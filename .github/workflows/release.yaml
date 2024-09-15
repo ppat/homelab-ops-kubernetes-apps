@@ -1,0 +1,35 @@
+---
+# yamllint disable rule:line-length
+name: release
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches:
+    - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    name: release
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - name: Release Please
+      uses: googleapis/release-please-action@v4
+      id: release
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        config-file: release-please-config.json
+        manifest-file: .release-please-manifest.json
+    - name: Show Release Please Output
+      env:
+        RELEASE_PLEASE_OUTPUT: ${{ toJSON(steps.release.outputs) }}
+      run: |
+        echo ${RELEASE_PLEASE_OUTPUT} | jq .

@@ -1,0 +1,31 @@
+{
+  "changelog-sections": [
+    { "type": "build", "section": "Build System", "hidden": true },
+    { "type": "chore", "section": "Miscellaneous", "hidden": true },
+    { "type": "ci", "section": "🚦 Continuous Integration", "hidden": true },
+    { "type": "docs", "section": "🛠 Improvements" },
+    { "type": "feat", "section": "✨ Features" },
+    { "type": "feature", "section": "✨ Features" },
+    { "type": "fix", "section": "🚀 Enhancements + Bug Fixes" },
+    { "type": "perf", "section": "🚀 Enhancements + Bug Fixes" },
+    { "type": "refactor", "section": "🚀 Enhancements + Bug Fixes" },
+    { "type": "revert", "section": "⚙️ Other" },
+    { "type": "style", "section": "🛠 Improvements" },
+    { "type": "test", "section": "🛠 Improvements" }
+  ],
+  "draft": false,
+  "initial-version": "0.0.1",
+  "packages": {
+    ".": {
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "extra-label": "pr-type:release"
+    }
+  },
+  "prerelease": false,
+  "pull-request-title-pattern": "chore(release): release${component} v${version}",
+  "release-type": "simple",
+  "separate-pull-requests": true,
+  "sequential-calls": true,
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json"
+}
