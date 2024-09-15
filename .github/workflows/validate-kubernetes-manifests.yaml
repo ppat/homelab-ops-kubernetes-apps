@@ -1,0 +1,101 @@
+---
+# yamllint disable rule:line-length
+name: validate-kubernetes-manifests
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+    - '.github/workflows/validate-kubernetes-manifests.yaml'
+    - 'apps/**/*.yaml'
+    - 'ci/**/*.yaml'
+    - 'infrastructure/**/*.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUX_SCHEMA_DIR: /tmp/flux-crd-schemas/master-standalone-strict
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - name: Checkout
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup kubeconform
+      uses: fluxcd/pkg/actions/kubeconform@30c101fc7c9fac4d84937ff4890a3da46a9db2dd
+      with:
+        # renovate: datasource=github-releases depName=yannh/kubeconform
+        version: "v0.6.7"
+
+    - name: Setup kustomize
+      uses: fluxcd/pkg/actions/kustomize@30c101fc7c9fac4d84937ff4890a3da46a9db2dd
+      with:
+        # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.*)$
+        version: "v5.4.3"
+
+    - name: Setup flux
+      uses: fluxcd/flux2/action@896e0fa46d5107a05e953dd0a5261d78a145ec8c # v2.3.0
+      with:
+        # renovate: datasource=github-releases depName=fluxcd/flux2
+        version: "v2.3.0"
+
+    - name: Downloading Flux OpenAPI schemas
+      shell: bash
+      env:
+        # renovate: datasource=github-releases depName=fluxcd/flux2
+        version: "v2.3.0"
+      run: |
+        set -x
+        wget --progress=dot:giga -c https://github.com/fluxcd/flux2/releases/download/${version}/crd-schemas.tar.gz -O /tmp/crd-schemas.tar.gz
+        mkdir -p ${FLUX_SCHEMA_DIR}
+        cd ${FLUX_SCHEMA_DIR}
+        tar -xzvf /tmp/crd-schemas.tar.gz
+
+    # based on https://github.com/fluxcd/flux2-kustomize-helm-example/blob/main/scripts/validate.sh
+    - name: Validate manifests
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        # mirror kustomize-controller build options
+        kustomize_flags=("--load-restrictor=LoadRestrictionsNone")
+        kustomize_config="kustomization.yaml"
+
+        # skip Kubernetes Secrets due to SOPS fields failing validation
+        kubeconform_flags=("-skip=Secret,IPAddressPool")
+        kubeconform_config=("-strict" "-ignore-missing-schemas" "-schema-location" "default" "-schema-location" "/tmp/flux-crd-schemas" -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' "-verbose")
+
+        echo -----------------------------------------------------------------------
+        echo "--> Validating kustomizations (pre-build)"
+        find . -type f -name $kustomize_config -print0 | while IFS= read -r -d $'\0' file;
+          do
+            kubeconform "${kubeconform_flags[@]}" "${kubeconform_config[@]}" "${file}" | pr -t -o 6
+            if [[ ${PIPESTATUS[0]} != 0 ]]; then
+              exit 1
+            fi
+        done
+        echo -----------------------------------------------------------------------
+        echo Loading env from ./ci/manifest-validation.env
+        set -o allexport
+        source ./ci/manifest-validation.env
+        set +o allexport
+        echo -----------------------------------------------------------------------
+        echo "--> Validating kustomiztions (post-build)"
+        find . -type f -name $kustomize_config -print0 | while IFS= read -r -d $'\0' file;
+          do
+            echo "      kustomization: ${file/%$kustomize_config}"
+            kustomize build "${file/%$kustomize_config}" "${kustomize_flags[@]}" | \
+              flux envsubst | \
+              kubeconform "${kubeconform_flags[@]}" "${kubeconform_config[@]}" | \
+              pr -t -o 8
+            if [[ ${PIPESTATUS[0]} != 0 ]]; then
+              exit 1
+            fi
+        done
+        echo -----------------------------------------------------------------------
