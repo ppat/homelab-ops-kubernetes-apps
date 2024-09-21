@@ -1,0 +1,12 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+data:
+  # yamllint disable-line rule:indentation
+  log.override: |
+    log . {
+        class denial error
+    }

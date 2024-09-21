@@ -1,0 +1,18 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubernetes
+  namespace: default
+  labels:
+    component: apiserver
+    provider: kubernetes
+  annotations:
+    traefik.ingress.kubernetes.io/service.serverstransport: traefik-insecure-skip-verify@kubernetescrd
+spec:
+  type: ClusterIP
+  ports:
+  - name: https
+    port: 443
+    protocol: TCP
+    targetPort: 6443

@@ -1,0 +1,23 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kubernetes-api
+  namespace: default
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: kubernetes-api.${domain_name}
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  tls: []
+  rules:
+  - host: kubernetes-api.${domain_name}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kubernetes
+            port:
+              number: 443
