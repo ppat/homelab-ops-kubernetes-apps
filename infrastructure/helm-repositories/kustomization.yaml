@@ -1,0 +1,17 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- cert-manager.yaml
+- cloudnative-pg.yaml
+- external-dns.yaml
+- external-secrets.yaml
+- fairwinds.yaml
+- grafana.yaml
+- longhorn.yaml
+- metallb.yaml
+- minio.yaml
+- node-feature-discovery.yaml
+- prometheus-community.yaml
+- traefik.yaml
