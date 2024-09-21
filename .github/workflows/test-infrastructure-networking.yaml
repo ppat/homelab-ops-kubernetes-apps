@@ -49,10 +49,6 @@ jobs:
           namespace: metallb-system
           for: jsonpath={.metadata.creationTimestamp}
           timeout: 1m
-        - resource: IPAddressPool/unifi-pool
-          namespace: metallb-system
-          for: jsonpath={.metadata.creationTimestamp}
-          timeout: 1m
         - resource: deployment/cert-manager
           namespace: cert-manager
           for: condition=available
