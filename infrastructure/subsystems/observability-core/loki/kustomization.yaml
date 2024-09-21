@@ -1,0 +1,20 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- helm-release.yaml
+
+# Generate configMap with configuration for deployment modes
+configMapGenerator:
+- name: loki-deployment-mode-config
+  namespace: logging
+  files:
+  - conf.d/mode-simple-scalable.yaml
+  - conf.d/mode-single-binary.yaml
+
+configurations:
+- name-reference.yaml
+
+sortOptions:
+  order: fifo

@@ -8,6 +8,7 @@ resources:
 - cluster-networking-conf.yaml
 - minio.yaml
 - pihole.yaml
+- cluster-observability-conf.yaml
 
 sortOptions:
   order: fifo
