@@ -1,0 +1,119 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: grafana-release
+  namespace: monitoring
+spec:
+  chart:
+    spec:
+      chart: grafana
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: grafana-repository
+        namespace: flux-system
+      version: 8.5.1
+  install:
+    crds: CreateReplace
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 15m0s
+  releaseName: grafana
+  targetNamespace: monitoring
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+
+  valuesFrom:
+  - kind: ConfigMap
+    name: grafana-helm-config
+    valuesKey: dashboards.yaml
+    optional: false
+  - kind: ConfigMap
+    name: grafana-helm-config
+    valuesKey: datasources.yaml
+    optional: false
+  - kind: ConfigMap
+    name: grafana-helm-config
+    valuesKey: grafana-ini.yaml
+    optional: false
+  - kind: ConfigMap
+    name: grafana-helm-config
+    valuesKey: plugins.yaml
+    optional: false
+  - kind: Secret
+    name: grafana-admin-credentials
+    valuesKey: username
+    targetPath: adminUser
+  - kind: Secret
+    name: grafana-admin-credentials
+    valuesKey: password
+    targetPath: adminPassword
+  values:
+    # ServiceMonitor label and job relabel
+    serviceMonitor:
+      enabled: true
+      labels:
+        release: kube-prometheus-stack
+      relabelings:
+      # Replace job value
+      - sourceLabels:
+        - __address__
+        action: replace
+        targetLabel: job
+        replacement: grafana
+
+    ingress:
+      enabled: true
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: grafana.${domain_name}
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
+      hosts:
+      - grafana.${domain_name}
+      path: /
+      pathType: Prefix
+      tls: []
+
+    affinity:
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 1
+          preference:
+            matchExpressions:
+            - key: node-role.kubernetes.io/control-plane
+              operator: In
+              values:
+              - "true"
+    resources: {}
+    tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+
+    ## Enable persistence using Persistent Volume Claims
+    persistence:
+      enabled: false
+
+    ## Sidecars that collect the configmaps with specified label and stores the included
+    ## files them into the respective folders.
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+        labelValue: "1"
+        searchNamespace: ALL
+        folderAnnotation: grafana_folder
+        provider:
+          foldersFromFilesStructure: true
+      datasources:
+        enabled: true
+        label: grafana_datasource
+        labelValue: "1"
+        searchNamespace: ALL

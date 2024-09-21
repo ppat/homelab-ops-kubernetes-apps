@@ -1,0 +1,40 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: monitoring
+
+# Generate dashboards config maps (one per dashboard)
+configMapGenerator:
+- name: dashboard-k3s-apiserver
+  files:
+  # source: https://grafana.com/grafana/dashboards/12654-kubernetes-api-server
+  - k3s-apiserver.json
+- name: dashboard-k3s-controllmanager
+  files:
+  # source: https://grafana.com/grafana/dashboards/12122-kubernetes-controller-manager
+  - k3s-controllermanager.json
+- name: dashboard-k3s-etcd
+  files:
+  # source: https://grafana.com/grafana/dashboards/16359-etcd/
+  - k3s-etcd.json
+- name: dashboard-k3s-kubelet
+  files:
+  # source: https://grafana.com/grafana/dashboards/16361-kubernetes-kubelet/
+  - k3s-kubelet.json
+- name: dashboard-k3s-scheduler
+  files:
+  # source: https://grafana.com/grafana/dashboards/12130-kubernetes-scheduler/
+  - k3s-scheduler.json
+- name: dashboard-k3s-kube-proxy
+  files:
+  # source: https://grafana.com/grafana/dashboards/12129-kubernetes-proxy
+  - k3s-kube-proxy.json
+
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    grafana_dashboard: "1"
+  annotations:
+    grafana_folder: K3S
+    kustomize.toolkit.fluxcd.io/substitute: disabled

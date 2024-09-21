@@ -1,0 +1,7 @@
+---
+## Grafana's primary configuration
+## NOTE: values in map will be converted to ini format
+## ref: http://docs.grafana.org/installation/configuration/
+grafana.ini:
+  analytics:
+    check_for_updates: false
