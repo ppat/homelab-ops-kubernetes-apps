@@ -68,6 +68,6 @@ jobs:
           namespace: longhorn-system
           for: condition=available
           timeout: 1m
-      git_url: https://github.com/{{ github.repository }}.git
+      git_url: https://github.com/${{ github.repository }}.git
       git_ref: ${{ github.head_ref || github.ref }}
       kind_cluster_config: kind-cluster-multi-node.yaml
