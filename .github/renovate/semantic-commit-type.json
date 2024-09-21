@@ -1,0 +1,29 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "description": "updateType=[pin,pinDigest] | configure semantic commit type",
+      "matchUpdateTypes": [
+        "pin",
+        "pinDigest"
+      ],
+      "semanticCommitType": "chore"
+    },
+    {
+      "description": "updateType=[digest,patch] | configure semantic commit type",
+      "matchUpdateTypes": [
+        "digest",
+        "patch"
+      ],
+      "semanticCommitType": "fix"
+    },
+    {
+      "description": "updateType=[major,minor] | configure semantic commit type",
+      "matchUpdateTypes": [
+        "major",
+        "minor"
+      ],
+      "semanticCommitType": "feat"
+    }
+  ]
+}

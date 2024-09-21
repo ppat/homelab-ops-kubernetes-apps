@@ -1,0 +1,72 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "description": "subsystem=apps-* | add semantic commit scope",
+      "matchFileNames": [
+        "apps/subsystems/**"
+      ],
+      "semanticCommitScope": "apps-{{ lookup (split packageFileDir '/') 2 }}"
+    },
+    {
+      "description": "subsystem=apps-helm-repos | add semantic commit scope",
+      "matchFileNames": [
+        "apps/helm-repositories/**"
+      ],
+      "semanticCommitScope": "apps-helm-repositories"
+    },
+    {
+      "description": "subsystem=infra-* | add semantic commit scope",
+      "matchFileNames": [
+        "infrastructure/subsystems/**"
+      ],
+      "semanticCommitScope": "infra-{{ lookup (split packageFileDir '/') 2 }}"
+    },
+    {
+      "description": "subsystem=infra-helm-repos | add semantic commit scope",
+      "matchFileNames": [
+        "infrastructure/helm-repositories/**"
+      ],
+      "semanticCommitScope": "infra-helm-repositories"
+    },
+    {
+      "description": "subsystem=infra-bootstrap-crds | add semantic commit scope",
+      "matchFileNames": [
+        "infrastructure/bootstrap/crds/**"
+      ],
+      "semanticCommitScope": "infra-bootstrap-crds"
+    },
+    {
+      "description": "matchFileNames=[.github] + matchManagers=[regex] | add semantic commit scope",
+      "matchFileNames": [
+        ".github/**"
+      ],
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "semanticCommitScope": "dev-tools"
+    },
+    {
+      "description": "matchFileNames=[.github] + matchManagers=[github-actions] | add semantic commit scope",
+      "matchFileNames": [
+        ".github/**"
+      ],
+      "matchManagers": [
+        "github-actions"
+      ],
+      "semanticCommitScope": "github-actions"
+    },
+    {
+      "description": "matchFileNames=[various] | add semantic commit scope",
+      "matchFileNames": [
+        ".node-version",
+        ".pre-commit-config.yaml",
+        "package-lock.json",
+        "package.json",
+        "poetry.lock",
+        "pyproject.toml"
+      ],
+      "semanticCommitScope": "dev-tools"
+    }
+  ]
+}

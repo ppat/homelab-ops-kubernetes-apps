@@ -1,0 +1,28 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "description": "subsystem=[all except infra subsystems] | configure version type separation",
+      "matchFileNames": [
+        "apps/helm-repositories/**",
+        "apps/subsystems/**",
+        "infrastructure/helm-repositories/**",
+        "infrastructure/bootstrap/crds/**"
+      ],
+      "separateMajorMinor": true,
+      "separateMinorPatch": false,
+      "separateMultipleMajor": true,
+      "separateMultipleMinor": false
+    },
+    {
+      "description": "subsystem=infra-* | configure version type separation",
+      "matchFileNames": [
+        "infrastructure/subsystems/**"
+      ],
+      "separateMajorMinor": true,
+      "separateMinorPatch": false,
+      "separateMultipleMajor": true,
+      "separateMultipleMinor": true
+    }
+  ]
+}

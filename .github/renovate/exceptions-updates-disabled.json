@@ -1,0 +1,21 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "description": "exceptions | * | disable update of flux images by kubernetes manager (as they are solely managed by flux manager)",
+      "enabled": false,
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchManagers": [
+        "kubernetes"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/fluxcd/helm-controller",
+        "ghcr.io/fluxcd/kustomize-controller",
+        "ghcr.io/fluxcd/notification-controller",
+        "ghcr.io/fluxcd/source-controller"
+      ]
+    }
+  ]
+}

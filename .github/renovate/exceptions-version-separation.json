@@ -1,0 +1,17 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "description": "packages=[various] | configure version separation",
+      "matchPackageNames": [
+        "fluxcd/flux2",
+        "kindest/node",
+        "kubernetes/kubernetes"
+      ],
+      "separateMajorMinor": true,
+      "separateMinorPatch": true,
+      "separateMultipleMajor": true,
+      "separateMultipleMinor": true
+    }
+  ]
+}

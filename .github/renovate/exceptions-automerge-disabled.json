@@ -1,0 +1,50 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "automerge": false,
+      "addLabels": [
+        "automerge:off"
+      ],
+      "description": "packages=[various] + updateType=minor | disable automerge",
+      "matchPackageNames": [
+        "fluxcd/flux2",
+        "kubernetes/kubernetes",
+        "kindest/node"
+      ],
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "reviewers": [
+        "ppat"
+      ]
+    },
+    {
+      "automerge": false,
+      "addLabels": [
+        "automerge:off"
+      ],
+      "description": "packages=[various] | disable automerge",
+      "matchPackageNames": [
+        "docker.io/mongo",
+        "linuxserver/unifi-network-application"
+      ],
+      "reviewers": [
+        "ppat"
+      ]
+    },
+    {
+      "automerge": false,
+      "addLabels": [
+        "automerge:off"
+      ],
+      "description": "matchFileNames=[crds] | disable automerge",
+      "matchFileNames": [
+        "infrastructure/bootstrap/crds/**"
+      ],
+      "reviewers": [
+        "ppat"
+      ]
+    }
+  ]
+}
