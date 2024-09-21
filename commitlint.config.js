@@ -39,6 +39,7 @@ module.exports = {
         'renovate',
         'release',
         'apps-helm-repositories',
+        'apps-development',
         'infra-bootstrap-crds',
         'infra-helm-repositories',
         'infra-clusterops-core',

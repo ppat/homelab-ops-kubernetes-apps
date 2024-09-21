@@ -1,0 +1,24 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps-development
+  namespace: flux-system
+spec:
+  interval: 15m0s
+  path: ./apps/subsystems/development
+  prune: false
+  postBuild:
+    substitute:
+      coder_db_storage_class: standard
+      coder_db_size: 1Gi
+      cert_issuer: selfsigned-issuer
+    substituteFrom:
+    - kind: ConfigMap
+      name: cluster-common-conf
+  sourceRef:
+    kind: GitRepository
+    name: test-source
+    namespace: flux-system
+  timeout: 2m0s
+  wait: false

@@ -1,0 +1,95 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: coder-release
+  namespace: coder
+spec:
+  chart:
+    spec:
+      chart: coder
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: coder-repository
+        namespace: flux-system
+      version: 2.15.0
+  install:
+    crds: CreateReplace
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 15m0s
+  releaseName: coder
+  targetNamespace: coder
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+  values:
+    coder:
+      env:
+      - name: CODER_ACCESS_URL
+        value: "https://coder.${domain_name}"
+      - name: CODER_PG_CONNECTION_URL
+        valueFrom:
+          secretKeyRef:
+            name: coder-db-app
+            key: uri
+      - name: CODER_PROMETHEUS_ENABLE
+        value: "true"
+      - name: CODER_PROMETHEUS_COLLECT_AGENT_STATS
+        value: "true"
+      - name: CODER_PROXY_TRUSTED_HEADERS
+        value: "X-Forwarded-For, X-Forwarded-Host, X-Forwarded-Port, X-Forwarded-Proto"
+      - name: CODER_EXPERIMENTS
+        value: "*"
+      - name: CODER_TELEMETRY_ENABLE
+        value: "false"
+      - name: CODER_ENABLE_TERRAFORM_DEBUG_MODE
+        value: "false"
+      - name: CODER_OAUTH2_GITHUB_ALLOW_SIGNUPS
+        valueFrom:
+          secretKeyRef:
+            name: coder-oidc-auth-settings
+            key: github_allow_signups
+            optional: true
+      - name: CODER_OAUTH2_GITHUB_CLIENT_ID
+        valueFrom:
+          secretKeyRef:
+            name: coder-oidc-auth-settings
+            key: github_client_id
+            optional: true
+      - name: CODER_OAUTH2_GITHUB_CLIENT_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: coder-oidc-auth-settings
+            key: github_client_secret
+            optional: true
+      - name: CODER_OAUTH2_GITHUB_ALLOWED_ORGS
+        valueFrom:
+          secretKeyRef:
+            name: coder-oidc-auth-settings
+            key: github_allowed_orgs
+            optional: true
+      - name: CODER_OAUTH2_GITHUB_ALLOW_EVERYONE
+        valueFrom:
+          secretKeyRef:
+            name: coder-oidc-auth-settings
+            key: github_allow_everyone
+            optional: true
+      ingress:
+        enable: false
+      replicaCount: 1
+      resources: {}
+      serviceAccount:
+        workspacePerms: true
+        enableDeployments: true
+      # TODO: remove after no staging
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
