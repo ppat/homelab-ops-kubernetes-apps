@@ -1,0 +1,47 @@
+---
+# yamllint disable rule:line-length
+name: test-infrastructure-database
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+    - '.github/workflows/test-infrastructure-database.yaml'
+    - '.github/workflows/test-kubernetes-resources-workflow.yaml'
+    - '.github/kind-cluster-multi-node.yaml'
+    - 'ci/test/infra-database/**.yaml'
+    - 'infrastructure/subsystems/database-core/**.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-infrastructure-database:
+    uses: ./.github/workflows/test-kubernetes-resources-workflow.yaml
+    with:
+      test_path: ./ci/test/infra-database
+      # yamllint disable-line rule:indentation
+      reconcile_items: |-
+        - name: infra-database-core
+          kind: kustomization
+          namespace: flux-system
+          timeout: 2m
+      # yamllint disable-line rule:indentation
+      success_conditions: |-
+        - resource: deployment/cloudnative-pg
+          namespace: cnpg-system
+          for: condition=available
+          timeout: 1m
+        - resource: cluster.postgresql.cnpg.io/test-db
+          namespace: default
+          for: condition=ready
+          timeout: 2m
+        - resource: secret/test-db-app
+          namespace: default
+          for: jsonpath={.data.uri}
+          timeout: 1m
+      git_url: https://github.com/${{ github.repository }}.git
+      git_ref: ${{ github.head_ref || github.ref }}
+      kind_cluster_config: kind-cluster-multi-node.yaml
