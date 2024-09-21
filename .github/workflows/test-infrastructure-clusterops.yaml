@@ -46,7 +46,7 @@ jobs:
           namespace: flux-system
           for: condition=available
           timeout: 1m
-      git_url: ssh://git@github.com/ppat/test-kubernetes.git
+      git_url: https://github.com/${{ github.repository }}.git
       git_ref: ${{ github.head_ref || github.ref }}
       kind_cluster_config: kind-cluster-single-node.yaml
       # yamllint disable-line rule:indentation
