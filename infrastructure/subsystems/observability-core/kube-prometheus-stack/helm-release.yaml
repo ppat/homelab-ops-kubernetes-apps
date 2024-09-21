@@ -1,0 +1,278 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack-release
+  namespace: monitoring
+spec:
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community-repository
+        namespace: flux-system
+      version: 62.7.0
+  install:
+    crds: CreateReplace
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 30m0s
+  releaseName: kube-prometheus-stack
+  targetNamespace: monitoring
+  timeout: 15m0s
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+  values:
+    crds:
+      enabled: true
+
+    cleanPrometheusOperatorObjectNames: true
+
+    # ------------------------------------------- prometheusOperator -----------------------------------------------
+    prometheusOperator:
+      # Relabeling job name for operator metrics
+      serviceMonitor:
+        relabelings:
+        # Replace job value
+        - sourceLabels:
+          - __address__
+          action: replace
+          targetLabel: job
+          replacement: prometheus-operator
+      # Disable creation of kubelet service
+      kubeletService:
+        enabled: false
+
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: In
+                values:
+                - "true"
+      resources: {}
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+
+      admissionWebhooks:
+        patch:
+          resources: {}
+          affinity:
+            nodeAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 1
+                preference:
+                  matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: In
+                    values:
+                    - "true"
+          tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            operator: Exists
+
+    # -------------------------------------------------------------------------------------------------------------
+
+    # --------------------------------------------- alertmanager --------------------------------------------------
+    alertmanager:
+      alertmanagerSpec:
+        routePrefix: /
+        storage:
+          volumeClaimTemplate:
+            metadata:
+              annotations:
+                kustomize.toolkit.fluxcd.io/prune: disabled
+            spec:
+              storageClassName: ${alertmanager_storage_class}
+              accessModes: ["ReadWriteOnce"]
+              resources:
+                requests:
+                  storage: ${alertmanager_storage_size}
+        retention: ${alertmanager_retention_period}
+
+        affinity:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: In
+                  values:
+                  - "true"
+        resources: {}
+        tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+
+      ingress:
+        enabled: true
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: alertmanager.${domain_name}
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+        hosts:
+        - alertmanager.${domain_name}
+        paths:
+        - /
+        pathType: Prefix
+        tls: []
+
+      # ServiceMonitor job relabel
+      serviceMonitor:
+        relabelings:
+        # Replace job value
+        - sourceLabels:
+          - __address__
+          action: replace
+          targetLabel: job
+          replacement: alertmanager
+    # -------------------------------------------------------------------------------------------------------------
+
+    # ---------------------------------------------- prometheus ---------------------------------------------------
+    prometheus:
+      prometheusSpec:
+        routePrefix: /
+        storageSpec:
+          volumeClaimTemplate:
+            metadata:
+              annotations:
+                kustomize.toolkit.fluxcd.io/prune: disabled
+            spec:
+              storageClassName: ${prometheus_storage_class}
+              accessModes: ["ReadWriteOnce"]
+              resources:
+                requests:
+                  storage: ${prometheus_storage_size}
+        retention: ${prometheus_retention_period}
+        retentionSize: ${prometheus_retention_size}
+
+        # Removing default filter Prometheus selectors (i.e. label release=kube-prometheus-stack)
+        podMonitorSelectorNilUsesHelmValues: false
+        probeSelectorNilUsesHelmValues: false
+        ruleSelectorNilUsesHelmValues: false
+        serviceMonitorSelectorNilUsesHelmValues: false
+        scrapeConfigSelectorNilUsesHelmValues: false
+
+        affinity:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: In
+                  values:
+                  - "true"
+        resources:
+          requests:
+            memory: 1Gi
+          limits:
+            memory: 1Gi
+        tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+
+      # ServiceMonitor job relabel
+      serviceMonitor:
+        relabelings:
+        # Replace job value
+        - sourceLabels:
+          - __address__
+          action: replace
+          targetLabel: job
+          replacement: prometheus
+
+      ingress:
+        enabled: true
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: prometheus.${domain_name}
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+        hosts:
+        - prometheus.${domain_name}
+        paths:
+        - /
+        pathType: Prefix
+        tls: []
+    # -------------------------------------------------------------------------------------------------------------
+
+    # ----------------------------------------------- grafana -----------------------------------------------------
+    grafana:
+      enabled: false
+      forceDeployDatasources: false
+      forceDeployDashboards: true
+      sidecar:
+        dashboards:
+          label: grafana_dashboard
+          annotations:
+            grafana_folder: Kube-Prometheus-Stack
+    # -------------------------------------------------------------------------------------------------------------
+
+    # ---------------------------------------- disable k8s monitoring ---------------------------------------------
+    # Disabling monitoring of K8s services.
+    # Monitoring of K3S components will be configured out of kube-prometheus-stack
+    kubelet:
+      enabled: false
+    kubeApiServer:
+      enabled: false
+    kubeControllerManager:
+      enabled: false
+    kubeScheduler:
+      enabled: false
+    kubeProxy:
+      enabled: false
+    kubeEtcd:
+      enabled: false
+    # Disable K8S Prometheus Rules
+    # Rules for K3S components will be configured out of kube-prometheus-stack
+    defaultRules:
+      create: true
+      rules:
+        etcd: false
+        k8s: false
+        kubeApiserverAvailability: false
+        kubeApiserverBurnrate: false
+        kubeApiserverHistogram: false
+        kubeApiserverSlos: false
+        kubeControllerManager: false
+        kubelet: false
+        kubeProxy: false
+        kubernetesApps: false
+        kubernetesResources: false
+        kubernetesStorage: false
+        kubernetesSystem: false
+        kubeScheduler: false
+    # -------------------------------------------------------------------------------------------------------------
+
+    # -------------------------------------- kube-state-metrics subchart ------------------------------------------
+    kube-state-metrics:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: In
+                values:
+                - "true"
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+
+      resources: {}
+    # -------------------------------------------------------------------------------------------------------------

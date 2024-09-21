@@ -5,7 +5,10 @@ kind: Kustomization
 resources:
 - cluster-common-conf.yaml
 - cluster-storage-conf.yaml
+- cluster-networking-conf.yaml
 - minio.yaml
+- pihole.yaml
+- cluster-observability-conf.yaml
 
 sortOptions:
   order: fifo

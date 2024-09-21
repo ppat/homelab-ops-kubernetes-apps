@@ -1,0 +1,61 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pihole-web
+  namespace: pihole
+  labels:
+    app.kubernetes.io/name: pihole
+spec:
+  selector:
+    app.kubernetes.io/name: pihole
+  ports:
+  - name: web
+    port: 80
+    targetPort: pihole-web
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pihole-dns-tcp
+  namespace: pihole
+  labels:
+    app.kubernetes.io/name: pihole
+    app.kubernetes.io/component: dns-tcp
+  annotations:
+    metallb.universe.tf/allow-shared-ip: dns
+    metallb.universe.tf/address-pool: pihole-pool
+spec:
+  selector:
+    app.kubernetes.io/name: pihole
+  externalTrafficPolicy: Local
+  ports:
+  - name: dns-tcp
+    port: 53
+    targetPort: pihole-dns-tcp
+    protocol: TCP
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pihole-dns-udp
+  namespace: pihole
+  labels:
+    app.kubernetes.io/name: pihole
+    app.kubernetes.io/component: dns-udp
+  annotations:
+    metallb.universe.tf/allow-shared-ip: dns
+    metallb.universe.tf/address-pool: pihole-pool
+spec:
+  selector:
+    app.kubernetes.io/name: pihole
+  externalTrafficPolicy: Local
+  ports:
+  - name: dns-tcp
+    port: 53
+    targetPort: pihole-dns-udp
+    protocol: UDP
+  type: LoadBalancer
