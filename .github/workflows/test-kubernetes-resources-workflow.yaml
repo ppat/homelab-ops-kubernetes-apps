@@ -1,0 +1,285 @@
+---
+# yamllint disable rule:line-length
+name: test-kubernetes-resources-workflow
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_call:
+    inputs:
+      test_path:
+        required: true
+        type: string
+      reconcile_items:
+        required: true
+        type: string
+      success_conditions:
+        required: true
+        type: string
+      custom_commands:
+        required: false
+        default: ""
+        type: string
+      git_ref:
+        required: true
+        type: string
+      git_url:
+        required: true
+        type: string
+      kind_cluster_config:
+        required: true
+        type: string
+    secrets:
+      git_ssh_key:
+        required: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - name: Checkout
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup kind cluster
+      uses: helm/kind-action@0025e74a8c7512023d06dc019c617aa3cf561fde # v1.10.0
+      with:
+        cluster_name: dev
+        config: ".github/${{ inputs.kind_cluster_config }}"
+        # renovate: datasource=github-releases depName=kubernetes-sigs/kind
+        version: "v0.24.0"
+
+    - name: Setup kubectl
+      uses: fluxcd/pkg/actions/kubectl@30c101fc7c9fac4d84937ff4890a3da46a9db2dd
+      with:
+        # renovate: datasource=github-releases depName=kubernetes/kubernetes
+        version: "v1.30.5"
+
+    - name: Setup flux
+      uses: fluxcd/flux2/action@896e0fa46d5107a05e953dd0a5261d78a145ec8c # v2.3.0
+      with:
+        # renovate: datasource=github-releases depName=fluxcd/flux2
+        version: "v2.3.0"
+
+    - name: Install flux in kind cluster
+      id: install-flux
+      shell: bash
+      env:
+        # renovate: datasource=github-releases depName=fluxcd/flux2
+        FLUX_VERSION: "v2.3.0"
+      # yamllint disable-line rule:indentation
+      run: |
+        flux install \
+          --version ${FLUX_VERSION} \
+          --log-level debug
+
+    - name: Bootstrap flux from git source
+      id: bootstrap-flux
+      shell: bash
+      env:
+        FLUX_TEST_PATH: ${{ inputs.test_path }}
+        FLUX_SECRET: test-secret
+        FLUX_GIT_SOURCE: test-source
+        FLUX_GIT_REF: ${{ inputs.git_ref }}
+        FLUX_KUSTOMIZATION: test-kustomization
+      # yamllint disable-line rule:indentation
+      run: |
+        echo Write ssh ssh key to file
+        mkdir -p /tmp/bootstrap
+        echo "${{ secrets.git_ssh_key }}" | base64 -d | sudo tee /tmp/bootstrap/git_ssh_key > /dev/null
+
+        echo Creating flux source secret...
+        flux create secret git ${FLUX_SECRET} \
+          --url ${{ inputs.git_url }} \
+          --private-key-file /tmp/bootstrap/git_ssh_key
+
+        rm -f /tmp/bootstrap/git_ssh_key
+
+        echo Show flux source secret...
+        kubectl get -n flux-system secret ${FLUX_SECRET}
+
+        if [[ "${FLUX_GIT_REF}" == "refs/heads/main" ]]; then
+          GIT_BRANCH="main"
+        else
+          GIT_BRANCH="${FLUX_GIT_REF}"
+        fi
+        echo "Creating git source for branch ${GIT_BRANCH} (ref=${FLUX_GIT_REF})..."
+        flux create source git ${FLUX_GIT_SOURCE} \
+          --url=${{ inputs.git_url }} \
+          --branch=${GIT_BRANCH} \
+          --secret-ref=${FLUX_SECRET} \
+          --export |\
+          kubectl apply --server-side -f -
+
+        echo Show git source...
+        flux get source git ${FLUX_GIT_SOURCE}
+
+        echo Wait for git source to be ready...
+        kubectl -n flux-system wait GitRepository/${FLUX_GIT_SOURCE} --for=condition=ready --timeout=1m
+
+        echo Setting up pre-requisites...
+        flux create kustomization pre-requisites \
+          --source=${FLUX_GIT_SOURCE} \
+          --path=./ci/test/pre-requisites
+
+        echo Waiting for pre-requisites to be ready...
+        kubectl -n flux-system wait Kustomization/pre-requisites --for=condition=ready --timeout=1m
+
+        echo Create kustomization for ${FLUX_TEST_PATH}...
+        flux create kustomization ${FLUX_KUSTOMIZATION} \
+          --source=${FLUX_GIT_SOURCE} \
+          --path=${FLUX_TEST_PATH}
+
+        echo Show kustomization...
+        flux get kustomizations ${FLUX_KUSTOMIZATION}
+
+        echo Wait for kustomization to be ready...
+        kubectl -n flux-system wait Kustomization/${FLUX_KUSTOMIZATION} --for=condition=ready --timeout=1m
+
+    - name: Reconcile
+      id: reconcile
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        echo Waiting 10 seconds before reconciling for flux to pick up inclusions from root kustomization
+        sleep 10
+        RECONCILE_YAML_FILE="$(mktemp --suffix .yaml)"
+        cat > $RECONCILE_YAML_FILE <<'EOF'
+        ${{ inputs.reconcile_items }}
+        EOF
+        echo -----------------------------------------------------------------------
+        for resource_name in $(yq -e '.[].name' $RECONCILE_YAML_FILE); do
+          resource_kind="$(yq -e '.[] | select(.name == "'$resource_name'") | .kind' $RECONCILE_YAML_FILE)"
+          resource_namespace="$(yq -e '.[] | select(.name == "'$resource_name'") | .namespace' $RECONCILE_YAML_FILE)"
+          reconcile_timeout="$(yq -e '.[] | select(.name == "'$resource_name'") | (select(has("timeout")) // {"timeout": "1m"}) | .timeout' $RECONCILE_YAML_FILE)"
+          set -x
+          flux reconcile $resource_kind -n $resource_namespace --timeout $reconcile_timeout $resource_name
+          set +x
+          echo -----------------------------------------------------------------------
+        done
+        echo "Reconcile done!"
+
+    - name: Show status
+      if: ${{ (success() || failure()) && steps.bootstrap-flux.outcome == 'success' }}
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        echo -----------------------------------------------------------------------
+        flux get all --all-namespaces
+        echo -----------------------------------------------------------------------
+        kubectl get -A cm,secret,po,svc,ing,deploy,ds,pvc
+        echo -----------------------------------------------------------------------
+        echo "All done!"
+
+    - name: Wait for success conditions
+      id: wait-success-conditions
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        SUCCESS_CONDITIONS_FILE="$(mktemp --suffix .yaml)"
+        cat > $SUCCESS_CONDITIONS_FILE <<'EOF'
+        ${{ inputs.success_conditions }}
+        EOF
+        echo "SUCCESS_CONDITIONS_FILE=$SUCCESS_CONDITIONS_FILE" >> $GITHUB_ENV
+        echo -----------------------------------------------------------------------
+        for resource in $(yq -e '.[].resource' $SUCCESS_CONDITIONS_FILE); do
+          namespace="$(yq -e '.[] | select(.resource == "'$resource'") | .namespace' $SUCCESS_CONDITIONS_FILE)"
+          timeout="$(yq -e '.[] | select(.resource == "'$resource'") | .timeout' $SUCCESS_CONDITIONS_FILE)"
+
+          resource_kind=$(echo $resource | cut -d'/' -f1)
+          resource_name=$(echo $resource | cut -d'/' -f2)
+
+          if [[ "${namespace}" == "-" ]]; then
+            namespace_filter=""
+          else
+            namespace_filter="-n $namespace"
+          fi
+
+          if [[ "${resource_kind}" == "daemonset" || "${resource_kind}" == "statefulset" ]]; then
+            set -x
+            kubectl -n $namespace rollout status $resource_kind $resource_name --timeout $timeout
+            set +x
+          else
+            for_condition="$(yq -e '.[] | select(.resource == "'$resource'") | .for' $SUCCESS_CONDITIONS_FILE)"
+            set -x
+            kubectl $namespace_filter wait $resource --for=$for_condition --timeout=$timeout
+            set +x
+          fi
+
+          echo "LAST_SUCCESS_STATUS_RESOURCE=$resource_name" >> $GITHUB_ENV
+          echo "LAST_SUCCESS_STATUS_NAMESPACE=$namespace" >> $GITHUB_ENV
+        done
+        echo -----------------------------------------------------------------------
+        echo "All success conditions met!"
+
+    - name: Run custom commands
+      if: ${{ (success() || failure()) && inputs.custom_commands != '' }}
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        CUSTOM_COMMANDS_FILE="$(mktemp --suffix .yaml)"
+        cat > $CUSTOM_COMMANDS_FILE <<'EOF'
+        ${{ inputs.custom_commands }}
+        EOF
+        echo -----------------------------------------------------------------------
+        for command_name in $(yq -e '.[].name' $CUSTOM_COMMANDS_FILE); do
+          command="$(yq -e '.[] | select(.name == "'$command_name'") | .command' $CUSTOM_COMMANDS_FILE)"
+          set -x
+          /bin/bash -c "${command}"
+          set +x
+          echo -----------------------------------------------------------------------
+        done
+        echo "All done!"
+
+    - name: Debug flux failure
+      if: ${{ failure() && (steps.install-flux.outcome == 'failure' || steps.bootstrap-flux.outcome == 'failure' || steps.reconcile.outcome == 'failure') }}
+      run: |
+        echo
+        echo ------------------------------ flux check ------------------------------
+        flux check
+        echo ------------------------ flux-system resources -------------------------
+        kubectl -n flux-system get all
+        echo -------------------------------- crds ----------------------------------
+        kubectl get crd
+        echo --------------------------- flux resources -----------------------------
+        flux get all --all-namespaces
+        echo --------------------------- flux source logs ---------------------------
+        kubectl -n flux-system logs deploy/source-controller
+        echo ------------------------- flux kustomize logs --------------------------
+        kubectl -n flux-system logs deploy/kustomize-controller
+        echo ---------------------------- flux helm logs ----------------------------
+        kubectl -n flux-system logs deploy/helm-controller
+
+    - name: Debug success condition failure
+      if: ${{ failure() && (steps.wait-success-conditions.outcome == 'failure' || steps.reconcile.outcome == 'failure') }}
+      env:
+        SUCCESS_NAMESPACE: ${{ env.LAST_SUCCESS_STATUS_RESOURCE }}
+        SUCCESS_RESOURCE: ${{ env.LAST_SUCCESS_STATUS_NAMESPACE }}
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        REACH_LAST_SUCCESS=0
+        for resource in $(yq -e '.[].resource' $SUCCESS_CONDITIONS_FILE); do
+          namespace="$(yq -e '.[] | select(.name == "'$resource'") | .namespace' $SUCCESS_CONDITIONS_FILE)"
+
+          if [[ "${REACH_LAST_SUCCESS}" == "1" ]]; then
+            break
+          fi
+          if [[ "${namespace}" == "${SUCCESS_NAMESPACE}" && "${resource}" == "${SUCCESS_RESOURCE}" ]]; then
+            REACH_LAST_SUCCESS=1
+          fi
+        done
+
+        echo Failed awaiting success condition for this resource...
+        echo -----------------------------------------------------------------------
+        if [[ "$namespace" == "-" ]]; then
+          kubectl get $resource -o yaml
+          echo =======================================================================
+          kubectl describe $resource
+        else
+          kubectl -n $namespace get $resource -o yaml
+          echo =======================================================================
+          kubectl -n $namespace describe $resource
+        fi
+        echo -----------------------------------------------------------------------
