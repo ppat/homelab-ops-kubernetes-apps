@@ -8,3 +8,4 @@ resources:
 - ../../apps/helm-repositories/
 - source.yaml
 - infra.yaml
+- apps.yaml

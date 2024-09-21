@@ -22,6 +22,12 @@
       "component": "apps-helm-repositories",
       "extra-label": "pr-type:release,subsystem:apps-helm-repositories"
     },
+    "apps/subsystems/development": {
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "component": "apps-development",
+      "extra-label": "pr-type:release,subsystem:apps-development"
+    },
     "infrastructure/bootstrap/crds": {
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
