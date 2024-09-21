@@ -55,5 +55,3 @@ jobs:
           command: 'kubectl describe -n flux-system po -l app=kustomize-controller'
         - name: show-helm-controller
           command: 'kubectl describe -n flux-system po -l app=helm-controller'
-    secrets:
-      git_ssh_key: ${{ secrets.FLUX_GIT_SSH_KEY }}
