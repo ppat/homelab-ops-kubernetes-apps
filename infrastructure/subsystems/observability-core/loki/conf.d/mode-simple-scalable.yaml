@@ -1,0 +1,84 @@
+---
+deploymentMode: SimpleScalable
+
+######################################################################################################################
+# Simple Scalable Deployment (SSD) Mode
+######################################################################################################################
+write:
+  replicas: 3
+  autoscaling:
+    enabled: false
+  resources: {}
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: write
+        topologyKey: kubernetes.io/hostname
+  tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+  persistence:
+    size: ${loki_write_storage_size}
+    storageClass: ${loki_storage_class}
+read:
+  replicas: 3
+  autoscaling:
+    enabled: false
+  resources: {}
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: read
+        topologyKey: kubernetes.io/hostname
+  tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+  persistence:
+    size: ${loki_read_storage_size}
+    storageClass: ${loki_storage_class}
+backend:
+  replicas: 3
+  autoscaling:
+    enabled: false
+  resources: {}
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: backend
+        topologyKey: kubernetes.io/hostname
+  tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+  persistence:
+    size: ${loki_backend_storage_size}
+    storageClass: ${loki_storage_class}
+
+######################################################################################################################
+# Zero out replica counts of other deployment modes
+######################################################################################################################
+singleBinary:
+  replicas: 0
+ingester:
+  replicas: 0
+querier:
+  replicas: 0
+queryFrontend:
+  replicas: 0
+queryScheduler:
+  replicas: 0
+distributor:
+  replicas: 0
+compactor:
+  replicas: 0
+indexGateway:
+  replicas: 0
+bloomCompactor:
+  replicas: 0
+bloomGateway:
+  replicas: 0

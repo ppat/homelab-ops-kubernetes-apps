@@ -1,0 +1,202 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: loki-release
+  namespace: logging
+spec:
+  chart:
+    spec:
+      chart: loki
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: grafana-repository
+        namespace: flux-system
+      version: 6.10.2
+  install:
+    crds: CreateReplace
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 30m0s
+  releaseName: loki
+  targetNamespace: logging
+  timeout: 15m0s
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+  valuesFrom:
+  - kind: ConfigMap
+    name: loki-deployment-mode-config
+    valuesKey: mode-${loki_deployment_mode}.yaml
+    optional: false
+  - kind: Secret
+    name: minio-serviceaccount-credentials
+    valuesKey: loki_accesskeyid
+    targetPath: loki.storage.s3.accessKeyId
+  - kind: Secret
+    name: minio-serviceaccount-credentials
+    valuesKey: loki_secretaccesskey
+    targetPath: loki.storage.s3.secretAccessKey
+  values:
+    ######################################################################################################################
+    # Loki Configuration
+    ######################################################################################################################
+    loki:
+      # Disable multi-tenant support
+      auth_enabled: false
+      ingester:
+        chunk_encoding: snappy
+      # see:
+      # - https://grafana.com/docs/loki/latest/operations/storage/schema/
+      # - https://grafana.com/docs/loki/latest/operations/storage/tsdb/
+      schemaConfig:
+        configs:
+        - from: "2024-04-01"
+          object_store: s3
+          store: tsdb
+          schema: v13
+          index:
+            prefix: index_
+            period: 24h
+      storage:
+        type: s3
+        bucketNames:
+          chunks: homelab-loki-chunks
+          ruler: homelab-loki-ruler
+        s3:
+          endpoint: s3.${domain_name}
+          # region: null
+          # signatureVersion: null
+          s3ForcePathStyle: true
+          insecure: false
+          http_config:
+            idle_conn_timeout: 90s
+            response_header_timeout: 0s
+            insecure_skip_verify: true
+          # # -- Check https://grafana.com/docs/loki/latest/configure/#s3_storage_config
+          #      for more info on how to provide a backoff_config
+          # backoff_config: {}
+
+    ######################################################################################################################
+    # Canary
+    ######################################################################################################################
+    lokiCanary:
+      enabled: false
+    # helm test requires canary
+    test:
+      enabled: false
+
+    ######################################################################################################################
+    # Gateway + Ingress
+    ######################################################################################################################
+    gateway:
+      enabled: true
+      replicas: 1
+      containerPort: 8080
+      annotations: {}
+      resources: {}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: gateway
+            topologyKey: kubernetes.io/hostname
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      ingress:
+        enabled: true
+        ingressClassName: traefik
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: loki.${domain_name}
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+        hosts:
+        - host: loki.${domain_name}
+          paths:
+          - path: /
+            pathType: Prefix
+        tls: []
+      basicAuth:
+        enabled: false
+
+    ######################################################################################################################
+    # Ruler
+    ######################################################################################################################
+    ruler:
+      # -- The ruler component is optional and can be disabled if desired.
+      enabled: true
+      replicas: 0
+      # @default -- Hard node anti-affinity
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: ruler
+            topologyKey: kubernetes.io/hostname
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+
+    ######################################################################################################################
+    # Caches
+    ######################################################################################################################
+    resultsCache:
+      enabled: true
+      # see: https://fluxcd.io/flux/components/kustomize/kustomizations/#post-build-substitution-of-numbers-and-booleans
+      allocatedMemory: ${quote}${loki_results_cache_memory}${quote}
+      affinity: {}
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+    chunksCache:
+      enabled: true
+      # see: https://fluxcd.io/flux/components/kustomize/kustomizations/#post-build-substitution-of-numbers-and-booleans
+      allocatedMemory: ${quote}${loki_chunks_cache_memory}${quote}
+      affinity: {}
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+
+    ######################################################################################################################
+    # Subchart configurations
+    ######################################################################################################################
+    #  https://github.com/grafana/helm-charts/tree/main/charts/rollout-operator
+    rollout_operator:
+      enabled: false
+    minio:
+      enabled: false
+
+    ######################################################################################################################
+    # Monitoring
+    ######################################################################################################################
+    monitoring:
+      dashboards:
+        enabled: true
+        annotations:
+          grafana_folder: Loki
+        labels:
+          grafana_dashboard: "1"
+      rules:
+        enabled: true
+        alerting: true
+      serviceMonitor:
+        enabled: true
+        metricsInstance:
+          enabled: false
+      selfMonitoring:
+        enabled: false
+        grafanaAgent:
+          installOperator: false
+    ######################################################################################################################
+    sidecar:
+      resources: {}

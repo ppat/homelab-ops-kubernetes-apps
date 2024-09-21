@@ -12,9 +12,24 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: monitoring
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: logging
+---
+apiVersion: v1
+kind: Namespace
+metadata:
   name: minio
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
   name: pihole
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: unifi

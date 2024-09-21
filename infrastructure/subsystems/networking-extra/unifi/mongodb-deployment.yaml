@@ -1,0 +1,114 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unifi-db
+  namespace: unifi
+  labels:
+    app.kubernetes.io/name: unifi-db
+    app.kubernetes.io/part-of: unifi
+    app.kubernetes.io/component: database
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: unifi-db
+      app.kubernetes.io/part-of: unifi
+      app.kubernetes.io/component: database
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: unifi-db
+        app.kubernetes.io/part-of: unifi
+        app.kubernetes.io/component: database
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: unifi-db
+        image: docker.io/mongo:7.0.14@sha256:244afb1488edfc42aaa8ffa6153393bbc075d63516ab0305daa2eaa35241eb52
+        imagePullPolicy: IfNotPresent
+        lifecycle:
+          preStop:
+            exec:
+              command: [/usr/bin/mongosh, --port, '27017', --eval, "db.adminCommand({'shutdown': 1})"]
+        livenessProbe:
+          exec:
+            command: [/usr/bin/mongosh, --port, '27017', --eval, "db.adminCommand('ping')"]
+          periodSeconds: 60
+        ports:
+        - name: mongodb
+          containerPort: 27017
+          protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: 27017
+          periodSeconds: 60
+        startupProbe:
+          exec:
+            command: [/usr/bin/mongosh, --port, '27017', --eval, "db.adminCommand('ping')"]
+          failureThreshold: 24
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        volumeMounts:
+        - name: mongo-data-volume
+          mountPath: /data/db
+        - name: init-scripts-volume
+          mountPath: /docker-entrypoint-initdb.d/init-mongo.js
+          readOnly: true
+          subPath: init-mongo.js
+      initContainers:
+      - name: init-mongodb-init-script
+        image: ghcr.io/fluxcd/flux-cli:v2.3.0@sha256:b0b43636bede7fee04afa99b9ad0732eca0f1778f7ebaa99fc89d48d35ccae18
+        command:
+        - "/bin/sh"
+        - "-c"
+        - "cat /templates/init-mongo.js | flux envsubst > /docker-entrypoint-initdb.d/init-mongo.js"
+        env:
+        - name: MONGO_USER
+          valueFrom:
+            secretKeyRef:
+              key: unifi_db_user
+              name: unifi-secrets
+              optional: false
+        - name: MONGO_PASS
+          valueFrom:
+            secretKeyRef:
+              key: unifi_db_password
+              name: unifi-secrets
+              optional: false
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          runAsNonRoot: true
+        volumeMounts:
+        - name: script-templates-volume
+          mountPath: /templates
+        - name: init-scripts-volume
+          mountPath: /docker-entrypoint-initdb.d
+      volumes:
+      - name: mongo-data-volume
+        persistentVolumeClaim:
+          claimName: unifi-db-data
+      - name: script-templates-volume
+        configMap:
+          name: unifi-db-script-template
+      - name: init-scripts-volume
+        emptyDir:
+          medium: Memory
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: In
+                values:
+                - "true"
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
