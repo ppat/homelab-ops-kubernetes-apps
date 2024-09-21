@@ -4,6 +4,11 @@ repos:
   rev: v4.6.0
   hooks:
   - id: check-added-large-files
+    # yamllint disable-line rule:indentation
+    exclude: |
+      (?x)^(
+        infrastructure/subsystems/clusterops-core/flux/gotk-components.yaml
+      )$
   - id: check-executables-have-shebangs
   - id: check-json
   - id: check-shebang-scripts-are-executable
