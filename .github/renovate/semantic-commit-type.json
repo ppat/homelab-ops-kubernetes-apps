@@ -24,6 +24,29 @@
         "minor"
       ],
       "semanticCommitType": "feat"
+    },
+    {
+      "description": "matchFileNames=[.github] + matchManagers=[regex, github-actions] | configure semantic commit type",
+      "matchFileNames": [
+        ".github/**"
+      ],
+      "matchManagers": [
+        "custom.regex",
+        "github-actions"
+      ],
+      "semanticCommitType": "chore"
+    },
+    {
+      "description": "matchFileNames=[various] | configure semantic commit type",
+      "matchFileNames": [
+        ".node-version",
+        ".pre-commit-config.yaml",
+        "package-lock.json",
+        "package.json",
+        "poetry.lock",
+        "pyproject.toml"
+      ],
+      "semanticCommitType": "chore"
     }
   ]
 }
