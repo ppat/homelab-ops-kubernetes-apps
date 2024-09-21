@@ -1,0 +1,23 @@
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: unifi-pool
+  namespace: metallb-system
+spec:
+  addresses:
+  - ${unifi_external_ip_address}/32
+  avoidBuggyIPs: true
+  serviceAllocation:
+    namespaces:
+    - unifi
+    serviceSelectors:
+    - matchLabels:
+        app.kubernetes.io/name: unifi-network-application
+        app.kubernetes.io/part-of: unifi
+    - matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: In
+        values:
+        - application-tcp
+        - application-udp
