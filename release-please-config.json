@@ -34,6 +34,12 @@
       "component": "infra-kubernetes-core",
       "extra-label": "pr-type:release,subsystem:infra-kubernetes-core"
     },
+    "infrastructure/subsystems/kubernetes-extra": {
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "component": "infra-kubernetes-extra",
+      "extra-label": "pr-type:release,subsystem:infra-kubernetes-extra"
+    },
     "infrastructure/subsystems/networking-core": {
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
