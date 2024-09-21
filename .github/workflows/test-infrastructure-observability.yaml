@@ -1,0 +1,90 @@
+---
+# yamllint disable rule:line-length
+name: test-infrastructure-observability
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+    - '.github/workflows/test-infrastructure-observability.yaml'
+    - '.github/workflows/test-kubernetes-resources-workflow.yaml'
+    - '.github/kind-cluster-multi-node.yaml'
+    - 'ci/test/infra-observability/**.yaml'
+    - 'infrastructure/subsystems/observability-core/**.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-infrastructure-observability:
+    uses: ./.github/workflows/test-kubernetes-resources-workflow.yaml
+    with:
+      test_path: ./ci/test/infra-observability
+      # yamllint disable-line rule:indentation
+      reconcile_items: |-
+        - name: minio
+          kind: kustomization
+          namespace: flux-system
+          timeout: 2m
+        - name: infra-observability-core
+          kind: kustomization
+          namespace: flux-system
+          timeout: 5m
+      # yamllint disable-line rule:indentation
+      success_conditions: |-
+        - resource: daemonset/kube-prometheus-stack-prometheus-node-exporter
+          namespace: monitoring
+          timeout: 1m
+        - resource: deployment/kube-prometheus-stack-kube-state-metrics
+          namespace: monitoring
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/kube-prometheus-stack-operator
+          namespace: monitoring
+          for: condition=available
+          timeout: 1m
+        - resource: statefulset/alertmanager-kube-prometheus-stack
+          namespace: monitoring
+          timeout: 1m
+        - resource: statefulset/prometheus-kube-prometheus-stack
+          namespace: monitoring
+          timeout: 1m
+        - resource: deployment/grafana
+          namespace: monitoring
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/loki-gateway
+          namespace: logging
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/loki-read
+          namespace: logging
+          for: condition=available
+          timeout: 1m
+        - resource: statefulset/loki-backend
+          namespace: logging
+          timeout: 1m
+        - resource: statefulset/loki-chunks-cache
+          namespace: logging
+          timeout: 1m
+        - resource: statefulset/loki-results-cache
+          namespace: logging
+          timeout: 1m
+        - resource: statefulset/loki-write
+          namespace: logging
+          for: condition=available
+          timeout: 1m
+        - resource: daemonset/promtail
+          namespace: logging
+          timeout: 2m
+      git_url: https://github.com/${{ github.repository }}.git
+      git_ref: ${{ github.head_ref || github.ref }}
+      kind_cluster_config: kind-cluster-multi-node.yaml
+      # yamllint disable-line rule:indentation
+      custom_commands: |-
+        - name: show-hr
+          command: 'kubectl get -n monitoring events'
+        - name: show-hr
+          command: 'kubectl get -n logging events'

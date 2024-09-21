@@ -39,7 +39,12 @@ module.exports = {
         'renovate',
         'release',
         'infra-bootstrap-crds',
-        'infra-helm-repositories'
+        'infra-helm-repositories',
+        'infra-networking-core',
+        'infra-networking-extra',
+        'infra-observability-core',
+        'infra-secrets-core',
+        'infra-storage-core'
       ]
     ],
 

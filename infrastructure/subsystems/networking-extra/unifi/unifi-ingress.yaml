@@ -1,0 +1,28 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: unifi-web
+  namespace: unifi
+  labels:
+    app.kubernetes.io/name: unifi-network-application
+    app.kubernetes.io/part-of: unifi
+    app.kubernetes.io/component: application-web
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: unifi.${domain_name}
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  # setting tls to [], so that default certficate will be assigned
+  tls: []
+  rules:
+  - host: unifi.${domain_name}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: unifi-web
+            port:
+              name: https-gui-api

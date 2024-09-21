@@ -1,0 +1,117 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: minio-release
+  namespace: minio
+spec:
+  chart:
+    spec:
+      chart: minio
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: minio-repository
+        namespace: flux-system
+      version: 5.2.0
+  install:
+    crds: CreateReplace
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 30m0s
+  releaseName: minio
+  targetNamespace: minio
+  timeout: 15m0s
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+  valuesFrom:
+  - kind: Secret
+    name: minio-admin-credentials
+    valuesKey: username
+    targetPath: rootUser
+  - kind: Secret
+    name: minio-admin-credentials
+    valuesKey: password
+    targetPath: rootPassword
+  - kind: ConfigMap
+    name: minio-buckets
+    # optional: true
+  - kind: ConfigMap
+    name: minio-policies
+    # optional: true
+  - kind: Secret
+    name: minio-users
+    # optional: true
+  values:
+    # -------------------------------------------- minio configuration --------------------------------------------
+    mode: standalone
+    ignoreChartChecksums: true
+    persistence:
+      enabled: true
+      storageClass: ""
+      size: ${minio_pvc_size}
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: s3.${domain_name}
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
+      hosts:
+      - s3.${domain_name}
+      tls: []
+    consoleIngress:
+      enabled: true
+      ingressClassName: traefik
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: minio-console.${domain_name}
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
+      hosts:
+      - minio-console.${domain_name}
+      tls: []
+    resources:
+      requests:
+        memory: 1Gi
+    affinity:
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 1
+          preference:
+            matchExpressions:
+            - key: node-role.kubernetes.io/control-plane
+              operator: In
+              values:
+              - "true"
+    tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+
+    postJob:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: In
+                values:
+                - "true"
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+    # -------------------------------------------------------------------------------------------------------------
+
+    # -------------------------------------------- Prometheus Monitoring ------------------------------------------
+    metrics:
+      serviceMonitor:
+        enabled: true
+    # -------------------------------------------------------------------------------------------------------------

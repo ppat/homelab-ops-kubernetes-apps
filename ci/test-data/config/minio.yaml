@@ -1,0 +1,52 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minio-buckets
+  namespace: minio
+data:
+  # yamllint disable-line rule:indentation
+  values.yaml: |-
+    buckets:
+    - name: homelab-loki-chunks
+      policy: none
+    - name: homelab-loki-ruler
+      policy: none
+    - name: homelab-tempo
+      policy: none
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minio-policies
+  namespace: minio
+data:
+  # yamllint disable-line rule:indentation
+  values.yaml: |-
+    policies:
+    - name: loki
+      statements:
+      - resources:
+        - 'arn:aws:s3:::homelab-loki-chunks'
+        - 'arn:aws:s3:::homelab-loki-chunks/*'
+        - 'arn:aws:s3:::homelab-loki-ruler'
+        - 'arn:aws:s3:::homelab-loki-ruler/*'
+        effect: "Allow"
+        actions:
+        - "s3:DeleteObject"
+        - "s3:GetObject"
+        - "s3:ListBucket"
+        - "s3:PutObject"
+    - name: tempo
+      statements:
+      - resources:
+        - 'arn:aws:s3:::homelab-tempo'
+        - 'arn:aws:s3:::homelab-tempo/*'
+        effect: "Allow"
+        actions:
+        - "s3:DeleteObject"
+        - "s3:GetObject"
+        - "s3:ListBucket"
+        - "s3:PutObject"
+        - "s3:GetObjectTagging"
+        - "s3:PutObjectTagging"
