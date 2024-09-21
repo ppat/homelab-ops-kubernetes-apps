@@ -1,0 +1,104 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: goldilocks-release
+  namespace: goldilocks
+spec:
+  chart:
+    spec:
+      chart: goldilocks
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: fairwinds-repository
+        namespace: flux-system
+      version: 8.0.2
+  install:
+    crds: CreateReplace
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 15m0s
+  releaseName: goldilocks
+  targetNamespace: goldilocks
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+  values:
+    # ---------------------------------------- vertical pod autoscaler --------------------------------------------
+    # disable installation of vpa as we install it separately
+    vpa:
+      enabled: false
+    # k3s already comes with metrics-server
+    metrics-server:
+      enabled: false
+    # -------------------------------------------------------------------------------------------------------------
+
+    # ------------------------------------------------ controller -------------------------------------------------
+    controller:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: In
+                values:
+                - "true"
+      resources:
+        requests:
+          cpu: 25m
+          memory: 50Mi
+        limits:
+          cpu: 500m
+          memory: 200Mi
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+    # -------------------------------------------------------------------------------------------------------------
+
+    # ------------------------------------------------- dashboard -------------------------------------------------
+    dashboard:
+      flags:
+        enable-cost: "false"
+      replicaCount: 1
+      ingress:
+        enabled: true
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: goldilocks.${domain_name}
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+        hosts:
+        - host: goldilocks.${domain_name}
+          paths:
+          - path: /
+            type: Prefix
+        tls: []
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: In
+                values:
+                - "true"
+      resources:
+        requests:
+          cpu: 25m
+          memory: 50Mi
+        limits:
+          cpu: 500m
+          memory: 200Mi
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+    # -------------------------------------------------------------------------------------------------------------
