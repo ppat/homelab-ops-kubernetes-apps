@@ -1,0 +1,47 @@
+---
+# yamllint disable rule:line-length
+name: test-infrastructure-kubernetes
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+    - '.github/workflows/test-infrastructure-kubernetes.yaml'
+    - '.github/workflows/test-kubernetes-resources-workflow.yaml'
+    - '.github/kind-cluster-single-node.yaml'
+    - 'ci/test/infra-kubernetes/**.yaml'
+    - 'infrastructure/subsystems/kubernetes-core/**.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-infrastructure-kubernetes:
+    uses: ./.github/workflows/test-kubernetes-resources-workflow.yaml
+    with:
+      test_path: ./ci/test/infra-kubernetes
+      # yamllint disable-line rule:indentation
+      reconcile_items: |-
+        - name: infra-kubernetes-core
+          kind: kustomization
+          namespace: flux-system
+          timeout: 3m
+      # yamllint disable-line rule:indentation
+      success_conditions: |-
+        - resource: configmap/coredns-custom
+          namespace: kube-system
+          for: jsonpath={.metadata.creationTimestamp}
+          timeout: 1m
+        - resource: deployment/coredns
+          namespace: kube-system
+          for: condition=available
+          timeout: 1m
+        - resource: ingress/kubernetes-api
+          namespace: default
+          for: jsonpath={.metadata.creationTimestamp}
+          timeout: 1m
+      git_url: https://github.com/${{ github.repository }}.git
+      git_ref: ${{ github.head_ref || github.ref }}
+      kind_cluster_config: kind-cluster-single-node.yaml
