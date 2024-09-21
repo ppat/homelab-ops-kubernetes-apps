@@ -13,6 +13,8 @@ spec:
       name: cluster-common-conf
     - kind: ConfigMap
       name: cluster-storage-conf
+    - kind: ConfigMap
+      name: cluster-networking-conf
   prune: true
   sourceRef:
     kind: GitRepository
