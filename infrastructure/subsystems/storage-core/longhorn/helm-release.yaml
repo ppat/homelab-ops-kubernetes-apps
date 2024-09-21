@@ -1,0 +1,53 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: longhorn-release
+  namespace: longhorn-system
+spec:
+  chart:
+    spec:
+      chart: longhorn
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: longhorn-repository
+        namespace: flux-system
+      version: 1.6.2
+  install:
+    crds: CreateReplace
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 30m0s
+  releaseName: longhorn
+  targetNamespace: longhorn-system
+  timeout: 15m0s
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+  values:
+    defaultSettings:
+      taintToleration: node-role.kubernetes.io/control-plane=true:NoSchedule
+
+    longhornManager:
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+    longhornDriver:
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+    longhornUI:
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+
+    metrics:
+      serviceMonitor:
+        enabled: true

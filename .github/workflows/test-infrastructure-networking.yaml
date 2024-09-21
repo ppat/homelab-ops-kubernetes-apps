@@ -1,0 +1,174 @@
+---
+# yamllint disable rule:line-length
+name: test-infrastructure-networking
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+    - '.github/workflows/test-infrastructure-networking.yaml'
+    - '.github/workflows/test-kubernetes-resources-workflow.yaml'
+    - '.github/kind-cluster-single-node.yaml'
+    - 'ci/test/infra-networking/**.yaml'
+    - 'infrastructure/subsystems/networking-core/**.yaml'
+    - 'infrastructure/subsystems/networking-extra/**.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-infrastructure-networking:
+    uses: ./.github/workflows/test-kubernetes-resources-workflow.yaml
+    with:
+      test_path: ./ci/test/infra-networking
+      # yamllint disable-line rule:indentation
+      reconcile_items: |-
+        - name: infra-networking-core
+          kind: kustomization
+          namespace: flux-system
+          timeout: 5m
+        - name: infra-networking-extra
+          kind: kustomization
+          namespace: flux-system
+          timeout: 3m
+      # yamllint disable-line rule:indentation
+      success_conditions: |-
+        - resource: deployment/metallb-controller
+          namespace: metallb-system
+          for: condition=available
+          timeout: 1m
+        - resource: daemonset/metallb-speaker
+          namespace: metallb-system
+          timeout: 1m
+        - resource: L2Advertisement/l2-advertisement
+          namespace: metallb-system
+          for: jsonpath={.metadata.creationTimestamp}
+          timeout: 1m
+        - resource: IPAddressPool/standard-pool
+          namespace: metallb-system
+          for: jsonpath={.metadata.creationTimestamp}
+          timeout: 1m
+        - resource: IPAddressPool/pihole-pool
+          namespace: metallb-system
+          for: jsonpath={.metadata.creationTimestamp}
+          timeout: 1m
+        - resource: deployment/cert-manager
+          namespace: cert-manager
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/cert-manager-cainjector
+          namespace: cert-manager
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/cert-manager-webhook
+          namespace: cert-manager
+          for: condition=available
+          timeout: 1m
+        - resource: clusterissuer/selfsigned-issuer
+          namespace: "-"
+          for: condition=ready
+          timeout: 1m
+        - resource: certificate/selfsigned-tls-cert
+          namespace: traefik
+          for: condition=ready
+          timeout: 1m
+        - resource: daemonset/traefik
+          namespace: traefik
+          timeout: 1m
+        - resource: deployment/whoami
+          namespace: traefik
+          for: condition=available
+          timeout: 1m
+        - resource: service/traefik
+          namespace: traefik
+          for: jsonpath={.status.loadBalancer.ingress}
+          timeout: 1m
+        - resource: middleware/header-forwarded
+          namespace: traefik
+          for: jsonpath={.metadata.creationTimestamp}
+          timeout: 1m
+        - resource: middleware/redirect
+          namespace: traefik
+          for: jsonpath={.metadata.creationTimestamp}
+          timeout: 1m
+        - resource: tlsstore/default
+          namespace: traefik
+          for: jsonpath={.metadata.creationTimestamp}
+          timeout: 1m
+        - resource: tlsoption/default
+          namespace: traefik
+          for: jsonpath={.metadata.creationTimestamp}
+          timeout: 1m
+        - resource: serverstransport/insecure-skip-verify
+          namespace: traefik
+          for: jsonpath={.metadata.creationTimestamp}
+          timeout: 1m
+        - resource: deployment/cloudflared-doh
+          namespace: pihole
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/unbound
+          namespace: pihole
+          for: condition=available
+          timeout: 1m
+        - resource: persistentvolumeclaim/pihole-data
+          namespace: pihole
+          for: jsonpath={.status.phase}=Bound
+          timeout: 1m
+        - resource: deployment/pihole
+          namespace: pihole
+          for: condition=available
+          timeout: 1m
+        - resource: service/pihole-dns-tcp
+          namespace: pihole
+          for: jsonpath={.status.loadBalancer.ingress}
+          timeout: 1m
+        - resource: service/pihole-dns-udp
+          namespace: pihole
+          for: jsonpath={.status.loadBalancer.ingress}
+          timeout: 1m
+        - resource: ingress/pihole-admin-https
+          namespace: pihole
+          for: jsonpath={.status.loadBalancer.ingress}
+          timeout: 1m
+        - resource: ingress/pihole-adblock-http
+          namespace: pihole
+          for: jsonpath={.status.loadBalancer.ingress}
+          timeout: 1m
+        - resource: ingress/pihole-adblock-https
+          namespace: pihole
+          for: jsonpath={.status.loadBalancer.ingress}
+          timeout: 1m
+        - resource: deployment/external-dns
+          namespace: external-dns
+          for: condition=available
+          timeout: 1m
+        - resource: IPAddressPool/unifi-pool
+          namespace: metallb-system
+          for: jsonpath={.metadata.creationTimestamp}
+          timeout: 1m
+        - resource: deployment/unifi-db
+          namespace: unifi
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/unifi-network-application
+          namespace: unifi
+          for: condition=available
+          timeout: 1m
+        - resource: service/unifi-tcp
+          namespace: unifi
+          for: jsonpath={.status.loadBalancer.ingress}
+          timeout: 1m
+        - resource: service/unifi-udp
+          namespace: unifi
+          for: jsonpath={.status.loadBalancer.ingress}
+          timeout: 1m
+        - resource: ingress/unifi-web
+          namespace: unifi
+          for: jsonpath={.status.loadBalancer.ingress}
+          timeout: 1m
+      git_url: https://github.com/${{ github.repository }}.git
+      git_ref: ${{ github.head_ref || github.ref }}
+      kind_cluster_config: kind-cluster-single-node.yaml

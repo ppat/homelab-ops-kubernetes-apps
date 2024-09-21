@@ -1,0 +1,29 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pihole-optional-config
+  namespace: pihole
+data:
+  DNSMASQ_LISTENING: all
+  DNSSEC: "false"
+  FTLCONF_MAXDBDAYS: "30"
+  FTLCONF_MOZILLA_CANARY: "true"
+  FTLCONF_RESOLVE_IPV6: "yes"
+  IPv6: "true"
+  REV_SERVER: "true"
+  REV_SERVER_CIDR: 10.112.0.0/16
+  REV_SERVER_DOMAIN: hosts.example.com
+  REV_SERVER_TARGET: 10.112.0.1
+  TZ: US/Eastern
+  WEBTHEME: default-darker
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: unbound-optional-config
+  namespace: pihole
+data:
+  # unbound requires running under root when deployed within kind,
+  # but does not require it when deployed within k3s
+  DISABLE_SET_PERMS: "true"

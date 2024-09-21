@@ -28,9 +28,6 @@ on:
       kind_cluster_config:
         required: true
         type: string
-    secrets:
-      git_ssh_key:
-        required: true
 
 jobs:
   test:
@@ -79,26 +76,11 @@ jobs:
       shell: bash
       env:
         FLUX_TEST_PATH: ${{ inputs.test_path }}
-        FLUX_SECRET: test-secret
         FLUX_GIT_SOURCE: test-source
         FLUX_GIT_REF: ${{ inputs.git_ref }}
         FLUX_KUSTOMIZATION: test-kustomization
       # yamllint disable-line rule:indentation
       run: |
-        echo Write ssh ssh key to file
-        mkdir -p /tmp/bootstrap
-        echo "${{ secrets.git_ssh_key }}" | base64 -d | sudo tee /tmp/bootstrap/git_ssh_key > /dev/null
-
-        echo Creating flux source secret...
-        flux create secret git ${FLUX_SECRET} \
-          --url ${{ inputs.git_url }} \
-          --private-key-file /tmp/bootstrap/git_ssh_key
-
-        rm -f /tmp/bootstrap/git_ssh_key
-
-        echo Show flux source secret...
-        kubectl get -n flux-system secret ${FLUX_SECRET}
-
         if [[ "${FLUX_GIT_REF}" == "refs/heads/main" ]]; then
           GIT_BRANCH="main"
         else
@@ -108,7 +90,6 @@ jobs:
         flux create source git ${FLUX_GIT_SOURCE} \
           --url=${{ inputs.git_url }} \
           --branch=${GIT_BRANCH} \
-          --secret-ref=${FLUX_SECRET} \
           --export |\
           kubectl apply --server-side -f -
 

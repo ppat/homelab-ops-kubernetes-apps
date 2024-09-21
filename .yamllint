@@ -46,3 +46,4 @@ rules:
 ignore:
 - dist/
 - node_modules/
+- infrastructure/subsystems/observability-core/k3s-monitoring/prometheusrule-k3s.yaml

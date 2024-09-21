@@ -1,0 +1,32 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infra-observability-core
+  namespace: flux-system
+spec:
+  interval: 15m0s
+  path: ./infrastructure/subsystems/observability-core
+  postBuild:
+    substituteFrom:
+    - kind: ConfigMap
+      name: cluster-common-conf
+    - kind: ConfigMap
+      name: cluster-observability-conf
+  prune: false
+  sourceRef:
+    kind: GitRepository
+    name: test-source
+    namespace: flux-system
+  timeout: 2m0s
+  wait: true
+  patches:
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      $patch: delete
+      kind: Endpoints
+      metadata:
+        name: k3s-metrics-service
+    target:
+      kind: Endpoints
+      name: k3s-metrics-service

@@ -1,0 +1,10 @@
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: standard-pool
+  namespace: metallb-system
+spec:
+  addresses:
+  - ${metallb_standard_ip_pool}
+  avoidBuggyIPs: true

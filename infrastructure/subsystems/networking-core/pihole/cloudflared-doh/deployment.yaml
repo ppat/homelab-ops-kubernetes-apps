@@ -1,0 +1,81 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflared-doh
+  namespace: pihole
+  labels:
+    app.kubernetes.io/name: cloudflared-doh
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cloudflared-doh
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cloudflared-doh
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: cloudflared-doh
+        env:
+        - name: PORT
+          value: "53"
+        - name: UPSTREAM1
+          value: https://1.1.1.2/dns-query
+        - name: UPSTREAM2
+          value: https://1.0.0.2/dns-query
+        - name: METRICS
+          value: 0.0.0.0:8080
+        - name: MAX_UPSTREAM_CONNS
+          value: "5"
+        image: visibilityspots/cloudflared:v2024.9.1@sha256:ec8e57ef185fca03814027dc3a3c838c75159864130dc6bb3fba49cc82b8faa2
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          tcpSocket:
+            port: 53
+          initialDelaySeconds: 5
+          periodSeconds: 15
+        ports:
+        - name: doh-tcp
+          containerPort: 53
+          protocol: TCP
+        - name: doh-udp
+          containerPort: 53
+          protocol: UDP
+        - name: doh-metrics
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command: [dig, +short, +retry=0, '@127.0.0.1', cloudflare.com]
+          initialDelaySeconds: 5
+          periodSeconds: 60
+          timeoutSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: true
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+      dnsConfig:
+        nameservers:
+        - 127.0.0.1
+        - ${dns_fallback:=1.1.1.1}
+      dnsPolicy: None
+      hostname: cloudflared-doh
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: In
+                values:
+                - "true"
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists

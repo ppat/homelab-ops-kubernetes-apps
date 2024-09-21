@@ -38,7 +38,13 @@ module.exports = {
         'github-actions',
         'renovate',
         'release',
-        'infra-bootstrap-crds'
+        'infra-bootstrap-crds',
+        'infra-helm-repositories',
+        'infra-networking-core',
+        'infra-networking-extra',
+        'infra-observability-core',
+        'infra-secrets-core',
+        'infra-storage-core'
       ]
     ],
 

@@ -1,0 +1,12 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- dashboards/
+- service-k3smetrics.yaml
+- servicemonitor-k3s.yaml
+- prometheusrule-k3s.yaml
+
+sortOptions:
+  order: fifo
