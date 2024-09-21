@@ -38,6 +38,7 @@ module.exports = {
         'github-actions',
         'renovate',
         'release',
+        'apps-helm-repositories',
         'infra-bootstrap-crds',
         'infra-helm-repositories',
         'infra-clusterops-core',

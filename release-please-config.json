@@ -16,6 +16,12 @@
   "draft": false,
   "initial-version": "0.0.1",
   "packages": {
+    "apps/helm-repositories": {
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "component": "apps-helm-repositories",
+      "extra-label": "pr-type:release,subsystem:apps-helm-repositories"
+    },
     "infrastructure/bootstrap/crds": {
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
