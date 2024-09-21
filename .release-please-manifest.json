@@ -2,7 +2,7 @@
   "infrastructure/bootstrap/crds": "0.0.1",
   "infrastructure/helm-repositories": "0.0.1",
   "infrastructure/subsystems/clusterops-core": "0.0.0",
-  "infrastructure/subsystems/clusterops-extra": "0.0.0",
+  "infrastructure/subsystems/clusterops-extra": "0.0.1",
   "infrastructure/subsystems/database-core": "0.0.0",
   "infrastructure/subsystems/kubernetes-core": "0.0.0",
   "infrastructure/subsystems/kubernetes-extra": "0.0.0",
