@@ -1,0 +1,54 @@
+---
+deploymentMode: SingleBinary
+
+loki:
+  commonConfig:
+    replication_factor: 1
+
+######################################################################################################################
+# Single Binary Deployment
+######################################################################################################################
+singleBinary:
+  replicas: 1
+  resources: {}
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: single-binary
+        topologyKey: kubernetes.io/hostname
+  tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+  persistence:
+    size: ${loki_singlebinary_storage_size}
+    storageClass: ${loki_storage_class}
+
+######################################################################################################################
+# Zero out replica counts of other deployment modes
+######################################################################################################################
+write:
+  replicas: 0
+read:
+  replicas: 0
+backend:
+  replicas: 0
+ingester:
+  replicas: 0
+querier:
+  replicas: 0
+queryFrontend:
+  replicas: 0
+queryScheduler:
+  replicas: 0
+distributor:
+  replicas: 0
+compactor:
+  replicas: 0
+indexGateway:
+  replicas: 0
+bloomCompactor:
+  replicas: 0
+bloomGateway:
+  replicas: 0

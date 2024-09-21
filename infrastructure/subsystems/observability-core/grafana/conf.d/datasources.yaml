@@ -1,0 +1,31 @@
+---
+## Configure grafana datasources
+## ref: http://docs.grafana.org/administration/provisioning/#datasources
+datasources:
+  additional-datasources.yaml:
+    apiVersion: 1
+    datasources:
+    - name: "Prometheus"
+      type: prometheus
+      uid: prometheus
+      url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local.:9090/
+      access: proxy
+      isDefault: true
+      jsonData:
+        httpMethod: POST
+        timeInterval: 30s
+    - name: "Alertmanager"
+      type: alertmanager
+      uid: alertmanager
+      url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local.:9093/
+      access: proxy
+      jsonData:
+        handleGrafanaManagedAlerts: false
+        implementation: prometheus
+    - name: Loki
+      type: loki
+      uid: loki
+      access: proxy
+      url: http://loki-gateway.logging.svc.cluster.local.
+      jsonData:
+        tlsSkipVerify: true

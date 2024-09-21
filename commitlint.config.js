@@ -42,6 +42,7 @@ module.exports = {
         'infra-helm-repositories',
         'infra-networking-core',
         'infra-networking-extra',
+        'infra-observability-core',
         'infra-secrets-core',
         'infra-storage-core'
       ]

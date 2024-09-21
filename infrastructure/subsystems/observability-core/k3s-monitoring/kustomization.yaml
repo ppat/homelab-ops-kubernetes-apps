@@ -3,13 +3,10 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- cert-manager.yaml
-- external-dns.yaml
-- grafana.yaml
-- loki.yaml
-- minio.yaml
-- pihole.yaml
-- unifi.yaml
+- dashboards/
+- service-k3smetrics.yaml
+- servicemonitor-k3s.yaml
+- prometheusrule-k3s.yaml
 
 sortOptions:
   order: fifo
