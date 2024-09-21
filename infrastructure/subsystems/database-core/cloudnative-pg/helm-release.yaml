@@ -1,0 +1,56 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cloudnative-pg-release
+  namespace: cnpg-system
+spec:
+  chart:
+    spec:
+      chart: cloudnative-pg
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: cloudnative-pg-repository
+        namespace: flux-system
+      version: 0.22.0
+  install:
+    crds: CreateReplace
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 30m0s
+  releaseName: cloudnative-pg
+  targetNamespace: cnpg-system
+  timeout: 15m0s
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+  values:
+    crds:
+      create: true
+
+    affinity:
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 1
+          preference:
+            matchExpressions:
+            - key: node-role.kubernetes.io/control-plane
+              operator: In
+              values:
+              - "true"
+    resources: {}
+    tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+
+    monitoring:
+      podMonitorEnabled: true
+      grafanaDashboard:
+        create: true
