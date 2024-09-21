@@ -1,0 +1,196 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: traefik-release
+  namespace: traefik
+spec:
+  chart:
+    spec:
+      chart: traefik
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: traefik-repository
+        namespace: flux-system
+      version: 30.1.0
+  dependsOn:
+  - name: metallb-release
+    namespace: metallb-system
+  - name: cert-manager-release
+    namespace: cert-manager
+  install:
+    crds: CreateReplace
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 15m0s
+  releaseName: traefik
+  targetNamespace: traefik
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+  values:
+    logs:
+      general:
+        level: DEBUG
+      access:
+        enabled: true
+        format: json
+        filePath: /var/log/traefik/access.log
+
+    # these are the defaults set in helm chart for securityContext + podSecurityContext
+    # (see: https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L899)
+    # with the following adjustments
+    # - moving runAsGroup, runAsUser and runAsNonRoot (retaining their values) from
+    #   podSecurityContext to securityContext (of main traefik container)
+    # - this allows us to run the init-container as root, while ensuring the main
+    #   traefik container continues to run as non-root
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: [ALL]
+      readOnlyRootFilesystem: true
+      runAsGroup: 65532
+      runAsNonRoot: true
+      runAsUser: 65532
+    podSecurityContext: {}
+
+    deployment:
+      kind: DaemonSet
+      additionalVolumes:
+      - name: traefik-logs
+        hostPath:
+          path: /var/log/traefik
+          type: DirectoryOrCreate
+      initContainers:
+      - name: volume-permissions
+        image: busybox@sha256:c230832bd3b0be59a6c47ed64294f9ce71e91b327957920b6929a0caa8353140
+        command:
+        - "/bin/sh"
+        - "-c"
+        - "chown 65532:65532 /var/log/traefik"
+        securityContext:
+          allowPrivilegeEscalation: true
+          capabilities:
+            add:
+            - CHOWN
+            drop:
+            - ALL
+          runAsNonRoot: false
+          runAsUser: 0
+          runAsGroup: 0
+        volumeMounts:
+        - mountPath: /var/log/traefik
+          name: traefik-logs
+    additionalVolumeMounts:
+    - mountPath: /var/log/traefik
+      name: traefik-logs
+
+    service:
+      spec:
+        externalTrafficPolicy: Local
+
+    # disable check new version + sending annonymous usage
+    globalArguments: []
+    additionalArguments: []
+
+    providers:
+      kubernetesCRD:
+        enabled: true
+        allowCrossNamespace: false
+        allowExternalNameServices: false
+      kubernetesIngress:
+        enabled: true
+        allowExternalNameServices: false
+        publishedService:
+          enabled: true
+
+    resources: {}
+    tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+
+    ingressRoute:
+      dashboard:
+        enabled: true
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: traefik.${domain_name}
+        matchRule: Host(`traefik.${domain_name}`)
+        entryPoints: ["websecure"]
+        middlewares: []
+        tls: {}
+    metrics:
+      prometheus:
+        addEntryPointsLabels: true
+        addRoutersLabels: true
+        addServicesLabels: true
+        service:
+          enabled: true
+        serviceMonitor:
+          enabled: true
+        prometheusRule:
+          enabled: false
+
+    tlsOptions:
+      default:
+        minVersion: VersionTLS12
+
+    tlsStore:
+      default:
+        defaultCertificate:
+          secretName: ${default_certificate:=selfsigned-tls-cert}
+
+    extraObjects:
+    # yamllint disable-line rule:indentation
+    - |
+      apiVersion: traefik.io/v1alpha1
+      kind: Middleware
+      metadata:
+        name: header-forwarded
+        namespace: traefik
+      spec:
+        headers:
+          customRequestHeaders:
+            X-Forwarded-Proto: "https"
+    # yamllint disable-line rule:indentation
+    - |
+      apiVersion: traefik.io/v1alpha1
+      kind: Middleware
+      metadata:
+        name: redirect
+        namespace: traefik
+      spec:
+        redirectScheme:
+          scheme: https
+          permanent: true
+    # yamllint disable-line rule:indentation
+    - |
+      apiVersion: traefik.io/v1alpha1
+      kind: ServersTransport
+      metadata:
+        name: insecure-skip-verify
+        namespace: traefik
+      spec:
+        insecureSkipVerify: true
+    # yamllint disable-line rule:indentation
+    - |
+      apiVersion: cert-manager.io/v1
+      kind: Certificate
+      metadata:
+        name: selfsigned-tls-cert
+        namespace: traefik
+      spec:
+        issuerRef:
+          name: selfsigned-issuer
+          kind: ClusterIssuer
+        dnsNames:
+        - '*.${domain_name}'
+        duration: 2160h # 90d
+        renewBefore: 1440h # 60d
+        secretName: selfsigned-tls-cert

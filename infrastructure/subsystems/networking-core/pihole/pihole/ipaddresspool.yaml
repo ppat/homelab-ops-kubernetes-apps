@@ -1,0 +1,22 @@
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: pihole-pool
+  namespace: metallb-system
+spec:
+  addresses:
+  - ${pihole_external_ip_address}/32
+  avoidBuggyIPs: true
+  serviceAllocation:
+    namespaces:
+    - pihole
+    serviceSelectors:
+    - matchLabels:
+        app.kubernetes.io/name: pihole
+    - matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: In
+        values:
+        - dns-tcp
+        - dns-udp

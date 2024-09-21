@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudflared-doh
+  namespace: pihole
+  labels:
+    app.kubernetes.io/name: cloudflared-doh
+spec:
+  selector:
+    app.kubernetes.io/name: cloudflared-doh
+  ports:
+  - name: doh-tcp
+    port: 53
+    targetPort: doh-tcp
+    protocol: TCP
+  - name: doh-udp
+    port: 53
+    targetPort: doh-udp
+    protocol: UDP
+  type: ClusterIP
