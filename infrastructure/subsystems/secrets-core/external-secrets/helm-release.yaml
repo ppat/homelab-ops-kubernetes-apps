@@ -1,0 +1,61 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: external-secrets-release
+  namespace: external-secrets
+spec:
+  chart:
+    spec:
+      chart: external-secrets
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: external-secrets-repository
+        namespace: flux-system
+      version: 0.10.3
+  install:
+    crds: CreateReplace
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 15m0s
+  releaseName: external-secrets
+  targetNamespace: external-secrets
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+  values:
+    installCRDs: true
+    global:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: In
+                values:
+                - "true"
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+
+    serviceMonitor:
+      enabled: true
+
+    resources: {}
+    webhook:
+      resources: {}
+      serviceMonitor:
+        enabled: true
+    certController:
+      resources: {}
+      serviceMonitor:
+        enabled: true
