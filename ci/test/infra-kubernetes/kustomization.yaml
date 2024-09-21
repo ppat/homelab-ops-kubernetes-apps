@@ -4,7 +4,6 @@ kind: Kustomization
 
 resources:
 - infra-kubernetes-core.yaml
-- infra-kubernetes-extra.yaml
 
 sortOptions:
   order: fifo
