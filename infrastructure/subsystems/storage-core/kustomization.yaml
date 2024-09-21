@@ -3,9 +3,9 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- namespaces.yaml
-- config/
-- secrets/
+- namespace.yaml
+- minio/
+- longhorn/
 
 sortOptions:
   order: fifo

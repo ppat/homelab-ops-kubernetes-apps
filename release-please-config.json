@@ -27,6 +27,12 @@
       "bump-patch-for-minor-pre-major": true,
       "component": "infra-helm-repositories",
       "extra-label": "pr-type:release,subsystem:infra-helm-repositories"
+    },
+    "infrastructure/subsystems/storage-core": {
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "component": "infra-storage-core",
+      "extra-label": "pr-type:release,subsystem:infra-storage-core"
     }
   },
   "prerelease": false,

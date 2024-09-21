@@ -4,6 +4,8 @@ kind: Kustomization
 
 resources:
 - cluster-common-conf.yaml
+- cluster-storage-conf.yaml
+- minio.yaml
 
 sortOptions:
   order: fifo
