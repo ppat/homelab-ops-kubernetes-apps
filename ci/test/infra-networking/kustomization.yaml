@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
 - infra-networking-core.yaml
+- infra-networking-extra.yaml
 
 sortOptions:
   order: fifo

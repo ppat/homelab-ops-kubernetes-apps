@@ -1,0 +1,109 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi-web
+  namespace: unifi
+  labels:
+    app.kubernetes.io/name: unifi-network-application
+    app.kubernetes.io/part-of: unifi
+    app.kubernetes.io/component: application-web
+  annotations:
+    traefik.ingress.kubernetes.io/service.serverstransport: traefik-insecure-skip-verify@kubernetescrd
+spec:
+  selector:
+    app.kubernetes.io/name: unifi-network-application
+    app.kubernetes.io/part-of: unifi
+    app.kubernetes.io/component: application
+  ports:
+  - name: https-gui-api
+    port: 8443
+    targetPort: https-gui-api
+    protocol: TCP
+  # - name: captive-portal-https
+  #   port: 8843
+  #   targetPort: captive-portal-https
+  #   protocol: TCP
+  # - name: captive-portal-http
+  #   port: 8880
+  #   targetPort: captive-portal-http
+  #   protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi-tcp
+  namespace: unifi
+  labels:
+    app.kubernetes.io/name: unifi-network-application
+    app.kubernetes.io/part-of: unifi
+    app.kubernetes.io/component: application-tcp
+  annotations:
+    metallb.universe.tf/allow-shared-ip: unifi
+    metallb.universe.tf/address-pool: unifi-pool
+spec:
+  selector:
+    app.kubernetes.io/name: unifi-network-application
+    app.kubernetes.io/part-of: unifi
+    app.kubernetes.io/component: application
+  externalTrafficPolicy: Local
+  ports:
+  - name: dns-tcp
+    port: 53
+    targetPort: dns-tcp
+    protocol: TCP
+  - name: speedtest
+    port: 6789
+    targetPort: speedtest
+    protocol: TCP
+  - name: dvc-comms
+    port: 8080
+    targetPort: dvc-comms
+    protocol: TCP
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi-udp
+  namespace: unifi
+  labels:
+    app.kubernetes.io/name: unifi-network-application
+    app.kubernetes.io/part-of: unifi
+    app.kubernetes.io/component: application-udp
+  annotations:
+    metallb.universe.tf/allow-shared-ip: unifi
+    metallb.universe.tf/address-pool: unifi-pool
+spec:
+  selector:
+    app.kubernetes.io/name: unifi-network-application
+    app.kubernetes.io/part-of: unifi
+    app.kubernetes.io/component: application
+  externalTrafficPolicy: Local
+  ports:
+  - name: dns-udp
+    port: 53
+    targetPort: dns-udp
+    protocol: UDP
+  - name: ntp
+    port: 123
+    targetPort: ntp
+    protocol: UDP
+  - name: l2-discovery
+    port: 1900
+    targetPort: l2-discovery
+    protocol: UDP
+  - name: stun
+    port: 3478
+    targetPort: stun
+    protocol: UDP
+  - name: remote-syslog
+    port: 5514
+    targetPort: remote-syslog
+    protocol: UDP
+  - name: dvc-discovery
+    port: 10001
+    targetPort: dvc-discovery
+    protocol: UDP
+  type: LoadBalancer
