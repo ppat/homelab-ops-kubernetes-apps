@@ -1,0 +1,15 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "description": "packages=[ppatlabs images] | configure version scheme",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ppatlabs/{/,}**"
+      ],
+      "versioning": "semver-coerced"
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "commitBody": "BREAKING CHANGE",
+      "description": "subsystem=infra-* + updateType=major | configure breaking change",
+      "matchFileNames": [
+        "infrastructure/subsystems/**",
+        "!infrastructure/subsystems/observability-core/grafana/conf.d/dashboards.yaml"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "semanticCommits": "disabled",
+      "commitMessagePrefix": "feat(infra-{{ lookup (split packageFileDir '/') 2 }})!:"
+    },
+    {
+      "commitBody": "BREAKING CHANGE",
+      "description": "subsystem=apps-* + updateType=major | configure breaking change",
+      "matchFileNames": [
+        "apps/subsystems/**"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "semanticCommits": "disabled",
+      "commitMessagePrefix": "feat(apps-{{ lookup (split packageFileDir '/') 2 }})!:"
+    },
+    {
+      "commitBody": "BREAKING CHANGE",
+      "description": "subsystem=infra-helm-repositories + updateType=major | configure breaking change",
+      "matchFileNames": [
+        "infrastructure/helm-repositories/**"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "semanticCommits": "disabled",
+      "commitMessagePrefix": "feat(infra-helm-repositories)!:"
+    },
+    {
+      "commitBody": "BREAKING CHANGE",
+      "description": "subsystem=apps-helm-repositories + updateType=major | configure breaking change",
+      "matchFileNames": [
+        "apps/helm-repositories/**"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "semanticCommits": "disabled",
+      "commitMessagePrefix": "feat(apps-helm-repositories)!:"
+    },
+    {
+      "commitBody": "BREAKING CHANGE",
+      "description": "subsystem=infra-bootstrap-crds + updateType=major | configure breaking change",
+      "matchFileNames": [
+        "infrastructure/bootstrap/crds/**"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "semanticCommits": "disabled",
+      "commitMessagePrefix": "feat(infra-bootstrap-crds)!:"
+    },
+    {
+      "commitBody": "BREAKING CHANGE",
+      "description": "datasource=kubernetes-api | configure breaking change",
+      "matchDatasources": [
+        "kubernetes-api"
+      ],
+      "semanticCommits": "disabled",
+      "commitMessagePrefix": "feat(kubernetes-api)!:"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "description": "packages=[various] + updateType=[patch,digest] | delay updates to 7 days (from 1 day)",
+      "matchPackageNames": [
+        "cloudnative-pg",
+        "docker.io/mongo",
+        "fluxcd/flux2",
+        "grafana",
+        "kindest/node",
+        "kubernetes/kubernetes",
+        "kube-prometheus-stack",
+        "linuxserver/unifi-network-application",
+        "loki",
+        "longhorn",
+        "minio",
+        "promtail"
+      ],
+      "matchUpdateTypes": [
+        "digest",
+        "patch"
+      ],
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "description": "packages=[various] + updateType=minor | delay updates to 30 days (from 7 days)",
+      "matchPackageNames": [
+        "cloudnative-pg",
+        "docker.io/mongo",
+        "fluxcd/flux2",
+        "grafana",
+        "kube-prometheus-stack",
+        "linuxserver/unifi-network-application",
+        "loki",
+        "longhorn",
+        "minio",
+        "promtail"
+      ],
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "minimumReleaseAge": "30 days"
+    },
+    {
+      "description": "packages=[k8s version upgrades] + updateType=minor | delay updates to 90 days (from 7 days)",
+      "matchPackageNames": [
+        "kindest/node",
+        "kubernetes/kubernetes"
+      ],
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "minimumReleaseAge": "90 days"
+    }
+  ]
+}
