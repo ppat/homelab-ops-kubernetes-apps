@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
 - ../../../infrastructure/bootstrap/crds/
 - ../../../infrastructure/helm-repositories/
+- ../../../apps/helm-repositories
 - ../../test-data/
 
 sortOptions:
