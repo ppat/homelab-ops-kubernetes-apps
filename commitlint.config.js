@@ -40,6 +40,7 @@ module.exports = {
         'release',
         'infra-bootstrap-crds',
         'infra-helm-repositories',
+        'infra-database-core',
         'infra-kubernetes-core',
         'infra-kubernetes-extra',
         'infra-networking-core',
