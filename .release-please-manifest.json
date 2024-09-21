@@ -1,5 +1,6 @@
 {
   "infrastructure/bootstrap/crds": "0.0.0",
   "infrastructure/helm-repositories": "0.0.0",
+  "infrastructure/subsystems/secrets-core": "0.0.0",
   "infrastructure/subsystems/storage-core": "0.0.0"
 }
