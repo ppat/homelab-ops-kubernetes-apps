@@ -7,6 +7,11 @@ on:
   push:
     branches:
     - main
+    paths:
+    - 'apps/**'
+    - 'infrastructure/**'
+    - '.release-please-manifest.json'
+    - 'release-please-config.json'
   workflow_dispatch:
 
 concurrency:
@@ -15,19 +20,25 @@ concurrency:
 jobs:
   release:
     name: release
-    permissions:
-      contents: write
-      pull-requests: write
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+    - name: Generate github app token for renovate
+      uses: actions/create-github-app-token@5d869da34e18e7287c1daad50e0b8ea0f506ce69 # v1
+      id: app-token
+      with:
+        app-id: ${{ secrets.HOMELAB_BOT_APP_ID }}
+        private-key: ${{ secrets.HOMELAB_BOT_APP_PRIVATE_KEY }}
+        owner: ${{ github.repository_owner }}
+
     - name: Release Please
-      uses: googleapis/release-please-action@v4
+      uses: googleapis/release-please-action@7987652d64b4581673a76e33ad5e98e3dd56832f # v4
       id: release
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ steps.app-token.outputs.token }}
         config-file: release-please-config.json
         manifest-file: .release-please-manifest.json
+
     - name: Show Release Please Output
       env:
         RELEASE_PLEASE_OUTPUT: ${{ toJSON(steps.release.outputs) }}
