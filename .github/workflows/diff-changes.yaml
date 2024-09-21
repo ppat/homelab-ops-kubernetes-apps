@@ -1,0 +1,63 @@
+---
+# yamllint disable rule:line-length
+name: diff-changes
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+    - '.github/workflows/diff-changes.yaml'
+    - 'apps/**/*.yaml'
+    - 'ci/diff/**/*.yaml'
+    - 'infrastructure/**/*.yaml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  diff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        resource:
+        - helmrelease
+        - kustomization
+
+    steps:
+    - name: Setup flux
+      uses: fluxcd/flux2/action@896e0fa46d5107a05e953dd0a5261d78a145ec8c # v2.3.0
+      with:
+        # renovate: datasource=github-releases depName=fluxcd/flux2
+        version: "v2.3.0"
+
+    - name: Compute diffs
+      uses: allenporter/flux-local/action/diff@1c5568b09bdd941ec029312fd44aeffb194ef766 # 5.5.1
+      id: diff
+      continue-on-error: true
+      with:
+        live-branch: main
+        path: ci/diff
+        resource: ${{ matrix.resource }}
+        sources: flux-diff
+        skip-secrets: true
+        skip-crds: true
+        debug: false
+
+    - name: Add PR comment w/ diff
+      uses: mshick/add-pr-comment@b8f338c590a895d50bcbfa6c5859251edc8952fc # v2
+      if: ${{ steps.diff.outputs.diff != '' }}
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        message-id: "${{ github.event.pull_request.number }}/${{ matrix.resource }}"
+        message-failure: Unable to post kustomization diff
+        message: |
+          `````diff
+          ${{ steps.diff.outputs.diff }}
+          `````
