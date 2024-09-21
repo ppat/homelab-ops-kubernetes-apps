@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
 - infra-clusterops-core.yaml
+- infra-clusterops-extra.yaml
 
 sortOptions:
   order: fifo
