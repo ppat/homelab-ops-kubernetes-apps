@@ -1,0 +1,29 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+# renovate-gh-release-asset: datasource=github-releases depName=cloudnative-pg/cloudnative-pg
+- https://github.com/cloudnative-pg/cloudnative-pg/releases/download/v1.24.0/cnpg-1.24.0.yaml
+
+patches:
+###########################################################
+# allow these CRDs to be adopted by Flux HelmRelease
+###########################################################
+# yamllint disable-line rule:indentation
+- patch: |-
+    apiVersion: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    metadata:
+      annotations:
+        meta.helm.sh/release-name: cloudnative-pg
+        meta.helm.sh/release-namespace: cnpg-system
+      labels:
+        app.kubernetes.io/managed-by: Helm
+        helm.toolkit.fluxcd.io/name: cloudnative-pg-release
+        helm.toolkit.fluxcd.io/namespace: flux-system
+      name: irrelevant
+  target:
+    group: apiextensions.k8s.io
+    version: v1
+    kind: CustomResourceDefinition

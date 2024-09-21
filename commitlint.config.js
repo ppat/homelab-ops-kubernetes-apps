@@ -37,7 +37,8 @@ module.exports = {
         'dev-tools',
         'github-actions',
         'renovate',
-        'release'
+        'release',
+        'infra-bootstrap-crds'
       ]
     ],
 

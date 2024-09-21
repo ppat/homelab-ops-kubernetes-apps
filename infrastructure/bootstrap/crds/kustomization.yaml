@@ -1,0 +1,24 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- cert-manager/
+- cloudnative-pg/
+- external-secrets/
+- metallb/
+- prometheus-operator/
+- traefik/
+
+patches:
+###########################################################
+# drop all resource kinds except CRDs
+###########################################################
+# yamllint disable-line rule:indentation
+- patch: |-
+    $patch: delete
+    kind: irrelevant
+    metadata:
+      name: irrelevant
+  target:
+    kind: "(ConfigMap|ClusterRole|ClusterRoleBinding|Deployment|MutatingWebhookConfiguration|Namespace|Role|RoleBinding|Secret|Service|ServiceAccount|ValidatingWebhookConfiguration)"

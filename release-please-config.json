@@ -16,10 +16,11 @@
   "draft": false,
   "initial-version": "0.0.1",
   "packages": {
-    ".": {
+    "infrastructure/bootstrap/crds": {
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
-      "extra-label": "pr-type:release"
+      "component": "infra-bootstrap-crds",
+      "extra-label": "pr-type:release,subsystem:infra-bootstrap-crds"
     }
   },
   "prerelease": false,
