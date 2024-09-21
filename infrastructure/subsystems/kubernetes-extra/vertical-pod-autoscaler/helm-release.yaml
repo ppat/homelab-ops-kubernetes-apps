@@ -1,0 +1,66 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: vertical-pod-autoscaler-release
+  namespace: kube-system
+spec:
+  chart:
+    spec:
+      chart: vpa
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: fairwinds-repository
+        namespace: flux-system
+      version: 4.5.0
+  install:
+    crds: CreateReplace
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 15m0s
+  releaseName: vertical-pod-autoscaler
+  targetNamespace: kube-system
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+  values:
+    recommender:
+      enabled: true
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: In
+                values:
+                - "true"
+      # resources:
+      #   limits:
+      #     cpu: 200m
+      #     memory: 1000Mi
+      #   requests:
+      #     cpu: 50m
+      #     memory: 500Mi
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      podMonitor:
+        enabled: true
+
+    updater:
+      enabled: false
+
+    admissionController:
+      enabled: false
+
+    metrics-server:
+      enabled: false

@@ -28,11 +28,35 @@
       "component": "infra-helm-repositories",
       "extra-label": "pr-type:release,subsystem:infra-helm-repositories"
     },
+    "infrastructure/subsystems/clusterops-core": {
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "component": "infra-clusterops-core",
+      "extra-label": "pr-type:release,subsystem:infra-clusterops-core"
+    },
+    "infrastructure/subsystems/clusterops-extra": {
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "component": "infra-clusterops-extra",
+      "extra-label": "pr-type:release,subsystem:infra-clusterops-extra"
+    },
+    "infrastructure/subsystems/database-core": {
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "component": "infra-database-core",
+      "extra-label": "pr-type:release,subsystem:infra-database-core"
+    },
     "infrastructure/subsystems/kubernetes-core": {
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
       "component": "infra-kubernetes-core",
       "extra-label": "pr-type:release,subsystem:infra-kubernetes-core"
+    },
+    "infrastructure/subsystems/kubernetes-extra": {
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "component": "infra-kubernetes-extra",
+      "extra-label": "pr-type:release,subsystem:infra-kubernetes-extra"
     },
     "infrastructure/subsystems/networking-core": {
       "bump-minor-pre-major": true,

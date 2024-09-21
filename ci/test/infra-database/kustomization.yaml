@@ -3,8 +3,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- infra-kubernetes-core.yaml
-- infra-kubernetes-extra.yaml
+- infra-database-core.yaml
+- test-db.yaml
 
 sortOptions:
   order: fifo
