@@ -1,0 +1,51 @@
+---
+# yamllint disable rule:line-length
+name: test-apps-development
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+    - '.github/workflows/test-apps-development.yaml'
+    - '.github/workflows/test-kubernetes-resources-workflow.yaml'
+    - '.github/kind-cluster-single-node.yaml'
+    - 'ci/test/apps-development/**.yaml'
+    - 'apps/subsystems/development/**.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-apps-development:
+    uses: ./.github/workflows/test-kubernetes-resources-workflow.yaml
+    with:
+      test_path: ./ci/test/apps-development
+      # yamllint disable-line rule:indentation
+      reconcile_items: |-
+        - name: infra-database-core
+          kind: kustomization
+          namespace: flux-system
+          timeout: 1m
+        - name: apps-development
+          kind: kustomization
+          namespace: flux-system
+          timeout: 2m
+      # yamllint disable-line rule:indentation
+      success_conditions: |-
+        - resource: deployment/coder
+          namespace: coder
+          for: condition=available
+          timeout: 1m
+      git_url: https://github.com/${{ github.repository }}.git
+      git_ref: ${{ github.head_ref || github.ref }}
+      kind_cluster_config: kind-cluster-single-node.yaml
+      # yamllint disable-line rule:indentation
+      custom_commands: |-
+        - name: show-hr
+          command: 'kubectl get -n coder events'
+        - name: desc-coder
+          command: 'kubectl describe -n coder deployment/coder'
+        - name: logs-coder
+          command: 'kubectl logs -n coder deployment/coder'
