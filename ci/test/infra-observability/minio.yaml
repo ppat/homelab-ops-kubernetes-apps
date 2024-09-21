@@ -1,0 +1,22 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: minio
+  namespace: flux-system
+spec:
+  interval: 15m0s
+  path: ./infrastructure/subsystems/storage-core/minio
+  postBuild:
+    substituteFrom:
+    - kind: ConfigMap
+      name: cluster-common-conf
+    - kind: ConfigMap
+      name: cluster-storage-conf
+  prune: false
+  sourceRef:
+    kind: GitRepository
+    name: test-source
+    namespace: flux-system
+  timeout: 2m0s
+  wait: true
