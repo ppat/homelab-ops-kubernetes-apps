@@ -39,7 +39,8 @@ module.exports = {
         'renovate',
         'release',
         'infra-bootstrap-crds',
-        'infra-helm-repositories'
+        'infra-helm-repositories',
+        'infra-storage-core'
       ]
     ],
 
