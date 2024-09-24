@@ -1,0 +1,51 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: intel-gpu-plugin-release
+  namespace: intel-device-plugins
+spec:
+  chart:
+    spec:
+      chart: intel-device-plugins-gpu
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: intel-repository
+        namespace: flux-system
+      version: 0.30.0
+  dependsOn:
+  - name: intel-plugin-operator-release
+    namespace: intel-device-plugins
+  install:
+    crds: CreateReplace
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 15m0s
+  releaseName: intel-gpu-plugin
+  targetNamespace: intel-device-plugins
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+
+  values:
+    # name given to the gpu plugin CRD will be a suffix for the gpu plugin daemon set and pods
+    name: gpu-device
+
+    # see crd for docs
+    sharedDevNum: ${gpu_shared_across_max_pods:=1}
+    logLevel: 2
+    resourceManager: false
+    enableMonitoring: true
+
+    tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+
+    nodeFeatureRule: true

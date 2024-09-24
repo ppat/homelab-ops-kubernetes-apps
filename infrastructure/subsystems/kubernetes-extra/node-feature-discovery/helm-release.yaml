@@ -57,6 +57,9 @@ spec:
       config:
         sources:
           usb:
+            # yamllint disable-line rule:line-length
+            # see: https://kubernetes-sigs.github.io/node-feature-discovery/v0.16/reference/worker-configuration-reference#sourcesusbdeviceclasswhitelist
+            # see: https://www.usb.org/defined-class-codes
             deviceClassWhitelist: ["02", "03", "08", "0e", "ef", "fe", "ff"]
             deviceLabelFields: ["class", "vendor", "device"]
       # resources:
