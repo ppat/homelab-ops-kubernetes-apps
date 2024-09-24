@@ -29,6 +29,10 @@ jobs:
           kind: kustomization
           namespace: flux-system
           timeout: 3m
+        - name: infra-kubernetes-extra
+          kind: kustomization
+          namespace: flux-system
+          timeout: 3m
       # yamllint disable-line rule:indentation
       success_conditions: |-
         - resource: configmap/coredns-custom
@@ -58,6 +62,24 @@ jobs:
           namespace: kube-system
           for: condition=available
           timeout: 1m
+        - resource: helmrelease/intel-plugin-operator-release
+          namespace: intel-device-plugins
+          for: jsonpath={.metadata.creationTimestamp}
+          timeout: 1m
+        - resource: helmrelease/intel-gpu-plugin-release
+          namespace: intel-device-plugins
+          for: jsonpath={.metadata.creationTimestamp}
+          timeout: 1m
       git_url: https://github.com/${{ github.repository }}.git
       git_ref: ${{ github.head_ref || github.ref }}
       kind_cluster_config: kind-cluster-single-node.yaml
+      # yamllint disable-line rule:indentation
+      custom_commands: |-
+        - name: show-events1
+          command: 'kubectl get -n kube-system events --sort-by=.lastTimestamp'
+        - name: show-events2
+          command: 'kubectl get -n intel-device-plugins events --sort-by=.lastTimestamp'
+        - name: show-hr1
+          command: 'kubectl describe -n intel-device-plugins hr intel-plugin-operator-release'
+        - name: show-hr2
+          command: 'kubectl describe -n intel-device-plugins hr intel-gpu-plugin-release'
