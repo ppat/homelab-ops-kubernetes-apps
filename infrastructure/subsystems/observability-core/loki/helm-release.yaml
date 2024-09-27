@@ -94,6 +94,9 @@ spec:
         - selector: '{namespace="media"}'
           priority: 1
           period: 24h
+        - selector: '{service_name="coredns"}'
+          priority: 1
+          period: 24h
       analytics:
         reporting_enabled: false
 

@@ -7,6 +7,4 @@ metadata:
 data:
   # yamllint disable-line rule:indentation
   log.override: |
-    log . {
-        class denial error
-    }
+    log . combined
