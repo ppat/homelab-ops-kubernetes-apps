@@ -30,6 +30,13 @@ jobs:
           timeout: 3m
       # yamllint disable-line rule:indentation
       success_conditions: |-
+        - resource: deployment/csi-nfs-controller
+          namespace: csi-driver-nfs
+          for: condition=available
+          timeout: 1m
+        - resource: daemonset/csi-nfs-node
+          namespace: csi-driver-nfs
+          timeout: 1m
         - resource: persistentvolumeclaim/minio
           namespace: minio
           for: jsonpath={.status.phase}=Bound
