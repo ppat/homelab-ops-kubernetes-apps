@@ -12,8 +12,6 @@ spec:
     - kind: ConfigMap
       name: cluster-common-conf
     - kind: ConfigMap
-      name: cluster-storage-conf
-    - kind: ConfigMap
       name: cluster-networking-conf
     - kind: ConfigMap
       name: cluster-observability-conf

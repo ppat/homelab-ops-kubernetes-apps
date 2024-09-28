@@ -55,8 +55,6 @@ spec:
     ignoreChartChecksums: true
     persistence:
       enabled: true
-      storageClass: ""
-      size: ${minio_pvc_size}
     ingress:
       enabled: true
       ingressClassName: traefik
@@ -90,7 +88,6 @@ spec:
               operator: In
               values:
               - "true"
-    nodeSelector: {}
     tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists

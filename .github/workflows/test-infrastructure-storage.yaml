@@ -37,10 +37,6 @@ jobs:
         - resource: daemonset/csi-nfs-node
           namespace: csi-driver-nfs
           timeout: 1m
-        - resource: persistentvolumeclaim/minio
-          namespace: minio
-          for: jsonpath={.status.phase}=Bound
-          timeout: 1m
         - resource: deployment/minio
           namespace: minio
           for: condition=available
