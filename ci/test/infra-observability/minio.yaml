@@ -18,3 +18,21 @@ spec:
     namespace: flux-system
   timeout: 2m0s
   wait: true
+  patches:
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: minio-release
+        namespace: minio
+      spec:
+        values:
+          persistence:
+            enabled: true
+            size: 1Gi
+    target:
+      group: helm.toolkit.fluxcd.io
+      kind: HelmRelease
+      name: minio-release
+      namespace: minio
