@@ -33,6 +33,7 @@ spec:
       strategy: rollback
   values:
     defaultSettings:
+      allowCollectingLonghornUsageMetrics: false
       taintToleration: node-role.kubernetes.io/control-plane=true:NoSchedule
 
     longhornManager:
