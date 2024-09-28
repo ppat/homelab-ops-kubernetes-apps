@@ -49,7 +49,7 @@ dashboards:
       datasource: prometheus
     external-secrets:
       # renovate-gh-raw-url: datasource=github-releases depName=external-secrets/external-secrets
-      url: https://raw.githubusercontent.com./external-secrets/external-secrets/v0.10.3/docs/snippets/dashboard.json
+      url: https://raw.githubusercontent.com./external-secrets/external-secrets/v0.10.4/docs/snippets/dashboard.json
       datasource: prometheus
     minio:
       # renovate: depName="MinIO"
