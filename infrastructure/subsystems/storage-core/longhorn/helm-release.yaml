@@ -34,6 +34,15 @@ spec:
   values:
     defaultSettings:
       allowCollectingLonghornUsageMetrics: false
+      allowRecurringJobWhileVolumeDetached: true
+      fastReplicaRebuildEnabled: true
+      recurringSuccessfulJobsHistoryLimit: 10
+      recurringFailedJobsHistoryLimit: 10
+      removeSnapshotsDuringFilesystemTrim: true
+      replicaAutoBalance: least-effort
+      snapshotDataIntegrity: fast-check
+      snapshotDataIntegrityCronjob: "0 4 * * *"
+      snapshotDataIntegrityImmediateCheckAfterSnapshotCreation: false
       taintToleration: node-role.kubernetes.io/control-plane=true:NoSchedule
 
     longhornManager:
