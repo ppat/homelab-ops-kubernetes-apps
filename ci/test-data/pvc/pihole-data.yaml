@@ -2,12 +2,10 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: unifi-db-data
-  namespace: unifi
+  name: pihole-data
+  namespace: pihole
   labels:
-    app.kubernetes.io/name: unifi-db
-    app.kubernetes.io/part-of: unifi
-    app.kubernetes.io/component: database
+    app.kubernetes.io/name: pihole
   annotations:
     kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
@@ -16,4 +14,4 @@ spec:
   volumeMode: Filesystem
   resources:
     requests:
-      storage: 2Gi
+      storage: 1Gi

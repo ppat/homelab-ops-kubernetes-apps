@@ -4,10 +4,8 @@ kind: Kustomization
 
 resources:
 - ipaddresspool.yaml
-- mongodb-pvc.yaml
 - mongodb-deployment.yaml
 - mongodb-service.yaml
-- unifi-pvc.yaml
 - unifi-deployment.yaml
 - unifi-service.yaml
 - unifi-ingress.yaml
