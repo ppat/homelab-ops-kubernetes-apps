@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: traefik-repository
         namespace: flux-system
-      version: 30.1.0
+      version: 31.1.1
   dependsOn:
   - name: metallb-release
     namespace: metallb-system
