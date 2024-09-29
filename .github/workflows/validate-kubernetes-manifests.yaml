@@ -92,10 +92,12 @@ jobs:
           target_kind="$(echo ${patch_filename%.*} | cut -d'_' -f1)"
           target_name_prefix="$(echo ${patch_filename%.*} | cut -d'_' -f2)"
           kustomize edit add patch --path $patch_file --kind $target_kind --name "$target_name_prefix.*"
+          echo "          $target_kind/$target_name_prefix"
         done
         echo -----------------------------------------------------------------------
         echo "--> Validating kustomiztions (post-build)"
-        find . -mindepth 3 -type f -name kustomization.yaml -print0 | while IFS= read -r -d $'\0' file; do
+        find . -mindepth 3 -type f -name kustomization.yaml -print | sort | grep -E -v '(infrastructure/bootstrap|ci/test/pre-requisites)' > /tmp/kustomizations
+        while read -r file; do
           kustomization="${file/%kustomization.yaml}"
           echo "      kustomization: $kustomization"
           kustomize edit add resource $kustomization
@@ -107,5 +109,5 @@ jobs:
             exit 1
           fi
           kustomize edit remove resource $kustomization
-        done
+        done < /tmp/kustomizations
         echo -----------------------------------------------------------------------
