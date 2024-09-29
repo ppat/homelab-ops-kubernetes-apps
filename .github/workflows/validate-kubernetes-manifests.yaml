@@ -65,7 +65,6 @@ jobs:
       run: |
         # mirror kustomize-controller build options
         kustomize_flags=("--load-restrictor=LoadRestrictionsNone")
-        kustomize_config="kustomization.yaml"
 
         # skip Kubernetes Secrets due to SOPS fields failing validation
         kubeconform_flags=("-skip=Secret,IPAddressPool")
@@ -73,29 +72,40 @@ jobs:
 
         echo -----------------------------------------------------------------------
         echo "--> Validating kustomizations (pre-build)"
-        find . -type f -name $kustomize_config -print0 | while IFS= read -r -d $'\0' file;
-          do
-            kubeconform "${kubeconform_flags[@]}" "${kubeconform_config[@]}" "${file}" | pr -t -o 6
-            if [[ ${PIPESTATUS[0]} != 0 ]]; then
-              exit 1
-            fi
+        find . -type f -name kustomization.yaml -print0 | while IFS= read -r -d $'\0' file; do
+          kubeconform "${kubeconform_flags[@]}" "${kubeconform_config[@]}" "${file}" | pr -t -o 6
+          if [[ ${PIPESTATUS[0]} != 0 ]]; then
+            exit 1
+          fi
         done
         echo -----------------------------------------------------------------------
-        echo Loading env from ./ci/manifest-validation.env
+        echo "--> Prepare for post-build kustomizations..."
+        echo "        Setting up environment variables for envsubst..."
         set -o allexport
-        source ./ci/manifest-validation.env
+        source ./ci/validation/.env
         set +o allexport
+        echo "        Creating wrapper kustomization..."
+        kustomize create
+        echo "        Gathering patches for the wrapper kustomization..."
+        find ./ci/validation/patches/ -type f -name '*.yaml' -print0 | while IFS= read -r -d $'\0' patch_file; do
+          patch_filename="$(basename $patch_file)"
+          target_kind="$(echo ${patch_filename%.*} | cut -d'_' -f1)"
+          target_name_prefix="$(echo ${patch_filename%.*} | cut -d'_' -f2)"
+          kustomize edit add patch --path $patch_file --kind $target_kind --name "$target_name_prefix.*"
+        done
         echo -----------------------------------------------------------------------
         echo "--> Validating kustomiztions (post-build)"
-        find . -type f -name $kustomize_config -print0 | while IFS= read -r -d $'\0' file;
-          do
-            echo "      kustomization: ${file/%$kustomize_config}"
-            kustomize build "${file/%$kustomize_config}" "${kustomize_flags[@]}" | \
-              flux envsubst | \
-              kubeconform "${kubeconform_flags[@]}" "${kubeconform_config[@]}" | \
-              pr -t -o 8
-            if [[ ${PIPESTATUS[0]} != 0 ]]; then
-              exit 1
-            fi
+        find . -mindepth 3 -type f -name kustomization.yaml -print0 | while IFS= read -r -d $'\0' file; do
+          kustomization="${file/%kustomization.yaml}"
+          echo "      kustomization: $kustomization"
+          kustomize edit add resource $kustomization
+          kustomize build . "${kustomize_flags[@]}" | \
+            flux envsubst | \
+            kubeconform "${kubeconform_flags[@]}" "${kubeconform_config[@]}" | \
+            pr -t -o 8
+          if [[ ${PIPESTATUS[0]} != 0 ]]; then
+            exit 1
+          fi
+          kustomize edit remove resource $kustomization
         done
         echo -----------------------------------------------------------------------
