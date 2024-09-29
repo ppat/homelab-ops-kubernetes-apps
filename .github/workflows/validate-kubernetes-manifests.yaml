@@ -95,7 +95,7 @@ jobs:
         done
         echo -----------------------------------------------------------------------
         echo "--> Validating kustomiztions (post-build)"
-        find . -type f -name kustomization.yaml -print0 | while IFS= read -r -d $'\0' file; do
+        find . -mindepth 3 -type f -name kustomization.yaml -print0 | while IFS= read -r -d $'\0' file; do
           kustomization="${file/%kustomization.yaml}"
           echo "      kustomization: $kustomization"
           kustomize edit add resource $kustomization
