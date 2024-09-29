@@ -1,0 +1,150 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plex
+  namespace: media
+  labels:
+    app.kubernetes.io/name: plex
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: plex
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: plex
+    spec:
+      automountServiceAccountToken: false
+      initContainers:
+      - name: volume-permissions
+        image: busybox@sha256:c230832bd3b0be59a6c47ed64294f9ce71e91b327957920b6929a0caa8353140
+        command:
+        - "/bin/sh"
+        - "-c"
+        - "chown 1000:1000 /var/log/plex"
+        securityContext:
+          allowPrivilegeEscalation: true
+          capabilities:
+            add:
+            - CHOWN
+            drop:
+            - ALL
+          runAsNonRoot: false
+          runAsUser: 0
+          runAsGroup: 0
+        volumeMounts:
+        - mountPath: "/var/log/plex"
+          name: plex-logs
+      containers:
+      - name: plex
+        command:
+        - /scripts/entrypoint.sh
+        env:
+        - name: ADVERTISE_IP
+          value: "http://${plex_external_ip_address}:32400"
+        envFrom:
+        - secretRef:
+            name: plex-secrets
+            optional: true
+        image: plexinc/pms-docker:1.41.0.8992-8463ad060@sha256:d55135de7cc93bb844e09dc0efb8b1eccb655b4ea8741945163de1163df5e043
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /identity
+            port: 32400
+        ports:
+        - name: plex
+          containerPort: 32400
+          protocol: TCP
+        - name: gdm-discovery1
+          containerPort: 32410
+          protocol: UDP
+        - name: gdm-discovery2
+          containerPort: 32412
+          protocol: UDP
+        - name: gdm-discovery3
+          containerPort: 32413
+          protocol: UDP
+        - name: gdm-discovery4
+          containerPort: 32414
+          protocol: UDP
+        readinessProbe:
+          httpGet:
+            path: /identity
+            port: 32400
+        resources:
+          requests:
+            gpu.intel.com/i915: 1
+            cpu: 500m
+            memory: 2048Mi
+          limits:
+            gpu.intel.com/i915: 1
+            memory: 8192Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - "ALL"
+          readOnlyRootFilesystem: true
+        startupProbe:
+          httpGet:
+            path: /identity
+            port: 32400
+          initialDelaySeconds: 15
+        volumeMounts:
+        - mountPath: /config
+          name: plex-data
+        - mountPath: /transcode
+          name: plex-transcode
+        - mountPath: /data
+          name: plex-media
+          readOnly: true
+          subPath: plex
+        - mountPath: "/var/log/plex"
+          name: plex-logs
+        - mountPath: /scripts
+          name: plex-scripts
+        - mountPath: /tmp
+          name: plex-temp
+      nodeSelector:
+        intel.feature.node.kubernetes.io/gpu: "true"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        # use a kustomize overlay to update w/
+        # - MEDIA_READER_GID (i.e. group w/ read access to plex-media volume)
+        # - TRANSCODER_DEV_GIDS (i.e. groups w/ access to /dev/dri/*)
+        supplementalGroups: []
+      volumes:
+      - name: plex-data
+        persistentVolumeClaim:
+          claimName: plex-data
+      - name: plex-transcode
+        emptyDir: {}
+      - name: plex-media
+        persistentVolumeClaim:
+          claimName: plex-media
+      - name: plex-logs
+        # plex writes logs to multiple different log files:
+        #     'PMS Plugin Logs/*.log'
+        #     'Plex Crash Uploader.log'
+        #     'Plex Media Server.log'
+        #     'Plex Tuner Service.log'
+        # these are not written to stdout, so we are placing them on the host,
+        # so that we can configure promtail to collect them.
+        hostPath:
+          path: /var/log/plex
+          type: DirectoryOrCreate
+      - name: plex-scripts
+        configMap:
+          name: plex-scripts
+          defaultMode: 0755
+      - name: plex-temp
+        emptyDir: {}

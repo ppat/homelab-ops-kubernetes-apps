@@ -8,3 +8,4 @@ data:
   metallb_standard_ip_pool: 10.112.0.0/24
   pihole_external_ip_address: 10.112.1.1
   unifi_external_ip_address: 10.112.1.2
+  plex_external_ip_address: 10.112.1.3

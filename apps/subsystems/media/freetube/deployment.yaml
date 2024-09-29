@@ -1,0 +1,63 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: freetube
+  namespace: media
+  labels:
+    app.kubernetes.io/name: freetube
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: freetube
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: freetube
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: freetube
+        env:
+        - name: PUID
+          value: "1000"
+        - name: PGID
+          value: "1000"
+        - name: TZ
+          value: Etc/UTC
+        image: linuxserver/freetube:168465262-ls29@sha256:2ae3326e06a58d51c7e4e62079f44d664c0cc68489ac258755b679509636c6cd
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          tcpSocket:
+            port: 3000
+        ports:
+        - name: freetube
+          containerPort: 3000
+          protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: 3000
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1024Mi
+          limits:
+            memory: 4096Mi
+        volumeMounts:
+        - mountPath: /config
+          name: freetube-data
+        - mountPath: /dev/shm
+          name: dev-shm
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      volumes:
+      - name: freetube-data
+        persistentVolumeClaim:
+          claimName: freetube-data
+      - name: dev-shm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 1Gi

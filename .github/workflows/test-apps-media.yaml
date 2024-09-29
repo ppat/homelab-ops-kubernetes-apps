@@ -1,0 +1,55 @@
+---
+# yamllint disable rule:line-length
+name: test-apps-media
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+    - '.github/workflows/test-apps-media.yaml'
+    - '.github/workflows/test-kubernetes-resources-workflow.yaml'
+    - '.github/kind-cluster-single-node.yaml'
+    - 'ci/test/apps-media/**.yaml'
+    - 'apps/subsystems/media/**.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-apps-media:
+    uses: ./.github/workflows/test-kubernetes-resources-workflow.yaml
+    with:
+      test_path: ./ci/test/apps-media
+      # yamllint disable-line rule:indentation
+      reconcile_items: |-
+        - name: apps-media
+          kind: kustomization
+          namespace: flux-system
+          timeout: 2m
+      # yamllint disable-line rule:indentation
+      success_conditions: |-
+        - resource: deployment/freetube
+          namespace: media
+          for: condition=available
+          timeout: 2m
+        - resource: deployment/plex
+          namespace: media
+          for: condition=available
+          timeout: 2m
+      git_url: https://github.com/${{ github.repository }}.git
+      git_ref: ${{ github.head_ref || github.ref }}
+      kind_cluster_config: kind-cluster-single-node.yaml
+      # yamllint disable-line rule:indentation
+      custom_commands: |-
+        - name: show-events
+          command: 'kubectl get -n media events --sort-by=.lastTimestamp'
+        - name: desc-plex
+          command: 'kubectl describe -n media deployment/plex'
+        - name: desc-freetube
+          command: 'kubectl describe -n media deployment/freetube'
+        - name: show-plex-logs
+          command: 'kubectl logs -n media deployment/plex'
+        - name: show-freetube-logs
+          command: 'kubectl logs -n media deployment/freetube'
