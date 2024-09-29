@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: freetube
+  namespace: media
+  labels:
+    app.kubernetes.io/name: freetube
+  annotations:
+    traefik.ingress.kubernetes.io/service.serverstransport: traefik-insecure-skip-verify@kubernetescrd
+spec:
+  selector:
+    app.kubernetes.io/name: freetube
+  ports:
+  - name: freetube
+    port: 3000
+    targetPort: freetube
+    protocol: TCP
+  type: ClusterIP

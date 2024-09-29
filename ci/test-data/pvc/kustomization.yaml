@@ -3,6 +3,9 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
+- freetube-data.yaml
 - pihole-data.yaml
+- plex-data.yaml
+- plex-media.yaml
 - unifi-data.yaml
 - unifi-db-data.yaml

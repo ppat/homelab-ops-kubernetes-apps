@@ -1,0 +1,32 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps-media
+  namespace: flux-system
+spec:
+  interval: 15m0s
+  path: ./apps/subsystems/media
+  prune: false
+  postBuild:
+    substituteFrom:
+    - kind: ConfigMap
+      name: cluster-common-conf
+    - kind: ConfigMap
+      name: cluster-networking-conf
+  sourceRef:
+    kind: GitRepository
+    name: test-source
+    namespace: flux-system
+  timeout: 2m0s
+  wait: false
+  patches:
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      # drop requirement of having intel gpu plugin for the test
+      - op: remove
+        path: /spec/template/spec/nodeSelector
+      - op: remove
+        path: /spec/template/spec/containers/0/resources
+    target:
+      kind: Deployment

@@ -28,6 +28,12 @@
       "component": "apps-development",
       "extra-label": "pr-type:release,subsystem:apps-development"
     },
+    "apps/subsystems/media": {
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "component": "apps-media",
+      "extra-label": "pr-type:release,subsystem:apps-media"
+    },
     "infrastructure/bootstrap/crds": {
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,

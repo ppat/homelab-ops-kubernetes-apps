@@ -1,0 +1,22 @@
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: plex-pool
+  namespace: metallb-system
+spec:
+  addresses:
+  - ${plex_external_ip_address}/32
+  avoidBuggyIPs: true
+  serviceAllocation:
+    namespaces:
+    - media
+    serviceSelectors:
+    - matchLabels:
+        app.kubernetes.io/name: plex
+    - matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: In
+        values:
+        - plex-tcp
+        - plex-udp

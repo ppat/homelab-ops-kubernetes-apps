@@ -1,0 +1,5 @@
+---
+$patch: delete
+kind: ConfigMap
+metadata:
+  name: irrelevant

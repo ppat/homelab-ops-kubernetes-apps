@@ -1,0 +1,56 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: plex-tcp
+  namespace: media
+  labels:
+    app.kubernetes.io/name: plex
+    app.kubernetes.io/component: plex-tcp
+  annotations:
+    metallb.universe.tf/allow-shared-ip: plex
+    metallb.universe.tf/address-pool: plex-pool
+spec:
+  selector:
+    app.kubernetes.io/name: plex
+  externalTrafficPolicy: Local
+  ports:
+  - name: plex
+    port: 32400
+    targetPort: plex
+    protocol: TCP
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: plex-udp
+  namespace: media
+  labels:
+    app.kubernetes.io/name: plex
+    app.kubernetes.io/component: plex-udp
+  annotations:
+    metallb.universe.tf/allow-shared-ip: plex
+    metallb.universe.tf/address-pool: plex-pool
+spec:
+  selector:
+    app.kubernetes.io/name: plex
+  externalTrafficPolicy: Local
+  ports:
+  - name: gdm-discovery1
+    port: 32410
+    targetPort: gdm-discovery1
+    protocol: UDP
+  - name: gdm-discovery2
+    port: 32412
+    targetPort: gdm-discovery2
+    protocol: UDP
+  - name: gdm-discovery3
+    port: 32413
+    targetPort: gdm-discovery3
+    protocol: UDP
+  - name: gdm-discovery4
+    port: 32414
+    targetPort: gdm-discovery4
+    protocol: UDP
+  type: LoadBalancer
