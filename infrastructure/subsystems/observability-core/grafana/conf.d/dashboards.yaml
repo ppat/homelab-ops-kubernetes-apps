@@ -59,7 +59,7 @@ dashboards:
       - { name: DS_PROMETHEUS, value: prometheus }
     longhorn:
       # renovate: depName="Longhorn"
-      gnetId: 16999
+      gnetId: 16888
       revision: 9
       datasource:
       - { name: datasource, value: prometheus }
