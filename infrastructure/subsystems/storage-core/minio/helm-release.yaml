@@ -32,31 +32,35 @@ spec:
       retries: 3
       strategy: rollback
   valuesFrom:
-  - kind: Secret
-    name: minio-admin-credentials
-    valuesKey: username
-    targetPath: rootUser
-  - kind: Secret
-    name: minio-admin-credentials
-    valuesKey: password
-    targetPath: rootPassword
   - kind: ConfigMap
-    name: minio-buckets
-    # optional: true
+    name: minio-config
+    valuesKey: minio-buckets.yaml
+    optional: true
   - kind: ConfigMap
-    name: minio-policies
-    # optional: true
-  - kind: Secret
-    name: minio-users
-    # optional: true
+    name: minio-config
+    valuesKey: minio-policies.yaml
+    optional: true
+  - kind: ConfigMap
+    name: minio-config
+    valuesKey: minio-users.yaml
+    optional: true
+  - kind: ConfigMap
+    name: minio-config
+    valuesKey: minio-svcaccts.yaml
+    optional: true
+  - kind: ConfigMap
+    name: minio-config
+    valuesKey: minio-custom-commands.yaml
+    optional: true
   values:
     # -------------------------------------------- minio configuration --------------------------------------------
     mode: standalone
     ignoreChartChecksums: true
+    existingSecret: minio-admin-credentials
     persistence:
       enabled: true
     ingress:
-      enabled: true
+      enabled: ${enable_ingress_api:=false}
       ingressClassName: traefik
       annotations:
         external-dns.alpha.kubernetes.io/hostname: s3.${domain_name}
