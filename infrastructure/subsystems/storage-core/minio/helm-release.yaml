@@ -118,15 +118,5 @@ spec:
     metrics:
       serviceMonitor:
         enabled: true
+        includeNode: true
     # -------------------------------------------------------------------------------------------------------------
-
-  postRenderers:
-  - kustomize:
-      patches:
-      - target:
-          kind: Job
-        # yamllint disable-line rule:indentation
-        patch: |
-          - op: add
-            path: /spec/ttlSecondsAfterFinished
-            value: 3600
