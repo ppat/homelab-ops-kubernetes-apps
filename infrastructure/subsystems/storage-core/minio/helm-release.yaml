@@ -31,6 +31,7 @@ spec:
       ignoreTestFailures: false
       retries: 3
       strategy: rollback
+
   valuesFrom:
   - kind: ConfigMap
     name: minio-config
@@ -52,6 +53,7 @@ spec:
     name: minio-config
     valuesKey: minio-custom-commands.yaml
     optional: true
+
   values:
     # -------------------------------------------- minio configuration --------------------------------------------
     mode: standalone
@@ -117,3 +119,14 @@ spec:
       serviceMonitor:
         enabled: true
     # -------------------------------------------------------------------------------------------------------------
+
+  postRenderers:
+  - kustomize:
+      patches:
+      - target:
+          kind: Job
+        # yamllint disable-line rule:indentation
+        patch: |
+          - op: add
+            path: /spec/ttlSecondsAfterFinished
+            value: 3600
