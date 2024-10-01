@@ -1,0 +1,10 @@
+---
+users:
+- accessKey: loki
+  existingSecret: minio-user-credentials
+  existingSecretKey: loki-secret-key
+  policy: loki
+- accessKey: tempo
+  existingSecret: minio-user-credentials
+  existingSecretKey: tempo-secret-key
+  policy: tempo
