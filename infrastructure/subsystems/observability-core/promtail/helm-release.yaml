@@ -30,78 +30,44 @@ spec:
       ignoreTestFailures: false
       retries: 3
       strategy: rollback
+
+  valuesFrom:
+  - kind: ConfigMap
+    name: promtail-default-config
+    valuesKey: default-scrape-config.yaml
+    optional: false
+  - kind: ConfigMap
+    name: promtail-default-config
+    valuesKey: default-volumes.yaml
+    optional: false
+  - kind: ConfigMap
+    name: promtail-extra-config
+    valuesKey: extra-limits-config.yaml
+    optional: true
+  - kind: ConfigMap
+    name: promtail-extra-config
+    valuesKey: extra-relabel-config.yaml
+    optional: true
+  - kind: ConfigMap
+    name: promtail-extra-config
+    valuesKey: extra-scrape-config.yaml
+    optional: true
+  - kind: ConfigMap
+    name: promtail-extra-config
+    valuesKey: extra-server-config.yaml
+    optional: true
+  - kind: ConfigMap
+    name: promtail-extra-config
+    valuesKey: extra-volumes.yaml
+    optional: true
+
   values:
+    configmap:
+      enabled: true
     daemonset:
       enabled: true
-
-    resources: {}
-    tolerations:
-    - key: node-role.kubernetes.io/master
-      operator: Exists
-    - key: node-role.kubernetes.io/control-plane
-      operator: Exists
-
-    extraVolumes:
-    # /etc/machine-id needed for reading systemd journal logs
-    - name: etc-machineid
-      hostPath:
-        path: /etc/machine-id
-    - name: run-log-journal
-      hostPath:
-        path: /run/log/journal
-    - name: var-log-journal
-      hostPath:
-        path: /var/log/journal
-    - name: var-log
-      hostPath:
-        path: /var/log
-
-    extraVolumeMounts:
-    - mountPath: /etc/machine-id
-      name: etc-machineid
-      readOnly: true
-    - mountPath: /run/log/journal
-      name: run-log-journal
-      readOnly: true
-    - mountPath: /var/log/journal
-      name: var-log-journal
-      readOnly: true
-    - mountPath: /var/log/dmesg
-      name: var-log
-      readOnly: true
-      subPath: dmesg
-    - mountPath: /var/log/cloud-init.log
-      name: var-log
-      readOnly: true
-      subPath: cloud-init.log
-    - mountPath: /var/log/cloud-init-output.log
-      name: var-log
-      readOnly: true
-      subPath: cloud-init-output.log
-    - mountPath: /var/log/pihole
-      name: var-log
-      readOnly: true
-      subPath: pihole
-    - mountPath: /var/log/traefik
-      name: var-log
-      readOnly: true
-      subPath: traefik
-    - mountPath: /var/log/unifi
-      name: var-log
-      readOnly: true
-      subPath: unifi
-
-    # Extra args for the Promtail container.
     extraArgs:
     - -client.external-labels=host=$(HOSTNAME)
-
-    serviceMonitor:
-      enabled: true
-      annotations: {}
-      labels: {}
-      prometheusRule:
-        enabled: false
-
     # -- Configure additional ports and services. For each configured port, a corresponding service is created.
     # See values.yaml for details
     extraPorts: {}
@@ -137,148 +103,74 @@ spec:
       enabled: true
       clients:
       - url: http://loki-gateway.logging.svc.cluster.local./loki/api/v1/push
-
-      # Custom snippets may be added in order to reduce redundancy.
-      # This is especially helpful when multiple `kubernetes_sd_configs` are use which usually have
-      # large parts in common.
       snippets:
-        # If set to true, adds an additional label for the scrape job.
-        # This helps debug the Promtail config.
-        addScrapeJobLabel: false
-
-        # -- You can put here any keys that will be directly added to the config file's 'limits_config' block.
-        extraLimitsConfig: ""
-
-        # -- You can put here any keys that will be directly added to the config file's 'server' block.
-        extraServerConfigs: ""
-
-        # -- You can put here any additional scrape configs you want to add to the config file.
+        # -- Config file contents for Promtail.
+        # Must be configured as string.
+        # It is templated so it can be assembled from reusable snippets in order to avoid redundancy.
         # yamllint disable-line rule:indentation
-        extraScrapeConfigs: |-
-          - job_name: journal
-            journal:
-              path: /run/log/journal
-              max_age: 12h
-              labels:
-                job: systemd-journal
-            relabel_configs:
-            - source_labels:
-              - __journal__systemd_unit
-              target_label: systemd_unit
-            - source_labels:
-              - __journal_syslog_identifier
-              target_label: syslog_identifier
-            - source_labels:
-              - __journal_priority_keyword
-              target_label: severity
-          - job_name: journal
-            journal:
-              path: /var/log/journal
-              max_age: 12h
-              labels:
-                job: systemd-journal
-            relabel_configs:
-            - source_labels:
-              - __journal__systemd_unit
-              target_label: systemd_unit
-            - source_labels:
-              - __journal_syslog_identifier
-              target_label: syslog_identifier
-            - source_labels:
-              - __journal_priority_keyword
-              target_label: severity
+        file: |
+          server:
+            log_level: {{ .Values.config.logLevel }}
+            log_format: {{ .Values.config.logFormat }}
+            http_listen_port: {{ .Values.config.serverPort }}
+            {{- with .Values.httpPathPrefix }}
+            http_path_prefix: {{ . }}
+            {{- end }}
+            {{- tpl .Values.config.snippets.extraServerConfigs . | nindent 2 }}
 
-          - job_name: system
-            static_configs:
-            - targets:
-              - localhost
-              labels:
-                service_name: dmesg
-                __path__: /var/log/dmesg
-            - targets:
-              - localhost
-              labels:
-                service_name: cloud-init
-                __path__: /var/log/cloud-init-output.log
-            - targets:
-              - localhost
-              labels:
-                service_name: cloud-init
-                __path__: /var/log/cloud-init.log
+          clients:
+            {{- tpl (toYaml .Values.config.clients) . | nindent 2 }}
 
-          - job_name: pihole-dnsmasq-logs
-            static_configs:
-            - targets:
-              - localhost
-              labels:
-                app: pihole
-                container: pihole
-                __path__: /var/log/pihole/pihole.log
-            # pipeline_stages:
-            # - regex:
-            #     expression: '^(?P<time>\w{3} +\d{1,2} \d{2}:\d{2}:\d{2}) .*'
-            # - timestamp:
-            #     source: time
-            #     # format specified using reference timestamp: Mon Jan 2 15:04:05 -0700 MST 2006
-            #     # see: https://grafana.com/docs/loki/latest/send-data/promtail/stages/timestamp/
-            #     format: 'Jan _2 15:04:05'
+          positions:
+            {{- tpl (toYaml .Values.config.positions) . | nindent 2 }}
 
-          - job_name: pihole-ftl-logs
-            static_configs:
-            - targets:
-              - localhost
-              labels:
-                app: pihole
-                container: pihole
-                __path__: /var/log/pihole/FTL.log
-            # pipeline_stages:
-            # - regex:
-            #     expression: '^\[(?P<time>[^\]]+)\s+(?P<metadata>[^\]]+)\] .*'
-            # - timestamp:
-            #     source: time
-            #     # format specified using reference timestamp: Mon Jan 2 15:04:05 -0700 MST 2006
-            #     # see: https://grafana.com/docs/loki/latest/send-data/promtail/stages/timestamp/
-            #     format: '2006-01-02 15:04:05.000'
+          scrape_configs:
+            {{- tpl .Values.config.snippets.scrapeConfigs . | nindent 2 }}
+            {{- tpl .Values.config.snippets.defaultScrapeConfigs . | nindent 2 }}
+            {{- tpl .Values.config.snippets.extraScrapeConfigs . | nindent 2 }}
 
-          - job_name: pihole-gravity-logs
-            static_configs:
-            - targets:
-              - localhost
-              labels:
-                app: pihole
-                container: pihole
-                __path__: /var/log/pihole/pihole_updateGravity.log
+          limits_config:
+            {{- tpl .Values.config.snippets.extraLimitsConfig . | nindent 2 }}
 
-          - job_name: traefik-access-logs
-            static_configs:
-            - targets:
-              - localhost
-              labels:
-                app: traefik
-                container: traefik
-                __path__: /var/log/traefik/*.log
-            pipeline_stages:
-            - json:
-                expressions:
-                  timestamp: time
-                  status: DownstreamStatus
-                  method: RequestMethod
-                drop_malformed: true
-            - labels:
-                status:
-                method:
-            - timestamp:
-                source: timestamp
-                format: RFC3339
+          tracing:
+            enabled: {{ .Values.config.enableTracing }}
 
-          - job_name: unifi-logs
-            static_configs:
-            - targets:
-              - localhost
-              labels:
-                app: unifi-network-application
-                container: unifi
-                __path__: /var/log/unifi/*.log
+    resources: {}
+    tolerations:
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
 
-        # -- You can put here any additional relabel_configs to "kubernetes-pods" job
-        extraRelabelConfigs: []
+    serviceMonitor:
+      enabled: true
+      annotations: {}
+      labels: {}
+      prometheusRule:
+        enabled: true
+        rules:
+        - alert: PromtailRequestErrors
+          # yamllint disable-line rule:line-length
+          expr: 100 * sum(rate(promtail_request_duration_seconds_count{status_code=~"5..|failed"}[1m])) by (namespace, job, route, instance) / sum(rate(promtail_request_duration_seconds_count[1m])) by (namespace, job, route, instance) > 10
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            description: |
+              The {{ $labels.job }} {{ $labels.route }} is experiencing
+              {{ printf \"%.2f\" $value }} errors.
+              VALUE = {{ $value }}
+              LABELS = {{ $labels }}
+            summary: Promtail request errors (instance {{ $labels.instance }})
+        - alert: PromtailRequestLatency
+          expr: histogram_quantile(0.99, sum(rate(promtail_request_duration_seconds_bucket[5m])) by (le)) > 1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: Promtail request latency (instance {{ $labels.instance }})
+            description: |
+              The {{ $labels.job }} {{ $labels.route }} is experiencing
+              {{ printf \"%.2f\" $value }}s 99th percentile latency.
+              VALUE = {{ $value }}
+              LABELS = {{ $labels }}

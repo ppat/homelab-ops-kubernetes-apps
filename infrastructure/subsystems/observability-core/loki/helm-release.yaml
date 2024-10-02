@@ -31,6 +31,7 @@ spec:
       ignoreTestFailures: false
       retries: 3
       strategy: rollback
+
   valuesFrom:
   - kind: ConfigMap
     name: loki-deployment-mode-config
@@ -52,6 +53,7 @@ spec:
     name: loki-retention-config
     valuesKey: loki-retention.yaml
     optional: true
+
   values:
     ######################################################################################################################
     # Loki Configuration

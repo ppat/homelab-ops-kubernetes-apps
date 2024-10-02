@@ -2,21 +2,14 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-resources:
-- helm-release.yaml
-
 configMapGenerator:
-- name: promtail-default-config
+- name: loki-retention-config
   namespace: logging
   files:
-  - conf.d/default-scrape-config.yaml
-  - conf.d/default-volumes.yaml
+  - conf.d/loki-retention.yaml
   options:
     annotations:
       kustomize.toolkit.fluxcd.io/substitute: disabled
 
-configurations:
-- name-reference.yaml
-
-sortOptions:
-  order: fifo
+generatorOptions:
+  disableNameSuffixHash: true

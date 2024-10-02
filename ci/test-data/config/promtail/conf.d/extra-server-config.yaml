@@ -1,0 +1,5 @@
+---
+config:
+  snippets:
+    # -- You can put here any keys that will be directly added to the config file's 'server' block.
+    extraServerConfigs: ""
