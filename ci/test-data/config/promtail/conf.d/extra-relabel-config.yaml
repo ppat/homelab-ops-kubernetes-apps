@@ -1,0 +1,5 @@
+---
+config:
+  snippets:
+    # -- You can put here any additional relabel_configs to "kubernetes-pods" job
+    extraRelabelConfigs: []

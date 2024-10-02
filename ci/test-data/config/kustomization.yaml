@@ -7,27 +7,9 @@ resources:
 - cluster-networking-conf.yaml
 - pihole.yaml
 - cluster-observability-conf.yaml
-
-configMapGenerator:
-- name: minio-config
-  namespace: minio
-  files:
-  - conf.d/minio-buckets.yaml
-  - conf.d/minio-policies.yaml
-  - conf.d/minio-users.yaml
-  options:
-    annotations:
-      kustomize.toolkit.fluxcd.io/substitute: disabled
-- name: loki-retention-config
-  namespace: logging
-  files:
-  - conf.d/loki-retention.yaml
-  options:
-    annotations:
-      kustomize.toolkit.fluxcd.io/substitute: disabled
-
-generatorOptions:
-  disableNameSuffixHash: true
+- loki/
+- minio/
+- promtail/
 
 sortOptions:
   order: fifo

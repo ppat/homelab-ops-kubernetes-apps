@@ -1,0 +1,51 @@
+---
+defaultVolumes:
+- name: run
+  hostPath:
+    path: /run/promtail
+- name: containers
+  hostPath:
+    path: /var/lib/docker/containers
+- name: var-log
+  hostPath:
+    path: /var/log
+# /etc/machine-id needed for reading systemd journal logs
+- name: etc-machineid
+  hostPath:
+    path: /etc/machine-id
+- name: run-log-journal
+  hostPath:
+    path: /run/log/journal
+
+defaultVolumeMounts:
+- mountPath: /run/promtail
+  name: run
+- mountPath: /var/lib/docker/containers
+  name: containers
+  readOnly: true
+- mountPath: /var/log/pods
+  name: var-log
+  readOnly: true
+  subPath: pods
+- mountPath: /etc/machine-id
+  name: etc-machineid
+  readOnly: true
+- mountPath: /run/log/journal
+  name: run-log-journal
+  readOnly: true
+- mountPath: /var/log/journal
+  name: var-log
+  readOnly: true
+  subPath: journal
+- mountPath: /var/log/dmesg
+  name: var-log
+  readOnly: true
+  subPath: dmesg
+- mountPath: /var/log/cloud-init.log
+  name: var-log
+  readOnly: true
+  subPath: cloud-init.log
+- mountPath: /var/log/cloud-init-output.log
+  name: var-log
+  readOnly: true
+  subPath: cloud-init-output.log

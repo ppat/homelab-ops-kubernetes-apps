@@ -48,6 +48,7 @@ spec:
     name: grafana-dashboard-config
     valuesKey: grafana-plugins.yaml
     optional: true
+
   values:
     admin:
       existingSecret: grafana-admin-credentials
