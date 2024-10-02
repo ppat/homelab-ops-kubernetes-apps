@@ -39,15 +39,6 @@
     },
     {
       "addLabels": [
-        "dependency-type:grafana-dashboard"
-      ],
-      "description": "matchFileNames=[grafana/dashboards] | add label dependency-type",
-      "matchFileNames": [
-        "infrastructure/subsystems/observability-core/grafana/conf.d/dashboards.yaml"
-      ]
-    },
-    {
-      "addLabels": [
         "dependency-type:dev-tools"
       ],
       "description": "matchFileNames=[.github] + matchManagers=[regex] | add label dependency-type",
