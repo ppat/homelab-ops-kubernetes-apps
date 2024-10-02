@@ -84,7 +84,9 @@ jobs:
       kind_cluster_config: kind-cluster-multi-node.yaml
       # yamllint disable-line rule:indentation
       custom_commands: |-
-        - name: show-hr
+        - name: show-monitoring-events
           command: 'kubectl get -n monitoring events --sort-by=.lastTimestamp'
-        - name: show-hr
+        - name: show-logging-events
           command: 'kubectl get -n logging events --sort-by=.lastTimestamp'
+        - name: show-prm-cm
+          command: 'kubectl get -n logging cm promtail-release -o yaml'
