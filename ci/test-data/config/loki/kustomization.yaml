@@ -3,7 +3,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 configMapGenerator:
-- name: loki-retention-config
+- name: loki-extra-config
   namespace: logging
   files:
   - conf.d/loki-retention.yaml

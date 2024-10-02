@@ -107,10 +107,6 @@ config:
         relabel_configs:
         - source_labels: ['__syslog_message_hostname']
           target_label: 'host'
-        - source_labels: ['__syslog_message_hostname']
-          target_label: 'remote_host'
-        - source_labels: ['__syslog_connection_ip_address']
-          target_label: 'host_ip'
         - source_labels: ['__syslog_message_app_name']
           target_label: 'app'
         - source_labels: ['__syslog_message_severity']

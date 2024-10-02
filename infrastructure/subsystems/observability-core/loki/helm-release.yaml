@@ -50,7 +50,7 @@ spec:
     valuesKey: loki_s3_secretaccesskey
     targetPath: loki.storage.s3.secretAccessKey
   - kind: ConfigMap
-    name: loki-retention-config
+    name: loki-extra-config
     valuesKey: loki-retention.yaml
     optional: true
 
