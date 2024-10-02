@@ -103,37 +103,6 @@ spec:
       enabled: true
       clients:
       - url: http://loki-gateway.logging.svc.cluster.local./loki/api/v1/push
-      snippets:
-        # -- Config file contents for Promtail.
-        # Must be configured as string.
-        # It is templated so it can be assembled from reusable snippets in order to avoid redundancy.
-        # yamllint disable-line rule:indentation
-        file: |
-          server:
-            log_level: {{ .Values.config.logLevel }}
-            log_format: {{ .Values.config.logFormat }}
-            http_listen_port: {{ .Values.config.serverPort }}
-            {{- with .Values.httpPathPrefix }}
-            http_path_prefix: {{ . }}
-            {{- end }}
-            {{- tpl .Values.config.snippets.extraServerConfigs . | nindent 2 }}
-
-          clients:
-            {{- tpl (toYaml .Values.config.clients) . | nindent 2 }}
-
-          positions:
-            {{- tpl (toYaml .Values.config.positions) . | nindent 2 }}
-
-          scrape_configs:
-            {{- tpl .Values.config.snippets.scrapeConfigs . | nindent 2 }}
-            {{- tpl .Values.config.snippets.defaultScrapeConfigs . | nindent 2 }}
-            {{- tpl .Values.config.snippets.extraScrapeConfigs . | nindent 2 }}
-
-          limits_config:
-            {{- tpl .Values.config.snippets.extraLimitsConfig . | nindent 2 }}
-
-          tracing:
-            enabled: {{ .Values.config.enableTracing }}
 
     resources: {}
     tolerations:
