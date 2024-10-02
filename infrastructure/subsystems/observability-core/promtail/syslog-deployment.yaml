@@ -37,8 +37,9 @@ spec:
           tcpSocket:
             port: 601
         volumeMounts:
-        - name: syslog-config
-          mountPath: /etc/syslog-ng/syslog-ng.conf
+        - mountPath: /etc/syslog-ng/syslog-ng.conf
+          name: syslog-config
+          subPath: syslog-ng.conf
       volumes:
       - name: syslog-config
         configMap:
