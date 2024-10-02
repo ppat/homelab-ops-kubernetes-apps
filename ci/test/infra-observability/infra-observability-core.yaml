@@ -21,6 +21,7 @@ spec:
   timeout: 2m0s
   wait: true
   patches:
+  # drop k3s-metrics endpoints as tests are run kind, not k3s
   # yamllint disable-line rule:indentation
   - patch: |-
       $patch: delete
@@ -30,3 +31,22 @@ spec:
     target:
       kind: Endpoints
       name: k3s-metrics-service
+  # enable loki canary + test for testing purposes only
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: loki-release
+        namespace: logging
+      spec:
+        values:
+          lokiCanary:
+            enabled: true
+          test:
+            enabled: true
+    target:
+      group: helm.toolkit.fluxcd.io
+      kind: HelmRelease
+      name: loki-release
+      namespace: logging
