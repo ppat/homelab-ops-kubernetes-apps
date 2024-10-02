@@ -36,10 +36,23 @@ spec:
         readinessProbe:
           tcpSocket:
             port: 601
+        securityContext:
+          allowPrivilegeEscalation: true
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - ALL
         volumeMounts:
         - mountPath: /etc/syslog-ng/syslog-ng.conf
           name: syslog-config
           subPath: syslog-ng.conf
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
       volumes:
       - name: syslog-config
         configMap:
