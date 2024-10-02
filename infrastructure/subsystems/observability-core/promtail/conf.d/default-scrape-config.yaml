@@ -96,13 +96,13 @@ config:
             service_name: cloud-init
             __path__: /var/log/cloud-init.log
 
-      - job_name: rsyslog
+      - job_name: remote-syslog
         syslog:
           listen_address: 0.0.0.0:1514
           idle_timeout: 120s
-          label_structured_data: true
+          label_structured_data: yes
           labels:
-            job: "rsyslog"
+            job: "syslog"
           use_incoming_timestamp: true
         relabel_configs:
         - source_labels: ['__syslog_message_hostname']
@@ -110,7 +110,7 @@ config:
         - source_labels: ['__syslog_message_hostname']
           target_label: 'remote_host'
         - source_labels: ['__syslog_connection_ip_address']
-          target_label: 'remote_ip'
+          target_label: 'host_ip'
         - source_labels: ['__syslog_message_app_name']
           target_label: 'app'
         - source_labels: ['__syslog_message_severity']

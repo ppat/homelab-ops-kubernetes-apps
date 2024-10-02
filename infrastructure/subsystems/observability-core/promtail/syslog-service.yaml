@@ -1,0 +1,44 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: syslog-tcp
+  namespace: logging
+  labels:
+    app.kubernetes.io/name: syslog
+    app.kubernetes.io/component: syslog-tcp
+  annotations:
+    metallb.universe.tf/allow-shared-ip: syslog
+    metallb.universe.tf/address-pool: syslog-pool
+spec:
+  selector:
+    app.kubernetes.io/name: syslog
+  externalTrafficPolicy: Local
+  ports:
+  - name: syslog-tcp
+    port: 601
+    targetPort: syslog-tcp
+    protocol: TCP
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: syslog-udp
+  namespace: logging
+  labels:
+    app.kubernetes.io/name: syslog
+    app.kubernetes.io/component: syslog-udp
+  annotations:
+    metallb.universe.tf/allow-shared-ip: syslog
+    metallb.universe.tf/address-pool: syslog-pool
+spec:
+  selector:
+    app.kubernetes.io/name: syslog
+  externalTrafficPolicy: Local
+  ports:
+  - name: syslog-udp
+    port: 514
+    targetPort: syslog-udp
+    protocol: UDP
+  type: LoadBalancer

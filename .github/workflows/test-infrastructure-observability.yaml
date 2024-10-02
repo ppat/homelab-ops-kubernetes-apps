@@ -91,6 +91,10 @@ jobs:
         - resource: daemonset/promtail
           namespace: logging
           timeout: 2m
+        - resource: deployment/syslog
+          namespace: logging
+          for: condition=available
+          timeout: 1m
       git_url: https://github.com/${{ github.repository }}.git
       git_ref: ${{ github.head_ref || github.ref }}
       kind_cluster_config: kind-cluster-multi-node.yaml
@@ -100,5 +104,7 @@ jobs:
           command: 'kubectl get -n monitoring events --sort-by=.lastTimestamp'
         - name: show-logging-events
           command: 'kubectl get -n logging events --sort-by=.lastTimestamp'
-        - name: show-prm-cm
-          command: 'kubectl get -n logging cm promtail -o yaml | yq .data'
+        - name: desc-syslog
+          command: 'kubectl describe -n logging deployment/syslog'
+        - name: show-syslog-logs
+          command: 'kubectl logs -n logging deployment/syslog'

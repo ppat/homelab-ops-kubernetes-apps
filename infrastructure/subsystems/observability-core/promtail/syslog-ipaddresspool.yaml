@@ -2,20 +2,21 @@
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:
-  name: rsyslog-pool
+  name: syslog-pool
   namespace: metallb-system
 spec:
   addresses:
-  - ${rsyslog_external_ip_address}/32
+  - ${syslog_external_ip_address}/32
   avoidBuggyIPs: true
   serviceAllocation:
     namespaces:
     - logging
     serviceSelectors:
     - matchLabels:
-        app.kubernetes.io/name: promtail
+        app.kubernetes.io/name: syslog
     - matchExpressions:
       - key: app.kubernetes.io/component
         operator: In
         values:
-        - promtail-rsyslog
+        - syslog-tcp
+        - syslog-udp
