@@ -1,0 +1,7 @@
+---
+loki:
+  limits_config:
+    retention_stream:
+    - selector: '{service_name="coredns"}'
+      priority: 1
+      period: 24h
