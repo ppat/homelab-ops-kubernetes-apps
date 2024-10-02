@@ -116,4 +116,28 @@ spec:
       annotations: {}
       labels: {}
       prometheusRule:
-        enabled: false
+        enabled: true
+        rules:
+        - alert: PromtailRequestErrors
+          # yamllint disable-line rule:line-length
+          expr: 100 * sum(rate(promtail_request_duration_seconds_count{status_code=~"5..|failed"}[1m])) by (namespace, job, route, instance) / sum(rate(promtail_request_duration_seconds_count[1m])) by (namespace, job, route, instance) > 10
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            description: |
+              The {{ $labels.job }} {{ $labels.route }} is experiencing {{ $value }} errors.
+              VALUE = {{ $value }}
+              LABELS = {{ $labels }}
+            summary: Promtail request errors (instance {{ $labels.instance }})
+        - alert: PromtailRequestLatency
+          expr: histogram_quantile(0.99, sum(rate(promtail_request_duration_seconds_bucket[5m])) by (le)) > 1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: Promtail request latency (instance {{ $labels.instance }})
+            description: |
+              The {{ $labels.job }} {{ $labels.route }} is experiencing {{ $value }}s 99th percentile latency.
+              VALUE = {{ $value }}
+              LABELS = {{ $labels }}
