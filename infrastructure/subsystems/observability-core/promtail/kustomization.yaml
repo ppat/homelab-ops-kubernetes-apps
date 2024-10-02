@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
 - helm-release.yaml
+- ipaddresspool.yaml
 
 configMapGenerator:
 - name: promtail-default-config
