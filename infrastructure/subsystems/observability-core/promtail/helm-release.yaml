@@ -72,19 +72,14 @@ spec:
       syslog:
         name: tcp-syslog
         containerPort: 1514
+        labels:
+          app.kubernetes.io/component: promtail-rsyslog
         protocol: TCP
         service:
-          type: ClusterIP
+          type: LoadBalancer
           port: 1514
-        ingress:
-          annotations:
-            external-dns.alpha.kubernetes.io/hostname: rsyslog.${domain_name}
-            traefik.ingress.kubernetes.io/router.entrypoints: websecure
-            traefik.ingress.kubernetes.io/router.tls: "true"
-          paths: "/"
-          hosts:
-          - rsyslog.${domain_name}
-          tls: []
+          externalTrafficPolicy: Local
+        ingress: {}
 
     config:
       enabled: true
