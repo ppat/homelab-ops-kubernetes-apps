@@ -85,6 +85,6 @@ jobs:
       # yamllint disable-line rule:indentation
       custom_commands: |-
         - name: show-hr
-          command: 'kubectl get -n monitoring events'
+          command: 'kubectl get -n monitoring events --sort-by=.lastTimestamp'
         - name: show-hr
-          command: 'kubectl get -n logging events'
+          command: 'kubectl get -n logging events --sort-by=.lastTimestamp'
