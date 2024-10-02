@@ -68,36 +68,23 @@ spec:
       enabled: true
     extraArgs:
     - -client.external-labels=host=$(HOSTNAME)
-    # -- Configure additional ports and services. For each configured port, a corresponding service is created.
-    # See values.yaml for details
-    extraPorts: {}
-    #  syslog:
-    #    name: tcp-syslog
-    #    annotations: {}
-    #    labels: {}
-    #    containerPort: 1514
-    #    protocol: TCP
-    #    service:
-    #      type: ClusterIP
-    #      clusterIP: null
-    #      port: 1514
-    #      externalIPs: []
-    #      nodePort: null
-    #      loadBalancerIP: null
-    #      loadBalancerSourceRanges: []
-    #      externalTrafficPolicy: null
-    #    ingress:
-    #      annotations: {}
-    #        # kubernetes.io/ingress.class: nginx
-    #        # kubernetes.io/tls-acme: "true"
-    #      paths: "/"
-    #      hosts:
-    #        - chart-example.local
-    #
-    #      tls: []
-    #      #  - secretName: chart-example-tls
-    #      #    hosts:
-    #      #      - chart-example.local
+    extraPorts:
+      syslog:
+        name: tcp-syslog
+        containerPort: 1514
+        protocol: TCP
+        service:
+          type: ClusterIP
+          port: 1514
+        ingress:
+          annotations:
+            external-dns.alpha.kubernetes.io/hostname: rsyslog.${domain_name}
+            traefik.ingress.kubernetes.io/router.entrypoints: websecure
+            traefik.ingress.kubernetes.io/router.tls: "true"
+          paths: "/"
+          hosts:
+          - rsyslog.${domain_name}
+          tls: []
 
     config:
       enabled: true
