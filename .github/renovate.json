@@ -50,7 +50,6 @@
     "github>ppat/renovate-presets:ci-dependencies",
     "github>ppat/renovate-presets:ci-dev-tools",
     "github>ppat/renovate-presets:ci-github-actions",
-    "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/custom-grafana-dashboard",
     "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/automerge",
     "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/labels-dependency-type",
     "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/labels-subsystem",

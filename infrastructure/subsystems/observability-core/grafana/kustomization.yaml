@@ -6,13 +6,11 @@ resources:
 - helm-release.yaml
 
 configMapGenerator:
-- name: grafana-helm-config
+- name: grafana-main-config
   namespace: monitoring
   files:
-  - conf.d/dashboards.yaml
   - conf.d/datasources.yaml
   - conf.d/grafana-ini.yaml
-  - conf.d/plugins.yaml
   options:
     annotations:
       kustomize.toolkit.fluxcd.io/substitute: disabled

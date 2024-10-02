@@ -5,8 +5,7 @@
       "commitBody": "BREAKING CHANGE",
       "description": "subsystem=infra-* + updateType=major | configure breaking change",
       "matchFileNames": [
-        "infrastructure/subsystems/**",
-        "!infrastructure/subsystems/observability-core/grafana/conf.d/dashboards.yaml"
+        "infrastructure/subsystems/**"
       ],
       "matchUpdateTypes": [
         "major"

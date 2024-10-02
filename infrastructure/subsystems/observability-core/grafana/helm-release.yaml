@@ -33,37 +33,32 @@ spec:
 
   valuesFrom:
   - kind: ConfigMap
-    name: grafana-helm-config
-    valuesKey: dashboards.yaml
-    optional: false
-  - kind: ConfigMap
-    name: grafana-helm-config
+    name: grafana-main-config
     valuesKey: datasources.yaml
     optional: false
   - kind: ConfigMap
-    name: grafana-helm-config
+    name: grafana-main-config
     valuesKey: grafana-ini.yaml
     optional: false
   - kind: ConfigMap
-    name: grafana-helm-config
-    valuesKey: plugins.yaml
-    optional: false
-  - kind: Secret
-    name: grafana-admin-credentials
-    valuesKey: username
-    targetPath: adminUser
-  - kind: Secret
-    name: grafana-admin-credentials
-    valuesKey: password
-    targetPath: adminPassword
+    name: grafana-dashboard-config
+    valuesKey: grafana-dashboards.yaml
+    optional: true
+  - kind: ConfigMap
+    name: grafana-dashboard-config
+    valuesKey: grafana-plugins.yaml
+    optional: true
   values:
-    # ServiceMonitor label and job relabel
+    admin:
+      existingSecret: grafana-admin-credentials
+      userKey: username
+      passwordKey: password
+
     serviceMonitor:
       enabled: true
       labels:
         release: kube-prometheus-stack
       relabelings:
-      # Replace job value
       - sourceLabels:
         - __address__
         action: replace
@@ -97,7 +92,6 @@ spec:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
 
-    ## Enable persistence using Persistent Volume Claims
     persistence:
       enabled: false
 
