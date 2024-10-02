@@ -89,4 +89,4 @@ jobs:
         - name: show-logging-events
           command: 'kubectl get -n logging events --sort-by=.lastTimestamp'
         - name: show-prm-cm
-          command: 'kubectl get -n logging cm promtail-release -o yaml'
+          command: 'kubectl get -n logging cm promtail -o yaml'
