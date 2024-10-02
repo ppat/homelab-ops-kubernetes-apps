@@ -5,7 +5,7 @@ kind: Kustomization
 resources:
 - helm-release.yaml
 - syslog-ipaddresspool.yaml
-- syslog-deployment
+- syslog-deployment.yaml
 - syslog-service.yaml
 
 configMapGenerator:
