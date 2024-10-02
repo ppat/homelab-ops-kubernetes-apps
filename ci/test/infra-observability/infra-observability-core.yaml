@@ -12,6 +12,8 @@ spec:
     - kind: ConfigMap
       name: cluster-common-conf
     - kind: ConfigMap
+      name: cluster-networking-conf
+    - kind: ConfigMap
       name: cluster-observability-conf
   prune: false
   sourceRef:
@@ -19,7 +21,7 @@ spec:
     name: test-source
     namespace: flux-system
   timeout: 2m0s
-  wait: true
+  wait: false
   patches:
   # drop k3s-metrics endpoints as tests are run kind, not k3s
   # yamllint disable-line rule:indentation
