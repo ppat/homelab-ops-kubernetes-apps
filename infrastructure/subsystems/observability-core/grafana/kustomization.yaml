@@ -6,7 +6,7 @@ resources:
 - helm-release.yaml
 
 configMapGenerator:
-- name: grafana-main-config
+- name: grafana-default-config
   namespace: monitoring
   files:
   - conf.d/datasources.yaml

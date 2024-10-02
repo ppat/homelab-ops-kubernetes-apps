@@ -33,19 +33,19 @@ spec:
 
   valuesFrom:
   - kind: ConfigMap
-    name: grafana-main-config
+    name: grafana-default-config
     valuesKey: datasources.yaml
     optional: false
   - kind: ConfigMap
-    name: grafana-main-config
+    name: grafana-default-config
     valuesKey: grafana-ini.yaml
     optional: false
   - kind: ConfigMap
-    name: grafana-dashboard-config
+    name: grafana-extra-config
     valuesKey: grafana-dashboards.yaml
     optional: true
   - kind: ConfigMap
-    name: grafana-dashboard-config
+    name: grafana-extra-config
     valuesKey: grafana-plugins.yaml
     optional: true
 
