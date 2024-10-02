@@ -1,0 +1,18 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  labels:
+    app: minio
+  name: minio-bucket
+  namespace: minio
+spec:
+  jobName: minio
+  prober:
+    path: /minio/v2/metrics/bucket
+    scheme: http
+    url: minio.minio:9000
+  targets:
+    staticConfig:
+      static:
+      - minio.minio

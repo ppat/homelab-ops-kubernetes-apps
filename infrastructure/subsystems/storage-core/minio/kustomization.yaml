@@ -4,6 +4,8 @@ kind: Kustomization
 
 resources:
 - helm-release.yaml
+- probe-minio-bucket.yaml
+- probe-minio-resource.yaml
 
 sortOptions:
   order: fifo
