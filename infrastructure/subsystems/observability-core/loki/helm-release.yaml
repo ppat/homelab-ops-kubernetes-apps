@@ -48,6 +48,10 @@ spec:
     name: loki-s3-credentials
     valuesKey: loki_s3_secretaccesskey
     targetPath: loki.storage.s3.secretAccessKey
+  - kind: ConfigMap
+    name: loki-retention-config
+    valuesKey: loki-retention.yaml
+    optional: true
   values:
     ######################################################################################################################
     # Loki Configuration
@@ -66,13 +70,6 @@ spec:
         chunk_encoding: snappy
       limits_config:
         retention_period: ${loki_retention_size:=7d}
-        retention_stream:
-        - selector: '{namespace="media"}'
-          priority: 1
-          period: 24h
-        - selector: '{service_name="coredns"}'
-          priority: 1
-          period: 24h
       rulerConfig:
         alertmanager_url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local.:9093/
         enable_api: true
