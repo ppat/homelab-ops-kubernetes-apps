@@ -4,7 +4,9 @@ kind: Kustomization
 
 resources:
 - helm-release.yaml
-- ipaddresspool.yaml
+- syslog-ipaddresspool.yaml
+- syslog-deployment.yaml
+- syslog-service.yaml
 
 configMapGenerator:
 - name: promtail-default-config
@@ -12,6 +14,13 @@ configMapGenerator:
   files:
   - conf.d/default-scrape-config.yaml
   - conf.d/default-volumes.yaml
+  options:
+    annotations:
+      kustomize.toolkit.fluxcd.io/substitute: disabled
+- name: syslog-config
+  namespace: logging
+  files:
+  - conf.d/syslog-ng.conf
   options:
     annotations:
       kustomize.toolkit.fluxcd.io/substitute: disabled

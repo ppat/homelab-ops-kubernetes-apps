@@ -70,15 +70,12 @@ spec:
     - -client.external-labels=host=$(HOSTNAME)
     extraPorts:
       syslog:
-        name: tcp-syslog
+        name: promtail-syslog
         containerPort: 1514
-        labels:
-          app.kubernetes.io/component: promtail-rsyslog
         protocol: TCP
         service:
-          type: LoadBalancer
+          type: ClusterIP
           port: 1514
-          externalTrafficPolicy: Local
         ingress: {}
 
     config:

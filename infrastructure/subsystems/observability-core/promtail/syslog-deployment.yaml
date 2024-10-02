@@ -1,0 +1,72 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: syslog
+  namespace: logging
+  labels:
+    app.kubernetes.io/name: syslog
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: syslog
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: syslog
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: syslog
+        image: balabit/syslog-ng:4.8.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          tcpSocket:
+            port: 601
+        ports:
+        - name: syslog-tcp
+          containerPort: 601
+          protocol: TCP
+        - name: syslog-udp
+          containerPort: 514
+          protocol: UDP
+        readinessProbe:
+          tcpSocket:
+            port: 601
+        securityContext:
+          capabilities:
+            add:
+            - CHOWN
+            - DAC_OVERRIDE
+            - DAC_READ_SEARCH
+            - FOWNER
+            - NET_BIND_SERVICE
+            - NET_BROADCAST
+            - NET_RAW
+            - SYSLOG
+            drop:
+            - ALL
+        volumeMounts:
+        - mountPath: /etc/syslog-ng/syslog-ng.conf
+          name: syslog-config
+          subPath: syslog-ng.conf
+      volumes:
+      - name: syslog-config
+        configMap:
+          name: syslog-config
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: In
+                values:
+                - "true"
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
