@@ -17,4 +17,5 @@ resources:
 - minio.yaml
 - node-feature-discovery.yaml
 - prometheus-community.yaml
+- stakater.yaml
 - traefik.yaml

@@ -7,3 +7,12 @@ metadata:
     kustomize.toolkit.fluxcd.io/ssa: merge
   labels:
     goldilocks.fairwinds.com/enabled: "true"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: stakater-reloader
+  annotations:
+    kustomize.toolkit.fluxcd.io/ssa: merge
+  labels:
+    goldilocks.fairwinds.com/enabled: "true"
