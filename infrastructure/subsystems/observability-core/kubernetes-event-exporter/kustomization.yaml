@@ -1,0 +1,23 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- bitnami.yaml
+- helm-release.yaml
+
+configMapGenerator:
+- name: kubernetes-event-exporter
+  namespace: logging
+  files:
+  # source: https://grafana.com/grafana/dashboards/17882-kubernetes-event-exporter/
+  - conf.d/kubernetes-event-exporter.json
+  options:
+    disableNameSuffixHash: true
+    labels:
+      grafana_dashboard: "1"
+    annotations:
+      kustomize.toolkit.fluxcd.io/substitute: disabled
+
+sortOptions:
+  order: fifo
