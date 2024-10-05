@@ -6,7 +6,7 @@ resources:
 - helm-release.yaml
 
 configMapGenerator:
-- name: kubernetes-event-exporter
+- name: kubernetes-event-exporter-dashboard
   namespace: logging
   files:
   # source: https://grafana.com/grafana/dashboards/17882-kubernetes-event-exporter/
