@@ -6,6 +6,7 @@ resources:
 - cert-manager/
 - cloudnative-pg/
 - external-secrets/
+- longhorn/
 - metallb/
 - prometheus-operator/
 - traefik/
@@ -21,4 +22,4 @@ patches:
     metadata:
       name: irrelevant
   target:
-    kind: "(ConfigMap|ClusterRole|ClusterRoleBinding|Deployment|MutatingWebhookConfiguration|Namespace|Role|RoleBinding|Secret|Service|ServiceAccount|ValidatingWebhookConfiguration)"
+    kind: "(ConfigMap|ClusterRole|ClusterRoleBinding|DaemonSet|Deployment|MutatingWebhookConfiguration|Namespace|PriorityClass|Role|RoleBinding|Secret|Service|ServiceAccount|ValidatingWebhookConfiguration)"
