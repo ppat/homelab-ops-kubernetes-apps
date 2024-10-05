@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
 - gotk-components.yaml
+- podmonitor-flux.yaml
 
 patches:
 - path: patches/deployment-tolerations.yaml
