@@ -6,6 +6,9 @@ metadata:
   namespace: pihole
   labels:
     app.kubernetes.io/name: pihole
+  annotations:
+    configmap.reloader.stakater.com/reload: "pihole-optional-config"
+    secret.reloader.stakater.com/reload: "pihole-secrets"
 spec:
   replicas: 1
   strategy:
