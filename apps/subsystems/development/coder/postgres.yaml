@@ -17,8 +17,3 @@ spec:
       database: coder
       owner: coder
   # resources: {}
-  affinity:
-    # TODO: remove after no staging
-    tolerations:
-    - key: node-role.kubernetes.io/control-plane
-      operator: Exists

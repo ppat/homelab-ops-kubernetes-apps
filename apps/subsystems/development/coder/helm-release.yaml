@@ -32,6 +32,8 @@ spec:
       strategy: rollback
   values:
     coder:
+      annotations:
+        secret.reloader.stakater.com/reload: "coder-db-app,coder-oidc-auth-settings"
       env:
       - name: CODER_ACCESS_URL
         value: "https://coder.${domain_name}"
@@ -89,7 +91,3 @@ spec:
       serviceAccount:
         workspacePerms: true
         enableDeployments: true
-      # TODO: remove after no staging
-      tolerations:
-      - key: node-role.kubernetes.io/control-plane
-        operator: Exists
