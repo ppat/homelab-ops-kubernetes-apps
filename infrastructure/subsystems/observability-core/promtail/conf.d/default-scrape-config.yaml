@@ -99,7 +99,8 @@ config:
       - job_name: remote-syslog
         syslog:
           listen_address: 0.0.0.0:1514
-          idle_timeout: 120s
+          # Don't disconnect the forwarder
+          idle_timeout: 12h
           label_structured_data: yes
           labels:
             job: "syslog"
