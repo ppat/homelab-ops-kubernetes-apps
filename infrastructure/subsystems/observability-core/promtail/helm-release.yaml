@@ -68,15 +68,6 @@ spec:
       enabled: true
     extraArgs:
     - -client.external-labels=host=$(HOSTNAME)
-    extraPorts:
-      syslog:
-        name: promtail-syslog
-        containerPort: 1514
-        protocol: TCP
-        service:
-          type: ClusterIP
-          port: 1514
-        ingress: {}
 
     config:
       enabled: true

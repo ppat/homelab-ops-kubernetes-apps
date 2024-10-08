@@ -3,20 +3,18 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- helm-release.yaml
+- syslog-ipaddresspool.yaml
+- syslog-deployment.yaml
+- syslog-service.yaml
 
 configMapGenerator:
-- name: promtail-default-config
+- name: syslog-config
   namespace: logging
   files:
-  - conf.d/default-scrape-config.yaml
-  - conf.d/default-volumes.yaml
+  - conf.d/syslog-ng.conf
   options:
     annotations:
       kustomize.toolkit.fluxcd.io/substitute: disabled
-
-configurations:
-- name-reference.yaml
 
 sortOptions:
   order: fifo
