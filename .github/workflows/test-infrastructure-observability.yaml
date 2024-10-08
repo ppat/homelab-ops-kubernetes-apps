@@ -32,6 +32,10 @@ jobs:
           kind: kustomization
           namespace: flux-system
           timeout: 5m
+        - name: infra-observability-extra
+          kind: kustomization
+          namespace: flux-system
+          timeout: 1m
       # yamllint disable-line rule:indentation
       success_conditions: |-
         - resource: helmrelease/kube-prometheus-stack-release
