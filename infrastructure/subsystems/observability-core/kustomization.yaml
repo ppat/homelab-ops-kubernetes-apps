@@ -9,8 +9,6 @@ resources:
 - loki/
 - promtail/
 - grafana/
-- kubernetes-event-exporter/
-- syslog-ng/
 
 sortOptions:
   order: fifo
