@@ -21,6 +21,9 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: syslog
+        env:
+        - name: LOKI_URL
+          value: ${syslogng_loki_url}
         image: balabit/syslog-ng:4.8.0@sha256:835dec2018cf96ee1d7051950851c07f6f11ba538d89a828e40307a47117c049
         imagePullPolicy: IfNotPresent
         livenessProbe:
