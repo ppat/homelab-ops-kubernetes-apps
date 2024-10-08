@@ -145,6 +145,13 @@ spec:
     # ---------------------------------------------- prometheus ---------------------------------------------------
     prometheus:
       prometheusSpec:
+        enableAdminAPI: true
+        enableFeatures:
+        - auto-gomemlimit
+        - memory-snapshot-on-shutdown
+        - new-service-discovery-manager
+        retention: ${prometheus_retention_period}
+        retentionSize: ${prometheus_retention_size}
         routePrefix: /
         storageSpec:
           volumeClaimTemplate:
@@ -157,8 +164,7 @@ spec:
               resources:
                 requests:
                   storage: ${prometheus_storage_size}
-        retention: ${prometheus_retention_period}
-        retentionSize: ${prometheus_retention_size}
+        walCompression: true
 
         # Removing default filter Prometheus selectors (i.e. label release=kube-prometheus-stack)
         podMonitorSelectorNilUsesHelmValues: false
@@ -179,9 +185,10 @@ spec:
                   - "true"
         resources:
           requests:
+            cpu: 100m
             memory: 1Gi
           limits:
-            memory: 1Gi
+            memory: 2Gi
         tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
