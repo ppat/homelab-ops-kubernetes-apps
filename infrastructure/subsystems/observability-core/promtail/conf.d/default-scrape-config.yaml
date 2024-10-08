@@ -95,20 +95,3 @@ config:
           labels:
             service_name: cloud-init
             __path__: /var/log/cloud-init.log
-
-      - job_name: remote-syslog
-        syslog:
-          listen_address: 0.0.0.0:1514
-          # Don't disconnect the forwarder
-          idle_timeout: 12h
-          label_structured_data: yes
-          labels:
-            job: "syslog"
-          use_incoming_timestamp: true
-        relabel_configs:
-        - source_labels: ['__syslog_message_hostname']
-          target_label: 'host'
-        - source_labels: ['__syslog_message_app_name']
-          target_label: 'app'
-        - source_labels: ['__syslog_message_severity']
-          target_label: 'severity'
