@@ -94,6 +94,12 @@
       "component": "infra-observability-core",
       "extra-label": "pr-type:release,subsystem:infra-observability-core"
     },
+    "infrastructure/subsystems/observability-extra": {
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "component": "infra-observability-extra",
+      "extra-label": "pr-type:release,subsystem:infra-observability-extra"
+    },
     "infrastructure/subsystems/secrets-core": {
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,

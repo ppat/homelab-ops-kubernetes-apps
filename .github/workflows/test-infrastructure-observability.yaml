@@ -32,6 +32,10 @@ jobs:
           kind: kustomization
           namespace: flux-system
           timeout: 5m
+        - name: infra-observability-extra
+          kind: kustomization
+          namespace: flux-system
+          timeout: 1m
       # yamllint disable-line rule:indentation
       success_conditions: |-
         - resource: helmrelease/kube-prometheus-stack-release
@@ -99,6 +103,10 @@ jobs:
           namespace: logging
           for: condition=available
           timeout: 1m
+        - resource: deployment/prometheus-snmp-exporter
+          namespace: monitoring
+          for: condition=available
+          timeout: 1m
       git_url: https://github.com/${{ github.repository }}.git
       git_ref: ${{ github.head_ref || github.ref }}
       kind_cluster_config: kind-cluster-multi-node.yaml
@@ -108,7 +116,7 @@ jobs:
           command: 'kubectl get -n monitoring events --sort-by=.lastTimestamp'
         - name: show-logging-events
           command: 'kubectl get -n logging events --sort-by=.lastTimestamp'
-        - name: desc-syslog
-          command: 'kubectl describe -n logging deployment/syslog'
         - name: show-syslog-logs
           command: 'kubectl logs -n logging deployment/syslog'
+        - name: show-snmp-logs
+          command: 'kubectl logs -n monitoring deployment/prometheus-snmp-exporter'
