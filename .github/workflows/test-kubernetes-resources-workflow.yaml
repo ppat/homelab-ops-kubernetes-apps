@@ -141,18 +141,6 @@ jobs:
         done
         echo "Reconcile done!"
 
-    - name: Show status
-      if: ${{ (success() || failure()) && steps.bootstrap-flux.outcome == 'success' }}
-      shell: bash
-      # yamllint disable-line rule:indentation
-      run: |
-        echo -----------------------------------------------------------------------
-        flux get all --all-namespaces
-        echo -----------------------------------------------------------------------
-        kubectl get -A cm,secret,po,svc,ing,deploy,ds,pvc
-        echo -----------------------------------------------------------------------
-        echo "All done!"
-
     - name: Wait for success conditions
       id: wait-success-conditions
       shell: bash
@@ -213,16 +201,34 @@ jobs:
         done
         echo "All done!"
 
-    - name: Debug flux failure
-      if: ${{ failure() && (steps.install-flux.outcome == 'failure' || steps.bootstrap-flux.outcome == 'failure' || steps.reconcile.outcome == 'failure') }}
+    - name: Show status
+      if: ${{ (success() || failure()) && steps.bootstrap-flux.outcome == 'success' }}
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        echo -----------------------------------------------------------------------
+        flux get all --all-namespaces
+        echo -----------------------------------------------------------------------
+        kubectl get -A crd,cm,secret,po,svc,ing,deploy,ds,sts,pv,pvc,es,cert
+        echo -----------------------------------------------------------------------
+        echo "All done!"
+
+    - name: Debug flux install/bootstrap failure
+      if: ${{ failure() && (steps.install-flux.outcome == 'failure' || steps.bootstrap-flux.outcome == 'failure') }}
+      shell: bash
+      # yamllint disable-line rule:indentation
       run: |
         echo
         echo ------------------------------ flux check ------------------------------
         flux check
         echo ------------------------ flux-system resources -------------------------
         kubectl -n flux-system get all
-        echo -------------------------------- crds ----------------------------------
-        kubectl get crd
+        echo -----------------------------------------------------------------------
+        echo "All done!"
+
+    - name: Debug flux install/bootstrap/reconcile failure
+      if: ${{ failure() && (steps.install-flux.outcome == 'failure' || steps.bootstrap-flux.outcome == 'failure' || steps.reconcile.outcome == 'failure') }}
+      run: |
         echo --------------------------- flux resources -----------------------------
         flux get all --all-namespaces
         echo --------------------------- flux source logs ---------------------------
@@ -231,6 +237,8 @@ jobs:
         kubectl -n flux-system logs deploy/kustomize-controller
         echo ---------------------------- flux helm logs ----------------------------
         kubectl -n flux-system logs deploy/helm-controller
+        echo -----------------------------------------------------------------------
+        echo "All done!"
 
     - name: Debug success condition failure
       if: ${{ failure() && (steps.wait-success-conditions.outcome == 'failure' || steps.reconcile.outcome == 'failure') }}

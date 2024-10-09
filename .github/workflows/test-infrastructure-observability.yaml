@@ -7,7 +7,6 @@ on:
   pull_request:
     paths:
     - '.github/workflows/test-infrastructure-observability.yaml'
-    - '.github/workflows/test-kubernetes-resources-workflow.yaml'
     - '.github/kind-cluster-multi-node.yaml'
     - 'ci/test/infra-observability/**.yaml'
     - 'infrastructure/subsystems/observability-core/**.yaml'
