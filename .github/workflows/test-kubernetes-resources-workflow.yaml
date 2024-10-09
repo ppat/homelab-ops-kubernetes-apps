@@ -35,7 +35,7 @@ jobs:
     timeout-minutes: 15
     steps:
     - name: Checkout
-      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+      uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
       with:
         fetch-depth: 0
 
@@ -48,7 +48,7 @@ jobs:
         version: "v0.24.0"
 
     - name: Setup kubectl
-      uses: fluxcd/pkg/actions/kubectl@30c101fc7c9fac4d84937ff4890a3da46a9db2dd
+      uses: fluxcd/pkg/actions/kubectl@ac1007b57e37838e73b8bc95365dab9a0e856e8e
       with:
         # renovate: datasource=github-releases depName=kubernetes/kubernetes
         version: "v1.30.5"
