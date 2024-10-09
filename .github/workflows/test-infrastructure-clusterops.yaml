@@ -7,7 +7,6 @@ on:
   pull_request:
     paths:
     - '.github/workflows/test-infrastructure-clusterops.yaml'
-    - '.github/workflows/test-kubernetes-resources-workflow.yaml'
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/infra-clusterops/**.yaml'
     - 'infrastructure/subsystems/clusterops-core/**.yaml'
