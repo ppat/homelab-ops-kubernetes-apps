@@ -194,8 +194,8 @@ jobs:
         echo -----------------------------------------------------------------------
         for command_name in $(yq -e '.[].name' $CUSTOM_COMMANDS_FILE); do
           command="$(yq -e '.[] | select(.name == "'$command_name'") | .command' $CUSTOM_COMMANDS_FILE)"
-          echo "Running command: ${command}"
-          ${command} 2>&1 | sed 's|^|    |'
+          echo "--> Running command: ${command}"
+          /bin/bash -e -o pipefail -c -- ${command} 2>&1 | sed 's|^|        |'
           echo -----------------------------------------------------------------------
         done
         echo "All done!"
