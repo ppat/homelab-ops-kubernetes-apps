@@ -12,11 +12,16 @@ kind: Certificate
 metadata:
   name: bitwarden-ca-cert
   namespace: external-secrets
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   # this is discouraged but required by ios
   commonName: cert-manager-bitwarden-tls
   isCA: true
   secretName: bitwarden-ca-cert
+  secretTemplate:
+    annotations:
+      kustomize.toolkit.fluxcd.io/prune: disabled
   subject:
     organizations:
     - external-secrets.io
@@ -50,8 +55,13 @@ kind: Certificate
 metadata:
   name: bitwarden-sdk-server-cert
   namespace: external-secrets
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   secretName: bitwarden-tls-certs
+  secretTemplate:
+    annotations:
+      kustomize.toolkit.fluxcd.io/prune: disabled
   dnsNames:
   - bitwarden-sdk-server.external-secrets.svc.cluster.local
   - external-secrets-bitwarden-sdk-server.external-secrets.svc.cluster.local
