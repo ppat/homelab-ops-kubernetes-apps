@@ -33,6 +33,7 @@ spec:
   valuesFrom:
   - kind: Secret
     name: cert-manager-secrets
+    optional: true
   values:
     crds:
       enabled: true
