@@ -30,10 +30,7 @@ spec:
       ignoreTestFailures: false
       retries: 3
       strategy: rollback
-  valuesFrom:
-  - kind: Secret
-    name: cert-manager-secrets
-    optional: true
+
   values:
     crds:
       enabled: true
