@@ -1,0 +1,79 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: bitwarden-ca-issuer
+  namespace: external-secrets
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: bitwarden-ca-cert
+  namespace: external-secrets
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  # this is discouraged but required by ios
+  commonName: cert-manager-bitwarden-tls
+  isCA: true
+  secretName: bitwarden-ca-cert
+  secretTemplate:
+    annotations:
+      kustomize.toolkit.fluxcd.io/prune: disabled
+  subject:
+    organizations:
+    - external-secrets.io
+  dnsNames:
+  - external-secrets-bitwarden-sdk-server.external-secrets.svc.cluster.local
+  - bitwarden-sdk-server.external-secrets.svc.cluster.local
+  - localhost
+  ipAddresses:
+  - 127.0.0.1
+  - ::1
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS8
+    size: 2048
+  issuerRef:
+    name: bitwarden-ca-issuer
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: bitwarden-cert-issuer
+  namespace: external-secrets
+spec:
+  ca:
+    secretName: bitwarden-ca-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: bitwarden-sdk-server-cert
+  namespace: external-secrets
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  secretName: bitwarden-tls-certs
+  secretTemplate:
+    annotations:
+      kustomize.toolkit.fluxcd.io/prune: disabled
+  dnsNames:
+  - bitwarden-sdk-server.external-secrets.svc.cluster.local
+  - external-secrets-bitwarden-sdk-server.external-secrets.svc.cluster.local
+  - localhost
+  ipAddresses:
+  - 127.0.0.1
+  - ::1
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS8
+    size: 2048
+  issuerRef:
+    name: bitwarden-cert-issuer
+    kind: Issuer
+    group: cert-manager.io

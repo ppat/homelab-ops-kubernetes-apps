@@ -15,6 +15,9 @@ spec:
         name: external-secrets-repository
         namespace: flux-system
       version: 0.10.4
+  dependsOn:
+  - name: cert-manager-release
+    namespace: cert-manager
   install:
     crds: CreateReplace
     createNamespace: false
@@ -59,3 +62,20 @@ spec:
       resources: {}
       serviceMonitor:
         enabled: true
+
+    bitwarden-sdk-server:
+      enabled: true
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: In
+                values:
+                - "true"
+      resources: {}
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
