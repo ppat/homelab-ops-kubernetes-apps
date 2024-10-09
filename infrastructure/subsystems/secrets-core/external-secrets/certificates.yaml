@@ -3,7 +3,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: bitwarden-bootstrap-certificate
-  namespace: cert-manager
+  namespace: external-secrets
 spec:
   # this is discouraged but required by ios
   commonName: cert-manager-bitwarden-tls
@@ -13,8 +13,8 @@ spec:
     organizations:
     - external-secrets.io
   dnsNames:
-  - external-secrets-bitwarden-sdk-server.default.svc.cluster.local
-  - bitwarden-sdk-server.default.svc.cluster.local
+  - external-secrets-bitwarden-sdk-server.external-secrets.svc.cluster.local
+  - bitwarden-sdk-server.external-secrets.svc.cluster.local
   - localhost
   ipAddresses:
   - 127.0.0.1
@@ -29,9 +29,10 @@ spec:
     group: cert-manager.io
 ---
 apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
+kind: Issuer
 metadata:
   name: bitwarden-certificate-issuer
+  namespace: external-secrets
 spec:
   ca:
     secretName: bitwarden-tls-certs
@@ -40,12 +41,12 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: bitwarden-tls-certs
-  namespace: default
+  namespace: external-secrets
 spec:
   secretName: bitwarden-tls-certs
   dnsNames:
-  - bitwarden-sdk-server.default.svc.cluster.local
-  - external-secrets-bitwarden-sdk-server.default.svc.cluster.local
+  - bitwarden-sdk-server.external-secrets.svc.cluster.local
+  - external-secrets-bitwarden-sdk-server.external-secrets.svc.cluster.local
   - localhost
   ipAddresses:
   - 127.0.0.1
@@ -56,5 +57,5 @@ spec:
     size: 2048
   issuerRef:
     name: bitwarden-certificate-issuer
-    kind: ClusterIssuer
+    kind: Issuer
     group: cert-manager.io
