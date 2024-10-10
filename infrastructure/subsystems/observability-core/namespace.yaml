@@ -6,7 +6,6 @@ metadata:
   annotations:
     kustomize.toolkit.fluxcd.io/ssa: merge
   labels:
-    bitwarden-secrets/enabled: "true"
     goldilocks.fairwinds.com/enabled: "true"
 ---
 apiVersion: v1
@@ -16,5 +15,4 @@ metadata:
   annotations:
     kustomize.toolkit.fluxcd.io/ssa: merge
   labels:
-    bitwarden-secrets/enabled: "true"
     goldilocks.fairwinds.com/enabled: "true"
