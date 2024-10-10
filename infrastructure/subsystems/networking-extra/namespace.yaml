@@ -7,4 +7,5 @@ metadata:
     kustomize.toolkit.fluxcd.io/prune: disabled
     kustomize.toolkit.fluxcd.io/ssa: merge
   labels:
+    bitwarden-secrets/enabled: "true"
     goldilocks.fairwinds.com/enabled: "true"
