@@ -1,0 +1,28 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- https://raw.githubusercontent.com/cert-manager/trust-manager/v0.9.2/deploy/crds/trust.cert-manager.io_bundles.yaml
+
+###########################################################
+# allow these CRDs to be adopted by Flux HelmRelease
+###########################################################
+patches:
+# yamllint disable-line rule:indentation
+- patch: |-
+    apiVersion: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    metadata:
+      annotations:
+        meta.helm.sh/release-name: trust-manager
+        meta.helm.sh/release-namespace: external-secrets
+      labels:
+        app.kubernetes.io/managed-by: Helm
+        helm.toolkit.fluxcd.io/name: trust-manager-release
+        helm.toolkit.fluxcd.io/namespace: flux-system
+      name: irrelevant
+  target:
+    group: apiextensions.k8s.io
+    version: v1
+    kind: CustomResourceDefinition
