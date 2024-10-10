@@ -2,7 +2,7 @@
 apiVersion: trust.cert-manager.io/v1alpha1
 kind: Bundle
 metadata:
-  name: bitwarden-ca-cert-bundle
+  name: bitwarden-ca-cert
 spec:
   sources:
   - useDefaultCAs: false
