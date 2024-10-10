@@ -16,4 +16,4 @@ spec:
       key: ca.crt
     namespaceSelector:
       matchLabels:
-        bitwarden-secrets: "enabled"
+        bitwarden-secrets/enabled: "true"
