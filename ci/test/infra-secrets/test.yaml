@@ -4,4 +4,4 @@ kind: Namespace
 metadata:
   name: test
   labels:
-    bitwarden-secrets: "enabled"
+    bitwarden-secrets/enabled: "true"
