@@ -1,0 +1,22 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: unpoller
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: unpoller
+spec:
+  namespaceSelector:
+    matchNames:
+    - monitoring
+  selector:
+    matchExpressions:
+    - key: app.kubernetes.io/name
+      operator: In
+      values:
+      - unpoller
+  podMetricsEndpoints:
+  - honorLabels: true
+    path: /metrics
+    port: prometheus

@@ -6,6 +6,7 @@ resources:
 - kubernetes-event-exporter/
 - prometheus-snmp-exporter/
 - syslog-ng/
+- unpoller/
 
 sortOptions:
   order: fifo
