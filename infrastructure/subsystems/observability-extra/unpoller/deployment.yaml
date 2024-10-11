@@ -1,0 +1,85 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unpoller
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: unpoller
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: unpoller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: unpoller
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: unpoller
+        env:
+        - name: UP_POLLER_DEBUG
+          value: "true"
+        - name: UP_UNIFI_DEFAULT_URL
+          value: "https://unifi.${domain_name}"
+        - name: UP_UNIFI_DEFAULT_USER
+          valueFrom:
+            secretKeyRef:
+              name: unpoller-credentials
+              key: unpoller_username
+        - name: UP_UNIFI_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: unpoller-credentials
+              key: unpoller_password
+        - name: UP_UNIFI_DEFAULT_SAVE_SITES
+          value: "true"
+        - name: UP_UNIFI_DEFAULT_SAVE_IDS
+          value: "false"
+        - name: UP_UNIFI_DEFAULT_SAVE_EVENTS
+          value: "false"
+        - name: UP_UNIFI_DEFAULT_SAVE_ALARMS
+          value: "false"
+        - name: UP_UNIFI_DEFAULT_SAVE_ANOMALIES
+          value: "false"
+        - name: UP_UNIFI_DEFAULT_SAVE_DPI
+          value: "false"
+        - name: UP_INFLUXDB_DISABLE
+          value: "true"
+        - name: UP_LOKI_DISABLE
+          value: "true"
+        - name: UP_LOKI_URL
+          value: "http://loki-gateway.logging.svc.cluster.local."
+        - name: UP_PROMETHEUS_DISABLE
+          value: "false"
+        image: ghcr.io/unpoller/unpoller:v2.11.2
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            port: 9130
+        ports:
+        - name: prometheus
+          containerPort: 9130
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            port: 9130
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
