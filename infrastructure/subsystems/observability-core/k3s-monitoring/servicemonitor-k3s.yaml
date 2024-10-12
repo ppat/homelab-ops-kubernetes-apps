@@ -12,12 +12,20 @@ spec:
   - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
     honorLabels: true
     metricRelabelings:
-    # apiserver
+    - action: labeldrop
+      regex: (uid)
     - action: drop
-      regex: apiserver_request_duration_seconds_bucket;(0.15|0.2|0.3|0.35|0.4|0.45|0.6|0.7|0.8|0.9|1.25|1.5|1.75|2|3|3.5|4|4.5|6|7|8|9|15|25|40|50)
-      sourceLabels:
-      - __name__
-      - le
+      sourceLabels: ["__name__"]
+      regex: (apiserver|etcd|rest_client)_request(|_sli|_slo)_duration_seconds_bucket
+    - action: drop
+      sourceLabels: ["__name__"]
+      regex: apiserver_request(|_sli)_duration_seconds_(count|sum)
+    - action: drop
+      sourceLabels: ["__name__"]
+      regex: apiserver_(request_body_size_bytes|response_sizes|watch_events_sizes)_bucket
+    - action: drop
+      sourceLabels: ["__name__"]
+      regex: rest_client_request_duration_seconds_(count|sum)
     port: https-metrics
     relabelings:
     - action: replace
@@ -73,6 +81,9 @@ spec:
       sourceLabels:
       - __metrics_path__
       targetLabel: metrics_path
+    - action: drop
+      sourceLabels: ["__name__"]
+      regex: prober_probe_duration_seconds_bucket
     scheme: https
     tlsConfig:
       caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
