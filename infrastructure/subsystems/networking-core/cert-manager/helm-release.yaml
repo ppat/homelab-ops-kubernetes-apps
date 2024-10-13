@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: cert-manager-repository
         namespace: flux-system
-      version: v1.16.0
+      version: v1.16.1
   install:
     crds: CreateReplace
     createNamespace: false
