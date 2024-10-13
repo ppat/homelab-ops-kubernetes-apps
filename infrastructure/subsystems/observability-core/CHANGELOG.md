@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.0.2...infra-observability-core-v0.1.0) (2024-10-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-observability-core:** update kube-prometheus-stack (62.7.0 -> 65.1.1) ([#136](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/136))
+* **infra-observability-extra:** move kubernetes-event-exporter + syslog-ng to new subsystem ([#117](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/117))
+
+### ✨ Features
+
+* **infra-observability-core:** update kube-prometheus-stack (62.7.0 -&gt; 65.1.1) ([#136](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/136)) ([49d05cb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/49d05cbf666382799ef8741b7a1d222bdb827101))
+* sync bitwarden-secret webhook's CA cert to all namespaces that will need to fetch secrets ([#141](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/141)) ([2c161b6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2c161b6d3aad70a8e7924c3dc407e504d13cab23))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** drop high cardinality prometheus metrics for k3s ([#149](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/149)) ([372e8c7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/372e8c72f6ed9bc78b8b939aa48ca9062f066820))
+* **infra-observability-core:** drop promtail's syslog-receiver + separate syslog-ng sources into rfc3164 and rfc5424 ([#113](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/113)) ([30414fe](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/30414fe039dd61ce1d7272b54f584d3f20c71490))
+* **infra-observability-core:** tune prometheus settings ([#118](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/118)) ([d7d8221](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d7d8221d6dd96d4867a51058a83b8b79586e9456))
+* **infra-observability-core:** update grafana (8.5.1 -&gt; 8.5.2) ([#120](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/120)) ([d8810f9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d8810f96496f2900f0f3de384883eddc48633b7b))
+* **infra-observability-extra:** move kubernetes-event-exporter + syslog-ng to new subsystem ([#117](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/117)) ([ed250eb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ed250eb53d0dc51f0fa677a546b2fa71c5e0c8bd))
+* **infra-secrets-core:** sync bitwarden-ca-cert as configmap only to external-secrets namespace (not others) ([#145](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/145)) ([79f88a6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/79f88a6e166da979d0ca4ebcbff04f821ac10ae5))
+
 ## [0.0.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.0.1...infra-observability-core-v0.0.2) (2024-10-07)
 
 
