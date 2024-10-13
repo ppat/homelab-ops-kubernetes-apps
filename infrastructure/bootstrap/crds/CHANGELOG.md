@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.1.0...infra-bootstrap-crds-v0.1.1) (2024-10-13)
+
+
+### ✨ Features
+
+* **infra-bootstrap-crds:** update cert-manager/cert-manager (v1.15.3 -&gt; v1.16.0) ([#133](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/133)) ([e41a199](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e41a199fccc1f2d31491cbee68966d22126dacd5))
+* **infra-bootstrap-crds:** update prometheus-operator/prometheus-operator (v0.75.2 -&gt; v0.77.1) ([#37](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/37)) ([43ece8a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/43ece8a3a0dbd6bc40522e000dabaeb3848ef3d5))
+* **infra-secrets-core:** distribute ca cert (needed for creating ExternalSecret) to other namespaces with trust-manager ([#139](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/139)) ([bc23e48](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/bc23e4831ba6afde86204d0111f695c00965a39d))
+
 ## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.0.1...infra-bootstrap-crds-v0.1.0) (2024-10-07)
 
 
