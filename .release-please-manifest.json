@@ -13,6 +13,6 @@
   "infrastructure/subsystems/networking-extra": "0.0.2",
   "infrastructure/subsystems/observability-core": "0.0.2",
   "infrastructure/subsystems/observability-extra": "0.0.0",
-  "infrastructure/subsystems/secrets-core": "0.0.2",
+  "infrastructure/subsystems/secrets-core": "0.0.3",
   "infrastructure/subsystems/storage-core": "0.0.2"
 }
