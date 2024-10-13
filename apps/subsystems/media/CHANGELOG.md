@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.1...apps-media-v0.0.2) (2024-10-13)
+
+
+### ✨ Features
+
+* sync bitwarden-secret webhook's CA cert to all namespaces that will need to fetch secrets ([#141](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/141)) ([2c161b6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2c161b6d3aad70a8e7924c3dc407e504d13cab23))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-secrets-core:** sync bitwarden-ca-cert as configmap only to external-secrets namespace (not others) ([#145](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/145)) ([79f88a6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/79f88a6e166da979d0ca4ebcbff04f821ac10ae5))
+
 ## 0.0.1 (2024-10-07)
 
 

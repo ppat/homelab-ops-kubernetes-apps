@@ -1,7 +1,7 @@
 {
   "apps/helm-repositories": "0.0.1",
   "apps/subsystems/development": "0.0.2",
-  "apps/subsystems/media": "0.0.1",
+  "apps/subsystems/media": "0.0.2",
   "infrastructure/bootstrap/crds": "0.1.0",
   "infrastructure/helm-repositories": "0.0.2",
   "infrastructure/subsystems/clusterops-core": "0.0.2",
