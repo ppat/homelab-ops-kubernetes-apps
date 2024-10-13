@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.2...infra-kubernetes-extra-v0.0.3) (2024-10-13)
+
+
+### ✨ Features
+
+* **infra-kubernetes-extra:** update intel-device-plugins-gpu (0.30.0 -&gt; 0.31.0) ([#109](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/109)) ([511a776](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/511a776d41fb1143b4b953aba229226ed6978147))
+* **infra-kubernetes-extra:** update intel-device-plugins-operator (0.30.0 -&gt; 0.31.0) ([#110](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/110)) ([a8559b6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a8559b66421b9c5767bbfad620a6816921c55323))
+
 ## [0.0.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.1...infra-kubernetes-extra-v0.0.2) (2024-10-07)
 
 
