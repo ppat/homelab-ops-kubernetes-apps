@@ -53,26 +53,6 @@ jobs:
           namespace: metallb-system
           for: jsonpath={.metadata.creationTimestamp}
           timeout: 1m
-        - resource: deployment/cert-manager
-          namespace: cert-manager
-          for: condition=available
-          timeout: 1m
-        - resource: deployment/cert-manager-cainjector
-          namespace: cert-manager
-          for: condition=available
-          timeout: 1m
-        - resource: deployment/cert-manager-webhook
-          namespace: cert-manager
-          for: condition=available
-          timeout: 1m
-        - resource: clusterissuer/selfsigned-issuer
-          namespace: "-"
-          for: condition=ready
-          timeout: 1m
-        - resource: certificate/selfsigned-tls-cert
-          namespace: traefik
-          for: condition=ready
-          timeout: 1m
         - resource: daemonset/traefik
           namespace: traefik
           timeout: 1m
