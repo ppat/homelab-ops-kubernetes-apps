@@ -4,7 +4,6 @@ kind: Kustomization
 
 resources:
 - namespace.yaml
-- cert-manager/
 - metallb/
 - pihole/
 - external-dns/
