@@ -18,8 +18,6 @@ spec:
   dependsOn:
   - name: metallb-release
     namespace: metallb-system
-  - name: cert-manager-release
-    namespace: cert-manager
   install:
     crds: CreateReplace
     createNamespace: false
