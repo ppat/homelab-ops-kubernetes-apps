@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-secrets-core-v0.0.3...infra-secrets-core-v0.0.4) (2024-10-14)
+
+
+### ✨ Features
+
+* **infra-secrets-core:** move cert-manager from infra-networking-core to infra-secrets-core ([#153](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/153)) ([6889411](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6889411b6403504d82354d92e26f3f0502644c26))
+
 ## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-secrets-core-v0.0.2...infra-secrets-core-v0.0.3) (2024-10-13)
 
 
