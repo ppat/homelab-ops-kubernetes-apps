@@ -31,26 +31,6 @@ spec:
       retries: 3
       strategy: rollback
   values:
-    env:
-    - name: EXTERNAL_DNS_PIHOLE_SERVER
-      value: http://pihole-web.pihole.svc.cluster.local
-    - name: EXTERNAL_DNS_PIHOLE_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: external-dns-secrets
-          key: pihole_password
-          optional: false
-    sources:
-    - ingress
-    # IMPORTANT: If you have records that you manage manually in Pi-hole, set
-    # the policy to upsert-only so they do not get deleted.
-    policy: sync
-    # Pihole only supports A/CNAME records so there is no mechanism to track ownership.
-    # You don't need to set this flag, but if you leave it unset, you will receive warning
-    # logs when ExternalDNS attempts to create TXT records.
-    registry: noop
-    provider: pihole
-
     resources: {}
     affinity:
       nodeAffinity:
