@@ -9,7 +9,7 @@
   "infrastructure/subsystems/database-core": "0.0.1",
   "infrastructure/subsystems/kubernetes-core": "0.0.2",
   "infrastructure/subsystems/kubernetes-extra": "0.0.3",
-  "infrastructure/subsystems/networking-core": "0.1.1",
+  "infrastructure/subsystems/networking-core": "0.1.2",
   "infrastructure/subsystems/networking-extra": "0.0.3",
   "infrastructure/subsystems/observability-core": "0.1.0",
   "infrastructure/subsystems/observability-extra": "0.0.1",

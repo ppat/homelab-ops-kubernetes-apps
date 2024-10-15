@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.1.1...infra-networking-core-v0.1.2) (2024-10-14)
+
+
+### ✨ Features
+
+* **infra-secrets-core:** move cert-manager from infra-networking-core to infra-secrets-core ([#153](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/153)) ([6889411](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6889411b6403504d82354d92e26f3f0502644c26))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** externalize external-dns provider configuration ([#156](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/156)) ([357b4f3](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/357b4f39a2335e258bf7042447bdc73d25a830e4))
+
 ## [0.1.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.1.0...infra-networking-core-v0.1.1) (2024-10-13)
 
 
