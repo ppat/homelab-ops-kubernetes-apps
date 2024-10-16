@@ -18,6 +18,10 @@ fi
 echo "- Symlinking /var/log/plex -> ${PLEX_MEDIA_SERVER_DIR}/Logs..."
 ln -sf /var/log/plex "${PLEX_MEDIA_SERVER_DIR}/Logs"
 echo
+if [[ -f "${PLEX_MEDIA_SERVER_DIR}/plexmediaserver.pid" ]]; then
+  echo "- Cleaning up PID file from a previous run..."
+  rm "${PLEX_MEDIA_SERVER_DIR}/plexmediaserver.pid"
+fi
 
 echo "Updating Plex Media Server preferences file..."
 if [[ ! -e "${PLEX_PREF_FILE}" ]]; then
