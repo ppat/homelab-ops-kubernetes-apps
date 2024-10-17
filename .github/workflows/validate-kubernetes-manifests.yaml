@@ -38,7 +38,7 @@ jobs:
       uses: fluxcd/pkg/actions/kustomize@ac1007b57e37838e73b8bc95365dab9a0e856e8e
       with:
         # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.*)$
-        version: "v5.4.3"
+        version: "v5.5.0"
 
     - name: Setup flux
       uses: fluxcd/flux2/action@896e0fa46d5107a05e953dd0a5261d78a145ec8c # v2.3.0
