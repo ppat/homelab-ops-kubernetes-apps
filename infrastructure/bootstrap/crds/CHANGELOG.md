@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.1.1...infra-bootstrap-crds-v0.1.2) (2024-10-18)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-bootstrap-crds:** update cert-manager/cert-manager (v1.16.0 -&gt; v1.16.1) ([#151](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/151)) ([2bf8d3a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2bf8d3a1cb65a3c34daba06c5b434f41bb70aacf))
+
 ## [0.1.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.1.0...infra-bootstrap-crds-v0.1.1) (2024-10-13)
 
 
