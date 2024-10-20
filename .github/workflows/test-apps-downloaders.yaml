@@ -33,10 +33,14 @@ jobs:
           timeout: 2m
       # yamllint disable-line rule:indentation
       success_conditions: |-
+        - resource: deployment/cloudnative-pg
+          namespace: cnpg-system
+          for: condition=available
+          timeout: 1m
         - resource: cluster.postgresql.cnpg.io/downloaders-db
           namespace: downloaders
           for: condition=ready
-          timeout: 2m
+          timeout: 3m
         - resource: deployment/bazarr
           namespace: downloaders
           for: condition=available
