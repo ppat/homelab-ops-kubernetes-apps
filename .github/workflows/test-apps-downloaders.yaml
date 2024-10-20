@@ -79,8 +79,8 @@ jobs:
         - name: desc-radarr
           command: 'kubectl describe -n downloaders deployment radarr'
         - name: logs-radarr
-          command: 'kubectl logs -n downloaders deployment radarr'
+          command: 'kubectl logs -n downloaders deployment/radarr'
         - name: desc-sabnzbd
           command: 'kubectl describe -n downloaders deployment sabnzbd'
         - name: logs-sabnzbd
-          command: 'kubectl logs -n downloaders deployment sabnzbd'
+          command: 'kubectl logs -n downloaders deployment/sabnzbd'
