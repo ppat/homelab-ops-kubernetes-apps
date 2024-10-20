@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bazarr-data
+  namespace: downloaders
+  labels:
+    app.kubernetes.io/name: bazarr
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: ${DATA_VOLUME_STORAGE_CLASS}
+  resources:
+    requests:
+      storage: ${DATA_VOLUME_BAZARR_SIZE}
+  volumeMode: Filesystem

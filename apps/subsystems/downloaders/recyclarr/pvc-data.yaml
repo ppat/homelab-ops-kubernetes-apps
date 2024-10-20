@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: recyclarr-data
+  namespace: downloaders
+  labels:
+    app.kubernetes.io/name: recyclarr
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: ${DATA_VOLUME_STORAGE_CLASS}
+  resources:
+    requests:
+      storage: ${DATA_VOLUME_RECYCLARR_SIZE}
+  volumeMode: Filesystem

@@ -1,0 +1,88 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bazarr
+  namespace: downloaders
+  labels:
+    app.kubernetes.io/name: bazarr
+  annotations:
+    secret.reloader.stakater.com/reload: downloader-config
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bazarr
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bazarr
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: bazarr
+        command:
+        - /scripts/entrypoint.sh
+        env:
+        - name: TZ
+          value: Etc/UTC
+        image: linuxserver/bazarr:v1.4.4-ls269@sha256:68efaf4f9a6ea072b68e1a8a2925fdc00f931fb1c699d969cae9c16f394b1411
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          tcpSocket:
+            port: 6767
+        ports:
+        - name: bazarr
+          containerPort: 6767
+          protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: 6767
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /config
+          name: bazarr-data
+        - mountPath: /data
+          name: bazarr-media
+        - mountPath: /config.yaml.preconfigured
+          name: downloader-config
+          readOnly: true
+          subPath: bazarr.yaml
+        - mountPath: /scripts
+          name: bazarr-scripts
+        - mountPath: /config/log
+          name: bazarr-logs
+        - mountPath: /tmp
+          name: bazarr-temp
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: ${MEDIA_WRITER_UID}
+        runAsGroup: ${MEDIA_WRITER_GID}
+        fsGroup: ${MEDIA_WRITER_GID}
+        fsGroupChangePolicy: OnRootMismatch
+      volumes:
+      - name: bazarr-data
+        persistentVolumeClaim:
+          claimName: bazarr-data
+      - name: bazarr-media
+        persistentVolumeClaim:
+          claimName: media
+      - name: downloader-config
+        secret:
+          secretName: downloader-config
+          optional: true
+      - name: bazarr-scripts
+        configMap:
+          name: bazarr-scripts
+          defaultMode: 0755
+      - name: bazarr-logs
+        emptyDir: {}
+      - name: bazarr-temp
+        emptyDir: {}

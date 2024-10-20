@@ -1,0 +1,65 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: recyclarr
+  namespace: downloaders
+  labels:
+    app.kubernetes.io/name: recyclarr
+spec:
+  concurrencyPolicy: Replace
+  failedJobsHistoryLimit: 4
+  jobTemplate:
+    metadata:
+      labels:
+        app.kubernetes.io/name: recyclarr
+    spec:
+      activeDeadlineSeconds: 300
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: recyclarr
+        spec:
+          automountServiceAccountToken: false
+          containers:
+          - name: recyclarr
+            args:
+            - sync
+            image: ghcr.io/recyclarr/recyclarr:7.2.4@sha256:1bf2436ed4749a4309765dd21643aac858dd436a536e37c25bb463513601e962
+            imagePullPolicy: IfNotPresent
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+              readOnlyRootFilesystem: true
+            volumeMounts:
+            - mountPath: /config
+              name: recyclarr-data
+            - mountPath: /config/recyclarr.yml
+              name: recyclarr-config
+              readOnly: true
+              subPath: recyclarr.yml
+            - mountPath: /tmp
+              name: recyclarr-temp
+          restartPolicy: OnFailure
+          securityContext:
+            runAsUser: 11111
+            runAsGroup: 11111
+            runAsNonRoot: true
+            fsGroup: 11111
+            fsGroupChangePolicy: Always
+          volumes:
+          - name: recyclarr-data
+            persistentVolumeClaim:
+              claimName: recyclarr-data
+          - name: recyclarr-config
+            secret:
+              secretName: downloader-config
+          - name: recyclarr-temp
+            emptyDir: {}
+      ttlSecondsAfterFinished: 604800  # 1 week
+  schedule: "0 18 * * *"
+  startingDeadlineSeconds: 43200  # 12 hours
+  successfulJobsHistoryLimit: 4
+  timeZone: Etc/UTC

@@ -1,0 +1,85 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: overseerr
+  namespace: downloaders
+  labels:
+    app.kubernetes.io/name: overseerr
+  annotations:
+    secret.reloader.stakater.com/reload: downloader-config
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: overseerr
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: overseerr
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: overseerr
+        command:
+        - /scripts/entrypoint.sh
+        env:
+        - name: LOG_LEVEL
+          value: debug
+        - name: TZ
+          value: Etc/UTC
+        image: sctx/overseerr:1.33.2@sha256:714ea6db2bc007a2262d112bef7eec74972eb33d9c72bddb9cbd98b8742de950
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          tcpSocket:
+            port: 5055
+        ports:
+        - name: overseerr
+          containerPort: 5055
+          protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: 5055
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /app/config
+          name: overseerr-data
+        - mountPath: /settings.json.preconfigured
+          name: downloader-config
+          readOnly: true
+          subPath: overseerr.json
+        - mountPath: /scripts
+          name: overseerr-scripts
+        - mountPath: /app/config/logs
+          name: overseerr-logs
+        - mountPath: /tmp
+          name: overseerr-temp
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 11111
+        runAsGroup: 11111
+        fsGroup: 11111
+        fsGroupChangePolicy: OnRootMismatch
+      volumes:
+      - name: overseerr-data
+        persistentVolumeClaim:
+          claimName: overseerr-data
+      - name: downloader-config
+        secret:
+          secretName: downloader-config
+          optional: true
+      - name: overseerr-scripts
+        configMap:
+          name: overseerr-scripts
+          defaultMode: 0755
+      - name: overseerr-logs
+        emptyDir: {}
+      - name: overseerr-temp
+        emptyDir: {}

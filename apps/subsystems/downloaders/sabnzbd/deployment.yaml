@@ -1,0 +1,90 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sabnzbd
+  namespace: downloaders
+  labels:
+    app.kubernetes.io/name: sabnzbd
+  annotations:
+    secret.reloader.stakater.com/reload: downloader-config
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sabnzbd
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sabnzbd
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: sabnzbd
+        command:
+        - /scripts/entrypoint.sh
+        env:
+        - name: TZ
+          value: Etc/UTC
+        image: linuxserver/sabnzbd:4.3.3-ls183@sha256:51df466fb66b6a18d89597a3608bb2ab69ff8aff3131b5bec80e4ed7534b2b9f
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /api?mode=version
+            port: 8080
+        ports:
+        - name: sabnzbd
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /api?mode=version
+            port: 8080
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /config
+          name: sabnzbd-data
+        - mountPath: /data
+          name: sabnzbd-media
+        - mountPath: /sabnzbd.ini.preconfigured
+          name: downloader-config
+          readOnly: true
+          subPath: sabnzbd.ini
+        - mountPath: /scripts
+          name: sabnzbd-scripts
+        - mountPath: /config/logs
+          name: sabnzbd-logs
+        - mountPath: /tmp
+          name: sabnzbd-temp
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: ${MEDIA_WRITER_UID}
+        runAsGroup: ${MEDIA_WRITER_GID}
+        fsGroup: ${MEDIA_WRITER_GID}
+        fsGroupChangePolicy: OnRootMismatch
+      volumes:
+      - name: sabnzbd-data
+        persistentVolumeClaim:
+          claimName: sabnzbd-data
+      - name: sabnzbd-media
+        persistentVolumeClaim:
+          claimName: media
+      - name: downloader-config
+        secret:
+          secretName: downloader-config
+          optional: true
+      - name: sabnzbd-scripts
+        configMap:
+          name: sabnzbd-scripts
+          defaultMode: 0755
+      - name: sabnzbd-logs
+        emptyDir: {}
+      - name: sabnzbd-temp
+        emptyDir: {}

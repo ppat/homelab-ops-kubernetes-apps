@@ -1,0 +1,30 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: downloaders-db
+  namespace: downloaders
+spec:
+  bootstrap:
+    initdb:
+      database: default
+      owner: downloader
+      postInitSQL:
+      - CREATE DATABASE bazarr WITH OWNER downloader
+      - CREATE DATABASE lidarr WITH OWNER downloader
+      - CREATE DATABASE "lidarr-log" WITH OWNER downloader
+      - CREATE DATABASE overseerr WITH OWNER downloader
+      - CREATE DATABASE prowlarr WITH OWNER downloader
+      - CREATE DATABASE radarr WITH OWNER downloader
+      - CREATE DATABASE sonarr WITH OWNER downloader
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.4
+  instances: ${quote}${POSTGRES_DB_INSTANCES}${quote}
+  monitoring:
+    enablePodMonitor: true
+  primaryUpdateStrategy: unsupervised
+  resources: {}
+  startDelay: 300
+  stopDelay: 300
+  storage:
+    size: ${POSTGRES_DB_SIZE}
+    storageClass: ${POSTGRES_DB_STORAGE_CLASS}

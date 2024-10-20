@@ -1,0 +1,107 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarr
+  namespace: downloaders
+  labels:
+    app.kubernetes.io/name: sonarr
+  annotations:
+    secret.reloader.stakater.com/reload: downloaders-db-app
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sonarr
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sonarr
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: sonarr
+        env:
+        - name: PUID
+          value: ${quote}${MEDIA_WRITER_UID}${quote}
+        - name: PGID
+          value: ${quote}${MEDIA_WRITER_GID}${quote}
+        - name: TZ
+          value: Etc/UTC
+        - name: SONARR__APP__INSTANCENAME
+          value: Sonarr
+        - name: SONARR__APP__THEME
+          value: dark
+        - name: SONARR__AUTH__APIKEY
+          valueFrom:
+            secretKeyRef:
+              name: downloader-api-keys
+              key: sonarr_api_key
+        - name: SONARR__AUTH__METHOD
+          value: External
+        - name: SONARR__AUTH__REQUIRED
+          value: DisabledForLocalAddresses
+        - name: SONARR__LOG__DBENABLED
+          value: "False"
+        - name: SONARR__LOG__LEVEL
+          value: info
+        - name: SONARR__POSTGRES__HOST
+          value: downloaders-db-rw.downloaders.svc.cluster.local
+        - name: SONARR__POSTGRES__PORT
+          value: "5432"
+        - name: SONARR__POSTGRES__MAINDB
+          value: sonarr
+        - name: SONARR__POSTGRES__USER
+          valueFrom:
+            secretKeyRef:
+              name: downloaders-db-app
+              key: username
+        - name: SONARR__POSTGRES__PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: downloaders-db-app
+              key: password
+        image: linuxserver/sonarr:4.0.9.2244-ls256@sha256:12570fbaddc8733664e1e5d9bb12a719cb07f9455c518097b0e6426f4960f884
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 8989
+        ports:
+        - name: sonarr
+          containerPort: 8989
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 8989
+        securityContext:
+          capabilities:
+            add:
+            - CHOWN
+            - SETGID
+            - SETUID
+            drop:
+            - ALL
+        volumeMounts:
+        - mountPath: /config
+          name: sonarr-data
+        - mountPath: /data
+          name: sonarr-media
+        - mountPath: /config/logs
+          name: sonarr-logs
+        - mountPath: /tmp
+          name: sonarr-temp
+      volumes:
+      - name: sonarr-data
+        persistentVolumeClaim:
+          claimName: sonarr-data
+      - name: sonarr-media
+        persistentVolumeClaim:
+          claimName: media
+      - name: sonarr-logs
+        emptyDir: {}
+      - name: sonarr-temp
+        emptyDir: {}

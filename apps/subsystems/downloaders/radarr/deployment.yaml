@@ -1,0 +1,107 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: radarr
+  namespace: downloaders
+  labels:
+    app.kubernetes.io/name: radarr
+  annotations:
+    secret.reloader.stakater.com/reload: downloaders-db-app
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: radarr
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: radarr
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: radarr
+        env:
+        - name: PUID
+          value: ${quote}${MEDIA_WRITER_UID}${quote}
+        - name: PGID
+          value: ${quote}${MEDIA_WRITER_GID}${quote}
+        - name: TZ
+          value: Etc/UTC
+        - name: RADARR__APP__INSTANCENAME
+          value: Radarr
+        - name: RADARR__APP__THEME
+          value: dark
+        - name: RADARR__AUTH__APIKEY
+          valueFrom:
+            secretKeyRef:
+              name: downloader-api-keys
+              key: radarr_api_key
+        - name: RADARR__AUTH__METHOD
+          value: External
+        - name: RADARR__AUTH__REQUIRED
+          value: DisabledForLocalAddresses
+        - name: RADARR__LOG__DBENABLED
+          value: "False"
+        - name: RADARR__LOG__LEVEL
+          value: info
+        - name: RADARR__POSTGRES__HOST
+          value: downloaders-db-rw.downloaders.svc.cluster.local
+        - name: RADARR__POSTGRES__PORT
+          value: "5432"
+        - name: RADARR__POSTGRES__MAINDB
+          value: radarr
+        - name: RADARR__POSTGRES__USER
+          valueFrom:
+            secretKeyRef:
+              name: downloaders-db-app
+              key: username
+        - name: RADARR__POSTGRES__PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: downloaders-db-app
+              key: password
+        image: linuxserver/radarr:5.11.0.9244-ls241@sha256:d758c5a5edc4cda1263260948b3f460f511430bccea505dca3cb70af01332ff8
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 7878
+        ports:
+        - name: radarr
+          containerPort: 7878
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 7878
+        securityContext:
+          capabilities:
+            add:
+            - CHOWN
+            - SETGID
+            - SETUID
+            drop:
+            - ALL
+        volumeMounts:
+        - mountPath: /config
+          name: radarr-data
+        - mountPath: /data
+          name: radarr-media
+        - mountPath: /config/logs
+          name: radarr-logs
+        - mountPath: /tmp
+          name: radarr-temp
+      volumes:
+      - name: radarr-data
+        persistentVolumeClaim:
+          claimName: radarr-data
+      - name: radarr-media
+        persistentVolumeClaim:
+          claimName: media
+      - name: radarr-logs
+        emptyDir: {}
+      - name: radarr-temp
+        emptyDir: {}

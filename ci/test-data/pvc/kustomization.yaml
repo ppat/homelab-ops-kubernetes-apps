@@ -9,3 +9,4 @@ resources:
 - plex-media.yaml
 - unifi-data.yaml
 - unifi-db-data.yaml
+- media.yaml

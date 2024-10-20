@@ -1,0 +1,102 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prowlarr
+  namespace: downloaders
+  labels:
+    app.kubernetes.io/name: prowlarr
+  annotations:
+    secret.reloader.stakater.com/reload: downloaders-db-app
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: prowlarr
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: prowlarr
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: prowlarr
+        env:
+        - name: PUID
+          value: ${quote}${MEDIA_WRITER_UID}${quote}
+        - name: PGID
+          value: ${quote}${MEDIA_WRITER_GID}${quote}
+        - name: TZ
+          value: Etc/UTC
+        - name: PROWLARR__APP__INSTANCENAME
+          value: Prowlarr
+        - name: PROWLARR__APP__THEME
+          value: dark
+        - name: PROWLARR__AUTH__APIKEY
+          valueFrom:
+            secretKeyRef:
+              name: downloader-api-keys
+              key: prowlarr_api_key
+        - name: PROWLARR__AUTH__METHOD
+          value: External
+        - name: PROWLARR__AUTH__REQUIRED
+          value: DisabledForLocalAddresses
+        - name: PROWLARR__LOG__DBENABLED
+          value: "False"
+        - name: PROWLARR__LOG__LEVEL
+          value: info
+        - name: PROWLARR__POSTGRES__HOST
+          value: downloaders-db-rw.downloaders.svc.cluster.local
+        - name: PROWLARR__POSTGRES__PORT
+          value: "5432"
+        - name: PROWLARR__POSTGRES__MAINDB
+          value: prowlarr
+        - name: PROWLARR__POSTGRES__USER
+          valueFrom:
+            secretKeyRef:
+              name: downloaders-db-app
+              key: username
+        - name: PROWLARR__POSTGRES__PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: downloaders-db-app
+              key: password
+        image: linuxserver/prowlarr:1.24.3.4754-ls88@sha256:a6fc8ab9ff34d82327d29f8b5bfb7a672c0e54a274e5e5b023db01c335d05dfd
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 9696
+        ports:
+        - name: prowlarr
+          containerPort: 9696
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 9696
+        securityContext:
+          capabilities:
+            add:
+            - CHOWN
+            - SETGID
+            - SETUID
+            drop:
+            - ALL
+        volumeMounts:
+        - mountPath: /config
+          name: prowlarr-data
+        - mountPath: /config/logs
+          name: prowlarr-logs
+        - mountPath: /tmp
+          name: prowlarr-temp
+      volumes:
+      - name: prowlarr-data
+        persistentVolumeClaim:
+          claimName: prowlarr-data
+      - name: prowlarr-logs
+        emptyDir: {}
+      - name: prowlarr-temp
+        emptyDir: {}

@@ -1,0 +1,24 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bazarr
+  namespace: downloaders
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: bazarr.${domain_name}
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  # setting tls to [], so that default certficate will be assigned
+  tls: []
+  rules:
+  - host: bazarr.${domain_name}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bazarr
+            port:
+              number: 6767

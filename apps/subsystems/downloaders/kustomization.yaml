@@ -1,0 +1,30 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- namespace.yaml
+- postgres.yaml
+- postgres-credentials.yaml
+- bazarr/
+- lidarr/
+- overseerr/
+- prowlarr/
+- radarr/
+- recyclarr/
+- sabnzbd/
+- sonarr/
+
+patches:
+# yamllint disable-line rule:indentation
+- patch: |-
+    kind: irrelevant
+    metadata:
+      name: irrelevant
+      annotations:
+        kustomize.toolkit.fluxcd.io/prune: disabled
+  target:
+    kind: "(Cluster|PersistentVolumeClaim)"
+
+sortOptions:
+  order: fifo

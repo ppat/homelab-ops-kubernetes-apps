@@ -1,0 +1,75 @@
+---
+# yamllint disable rule:line-length
+name: test-apps-downloaders
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+    - '.github/workflows/test-apps-downloaders.yaml'
+    - '.github/kind-cluster-single-node.yaml'
+    - 'ci/test/apps-downloaders/**.yaml'
+    - 'apps/subsystems/downloaders/**.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-apps-downloaders:
+    uses: ./.github/workflows/test-kubernetes-resources-workflow.yaml
+    with:
+      test_path: ./ci/test/apps-downloaders
+      # yamllint disable-line rule:indentation
+      reconcile_items: |-
+        - name: infra-database-core
+          kind: kustomization
+          namespace: flux-system
+          timeout: 1m
+        - name: apps-downloaders
+          kind: kustomization
+          namespace: flux-system
+          timeout: 2m
+      # yamllint disable-line rule:indentation
+      success_conditions: |-
+        - resource: cluster.postgresql.cnpg.io/downloaders-db
+          namespace: downloaders
+          for: condition=ready
+          timeout: 2m
+        - resource: deployment/bazarr
+          namespace: downloaders
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/lidarr
+          namespace: downloaders
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/overseerr
+          namespace: downloaders
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/prowlarr
+          namespace: downloaders
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/radarr
+          namespace: downloaders
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/sabnzbd
+          namespace: downloaders
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/sonarr
+          namespace: downloaders
+          for: condition=available
+          timeout: 1m
+
+      git_url: https://github.com/${{ github.repository }}.git
+      git_ref: ${{ github.head_ref || github.ref }}
+      kind_cluster_config: kind-cluster-single-node.yaml
+      # yamllint disable-line rule:indentation
+      custom_commands: |-
+        - name: show-hr
+          command: 'kubectl get -n downloaders events --sort-by=.lastTimestamp'
