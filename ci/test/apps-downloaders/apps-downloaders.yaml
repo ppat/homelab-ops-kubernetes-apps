@@ -34,3 +34,14 @@ spec:
     namespace: flux-system
   timeout: 2m0s
   wait: false
+  patches:
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      # drop media volume
+      - op: remove
+        path: /spec/template/spec/volumes/1
+      - op: remove
+        path: /spec/template/spec/containers/0/volumeMounts/1
+    target:
+      kind: Deployment
+      name: '^(bazarr|lidarr|radarr|sabnzbd|sonarr)$'
