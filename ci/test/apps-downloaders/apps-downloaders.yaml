@@ -21,7 +21,6 @@ spec:
       DATA_VOLUME_RECYCLARR_SIZE: 1Gi
       DATA_VOLUME_SABNZBD_SIZE: 1Gi
       DATA_VOLUME_SONARR_SIZE: 1Gi
-      POSTGRES_DB_INSTANCES: 1
       POSTGRES_DB_STORAGE_CLASS: standard
       POSTGRES_DB_SIZE: 1Gi
       # see: https://fluxcd.io/flux/components/kustomize/kustomizations/#post-build-substitution-of-numbers-and-booleans

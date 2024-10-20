@@ -18,7 +18,7 @@ spec:
       - CREATE DATABASE radarr WITH OWNER downloader
       - CREATE DATABASE sonarr WITH OWNER downloader
   imageName: ghcr.io/cloudnative-pg/postgresql:16.4
-  instances: ${quote}${POSTGRES_DB_INSTANCES}${quote}
+  instances: 2
   monitoring:
     enablePodMonitor: true
   primaryUpdateStrategy: unsupervised

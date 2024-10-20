@@ -7,7 +7,7 @@ on:
   pull_request:
     paths:
     - '.github/workflows/test-apps-downloaders.yaml'
-    - '.github/kind-cluster-single-node.yaml'
+    - '.github/kind-cluster-multi-node.yaml'
     - 'ci/test/apps-downloaders/**.yaml'
     - 'apps/subsystems/downloaders/**.yaml'
   workflow_dispatch:
@@ -68,7 +68,7 @@ jobs:
 
       git_url: https://github.com/${{ github.repository }}.git
       git_ref: ${{ github.head_ref || github.ref }}
-      kind_cluster_config: kind-cluster-single-node.yaml
+      kind_cluster_config: kind-cluster-multi-node.yaml
       # yamllint disable-line rule:indentation
       custom_commands: |-
         - name: show-hr
