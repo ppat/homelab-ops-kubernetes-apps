@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bazarr
+  namespace: downloaders
+  labels:
+    app.kubernetes.io/name: bazarr
+spec:
+  selector:
+    app.kubernetes.io/name: bazarr
+  ports:
+  - name: bazarr
+    port: 6767
+    targetPort: bazarr
+    protocol: TCP
+  type: ClusterIP

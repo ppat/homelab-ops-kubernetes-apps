@@ -40,6 +40,7 @@ module.exports = {
         'release',
         'apps-helm-repositories',
         'apps-development',
+        'apps-downloaders',
         'apps-media',
         'infra-bootstrap-crds',
         'infra-helm-repositories',
