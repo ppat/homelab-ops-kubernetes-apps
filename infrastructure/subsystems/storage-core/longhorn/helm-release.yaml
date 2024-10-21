@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: longhorn-repository
         namespace: flux-system
-      version: 1.6.2
+      version: 1.7.1
   install:
     crds: CreateReplace
     createNamespace: false
