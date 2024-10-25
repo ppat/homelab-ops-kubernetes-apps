@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.1.2...infra-networking-core-v0.2.0) (2024-10-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-networking-core:** update traefik (31.1.1 -> 32.1.1) ([#171](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/171))
+
+### ✨ Features
+
+* **infra-networking-core:** update traefik (31.1.1 -&gt; 32.1.1) ([#171](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/171)) ([aa9f843](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/aa9f84310346284cee61cb48bcfa78b92ea29e10))
+* **infra-networking-core:** update visibilityspots/cloudflared (v2024.9.1 -&gt; v2024.10.0) ([#164](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/164)) ([80f82f6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/80f82f615d5ff9fa32d6067f69d37bcc2d913e20))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** update visibilityspots/cloudflared (v2024.10.0 -&gt; v2024.10.1) ([#191](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/191)) ([bc0495a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/bc0495a3c9ae9c7b8a4a34a4f2ac35465dfd1594))
+
 ## [0.1.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.1.1...infra-networking-core-v0.1.2) (2024-10-14)
 
 
