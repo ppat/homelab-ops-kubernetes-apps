@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.0.3...infra-networking-extra-v0.0.4) (2024-10-25)
+
+
+### ✨ Features
+
+* **infra-networking-extra:** update linuxserver/unifi-network-application (8.3.32 -&gt; 8.5.6) ([#176](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/176)) ([2b25c95](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2b25c95b905d0844f6a913ac213b89496eafd1e5))
+
 ## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.0.2...infra-networking-extra-v0.0.3) (2024-10-13)
 
 
