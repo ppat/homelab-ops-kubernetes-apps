@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.2...apps-media-v0.0.3) (2024-10-25)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** clean up plex PID file from a previous run if it exists ([#161](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/161)) ([b1d548a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b1d548a71e157a033abf9b981ba8e06ef2db65c8))
+
 ## [0.0.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.1...apps-media-v0.0.2) (2024-10-13)
 
 
