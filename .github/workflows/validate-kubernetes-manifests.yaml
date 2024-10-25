@@ -44,13 +44,13 @@ jobs:
       uses: fluxcd/flux2/action@896e0fa46d5107a05e953dd0a5261d78a145ec8c # v2.3.0
       with:
         # renovate: datasource=github-releases depName=fluxcd/flux2
-        version: "v2.3.0"
+        version: "v2.4.0"
 
     - name: Downloading Flux OpenAPI schemas
       shell: bash
       env:
         # renovate: datasource=github-releases depName=fluxcd/flux2
-        version: "v2.3.0"
+        version: "v2.4.0"
       run: |
         set -x
         wget --progress=dot:giga -c https://github.com/fluxcd/flux2/releases/download/${version}/crd-schemas.tar.gz -O /tmp/crd-schemas.tar.gz

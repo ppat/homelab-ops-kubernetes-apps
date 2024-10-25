@@ -35,7 +35,7 @@ jobs:
       uses: fluxcd/flux2/action@896e0fa46d5107a05e953dd0a5261d78a145ec8c # v2.3.0
       with:
         # renovate: datasource=github-releases depName=fluxcd/flux2
-        version: "v2.3.0"
+        version: "v2.4.0"
 
     - name: Compute diffs
       uses: allenporter/flux-local/action/diff@1c5568b09bdd941ec029312fd44aeffb194ef766 # 5.5.1
