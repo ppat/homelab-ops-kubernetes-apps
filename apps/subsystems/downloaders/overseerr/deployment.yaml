@@ -28,7 +28,7 @@ spec:
           value: debug
         - name: TZ
           value: Etc/UTC
-        image: sctx/overseerr:1.33.2@sha256:714ea6db2bc007a2262d112bef7eec74972eb33d9c72bddb9cbd98b8742de950
+        image: ghcr.io/sct/overseerr:1.33.2@sha256:714ea6db2bc007a2262d112bef7eec74972eb33d9c72bddb9cbd98b8742de950
         imagePullPolicy: IfNotPresent
         livenessProbe:
           tcpSocket:
