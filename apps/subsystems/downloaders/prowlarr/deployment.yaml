@@ -63,7 +63,7 @@ spec:
             secretKeyRef:
               name: downloaders-db-app
               key: password
-        image: linuxserver/prowlarr:1.24.3.4754-ls88@sha256:a6fc8ab9ff34d82327d29f8b5bfb7a672c0e54a274e5e5b023db01c335d05dfd
+        image: ghcr.io/linuxserver/prowlarr:1.24.3.4754-ls88@sha256:a6fc8ab9ff34d82327d29f8b5bfb7a672c0e54a274e5e5b023db01c335d05dfd
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:

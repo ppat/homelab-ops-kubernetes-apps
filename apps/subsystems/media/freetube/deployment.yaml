@@ -28,7 +28,7 @@ spec:
           value: "1000"
         - name: TZ
           value: Etc/UTC
-        image: linuxserver/freetube:168465262-ls29@sha256:2ae3326e06a58d51c7e4e62079f44d664c0cc68489ac258755b679509636c6cd
+        image: ghcr.io/linuxserver/freetube:168465262-ls29@sha256:2ae3326e06a58d51c7e4e62079f44d664c0cc68489ac258755b679509636c6cd
         imagePullPolicy: IfNotPresent
         livenessProbe:
           tcpSocket:
