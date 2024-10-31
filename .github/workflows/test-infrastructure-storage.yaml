@@ -51,9 +51,6 @@ jobs:
         - resource: daemonset/longhorn-manager
           namespace: longhorn-system
           timeout: 1m
-        - resource: daemonset/longhorn-csi-plugin
-          namespace: longhorn-system
-          timeout: 1m
         - resource: deployment/csi-attacher
           namespace: longhorn-system
           for: condition=available

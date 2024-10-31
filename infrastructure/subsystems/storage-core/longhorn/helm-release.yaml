@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: longhorn-repository
         namespace: flux-system
-      version: 1.7.1
+      version: 1.7.2
   install:
     crds: CreateReplace
     createNamespace: false
@@ -32,6 +32,11 @@ spec:
       retries: 3
       strategy: rollback
   values:
+    global:
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+
     defaultSettings:
       allowCollectingLonghornUsageMetrics: false
       allowRecurringJobWhileVolumeDetached: true
@@ -44,19 +49,6 @@ spec:
       snapshotDataIntegrityCronjob: "0 4 * * *"
       snapshotDataIntegrityImmediateCheckAfterSnapshotCreation: false
       taintToleration: node-role.kubernetes.io/control-plane=true:NoSchedule
-
-    longhornManager:
-      tolerations:
-      - key: node-role.kubernetes.io/control-plane
-        operator: Exists
-    longhornDriver:
-      tolerations:
-      - key: node-role.kubernetes.io/control-plane
-        operator: Exists
-    longhornUI:
-      tolerations:
-      - key: node-role.kubernetes.io/control-plane
-        operator: Exists
 
     metrics:
       serviceMonitor:
