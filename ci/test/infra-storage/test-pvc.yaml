@@ -1,0 +1,29 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: test-storage-class
+allowVolumeExpansion: true
+parameters:
+  fsType: ext4
+  dataLocality: "best-effort"
+  numberOfReplicas: "2"
+provisioner: driver.longhorn.io
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: test-pvc
+  namespace: default
+  labels:
+    recurring-job.longhorn.io/source: enabled
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: test-storage-class
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi

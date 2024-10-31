@@ -51,8 +51,13 @@ jobs:
         - resource: daemonset/longhorn-manager
           namespace: longhorn-system
           timeout: 1m
-        - resource: daemonset/longhorn-csi-plugin
-          namespace: longhorn-system
+        - resource: storageclass/test-storage-class
+          namespace: "-"
+          for: jsonpath={.metadata.creationTimestamp}
+          timeout: 1m
+        - resource: persistentvolumeclaim/test-pvc
+          namespace: default
+          for: jsonpath={.status.phase}=Bound
           timeout: 1m
         - resource: deployment/csi-attacher
           namespace: longhorn-system
@@ -70,6 +75,9 @@ jobs:
           namespace: longhorn-system
           for: condition=available
           timeout: 1m
+        - resource: daemonset/longhorn-csi-plugin
+          namespace: longhorn-system
+          timeout: 1m
       git_url: https://github.com/${{ github.repository }}.git
       git_ref: ${{ github.head_ref || github.ref }}
       kind_cluster_config: kind-cluster-multi-node.yaml
@@ -77,5 +85,5 @@ jobs:
       custom_commands: |-
         - name: show-events
           command: 'kubectl get -n minio events --sort-by=.lastTimestamp'
-        - name: show-events
+        - name: show-events-ls
           command: 'kubectl get -n longhorn-system events --sort-by=.lastTimestamp'

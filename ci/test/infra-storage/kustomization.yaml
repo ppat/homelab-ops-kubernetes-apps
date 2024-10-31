@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
 - infra-storage-core.yaml
+- test-pvc.yaml
 
 sortOptions:
   order: fifo
