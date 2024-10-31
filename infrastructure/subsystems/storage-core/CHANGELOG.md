@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.0.3...infra-storage-core-v0.0.4) (2024-10-31)
+
+
+### ✨ Features
+
+* **infra-storage-core:** update longhorn (1.6.2 -&gt; 1.7.2) ([#99](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/99)) ([9d9c25c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9d9c25cb838d6fdf2476074d8576afa55132b74c))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** move longhorn prometheus rule to longhorn-system namespace ([#210](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/210)) ([ad7ace4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ad7ace40e42804f37ebb00af900bbde4310c2646))
+
 ## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.0.2...infra-storage-core-v0.0.3) (2024-10-13)
 
 
