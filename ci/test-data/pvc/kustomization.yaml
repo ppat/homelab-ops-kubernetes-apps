@@ -6,6 +6,6 @@ resources:
 - freetube-data.yaml
 - pihole-data.yaml
 - plex-data.yaml
-- plex-media.yaml
+- media-read-only.yaml
 - unifi-data.yaml
 - unifi-db-data.yaml
