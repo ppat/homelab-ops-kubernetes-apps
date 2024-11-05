@@ -141,4 +141,3 @@ export PLEX_MEDIA_SERVER_INFO_DEVICE="Docker Container"
 export PLEX_MEDIA_SERVER_INFO_MODEL="$(uname -m)"
 export PLEX_MEDIA_SERVER_INFO_PLATFORM_VERSION="$(uname -r)"
 exec /usr/lib/plexmediaserver/Plex\ Media\ Server
-echo

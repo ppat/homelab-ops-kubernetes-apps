@@ -105,7 +105,6 @@ spec:
         - mountPath: /data
           name: plex-media
           readOnly: true
-          subPath: plex
         - mountPath: "/var/log/plex"
           name: plex-logs
         - mountPath: /scripts
@@ -118,8 +117,6 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
         runAsGroup: 1000
-        fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
         # use a kustomize overlay to update w/
         # - MEDIA_READER_GID (i.e. group w/ read access to plex-media volume)
         # - TRANSCODER_DEV_GIDS (i.e. groups w/ access to /dev/dri/*)
@@ -132,7 +129,7 @@ spec:
         emptyDir: {}
       - name: plex-media
         persistentVolumeClaim:
-          claimName: plex-media
+          claimName: media-read-only
       - name: plex-logs
         # plex writes logs to multiple different log files:
         #     'PMS Plugin Logs/*.log'
