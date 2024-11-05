@@ -60,16 +60,8 @@ spec:
       - name: syslog-config
         configMap:
           name: syslog-config
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-              - key: node-role.kubernetes.io/control-plane
-                operator: In
-                values:
-                - "true"
+      nodeSelector:
+        kubernetes.io/arch: amd64
       tolerations:
       - key: node-role.kubernetes.io/control-plane
         operator: Exists

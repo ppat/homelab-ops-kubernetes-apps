@@ -10,6 +10,7 @@ on:
     - '.github/kind-cluster-multi-node.yaml'
     - 'ci/test/infra-observability/**.yaml'
     - 'infrastructure/subsystems/observability-core/**.yaml'
+    - 'infrastructure/subsystems/observability-extra/**.yaml'
   workflow_dispatch:
 
 concurrency:
