@@ -39,7 +39,7 @@ spec:
             secretKeyRef:
               key: pihole_password
               name: pihole-secrets
-              optional: false
+              optional: true
         envFrom:
         - configMapRef:
             name: pihole-optional-config
