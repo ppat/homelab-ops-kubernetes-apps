@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.0.3...infra-networking-extra-v0.0.4) (2024-11-08)
+
+
+### ✨ Features
+
+* **infra-networking-extra:** update linuxserver/unifi-network-application (8.3.32 -&gt; 8.5.6) ([#176](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/176)) ([2b25c95](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2b25c95b905d0844f6a913ac213b89496eafd1e5))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** set unifi + unifi-db's affinity to any amd64 nodes instead of control-plane nodes ([#224](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/224)) ([a378845](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a378845862fe46a3717f3342a98793760459d1ad))
+* **infra-networking-extra:** update docker.io/mongo (7.0.14 -&gt; 7.0.15) ([#198](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/198)) ([364836a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/364836a1d1269b473ad9db35da3c0d00c4f20567))
+
 ## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.0.2...infra-networking-extra-v0.0.3) (2024-10-13)
 
 
