@@ -59,7 +59,6 @@ spec:
         - 127.0.0.1
         - ${dns_fallback:=1.1.1.1}
       dnsPolicy: None
-      hostname: unbound
       volumes:
       - name: unbound-config-volume
         configMap:
