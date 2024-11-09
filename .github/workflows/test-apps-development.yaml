@@ -33,6 +33,14 @@ jobs:
           timeout: 2m
       # yamllint disable-line rule:indentation
       success_conditions: |-
+        - resource: deployment/cloudnative-pg
+          namespace: cnpg-system
+          for: condition=available
+          timeout: 1m
+        - resource: cluster.postgresql.cnpg.io/coder-db
+          namespace: coder
+          for: condition=ready
+          timeout: 3m
         - resource: deployment/coder
           namespace: coder
           for: condition=available
@@ -43,7 +51,7 @@ jobs:
       # yamllint disable-line rule:indentation
       custom_commands: |-
         - name: show-hr
-          command: 'kubectl get -n coder events'
+          command: 'kubectl get -n coder events --sort-by=.lastTimestamp'
         - name: desc-coder
           command: 'kubectl describe -n coder deployment/coder'
         - name: logs-coder

@@ -88,6 +88,8 @@ spec:
         enable: false
       replicaCount: 1
       resources: {}
+      service:
+        type: ClusterIP
       serviceAccount:
         workspacePerms: true
         enableDeployments: true

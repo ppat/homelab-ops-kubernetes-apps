@@ -13,8 +13,19 @@ spec:
   - secretName: coder-tls-cert
     hosts:
     - 'coder.${domain_name}'
+    - '*.coder.${domain_name}'
   rules:
   - host: coder.${domain_name}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: coder
+            port:
+              name: http
+  - host: '*.coder.${domain_name}'
     http:
       paths:
       - path: /
