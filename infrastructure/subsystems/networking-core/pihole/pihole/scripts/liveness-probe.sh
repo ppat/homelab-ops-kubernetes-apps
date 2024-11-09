@@ -20,6 +20,6 @@ UPSTREAM_HOST=$(cat /var/run/pihole/__upstream_current)
 UPSTREAM_RESULT="$(dig +short +retry=0 @$UPSTREAM_HOST cloudflare.com)"
 test ! -z "$UPSTREAM_RESULT"
 
-#   2) dns resolution by pihole itself
+# 2) dns resolution by pihole itself
 PIHOLE_RESULT="$(dig +short +retry=0 +norecurse '@127.0.0.1' pi.hole)"
 test ! -z "$PIHOLE_RESULT"
