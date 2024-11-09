@@ -98,7 +98,6 @@ spec:
         - 127.0.0.1
         - ${dns_fallback:=1.1.1.1}
       dnsPolicy: None
-      hostname: pihole
       volumes:
       - name: pihole-data
         persistentVolumeClaim:
