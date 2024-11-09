@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # For the liveness probe, we're testing 2 things:
 #   1) dns resolution by upstream server
@@ -14,6 +15,11 @@
 #   2) additionally if pihole itself can't resolve DNS, then a restart could potentially
 #      solve that issue.
 
+# 1) dns resolution by upstream server
 UPSTREAM_HOST=$(cat /var/run/pihole/__upstream_current)
-dig +short +retry=0 @$UPSTREAM_HOST cloudflare.com
-dig +short +retry=0 +norecurse '@127.0.0.1' pi.hole
+UPSTREAM_RESULT="$(dig +short +retry=0 @$UPSTREAM_HOST cloudflare.com)"
+test ! -z "$UPSTREAM_RESULT"
+
+# 2) dns resolution by pihole itself
+PIHOLE_RESULT="$(dig +short +retry=0 +norecurse '@127.0.0.1' pi.hole)"
+test ! -z "$PIHOLE_RESULT"
