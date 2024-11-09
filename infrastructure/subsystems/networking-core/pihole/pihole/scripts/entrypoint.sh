@@ -89,6 +89,15 @@ configure_upstream() {
   fi
 }
 
+configure_cluster_dns() {
+  local -r router_host="$1"
+  local -r cluster_domain="$2"
+
+  echo "Configuring pi-hole for cluster dns..."
+  echo "  Delegating resolution of external-dns created DNS records to router..."
+  echo "server=/$cluster_domain/$router_host" > /etc/dnsmasq.d/11-cluster.conf
+}
+
 main() {
   echo "Detecting and configuring pihole upstream based on kubernetes service env vars..."
   echo
@@ -98,6 +107,10 @@ main() {
     echo "Configuring router ($REV_SERVER_TARGET) in /etc/hosts..."
     echo -e "$REV_SERVER_TARGET\trouter" >> /etc/hosts
     echo
+    if [[ ! -z "${CLUSTER_DOMAIN}" ]]; then
+      configure_cluster_dns "$REV_SERVER_TARGET" "$CLUSTER_DOMAIN"
+      echo
+    fi
   fi
   echo "Starting pihole..."
   exec /s6-init

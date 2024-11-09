@@ -34,6 +34,8 @@ spec:
           value: ${pihole_external_ip_address}
         - name: VIRTUAL_HOST
           value: pihole.${domain_name}
+        - name: CLUSTER_DOMAIN
+          value: ${domain_name}
         - name: WEBPASSWORD
           valueFrom:
             secretKeyRef:
