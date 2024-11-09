@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-development-v0.0.4...apps-development-v0.0.5) (2024-11-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-development:** fix coder ingress ([#229](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/229)) ([3c56f87](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3c56f87c78a45f43fd4827132ecb11259580d8be))
+
 ## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-development-v0.0.3...apps-development-v0.0.4) (2024-11-07)
 
 
