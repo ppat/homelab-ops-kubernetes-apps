@@ -9,8 +9,10 @@ on:
     - '.github/workflows/test-infrastructure-networking.yaml'
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/infra-networking/**.yaml'
-    - 'infrastructure/subsystems/networking-core/**.yaml'
+    - 'infrastructure/subsystems/networking-core/**/*.yaml'
+    - 'infrastructure/subsystems/networking-core/**/*.sh'
     - 'infrastructure/subsystems/networking-extra/**.yaml'
+    - 'infrastructure/subsystems/networking-extra/**.sh'
   workflow_dispatch:
 
 concurrency:
