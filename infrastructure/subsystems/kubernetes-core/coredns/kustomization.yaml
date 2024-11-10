@@ -4,3 +4,4 @@ kind: Kustomization
 
 resources:
 - coredns-custom.yaml
+- coredns-deployment.yaml
