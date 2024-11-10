@@ -9,3 +9,4 @@ resources:
 - media-read-only.yaml
 - unifi-data.yaml
 - unifi-db-data.yaml
+- tautulli-data.yaml
