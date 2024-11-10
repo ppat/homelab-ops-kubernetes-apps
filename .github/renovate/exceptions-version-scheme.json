@@ -12,7 +12,7 @@
       "versioning": "semver-coerced"
     },
     {
-      "description": "packages=[ppatlabs images] | configure version scheme",
+      "description": "packages=[linuxserver images] | configure version scheme",
       "matchDatasources": [
         "docker"
       ],
