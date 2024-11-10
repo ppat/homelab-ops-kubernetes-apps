@@ -11,3 +11,4 @@ data:
   plex_external_ip_address: 10.112.1.3
   syslog_external_ip_address: 10.112.1.4
   external_dns_ip_address: 10.112.1.1
+  jellyfin_external_ip_address: 10.112.1.5

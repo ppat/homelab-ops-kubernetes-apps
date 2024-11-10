@@ -1,0 +1,22 @@
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: jellyfin-pool
+  namespace: metallb-system
+spec:
+  addresses:
+  - ${jellyfin_external_ip_address}/32
+  avoidBuggyIPs: true
+  serviceAllocation:
+    namespaces:
+    - media
+    serviceSelectors:
+    - matchLabels:
+        app.kubernetes.io/name: jellyfin
+    - matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: In
+        values:
+        - jellyfin-tcp
+        - jellyfin-udp

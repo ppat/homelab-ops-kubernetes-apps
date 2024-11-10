@@ -30,4 +30,4 @@ spec:
         path: /spec/template/spec/containers/0/resources
     target:
       kind: Deployment
-      name: '^(plex|freetube)$'
+      name: '^(plex|freetube|jellyfin)$'
