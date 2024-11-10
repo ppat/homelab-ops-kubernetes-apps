@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
 - freetube-data.yaml
+- jellyfin-data.yaml
 - pihole-data.yaml
 - plex-data.yaml
 - media-read-only.yaml
