@@ -16,6 +16,19 @@
         "ghcr.io/fluxcd/notification-controller",
         "ghcr.io/fluxcd/source-controller"
       ]
+    },
+    {
+      "description": "exceptions | * | renovate bug where it attempts to update a flux helmrelease with a docker datasource instead of helm datasource",
+      "enabled": false,
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchUpdateTypes": [
+        "pinDigest"
+      ],
+      "matchPackageNames": [
+        "registry-1.docker.io/bitnamicharts/kubernetes-event-exporter"
+      ]
     }
   ]
 }

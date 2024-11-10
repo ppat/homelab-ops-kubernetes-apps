@@ -52,16 +52,6 @@ spec:
       kubeletService:
         enabled: false
 
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-              - key: node-role.kubernetes.io/control-plane
-                operator: In
-                values:
-                - "true"
       resources: {}
       tolerations:
       - key: node-role.kubernetes.io/control-plane
@@ -70,16 +60,6 @@ spec:
       admissionWebhooks:
         patch:
           resources: {}
-          affinity:
-            nodeAffinity:
-              preferredDuringSchedulingIgnoredDuringExecution:
-              - weight: 1
-                preference:
-                  matchExpressions:
-                  - key: node-role.kubernetes.io/control-plane
-                    operator: In
-                    values:
-                    - "true"
           tolerations:
           - key: node-role.kubernetes.io/control-plane
             operator: Exists
@@ -103,16 +83,6 @@ spec:
                   storage: ${alertmanager_storage_size}
         retention: ${alertmanager_retention_period}
 
-        affinity:
-          nodeAffinity:
-            preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 1
-              preference:
-                matchExpressions:
-                - key: node-role.kubernetes.io/control-plane
-                  operator: In
-                  values:
-                  - "true"
         resources: {}
         tolerations:
         - key: node-role.kubernetes.io/control-plane
@@ -173,16 +143,6 @@ spec:
         serviceMonitorSelectorNilUsesHelmValues: false
         scrapeConfigSelectorNilUsesHelmValues: false
 
-        affinity:
-          nodeAffinity:
-            preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 1
-              preference:
-                matchExpressions:
-                - key: node-role.kubernetes.io/control-plane
-                  operator: In
-                  values:
-                  - "true"
         resources:
           requests:
             cpu: 100m
@@ -267,16 +227,6 @@ spec:
 
     # -------------------------------------- kube-state-metrics subchart ------------------------------------------
     kube-state-metrics:
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-              - key: node-role.kubernetes.io/control-plane
-                operator: In
-                values:
-                - "true"
       tolerations:
       - key: node-role.kubernetes.io/control-plane
         operator: Exists
