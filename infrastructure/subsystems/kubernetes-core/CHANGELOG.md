@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-core-v0.0.2...infra-kubernetes-core-v0.0.3) (2024-11-10)
+
+
+### ✨ Features
+
+* **infra-kubernetes-core:** forward dns to dns provider used w/ external-dns to resolve DNS for those subdomains ([#241](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/241)) ([abb3cda](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/abb3cdacb3bcc56cf29c5e9d9be6561b200e8f78))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-kubernetes-core:** scale coredns to 3 replicas ([#243](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/243)) ([08db242](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/08db24205cc2992f890858e4a80d1b6a313ffbba))
+
 ## [0.0.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-core-v0.0.1...infra-kubernetes-core-v0.0.2) (2024-10-07)
 
 
