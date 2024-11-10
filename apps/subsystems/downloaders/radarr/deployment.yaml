@@ -63,7 +63,7 @@ spec:
             secretKeyRef:
               name: downloaders-db-app
               key: password
-        image: ghcr.io/linuxserver/radarr:5.11.0.9244-ls241@sha256:d758c5a5edc4cda1263260948b3f460f511430bccea505dca3cb70af01332ff8
+        image: ghcr.io/linuxserver/radarr:5.14.0@sha256:3329fbf778701cf53703b342b3a84da31caafec970ef9310be5723dd057666dc
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
