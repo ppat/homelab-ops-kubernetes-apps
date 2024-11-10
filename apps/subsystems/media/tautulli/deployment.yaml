@@ -1,0 +1,77 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tautulli
+  namespace: media
+  labels:
+    app.kubernetes.io/name: tautulli
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tautulli
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: tautulli
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: tautulli
+        command:
+        - /usr/local/bin/python
+        - Tautulli.py
+        args:
+        - --config
+        - /config/config.ini
+        - --datadir
+        - /config
+        - --port
+        - "8181"
+        env:
+        - name: TZ
+          value: Etc/UTC
+        image: ghcr.io/tautulli/tautulli:v2.14.6@sha256:f54d2d3a78780c765cd7a10b882474909f50247b5d2d118badaa9c035421effd
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /status
+            port: 8181
+        ports:
+        - name: tautulli
+          containerPort: 8181
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /status
+            port: 8181
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /config
+          name: tautulli-data
+        - mountPath: /config/logs
+          name: tautulli-logs
+        - mountPath: /tmp
+          name: tautulli-temp
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      volumes:
+      - name: tautulli-data
+        persistentVolumeClaim:
+          claimName: tautulli-data
+      - name: tautulli-logs
+        emptyDir: {}
+      - name: tautulli-temp
+        emptyDir: {}
