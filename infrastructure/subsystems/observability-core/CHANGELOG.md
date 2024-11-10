@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.1.1...infra-observability-core-v0.1.2) (2024-11-10)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** do not crowd control plane nodes with kube-prometheus-stack services ([#236](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/236)) ([e656d3d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e656d3d03cb32f190e5dc2ae66502f69214c3db0))
+
 ## [0.1.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.1.0...infra-observability-core-v0.1.1) (2024-11-10)
 
 
