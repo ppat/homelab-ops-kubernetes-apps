@@ -8,3 +8,24 @@ data:
   # yamllint disable-line rule:indentation
   log.override: |
     log . combined
+  # yamllint disable-line rule:indentation
+  localnet.server: |
+    (common_snippet) {
+      cache 30
+      errors
+      log . combined
+      loop
+      prometheus :9153
+      ready
+      reload
+      whoami
+    }
+    ${domain_name}:53 {
+      forward . ${external_dns_ip_address}:53
+      import common_snippet
+      loadbalance
+    }
+    nodes.${dns_zone}:53 {
+      forward . ${external_dns_ip_address}:53
+      import common_snippet
+    }

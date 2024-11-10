@@ -83,7 +83,7 @@
       "infrastructure/subsystems/clusterops-core/flux/gotk-components.yaml"
     ]
   },
-  "prConcurrentLimit": 30,
+  "prConcurrentLimit": 0,
   "prHourlyLimit": 0,
   "rebaseWhen": "behind-base-branch",
   "timezone": "US/Eastern"
