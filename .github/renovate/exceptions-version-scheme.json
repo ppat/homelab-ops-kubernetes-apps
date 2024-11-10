@@ -10,6 +10,16 @@
         "ppatlabs/{/,}**"
       ],
       "versioning": "semver-coerced"
+    },
+    {
+      "description": "packages=[ppatlabs images] | configure version scheme",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/linuxserver/{/,}**"
+      ],
+      "versioning": "semver-coerced"
     }
   ]
 }
