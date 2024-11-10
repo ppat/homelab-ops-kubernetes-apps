@@ -63,7 +63,7 @@ spec:
             secretKeyRef:
               name: downloaders-db-app
               key: password
-        image: ghcr.io/linuxserver/sonarr:4.0.10@sha256:c0281bd62b9a75f088fa4a09e5f8776431921883766633cb5e5fbd5a74761155
+        image: ghcr.io/linuxserver/sonarr:5.14@sha256:df3c854a38dcc001f2b87cf44a101d9da52cb22c22dcbaf135f825d9c9d0a844
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
