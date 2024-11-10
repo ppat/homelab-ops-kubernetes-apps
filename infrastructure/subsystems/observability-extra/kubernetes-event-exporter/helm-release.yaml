@@ -65,16 +65,6 @@ spec:
         - match:
           - receiver: "loki"
 
-    affinity:
-      nodeAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 1
-          preference:
-            matchExpressions:
-            - key: node-role.kubernetes.io/control-plane
-              operator: In
-              values:
-              - "true"
     resources: {}
     tolerations:
     - key: node-role.kubernetes.io/control-plane
