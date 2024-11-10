@@ -6,3 +6,4 @@ metadata:
   namespace: flux-system
 data:
   domain_name: cluster.example.com
+  dns_zone: example.com

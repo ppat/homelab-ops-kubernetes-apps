@@ -11,6 +11,8 @@ spec:
     substituteFrom:
     - kind: ConfigMap
       name: cluster-common-conf
+    - kind: ConfigMap
+      name: cluster-networking-conf
   prune: false
   sourceRef:
     kind: GitRepository
