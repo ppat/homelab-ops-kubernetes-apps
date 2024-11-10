@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.0.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.0.1...infra-observability-extra-v0.0.2) (2024-11-10)
+
+
+### ✨ Features
+
+* **infra-observability-extra:** update prometheus-snmp-exporter (5.5.1 -&gt; 5.6.0) ([#183](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/183)) ([0ac109c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0ac109c6cc1ad8044f5801a3f607e8aeece28628))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-extra:** add nodeselector for syslogng requiring an amd64 node ([#221](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/221)) ([4d3c376](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4d3c376cc20b8b316f79205d2018cd034cdb657c))
+* **infra-observability-extra:** do not crowd control plane nodes with kubernetes-event-exporter services ([#240](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/240)) ([895a805](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/895a805c8e68ca7705a00bdd4950f32efd3b3eb1))
+* **infra-observability-extra:** update kubernetes-event-exporter (3.2.14 -&gt; 3.2.15) ([#228](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/228)) ([0af0de7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0af0de7e5d10345ae6c1ac93de9645558e6f2fc2))
+
 ## 0.0.1 (2024-10-13)
 
 

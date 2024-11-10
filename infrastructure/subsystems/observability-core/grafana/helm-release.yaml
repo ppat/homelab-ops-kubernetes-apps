@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: grafana-repository
         namespace: flux-system
-      version: 8.5.11
+      version: 8.5.12
   install:
     crds: CreateReplace
     createNamespace: false
@@ -78,16 +78,6 @@ spec:
       pathType: Prefix
       tls: []
 
-    affinity:
-      nodeAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 1
-          preference:
-            matchExpressions:
-            - key: node-role.kubernetes.io/control-plane
-              operator: In
-              values:
-              - "true"
     resources: {}
     tolerations:
     - key: node-role.kubernetes.io/control-plane
