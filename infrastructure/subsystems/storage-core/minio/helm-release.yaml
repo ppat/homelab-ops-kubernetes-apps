@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: minio-repository
         namespace: flux-system
-      version: 5.2.0
+      version: 5.3.0
   install:
     crds: CreateReplace
     createNamespace: false
