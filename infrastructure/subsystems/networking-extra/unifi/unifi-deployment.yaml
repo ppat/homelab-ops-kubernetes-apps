@@ -127,6 +127,12 @@ spec:
           mountPath: /config/data
         - name: unifi-logs
           mountPath: /config/logs
+        - name: unifi-backups
+          mountPath: /config/data/firmware
+          subPath: firmware
+        - name: unifi-backups
+          mountPath: /config/data/backup
+          subPath: backup
       volumes:
       - name: unifi-data
         persistentVolumeClaim:
@@ -140,6 +146,9 @@ spec:
         hostPath:
           path: /var/log/unifi
           type: DirectoryOrCreate
+      - name: unifi-backups
+        persistentVolumeClaim:
+          claimName: unifi-backups
       affinity:
         nodeAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
