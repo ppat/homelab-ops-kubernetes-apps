@@ -8,6 +8,7 @@ resources:
 - pihole-data.yaml
 - plex-data.yaml
 - media-read-only.yaml
+- unifi-backups.yaml
 - unifi-data.yaml
 - unifi-db-data.yaml
 - tautulli-data.yaml
