@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.0.2...apps-downloaders-v0.0.3) (2024-11-15)
+
+
+### ✨ Features
+
+* **apps-downloaders:** update ghcr.io/recyclarr/recyclarr (7.3.0 -&gt; 7.4.0) ([#262](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/262)) ([0001910](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0001910c2acb97789c6dacc03d8973281c80d754))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-downloaders:** update digest ghcr.io/linuxserver/bazarr (8868433 -&gt; 7391c8c) ([#266](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/266)) ([bafae53](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/bafae53341aaa1c9bf1beb852077c3bcf63a71b2))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/lidarr (c4d9107 -&gt; 5c1f7a0) ([#270](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/270)) ([52dc577](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/52dc57706aba2e096653e69d07abadc4399ea619))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/prowlarr (1e2fffd -&gt; 7cd854d) ([#271](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/271)) ([1546247](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1546247f02a6e2267bc29026c502470548c48425))
+
 ## [0.0.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.0.1...apps-downloaders-v0.0.2) (2024-11-10)
 
 
