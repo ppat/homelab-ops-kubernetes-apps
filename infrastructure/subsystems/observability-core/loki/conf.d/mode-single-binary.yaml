@@ -11,13 +11,6 @@ loki:
 singleBinary:
   replicas: 1
   resources: {}
-  affinity:
-    podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchLabels:
-            app.kubernetes.io/component: single-binary
-        topologyKey: kubernetes.io/hostname
   tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists

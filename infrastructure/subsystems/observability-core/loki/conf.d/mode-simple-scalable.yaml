@@ -9,13 +9,6 @@ write:
   autoscaling:
     enabled: false
   resources: {}
-  affinity:
-    podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchLabels:
-            app.kubernetes.io/component: write
-        topologyKey: kubernetes.io/hostname
   tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists
@@ -27,13 +20,6 @@ read:
   autoscaling:
     enabled: false
   resources: {}
-  affinity:
-    podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchLabels:
-            app.kubernetes.io/component: read
-        topologyKey: kubernetes.io/hostname
   tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists
@@ -45,13 +31,6 @@ backend:
   autoscaling:
     enabled: false
   resources: {}
-  affinity:
-    podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-          matchLabels:
-            app.kubernetes.io/component: backend
-        topologyKey: kubernetes.io/hostname
   tolerations:
   - key: node-role.kubernetes.io/control-plane
     operator: Exists
