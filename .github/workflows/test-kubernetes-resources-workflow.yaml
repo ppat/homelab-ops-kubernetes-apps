@@ -45,7 +45,7 @@ jobs:
         cluster_name: dev
         config: ".github/${{ inputs.kind_cluster_config }}"
         # renovate: datasource=github-releases depName=kubernetes-sigs/kind
-        version: "v0.24.0"
+        version: "v0.25.0"
 
     - name: Setup kubectl
       uses: fluxcd/pkg/actions/kubectl@2cbdbf505138bff429dcd8a170ae9d49aa591ac9

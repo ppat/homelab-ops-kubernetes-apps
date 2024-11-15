@@ -20,6 +20,17 @@
         "ghcr.io/linuxserver/{/,}**"
       ],
       "versioning": "semver-coerced"
+    },
+    {
+      "description": "packages=[various] | configure version scheme",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "plexinc/pms-docker",
+        "madnuttah/unbound"
+      ],
+      "versioning": "loose"
     }
   ]
 }

@@ -89,7 +89,7 @@ spec:
           name: jellyfin-data
         - mountPath: /cache
           name: jellyfin-cache
-        - mountPath: /media
+        - mountPath: /data
           name: jellyfin-media
           readOnly: true
         - mountPath: "/config/log"

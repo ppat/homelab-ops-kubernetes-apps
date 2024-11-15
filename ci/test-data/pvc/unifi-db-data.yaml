@@ -8,8 +8,6 @@ metadata:
     app.kubernetes.io/name: unifi-db
     app.kubernetes.io/part-of: unifi
     app.kubernetes.io/component: database
-  annotations:
-    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes:
   - ReadWriteOnce

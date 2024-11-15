@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.0.4...infra-networking-extra-v0.0.5) (2024-11-15)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** re-locate unifi data and firmware backups to a separate PVC mount ([#288](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/288)) ([459bc67](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/459bc6728dcd10ebd165020677e8fbfe71f94164))
+* **infra-networking-extra:** update digest docker.io/mongo (7ba1f8f -&gt; 8ff7333) ([#274](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/274)) ([b4c3d54](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b4c3d54bc1f7eb5fe691cad04b9bfc6802a5217e))
+
 ## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.0.3...infra-networking-extra-v0.0.4) (2024-11-08)
 
 
