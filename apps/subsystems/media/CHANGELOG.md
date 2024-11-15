@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.3...apps-media-v0.0.4) (2024-11-15)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** switch jellyfin's media volume mount path to be /data ([#287](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/287)) ([f775d33](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f775d33afffa03ca4409ab071c6c75b7be5928ff))
+* **apps-media:** update plexinc/pms-docker (1.41.0.8992-8463ad060 -&gt; 1.41.1.9057-af5eaea7a) ([#280](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/280)) ([cbb1f1e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/cbb1f1e0b813e630cb4d6272869c7482bfaf38a8))
+
 ## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.2...apps-media-v0.0.3) (2024-11-10)
 
 
