@@ -23,3 +23,30 @@ spec:
     namespace: flux-system
   timeout: 2m0s
   wait: true
+  patches:
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      - op: remove
+        path: /spec/values/proxyClass
+    target:
+      group: helm.toolkit.fluxcd.io
+      kind: HelmRelease
+      name: tailscale-operator
+      namespace: tailscale
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      - op: remove
+        path: /spec/proxyClass
+    target:
+      kind: Connector
+      name: homelab
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      $patch: delete
+      apiVersion: tailscale.com/v1alpha1
+      kind: ProxyClass
+      metadata:
+        name: tun-access
+    target:
+      kind: ProxyClass
+      name: tun-access
