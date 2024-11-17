@@ -7,6 +7,7 @@ resources:
 - node-feature-discovery/
 - vertical-pod-autoscaler/
 - intel-device-plugins/
+- generic-device-plugin/
 
 sortOptions:
   order: fifo
