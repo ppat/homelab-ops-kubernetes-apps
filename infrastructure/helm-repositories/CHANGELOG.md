@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-helm-repositories-v0.0.3...infra-helm-repositories-v0.0.4) (2024-11-18)
+
+
+### ✨ Features
+
+* **infra-clusterops-extra:** add crossplane ([#301](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/301)) ([7bc41be](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7bc41bedbb79f4480d64ac5a6fb0fae5fbb3654b))
+
 ## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-helm-repositories-v0.0.2...infra-helm-repositories-v0.0.3) (2024-11-18)
 
 
