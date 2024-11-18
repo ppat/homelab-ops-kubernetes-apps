@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.4...infra-kubernetes-extra-v0.0.5) (2024-11-18)
+
+
+### ✨ Features
+
+* **infra-kubernetes-extra:** add generic-device-plugin ([#295](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/295)) ([c89d977](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c89d977f8140b1dbacc0a364cbb620cc85914fb9))
+* **infra-kubernetes-extra:** update vpa (4.6.0 -&gt; 4.7.0) ([#265](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/265)) ([9641960](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9641960b26453448e13095aec32f560c137ff409))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-kubernetes-extra:** update vpa (4.7.0 -&gt; 4.7.1) ([#268](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/268)) ([8eaca84](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8eaca841b3f3644ad514f50f90d95321598a14a1))
+
 ## [0.0.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.4...infra-kubernetes-extra-v0.0.5) (2024-11-17)
 
 
