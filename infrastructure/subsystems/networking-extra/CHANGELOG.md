@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.0.5...infra-networking-extra-v0.0.6) (2024-11-18)
+
+
+### ✨ Features
+
+* **infra-networking-extra:** add tailscale-operator w/ connector configuration for subnet-routes + exit-node ([#296](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/296)) ([71b0096](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/71b0096b8ecf04b151d14d532c8229efb08daa37))
+
 ## [0.0.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.0.4...infra-networking-extra-v0.0.5) (2024-11-15)
 
 
