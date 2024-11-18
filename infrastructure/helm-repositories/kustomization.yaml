@@ -6,6 +6,7 @@ resources:
 - bitnami.yaml
 - cert-manager.yaml
 - cloudnative-pg.yaml
+- crossplane.yaml
 - csi-driver-nfs.yaml
 - external-dns.yaml
 - external-secrets.yaml
