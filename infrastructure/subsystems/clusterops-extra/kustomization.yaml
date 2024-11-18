@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
 - namespace.yaml
+- crossplane/
 - goldilocks/
 - stakater-reloader/
 - tf-controller/

@@ -2,29 +2,27 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: tf-controller-release
-  namespace: flux-system
+  name: tailscale-operator
+  namespace: tailscale
 spec:
   chart:
     spec:
-      chart: tf-controller
+      chart: tailscale-operator
       interval: 24h0m0s
       reconcileStrategy: ChartVersion
       sourceRef:
         kind: HelmRepository
-        name: tf-controller-repository
+        name: tailscale-repository
         namespace: flux-system
-      version: v0.15.1
+      version: 1.76.6
   install:
-    crds: CreateReplace
     createNamespace: false
     remediation:
       retries: 3
   interval: 15m0s
-  releaseName: tf-controller
-  targetNamespace: flux-system
+  releaseName: tailscale-operator
+  targetNamespace: tailscale
   upgrade:
-    crds: CreateReplace
     cleanupOnFail: true
     remediation:
       ignoreTestFailures: false
@@ -32,11 +30,7 @@ spec:
       strategy: rollback
 
   values:
-    tolerations:
-    - key: node-role.kubernetes.io/control-plane
-      operator: Exists
-
-    metrics:
-      enabled: true
-      serviceMonitor:
-        enabled: true
+    operatorConfig:
+      hostname: "tailscale-operator"
+    apiServerProxyConfig:
+      mode: "false"

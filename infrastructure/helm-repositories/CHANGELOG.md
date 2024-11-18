@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-helm-repositories-v0.0.3...infra-helm-repositories-v0.0.4) (2024-11-18)
+
+
+### ✨ Features
+
+* **infra-clusterops-extra:** add crossplane ([#301](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/301)) ([7bc41be](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7bc41bedbb79f4480d64ac5a6fb0fae5fbb3654b))
+
+## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-helm-repositories-v0.0.2...infra-helm-repositories-v0.0.3) (2024-11-18)
+
+
+### ✨ Features
+
+* **infra-networking-extra:** add tailscale-operator w/ connector configuration for subnet-routes + exit-node ([#296](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/296)) ([71b0096](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/71b0096b8ecf04b151d14d532c8229efb08daa37))
+
 ## [0.0.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-helm-repositories-v0.0.1...infra-helm-repositories-v0.0.2) (2024-10-07)
 
 

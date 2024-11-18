@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.4...apps-media-v0.0.5) (2024-11-18)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** update ghcr.io/jellyfin/jellyfin (10.10.1 -&gt; 10.10.2) ([#294](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/294)) ([d3c7ed3](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d3c7ed3b6e83e8461cf78810f2e2f00086b5773a))
+* **apps-media:** update plexinc/pms-docker (1.41.1.9057-af5eaea7a -&gt; 1.41.2.9200-c6bbc1b53) ([#290](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/290)) ([4029c8c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4029c8c0e5dde22ba469c82c3b07cc64d93d59bc))
+
 ## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.3...apps-media-v0.0.4) (2024-11-15)
 
 

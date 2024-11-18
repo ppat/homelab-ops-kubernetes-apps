@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-extra-v0.1.0...infra-clusterops-extra-v0.1.1) (2024-11-18)
+
+
+### ✨ Features
+
+* **infra-clusterops-extra:** add crossplane ([#301](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/301)) ([7bc41be](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7bc41bedbb79f4480d64ac5a6fb0fae5fbb3654b))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-clusterops-extra:** drop unnecessary affinity to control plane nodes in clusterops-extra ([#304](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/304)) ([e63584b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e63584bb423db1b03dec41c78d46c738724e84e8))
+
 ## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-extra-v0.0.1...infra-clusterops-extra-v0.1.0) (2024-10-07)
 
 

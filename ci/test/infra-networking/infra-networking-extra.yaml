@@ -23,3 +23,17 @@ spec:
     namespace: flux-system
   timeout: 2m0s
   wait: true
+  patches:
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      $patch: delete
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: tailscale-operator
+        namespace: tailscale
+    target:
+      group: helm.toolkit.fluxcd.io
+      kind: HelmRelease
+      name: tailscale-operator
+      namespace: tailscale

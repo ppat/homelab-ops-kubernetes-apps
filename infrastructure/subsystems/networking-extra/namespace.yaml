@@ -8,3 +8,13 @@ metadata:
     kustomize.toolkit.fluxcd.io/ssa: merge
   labels:
     goldilocks.fairwinds.com/enabled: "true"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tailscale
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+    kustomize.toolkit.fluxcd.io/ssa: merge
+  labels:
+    goldilocks.fairwinds.com/enabled: "true"
