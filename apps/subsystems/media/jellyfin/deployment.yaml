@@ -21,7 +21,7 @@ spec:
       automountServiceAccountToken: false
       initContainers:
       - name: volume-permissions
-        image: busybox@sha256:c230832bd3b0be59a6c47ed64294f9ce71e91b327957920b6929a0caa8353140
+        image: busybox@sha256:5b0f33c83a97f5f7d12698df6732098b0cdb860d377f6307b68efe2c6821296f
         command:
         - "/bin/sh"
         - "-c"
