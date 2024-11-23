@@ -65,16 +65,6 @@ spec:
         - 127.0.0.1
         - ${dns_fallback:=1.1.1.1}
       dnsPolicy: None
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-              - key: node-role.kubernetes.io/control-plane
-                operator: In
-                values:
-                - "true"
       tolerations:
       - key: node-role.kubernetes.io/control-plane
         operator: Exists
