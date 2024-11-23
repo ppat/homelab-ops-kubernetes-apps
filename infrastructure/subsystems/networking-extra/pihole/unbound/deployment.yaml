@@ -64,16 +64,6 @@ spec:
         configMap:
           name: unbound-config
           optional: false
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-              - key: node-role.kubernetes.io/control-plane
-                operator: In
-                values:
-                - "true"
       tolerations:
       - key: node-role.kubernetes.io/control-plane
         operator: Exists
