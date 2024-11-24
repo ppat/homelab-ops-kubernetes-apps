@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.0.6...infra-networking-extra-v0.1.0) (2024-11-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-networking-extra:** move pihole + unbound + cloudflared-doh from networking-core to networking-extra ([#335](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/335))
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** drop affinity setting for networking-core + networking-extra subsystem apps ([#337](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/337)) ([825192c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/825192c655ecf6fad55b1728f37fe5a6c0292924))
+* **infra-networking-extra:** move pihole + unbound + cloudflared-doh from networking-core to networking-extra ([#335](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/335)) ([b1fe04a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b1fe04ad3d28a6674a5c7676a591590ec458d8ee))
+
 ## [0.0.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.0.5...infra-networking-extra-v0.0.6) (2024-11-18)
 
 
