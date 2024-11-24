@@ -61,6 +61,8 @@ spec:
     image:
       # renovate: datasource=docker depName=minio/minio
       tag: "RELEASE.2024-11-07T00-52-20Z"
+    deploymentUpdate:
+      type: Recreate
     existingSecret: minio-admin-credentials
     persistence:
       enabled: true
@@ -87,31 +89,11 @@ spec:
     resources:
       requests:
         memory: 1Gi
-    affinity:
-      nodeAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 1
-          preference:
-            matchExpressions:
-            - key: node-role.kubernetes.io/control-plane
-              operator: In
-              values:
-              - "true"
     tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
 
     postJob:
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-              - key: node-role.kubernetes.io/control-plane
-                operator: In
-                values:
-                - "true"
       tolerations:
       - key: node-role.kubernetes.io/control-plane
         operator: Exists
