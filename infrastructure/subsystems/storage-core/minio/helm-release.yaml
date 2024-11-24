@@ -59,8 +59,7 @@ spec:
     mode: standalone
     ignoreChartChecksums: true
     image:
-      # yamllint disable-line rule:line-length
-      # renovate: datasource=github-releases depName=minio/minio versioning=regex:^RELEASE\\.(?<major>\\d{4})-(?<minor>\\d{2})-(?<patch>\\d{2})
+      # renovate: datasource=docker depName=minio/minio versioning=loose
       tag: "RELEASE.2024-04-18T19-09-19Z"
     existingSecret: minio-admin-credentials
     persistence:
