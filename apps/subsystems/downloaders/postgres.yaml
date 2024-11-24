@@ -4,6 +4,8 @@ kind: Cluster
 metadata:
   name: downloaders-db
   namespace: downloaders
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   bootstrap:
     initdb:

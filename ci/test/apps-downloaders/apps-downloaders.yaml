@@ -12,15 +12,6 @@ spec:
     substitute:
       MEDIA_WRITER_UID: "22222"
       MEDIA_WRITER_GID: "22222"
-      DATA_VOLUME_STORAGE_CLASS: standard
-      DATA_VOLUME_BAZARR_SIZE: 1Gi
-      DATA_VOLUME_LIDARR_SIZE: 1Gi
-      DATA_VOLUME_OVERSEERR_SIZE: 1Gi
-      DATA_VOLUME_PROWLARR_SIZE: 1Gi
-      DATA_VOLUME_RADARR_SIZE: 1Gi
-      DATA_VOLUME_RECYCLARR_SIZE: 1Gi
-      DATA_VOLUME_SABNZBD_SIZE: 1Gi
-      DATA_VOLUME_SONARR_SIZE: 1Gi
       POSTGRES_DB_STORAGE_CLASS: standard
       POSTGRES_DB_SIZE: 1Gi
       # see: https://fluxcd.io/flux/components/kustomize/kustomizations/#post-build-substitution-of-numbers-and-booleans

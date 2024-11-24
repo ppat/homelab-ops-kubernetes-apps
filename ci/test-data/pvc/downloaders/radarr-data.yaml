@@ -2,15 +2,14 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: sonarr-data
+  name: radarr-data
   namespace: downloaders
   labels:
-    app.kubernetes.io/name: sonarr
+    app.kubernetes.io/name: radarr
 spec:
   accessModes:
   - ReadWriteOnce
-  storageClassName: ${DATA_VOLUME_STORAGE_CLASS}
   resources:
     requests:
-      storage: ${DATA_VOLUME_SONARR_SIZE}
+      storage: 1Gi
   volumeMode: Filesystem
