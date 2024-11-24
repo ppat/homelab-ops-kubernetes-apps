@@ -3,4 +3,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- cronjob.yaml
+- pihole-data.yaml
+- unifi-backups.yaml
+- unifi-data.yaml
+- unifi-db-data.yaml
