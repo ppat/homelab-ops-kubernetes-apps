@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.0.5...infra-storage-core-v0.0.6) (2024-11-24)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** set minio deployment's update strategy to recreate as we use standalone mode ([#351](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/351)) ([1e659df](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1e659df5c3d79b03b6f84a0844deb57d8ee250ce))
+
 ## [0.0.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.0.4...infra-storage-core-v0.0.5) (2024-11-24)
 
 
