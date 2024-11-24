@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.3.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.2.0...infra-networking-core-v0.3.0) (2024-11-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-networking-extra:** move pihole + unbound + cloudflared-doh from networking-core to networking-extra ([#335](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/335))
+
+### ✨ Features
+
+* **infra-networking-core:** update madnuttah/unbound (1.20.0-5 -&gt; 1.22.0-1) ([#283](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/283)) ([93b15e7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/93b15e72b31958961576d66663624d747814bcf6))
+* **infra-networking-core:** update visibilityspots/cloudflared (v2024.10.1 -&gt; v2024.11.0) ([#284](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/284)) ([ca72ce2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ca72ce2fe9cfc08fa48cfc408b35aeee39b223a8))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** drop affinity setting for networking-core + networking-extra subsystem apps ([#337](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/337)) ([825192c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/825192c655ecf6fad55b1728f37fe5a6c0292924))
+* **infra-networking-core:** update digest busybox (5b0f33c -&gt; db142d4) ([#314](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/314)) ([1897233](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1897233dc4b5695fa3b7b34cdce985c0075f68bf))
+* **infra-networking-core:** update digest busybox (c230832 -&gt; 5b0f33c) ([#312](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/312)) ([b2c9660](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b2c96609233be7be7480499305b11796c9eef4b7))
+* **infra-networking-core:** update visibilityspots/cloudflared (v2024.11.0 -&gt; v2024.11.1) ([#316](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/316)) ([0eb2535](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0eb2535419b3cb981456682c9f655c242fdb221f))
+* **infra-networking-extra:** move pihole + unbound + cloudflared-doh from networking-core to networking-extra ([#335](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/335)) ([b1fe04a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b1fe04ad3d28a6674a5c7676a591590ec458d8ee))
+
 ## [0.2.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.1.2...infra-networking-core-v0.2.0) (2024-11-09)
 
 
