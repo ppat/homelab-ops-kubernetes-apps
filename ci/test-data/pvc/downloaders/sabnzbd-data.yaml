@@ -9,8 +9,7 @@ metadata:
 spec:
   accessModes:
   - ReadWriteOnce
-  storageClassName: ${DATA_VOLUME_STORAGE_CLASS}
   resources:
     requests:
-      storage: ${DATA_VOLUME_SABNZBD_SIZE}
+      storage: 1Gi
   volumeMode: Filesystem

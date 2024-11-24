@@ -1,0 +1,13 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- bazarr-data.yaml
+- lidarr-data.yaml
+- overseerr-data.yaml
+- prowlarr-data.yaml
+- radarr-data.yaml
+- recyclarr-data.yaml
+- sabnzbd-data.yaml
+- sonarr-data.yaml
