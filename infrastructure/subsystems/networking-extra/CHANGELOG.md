@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.0...infra-networking-extra-v0.1.1) (2024-12-04)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** pihole should differ resolution homelab + nas k8s cluster subdomains to router ([#382](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/382)) ([2d2b697](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2d2b697aff488391508d216c5c829e70f6acf7c9))
+
 ## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.0.6...infra-networking-extra-v0.1.0) (2024-11-24)
 
 
