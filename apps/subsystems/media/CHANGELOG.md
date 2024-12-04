@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.6...apps-media-v0.0.7) (2024-12-04)
+
+
+### ✨ Features
+
+* **apps-media:** update ghcr.io/tautulli/tautulli (v2.14.6 -&gt; v2.15.0) ([#356](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/356)) ([2ef1dcb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2ef1dcb63225dfeee5073df592a3120bfada54aa))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** fix issue where plex deployment's init script creates an unnecessary symlink ([#381](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/381)) ([f5bb471](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f5bb471ee39b760a4722685c837478060002f18e))
+
 ## [0.0.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.5...apps-media-v0.0.6) (2024-11-24)
 
 
