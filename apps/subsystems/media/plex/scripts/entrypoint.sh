@@ -17,6 +17,7 @@ if [[ ! -d "${PLEX_MEDIA_SERVER_DIR}" ]]; then
 fi
 echo "- Symlinking /var/log/plex -> ${PLEX_MEDIA_SERVER_DIR}/Logs..."
 ln -sf /var/log/plex "${PLEX_MEDIA_SERVER_DIR}/Logs"
+find /var/log/plex -type l -exec rm {} \;
 echo
 if [[ -f "${PLEX_MEDIA_SERVER_DIR}/plexmediaserver.pid" ]]; then
   echo "- Cleaning up PID file from a previous run..."
