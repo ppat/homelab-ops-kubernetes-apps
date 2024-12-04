@@ -34,8 +34,10 @@ spec:
           value: ${pihole_external_ip_address}
         - name: VIRTUAL_HOST
           value: pihole.${domain_name}
-        - name: CLUSTER_DOMAIN
-          value: ${domain_name}
+        - name: HOMELAB_CLUSTER_DOMAIN
+          value: homelab.${dns_zone}
+        - name: NAS_CLUSTER_DOMAIN
+          value: nas.${dns_zone}
         - name: WEBPASSWORD
           valueFrom:
             secretKeyRef:

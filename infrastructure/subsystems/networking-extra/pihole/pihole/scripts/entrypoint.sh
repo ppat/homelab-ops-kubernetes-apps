@@ -91,11 +91,13 @@ configure_upstream() {
 
 configure_cluster_dns() {
   local -r router_host="$1"
-  local -r cluster_domain="$2"
+  local -r homelab_cluster_domain="$2"
+  local -r nas_cluster_domain="$3"
 
   echo "Configuring pi-hole for cluster dns..."
   echo "  Delegating resolution of external-dns created DNS records to router..."
-  echo "server=/$cluster_domain/$router_host" > /etc/dnsmasq.d/11-cluster.conf
+  echo "server=/$homelab_cluster_domain/$router_host" > /etc/dnsmasq.d/11-cluster.conf
+  echo "server=/$nas_cluster_domain/$router_host" >> /etc/dnsmasq.d/11-cluster.conf
 }
 
 main() {
@@ -107,10 +109,8 @@ main() {
     echo "Configuring router ($REV_SERVER_TARGET) in /etc/hosts..."
     echo -e "$REV_SERVER_TARGET\trouter" >> /etc/hosts
     echo
-    if [[ ! -z "${CLUSTER_DOMAIN}" ]]; then
-      configure_cluster_dns "$REV_SERVER_TARGET" "$CLUSTER_DOMAIN"
-      echo
-    fi
+    configure_cluster_dns "$REV_SERVER_TARGET" "${HOMELAB_CLUSTER_DOMAIN:?}" "${NAS_CLUSTER_DOMAIN:?}"
+    echo
   fi
   echo "Starting pihole..."
   exec /s6-init
