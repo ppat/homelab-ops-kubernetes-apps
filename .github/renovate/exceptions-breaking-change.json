@@ -60,15 +60,6 @@
       ],
       "semanticCommits": "disabled",
       "commitMessagePrefix": "feat(infra-bootstrap-crds)!:"
-    },
-    {
-      "commitBody": "BREAKING CHANGE",
-      "description": "datasource=kubernetes-api | configure breaking change",
-      "matchDatasources": [
-        "kubernetes-api"
-      ],
-      "semanticCommits": "disabled",
-      "commitMessagePrefix": "feat(kubernetes-api)!:"
     }
   ]
 }
