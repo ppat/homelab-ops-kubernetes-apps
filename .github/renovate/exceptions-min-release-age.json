@@ -7,15 +7,11 @@
         "cloudnative-pg",
         "docker.io/mongo",
         "fluxcd/flux2",
-        "grafana",
         "kindest/node",
         "kubernetes/kubernetes",
-        "kube-prometheus-stack",
         "linuxserver/unifi-network-application",
-        "loki",
         "longhorn",
-        "minio",
-        "promtail"
+        "minio"
       ],
       "matchUpdateTypes": [
         "digest",
@@ -29,13 +25,9 @@
         "cloudnative-pg",
         "docker.io/mongo",
         "fluxcd/flux2",
-        "grafana",
-        "kube-prometheus-stack",
         "linuxserver/unifi-network-application",
-        "loki",
         "longhorn",
-        "minio",
-        "promtail"
+        "minio"
       ],
       "matchUpdateTypes": [
         "minor"
@@ -52,6 +44,13 @@
         "minor"
       ],
       "minimumReleaseAge": "90 days"
+    },
+    {
+      "description": "datasource=kubernetes-api | configure min release age",
+      "matchDatasources": [
+        "kubernetes-api"
+      ],
+      "minimumReleaseAge": "60 days"
     }
   ]
 }
