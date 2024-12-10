@@ -136,6 +136,7 @@ jobs:
       shell: bash
       # yamllint disable-line rule:indentation
       run: |
+        export NODE_OPTIONS="$NODE_OPTIONS --no-deprecation"
         npm install --no-fund --no-audit renovate
         echo "Validating renovate main configuration..."
         echo ".github/renovate.json:"

@@ -3,76 +3,11 @@
   "packageRules": [
     {
       "addLabels": [
-        "dependency-type:docker-image"
-      ],
-      "description": "datasource=docker | add label dependency-type",
-      "matchDatasources": [
-        "docker"
-      ]
-    },
-    {
-      "addLabels": [
-        "dependency-type:helm-chart"
-      ],
-      "description": "datasource=helm | add label dependency-type",
-      "matchDatasources": [
-        "helm"
-      ]
-    },
-    {
-      "addLabels": [
-        "dependency-type:kubernetes-api"
-      ],
-      "description": "datasource=kubernetes-api | add label dependency-type",
-      "matchDatasources": [
-        "kubernetes-api"
-      ]
-    },
-    {
-      "addLabels": [
         "dependency-type:crds"
       ],
       "description": "matchFileNames=[crds] | add label dependency-type",
       "matchFileNames": [
         "infrastructure/bootstrap/crds/**"
-      ]
-    },
-    {
-      "addLabels": [
-        "dependency-type:dev-tools"
-      ],
-      "description": "matchFileNames=[.github] + matchManagers=[regex] | add label dependency-type",
-      "matchFileNames": [
-        ".github/**"
-      ],
-      "matchManagers": [
-        "custom.regex"
-      ]
-    },
-    {
-      "addLabels": [
-        "dependency-type:github-actions"
-      ],
-      "description": "matchFileNames=[.github] + matchManagers=[github-actions] | add label dependency-type",
-      "matchFileNames": [
-        ".github/**"
-      ],
-      "matchManagers": [
-        "github-actions"
-      ]
-    },
-    {
-      "addLabels": [
-        "dependency-type:dev-tools"
-      ],
-      "description": "matchFileNames=[various] | add label dependency-type",
-      "matchFileNames": [
-        ".node-version",
-        ".pre-commit-config.yaml",
-        "package-lock.json",
-        "package.json",
-        "poetry.lock",
-        "pyproject.toml"
       ]
     }
   ]
