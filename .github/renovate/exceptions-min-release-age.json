@@ -23,6 +23,7 @@
       "description": "packages=[various] + updateType=minor | delay updates to 30 days (from 7 days)",
       "matchPackageNames": [
         "cloudnative-pg",
+        "coder/coder",
         "docker.io/mongo",
         "fluxcd/flux2",
         "linuxserver/unifi-network-application",
