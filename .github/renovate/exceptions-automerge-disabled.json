@@ -45,19 +45,6 @@
       "reviewers": [
         "ppat"
       ]
-    },
-    {
-      "automerge": false,
-      "addLabels": [
-        "automerge:off"
-      ],
-      "description": "datasource=kubernetes-api | configure automerge=off",
-      "matchDatasources": [
-        "kubernetes-api"
-      ],
-      "reviewers": [
-        "ppat"
-      ]
     }
   ]
 }

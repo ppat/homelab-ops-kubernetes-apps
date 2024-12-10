@@ -45,13 +45,6 @@
         "minor"
       ],
       "minimumReleaseAge": "90 days"
-    },
-    {
-      "description": "datasource=kubernetes-api | configure min release age",
-      "matchDatasources": [
-        "kubernetes-api"
-      ],
-      "minimumReleaseAge": "60 days"
     }
   ]
 }
