@@ -4,7 +4,7 @@ apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
   # renovate: datasource=docker versioning=docker
-  image: "kindest/node:v1.30.6@sha256:b6d08db72079ba5ae1f4a88a09025c0a904af3b52387643c285442afb05ab994"
+  image: "kindest/node:v1.31.0@sha256:53df588e04085fd41ae12de0c3fe4c72f7013bba32a20e7325357a1ac94ba865"
   extraMounts:
   - hostPath: /var/log
     containerPath: /var/log
