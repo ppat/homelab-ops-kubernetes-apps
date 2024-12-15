@@ -90,6 +90,7 @@ spec:
       resources: {}
       service:
         type: ClusterIP
+        externalTrafficPolicy: Local
       serviceAccount:
         workspacePerms: true
         enableDeployments: true
