@@ -6,6 +6,7 @@ resources:
 - postgres.yaml
 - helm-release.yaml
 - ingress.yaml
+- rbac.yaml
 
 sortOptions:
   order: fifo
