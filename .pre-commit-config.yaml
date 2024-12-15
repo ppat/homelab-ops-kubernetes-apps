@@ -18,13 +18,19 @@ repos:
   - id: mixed-line-ending
     args: [--fix=lf]
   - id: trailing-whitespace
+- repo: https://github.com/sirosen/texthooks
+  rev: 0.6.8
+  hooks:
+  - id: fix-smartquotes
+  - id: fix-ligatures
+  - id: fix-spaces
 - repo: https://github.com/adrienverge/yamllint.git
   rev: v1.35.1
   hooks:
   - id: yamllint
     args: [--strict]
-- repo: https://github.com/koalaman/shellcheck-precommit
-  rev: v0.10.0
+- repo: https://github.com/shellcheck-py/shellcheck-py
+  rev: v0.10.0.1
   hooks:
   - id: shellcheck
 - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
