@@ -8,6 +8,7 @@ resources:
 - vertical-pod-autoscaler/
 - intel-device-plugins/
 - generic-device-plugin/
+- descheduler/
 
 sortOptions:
   order: fifo
