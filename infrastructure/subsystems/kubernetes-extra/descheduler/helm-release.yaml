@@ -1,0 +1,97 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: descheduler-release
+  namespace: kube-system
+spec:
+  chart:
+    spec:
+      chart: descheduler
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: descheduler-repository
+        namespace: flux-system
+      version: 0.31.0
+  install:
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 15m0s
+  releaseName: descheduler
+  targetNamespace: kube-system
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+  values:
+    kind: Deployment
+    leaderElection:
+      enabled: false
+    service:
+      enabled: true
+    serviceMonitor:
+      enabled: true
+    tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+
+    deschedulingInterval: 10m
+    deschedulerPolicy:
+      maxNoOfPodsToEvictPerNamespace: 2
+      metricsCollector:
+        enabled: true
+      profiles:
+      - name: Default
+        pluginConfig:
+        - name: DefaultEvictor
+          args:
+            evictFailedBarePods: true
+            evictLocalStoragePods: true
+            nodeFit: true
+        - name: RemovePodsViolatingInterPodAntiAffinity
+        - name: RemovePodsViolatingTopologySpreadConstraint
+          args:
+            constraints:
+            - DoNotSchedule
+            - ScheduleAnyway
+        - name: RemovePodsHavingTooManyRestarts
+          args:
+            podRestartThreshold: 100
+            includingInitContainers: true
+        - name: RemovePodsViolatingNodeTaints
+        - name: RemovePodsViolatingNodeAffinity
+          args:
+            nodeAffinityType:
+            - requiredDuringSchedulingIgnoredDuringExecution
+        - name: "LowNodeUtilization"
+          args:
+            thresholds:
+              cpu: 20
+              memory: 20
+              pods: 25
+            targetThresholds:
+              cpu: 50
+              memory: 50
+              pods: 50
+            metricsUtilization:
+              metricsServer: true
+            evictableNamespaces:
+              exclude:
+              - longhorn-system
+              - logging
+        plugins:
+          balance:
+            enabled:
+            - LowNodeUtilization
+            - RemovePodsViolatingTopologySpreadConstraint
+          deschedule:
+            enabled:
+            - RemovePodsHavingTooManyRestarts
+            - RemovePodsViolatingInterPodAntiAffinity
+            - RemovePodsViolatingNodeAffinity
+            - RemovePodsViolatingNodeTaints
