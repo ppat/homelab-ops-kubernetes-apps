@@ -1,7 +1,7 @@
 {
   "apps/helm-repositories": "0.0.1",
   "apps/subsystems/development": "0.0.7",
-  "apps/subsystems/downloaders": "0.1.1",
+  "apps/subsystems/downloaders": "0.1.2",
   "apps/subsystems/media": "0.0.8",
   "infrastructure/bootstrap/crds": "0.2.0",
   "infrastructure/helm-repositories": "0.0.4",
