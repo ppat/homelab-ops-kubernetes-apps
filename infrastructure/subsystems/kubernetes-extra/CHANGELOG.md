@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.6...infra-kubernetes-extra-v0.0.7) (2024-12-17)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-kubernetes-extra:** metrics based LowNodeUtilization balancing in descheduler is not yet released ([#447](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/447)) ([603b7b7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/603b7b734bf78f93b9cbed633954669af478bfc6))
+
 ## [0.0.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.5...infra-kubernetes-extra-v0.0.6) (2024-12-17)
 
 
