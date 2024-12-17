@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.1...infra-networking-extra-v0.1.2) (2024-12-17)
+
+
+### ✨ Features
+
+* **infra-networking-extra:** update linuxserver/unifi-network-application (8.5.6 -&gt; 8.6.9) ([#401](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/401)) ([7eb180c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7eb180c95cba91bc98153ea8787285c3436e1780))
+* **infra-networking-extra:** update tailscale-operator (1.76.6 -&gt; 1.78.1) ([#413](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/413)) ([546deff](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/546deff40d12d663a72ba89ef6a3371822543713))
+* **infra-networking-extra:** update visibilityspots/cloudflared (v2024.11.1 -&gt; v2024.12.1) ([#425](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/425)) ([26f506e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/26f506ec8868300b227cad1adaa050cc977f07d2))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update digest docker.io/mongo (8ff7333 -&gt; 8958f43) ([#420](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/420)) ([e7db40f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e7db40f644bba88696bb0789316cbe8e2d634b89))
+* **infra-networking-extra:** update tailscale-operator (1.78.1 -&gt; 1.78.3) ([#427](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/427)) ([0aa3687](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0aa368776cc71b0e062eaefe96746be0d31fc03b))
+
 ## [0.1.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.0...infra-networking-extra-v0.1.1) (2024-12-04)
 
 
