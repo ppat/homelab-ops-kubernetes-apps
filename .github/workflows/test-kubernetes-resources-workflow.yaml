@@ -48,7 +48,7 @@ jobs:
         version: "v0.25.0"
 
     - name: Setup kubectl
-      uses: fluxcd/pkg/actions/kubectl@42918b3976feb09d656545044ed34ad3e0193ed1
+      uses: fluxcd/pkg/actions/kubectl@6f2619522699f1a78e8c7b41583ad9f7b7c9544e
       with:
         # renovate: datasource=github-releases depName=kubernetes/kubernetes
         version: "v1.30.8"

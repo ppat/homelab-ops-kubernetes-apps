@@ -1,0 +1,41 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: node-problem-detector-release
+  namespace: monitoring
+spec:
+  chart:
+    spec:
+      chart: node-problem-detector
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: deliveryhero-repository
+        namespace: flux-system
+      version: 2.3.14
+  install:
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 15m0s
+  releaseName: node-problem-detector
+  targetNamespace: monitoring
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+
+  values:
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+      prometheusRule:
+        enabled: true
+    tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-helm-repositories-v0.0.4...infra-helm-repositories-v0.0.5) (2024-12-17)
+
+
+### ✨ Features
+
+* **infra-kubernetes-extra:** add descheduler ([#443](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/443)) ([5af89e2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5af89e21cfd8865f598cceb3c0bf03bdf502729a))
+* **infra-observability-extra:** add node-problem-detector ([#446](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/446)) ([ae7a2c6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ae7a2c622229e39ee9cade5dba6940cb48725282))
+
 ## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-helm-repositories-v0.0.3...infra-helm-repositories-v0.0.4) (2024-11-18)
 
 
