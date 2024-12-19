@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: crossplane-repository
         namespace: flux-system
-      version: 1.18.1
+      version: 1.18.2
   install:
     createNamespace: false
     remediation:
