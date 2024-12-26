@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.2...infra-networking-extra-v0.1.3) (2024-12-26)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update digest linuxserver/unifi-network-application (380542d -&gt; f8403a6) ([#450](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/450)) ([f36f292](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f36f292702a61c429249ae94fef7e0f55d02b052))
+* **infra-networking-extra:** update visibilityspots/cloudflared (v2024.12.1 -&gt; v2024.12.2) ([#467](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/467)) ([7d60a76](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7d60a76b688578f09f791c5f219eb299227296c9))
+
 ## [0.1.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.1...infra-networking-extra-v0.1.2) (2024-12-17)
 
 
