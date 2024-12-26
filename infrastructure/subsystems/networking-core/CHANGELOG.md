@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.4.0...infra-networking-core-v0.4.1) (2024-12-26)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** update metallb (0.14.8 -&gt; 0.14.9) ([#457](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/457)) ([3ae4643](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3ae46436c3e8556257d1d97238e825cc5b5c2ae8))
+* **infra-networking-core:** update traefik (33.2.0 -&gt; 33.2.1) ([#429](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/429)) ([355836d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/355836d4abe179a0803cc0db8c2e3a7c2dfcb927))
+
 ## [0.4.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.3.0...infra-networking-core-v0.4.0) (2024-12-13)
 
 
