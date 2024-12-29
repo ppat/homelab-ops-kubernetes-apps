@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.0.3...infra-observability-extra-v0.0.4) (2024-12-27)
+
+
+### ✨ Features
+
+* **infra-observability-extra:** update kubernetes-event-exporter (3.2.16 -&gt; 3.3.0) ([#454](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/454)) ([637e7ae](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/637e7ae2e269f9e4c100c31bf8e1616af036ae2e))
+
 ## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.0.2...infra-observability-extra-v0.0.3) (2024-12-17)
 
 
