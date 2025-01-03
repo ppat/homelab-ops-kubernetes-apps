@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: cloudnative-pg-repository
         namespace: flux-system
-      version: 0.22.1
+      version: 0.23.0
   install:
     crds: CreateReplace
     createNamespace: false
