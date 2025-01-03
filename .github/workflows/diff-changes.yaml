@@ -38,7 +38,7 @@ jobs:
         version: "v2.4.0"
 
     - name: Compute diffs
-      uses: allenporter/flux-local/action/diff@2e44db0a138ad1fb071b146d332e5d2cc0a1f170 # 6.1.0
+      uses: allenporter/flux-local/action/diff@05de0c97eba82d7cdc4faa7279752e17e3c565cf # 7.0.0
       id: diff
       continue-on-error: true
       with:
