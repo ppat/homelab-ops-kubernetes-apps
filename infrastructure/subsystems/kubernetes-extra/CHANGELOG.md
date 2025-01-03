@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.7...infra-kubernetes-extra-v0.0.8) (2025-01-03)
+
+
+### ✨ Features
+
+* **infra-kubernetes-extra:** update descheduler (0.31.0 -&gt; 0.32.0) ([#514](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/514)) ([8caee3e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8caee3e7dad8f5937467cb5622c73aa07120cc9e))
+* **infra-kubernetes-extra:** update node-feature-discovery (0.16.6 -&gt; 0.17.0) ([#500](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/500)) ([5190d24](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5190d249f802edb019a9fb5d8682fd93b9b87818))
+
 ## [0.0.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.6...infra-kubernetes-extra-v0.0.7) (2024-12-17)
 
 
