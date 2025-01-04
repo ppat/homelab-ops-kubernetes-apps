@@ -51,7 +51,7 @@ jobs:
       uses: fluxcd/pkg/actions/kubectl@a8278c8c78e59a2ca96285cd4e346c1384559370
       with:
         # renovate: datasource=github-releases depName=kubernetes/kubernetes
-        version: "v1.30.8"
+        version: "v1.31.1"
 
     - name: Setup flux
       uses: fluxcd/flux2/action@5350425cdcd5fa015337e09fa502153c0275bd4b # v2.4.0
