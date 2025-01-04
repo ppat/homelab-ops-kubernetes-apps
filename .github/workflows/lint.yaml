@@ -134,7 +134,7 @@ jobs:
       # yamllint disable-line rule:indentation
       run: |
         if [[ "${CHANGED_FILES}" == "ALL" ]]; then
-        set -x
+          set -x
           actionlint -shellcheck "shellcheck --rcfile .shellcheckrc"
           set +x
         else
