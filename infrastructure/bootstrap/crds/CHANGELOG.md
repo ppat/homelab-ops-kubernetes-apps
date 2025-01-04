@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.3.0...infra-bootstrap-crds-v0.3.1) (2025-01-03)
+
+
+### ✨ Features
+
+* **infra-bootstrap-crds:** update cloudnative-pg/cloudnative-pg (v1.24.1 -&gt; v1.25.0) ([#475](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/475)) ([9c56bf4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9c56bf400077aa7b331381972ed0b470bda2e328))
+* **infra-bootstrap-crds:** update external-secrets/external-secrets (v0.11.0 -&gt; v0.12.1) ([#490](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/490)) ([e49de66](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e49de6615d7f603d2011d25ec576e7525b7ba5ce))
+* **infra-bootstrap-crds:** update prometheus-operator/prometheus-operator (v0.78.2 -&gt; v0.79.2) ([#451](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/451)) ([783f90f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/783f90f84c9cd16b9bfd53bd66eea0abe8a734d2))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-bootstrap-crds:** update metallb/metallb (v0.14.8 -&gt; v0.14.9) ([#456](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/456)) ([eab7fdd](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/eab7fdde2d5cf1fae53cdd67df189c0ca509dd2f))
+
 ## [0.3.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.2.0...infra-bootstrap-crds-v0.3.0) (2024-12-17)
 
 
