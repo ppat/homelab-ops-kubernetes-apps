@@ -2,7 +2,6 @@
 # yamllint disable rule:line-length
 name: test-infrastructure-kubernetes
 
-# yamllint disable-line rule:truthy
 on:
   pull_request:
     paths:

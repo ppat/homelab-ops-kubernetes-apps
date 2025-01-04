@@ -2,7 +2,6 @@
 # yamllint disable rule:line-length
 name: diff-changes
 
-# yamllint disable-line rule:truthy
 on:
   pull_request:
     branches: ["main"]
