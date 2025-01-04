@@ -2,7 +2,6 @@
 # yamllint disable rule:line-length
 name: release
 
-# yamllint disable-line rule:truthy
 on:
   push:
     branches:
@@ -20,7 +19,7 @@ concurrency:
 jobs:
   release:
     name: release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
     - name: Generate github app token for renovate

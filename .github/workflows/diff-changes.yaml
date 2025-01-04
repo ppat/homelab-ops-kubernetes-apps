@@ -2,7 +2,6 @@
 # yamllint disable rule:line-length
 name: diff-changes
 
-# yamllint disable-line rule:truthy
 on:
   pull_request:
     branches: ["main"]
@@ -18,7 +17,7 @@ concurrency:
 
 jobs:
   diff:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       contents: read
