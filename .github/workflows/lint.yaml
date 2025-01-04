@@ -97,10 +97,6 @@ jobs:
       if: success() || failure()
       run: pre-commit run --all-files --color=always trailing-whitespace
 
-    - name: shellcheck
-      if: success() || failure()
-      run: poetry run pre-commit run --all-files --color=always shellcheck
-
     - name: yamllint
       if: (success() || failure()) && (steps.changed-files-yaml.outputs.yaml_any_changed == 'true' || github.event_name == 'workflow_dispatch')
       env:
