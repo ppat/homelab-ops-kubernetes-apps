@@ -20,7 +20,7 @@ env:
   FLUX_SCHEMA_DIR: /tmp/flux-crd-schemas/master-standalone-strict
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
     - name: Checkout

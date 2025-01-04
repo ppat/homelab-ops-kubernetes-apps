@@ -20,7 +20,7 @@ concurrency:
 jobs:
   release:
     name: release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
     - name: Generate github app token for renovate
