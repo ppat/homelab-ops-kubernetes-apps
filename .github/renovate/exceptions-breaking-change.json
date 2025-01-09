@@ -7,6 +7,11 @@
       "matchFileNames": [
         "infrastructure/subsystems/**"
       ],
+      "matchPackageNames": [
+        "!minio/minio",
+        "!pihole/pihole",
+        "!visibilityspots/cloudflared"
+      ],
       "matchUpdateTypes": [
         "major"
       ],
@@ -60,21 +65,6 @@
       ],
       "semanticCommits": "disabled",
       "commitMessagePrefix": "feat(infra-bootstrap-crds)!:"
-    },
-    {
-      "commitBody": "",
-      "description": "disable marking of breaking change for uses of calver versioning",
-      "matchPackageNames": [
-        "minio/minio",
-        "pihole/pihole",
-        "visibilityspots/cloudflared"
-      ],
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "semanticCommits": "enabled",
-      "semanticCommitScope": "infra-{{ lookup (split packageFileDir '/') 2 }}",
-      "semanticCommitType": "feat"
     }
   ]
 }
