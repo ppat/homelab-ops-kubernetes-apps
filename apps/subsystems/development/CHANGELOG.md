@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-development-v0.0.8...apps-development-v0.0.9) (2025-01-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-development:** update coder (2.18.1 -&gt; 2.18.2) ([#534](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/534)) ([44a6938](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/44a6938692b32a5f7150b95c45cf732d5819a109))
+
 ## [0.0.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-development-v0.0.7...apps-development-v0.0.8) (2024-12-26)
 
 
