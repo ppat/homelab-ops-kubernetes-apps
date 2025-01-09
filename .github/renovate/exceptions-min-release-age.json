@@ -45,6 +45,20 @@
         "minor"
       ],
       "minimumReleaseAge": "90 days"
+    },
+    {
+      "description": "set minReleaseAge to a fix 14 days for calver versioned packages",
+      "matchPackageNames": [
+        "minio/minio",
+        "pihole/pihole",
+        "visibilityspots/cloudflared"
+      ],
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "patch"
+      ],
+      "minimumReleaseAge": "14 days"
     }
   ]
 }
