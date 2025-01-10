@@ -31,7 +31,7 @@ jobs:
         - resource: helmrelease/bitwarden-release
           namespace: bitwarden
           for: condition=ready
-          timeout: 10m
+          timeout: 3m
         - resource: statefulset/bitwarden-self-host-mssql
           namespace: bitwarden
           timeout: 1m
@@ -80,3 +80,7 @@ jobs:
           command: 'kubectl get -n bitwarden events --sort-by=.lastTimestamp'
         - name: show-hr
           command: 'kubectl describe -n bitwarden hr bitwarden-release'
+        - name: show-mssql-pod-logs
+          command: 'kubectl logs -n bitwarden pod/bitwarden-self-host-mssql-0'
+        - name: show-mssql-pod
+          command: 'kubectl describe -n bitwarden pod/bitwarden-self-host-mssql-0'
