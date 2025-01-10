@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.9...apps-coder-v0.0.10) (2025-01-10)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-coder:** rename subsystem development -&gt; coder ([#551](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/551)) ([8fdf96f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8fdf96fcbb719815a3d898f31a501b1731cbc364))
+
 ## [0.0.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-development-v0.0.8...apps-development-v0.0.9) (2025-01-09)
 
 
