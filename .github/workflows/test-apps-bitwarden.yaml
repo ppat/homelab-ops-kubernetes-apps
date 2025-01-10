@@ -28,13 +28,9 @@ jobs:
           timeout: 2m
       # yamllint disable-line rule:indentation
       success_conditions: |-
-        - resource: helmrelease/bitwarden-release
-          namespace: bitwarden
-          for: condition=ready
-          timeout: 3m
         - resource: statefulset/bitwarden-self-host-mssql
           namespace: bitwarden
-          timeout: 1m
+          timeout: 2m
         - resource: deployment/bitwarden-self-host-admin
           namespace: bitwarden
           for: condition=available
@@ -71,6 +67,10 @@ jobs:
           namespace: bitwarden
           for: condition=available
           timeout: 1m
+        - resource: helmrelease/bitwarden-release
+          namespace: bitwarden
+          for: condition=ready
+          timeout: 1m
       git_url: https://github.com/${{ github.repository }}.git
       git_ref: ${{ github.head_ref || github.ref }}
       kind_cluster_config: kind-cluster-single-node.yaml
@@ -78,9 +78,3 @@ jobs:
       custom_commands: |-
         - name: show-events
           command: 'kubectl get -n bitwarden events --sort-by=.lastTimestamp'
-        - name: show-hr
-          command: 'kubectl describe -n bitwarden hr bitwarden-release'
-        - name: show-mssql-pod-logs
-          command: 'kubectl logs -n bitwarden deployment/bitwarden-self-host-api'
-        - name: show-mssql-pod
-          command: 'kubectl describe -n bitwarden deployment/bitwarden-self-host-api'

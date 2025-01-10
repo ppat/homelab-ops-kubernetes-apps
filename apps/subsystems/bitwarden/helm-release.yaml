@@ -19,10 +19,10 @@ spec:
     createNamespace: false
     remediation:
       retries: 3
-  interval: 30m0s
+  interval: 15m0s
   releaseName: bitwarden
   targetNamespace: bitwarden
-  timeout: 15m0s
+  timeout: 5m0s
   upgrade:
     cleanupOnFail: true
     remediation:
@@ -34,20 +34,6 @@ spec:
       domain: "bitwarden.${domain_name}"
       ingress:
         enabled: false
-      # Disable account registration on web vault
-      disableUserRegistration: "false"
-      # Comma-separated list of email addresses for Admin users
-      admins: "false"
-      email:
-        replyToEmail: "no-reply@bitwarden.${domain_name}"
-        smtpHost: "smtp.gmail.com"
-        smtpPort: "587"
-        smtpSsl: "false"
-        smtpTrustServer: "false"
-        smtpSslOverride: "false"
-        smtpStartTls: "false"
-      # Custom labels to add throughout the installation
-      labels: {}
       enableCloudCommunication: false
       cloudRegion: US
 
@@ -69,7 +55,8 @@ spec:
       enabled: true
       image:
         name: mcr.microsoft.com/mssql/server
-        tag: 2022-CU16-ubuntu-22.04
+        # renovate: datasource=docker depName=mcr.microsoft.com/mssql/server
+        tag: "2022-CU16-ubuntu-22.04"
       volume:
         backups:
           existingClaim: bitwarden-db-backups
