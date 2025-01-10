@@ -1,6 +1,6 @@
 {
   "apps/helm-repositories": "0.0.1",
-  "apps/subsystems/bitwarden": "0.0.0",
+  "apps/subsystems/bitwarden": "0.0.1",
   "apps/subsystems/development": "0.0.9",
   "apps/subsystems/downloaders": "0.1.7",
   "apps/subsystems/harbor": "0.0.0",
