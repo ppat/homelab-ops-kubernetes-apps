@@ -1,0 +1,96 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bitwarden-strip-prefix
+  namespace: bitwarden
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: bitwarden.${domain_name}
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: bitwarden-stripprefix@kubernetescrd
+spec:
+  tls: []
+  rules:
+  - host: bitwarden.${domain_name}
+    http:
+      paths:
+      - path: /api/
+        pathType: Prefix
+        backend:
+          service:
+            name: bitwarden-self-host-api
+            port:
+              number: 5000
+      - path: /attachments/
+        pathType: Prefix
+        backend:
+          service:
+            name: bitwarden-self-host-attachments
+            port:
+              number: 5000
+      - path: /icons/
+        pathType: Prefix
+        backend:
+          service:
+            name: bitwarden-self-host-icons
+            port:
+              number: 5000
+      - path: /notifications/
+        pathType: Prefix
+        backend:
+          service:
+            name: bitwarden-self-host-notifications
+            port:
+              number: 5000
+      - path: /events/
+        pathType: Prefix
+        backend:
+          service:
+            name: bitwarden-self-host-events
+            port:
+              number: 5000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bitwarden
+  namespace: bitwarden
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: bitwarden.${domain_name}
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  tls: []
+  rules:
+  - host: bitwarden.${domain_name}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bitwarden-self-host-web
+            port:
+              number: 5000
+      - path: /sso/
+        pathType: Prefix
+        backend:
+          service:
+            name: bitwarden-self-host-sso
+            port:
+              number: 5000
+      - path: /identity/
+        pathType: Prefix
+        backend:
+          service:
+            name: bitwarden-self-host-identity
+            port:
+              number: 5000
+      - path: /admin
+        pathType: Prefix
+        backend:
+          service:
+            name: bitwarden-self-host-admin
+            port:
+              number: 5000
