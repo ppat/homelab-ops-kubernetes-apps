@@ -17,6 +17,16 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: harbor
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: logging
+---
+apiVersion: v1
+kind: Namespace
+metadata:
   name: media
 ---
 apiVersion: v1
@@ -27,17 +37,12 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: monitoring
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: logging
----
-apiVersion: v1
-kind: Namespace
-metadata:
   name: minio
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
 ---
 apiVersion: v1
 kind: Namespace

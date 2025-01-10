@@ -41,6 +41,7 @@ module.exports = {
         'apps-helm-repositories',
         'apps-development',
         'apps-downloaders',
+        'apps-harbor',
         'apps-media',
         'infra-bootstrap-crds',
         'infra-helm-repositories',
