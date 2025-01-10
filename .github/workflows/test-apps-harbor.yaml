@@ -1,0 +1,66 @@
+---
+# yamllint disable rule:line-length
+name: test-apps-harbor
+
+on:
+  pull_request:
+    paths:
+    - '.github/workflows/test-apps-harbor.yaml'
+    - '.github/kind-cluster-single-node.yaml'
+    - 'ci/test/apps-harbor/**.yaml'
+    - 'apps/subsystems/harbor/**.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-apps-development:
+    uses: ./.github/workflows/test-kubernetes-resources-workflow.yaml
+    with:
+      test_path: ./ci/test/apps-harbor
+      # yamllint disable-line rule:indentation
+      reconcile_items: |-
+        - name: apps-habor
+          kind: kustomization
+          namespace: flux-system
+          timeout: 2m
+      # yamllint disable-line rule:indentation
+      success_conditions: |-
+        - resource: statefulset/harbor-database
+          namespace: harbor
+          timeout: 1m
+        - resource: statefulset/harbor-redis
+          namespace: harbor
+          timeout: 1m
+        - resource: statefulset/harbor-trivy
+          namespace: harbor
+          timeout: 1m
+        - resource: deployment/harbor-core
+          namespace: harbor
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/harbor-exporter
+          namespace: harbor
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/harbor-jobservice
+          namespace: harbor
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/harbor-portal
+          namespace: harbor
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/harbor-registry
+          namespace: harbor
+          for: condition=available
+          timeout: 1m
+      git_url: https://github.com/${{ github.repository }}.git
+      git_ref: ${{ github.head_ref || github.ref }}
+      kind_cluster_config: kind-cluster-single-node.yaml
+      # yamllint disable-line rule:indentation
+      custom_commands: |-
+        - name: show-events
+          command: 'kubectl get -n harbor events --sort-by=.lastTimestamp'

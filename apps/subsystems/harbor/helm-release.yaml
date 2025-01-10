@@ -1,0 +1,98 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: harbor-release
+  namespace: harbor
+spec:
+  chart:
+    spec:
+      chart: harbor
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: harbor-repository
+        namespace: flux-system
+      version: 1.16.1
+  install:
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 15m0s
+  releaseName: harbor
+  targetNamespace: harbor
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+  values:
+    expose:
+      type: ingress
+      tls:
+        enabled: true
+        certSource: none
+      ingress:
+        hosts:
+          core: harbor.${domain_name}
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: harbor.${domain_name}
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+    externalURL: https://harbor.${domain_name}
+    persistence:
+      enabled: true
+      resourcePolicy: "keep"
+      persistentVolumeClaim:
+        registry:
+          existingClaim: harbor-registry
+        jobservice:
+          jobLog:
+            existingClaim: harbor-jobservice
+        database:
+          existingClaim: harbor-database
+        redis:
+          existingClaim: harbor-redis
+        trivy:
+          existingClaim: harbor-trivy
+      imageChartStorage:
+        disableredirect: true
+
+    existingSecretAdminPassword: harbor
+    existingSecretAdminPasswordKey: adminPassword
+    existingSecretSecretKey: harbor
+
+    metrics:
+      enabled: true
+      core:
+        path: /metrics
+        port: 8001
+      registry:
+        path: /metrics
+        port: 8001
+      jobservice:
+        path: /metrics
+        port: 8001
+      exporter:
+        path: /metrics
+        port: 8001
+      serviceMonitor:
+        enabled: true
+
+  postRenderers:
+  - kustomize:
+      patches:
+      - target:
+          kind: Ingress
+        # yamllint disable-line rule:indentation
+        patch: |-
+          - op: remove
+            path: /metadata/annotations/ingress.kubernetes.io~1proxy-body-size
+          - op: remove
+            path: /metadata/annotations/ingress.kubernetes.io~1ssl-redirect
+          - op: remove
+            path: /metadata/annotations/nginx.ingress.kubernetes.io~1proxy-body-size
+          - op: remove
+            path: /metadata/annotations/nginx.ingress.kubernetes.io~1ssl-redirect
