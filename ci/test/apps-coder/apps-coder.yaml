@@ -2,11 +2,11 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: apps-development
+  name: apps-coder
   namespace: flux-system
 spec:
   interval: 15m0s
-  path: ./apps/subsystems/development
+  path: ./apps/subsystems/coder
   prune: false
   postBuild:
     substitute:
