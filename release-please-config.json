@@ -28,11 +28,11 @@
       "component": "apps-bitwarden",
       "extra-label": "pr-type:release,subsystem:apps-bitwarden"
     },
-    "apps/subsystems/development": {
+    "apps/subsystems/coder": {
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
-      "component": "apps-development",
-      "extra-label": "pr-type:release,subsystem:apps-development"
+      "component": "apps-coder",
+      "extra-label": "pr-type:release,subsystem:apps-coder"
     },
     "apps/subsystems/downloaders": {
       "bump-minor-pre-major": true,

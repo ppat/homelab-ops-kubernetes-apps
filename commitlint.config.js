@@ -40,7 +40,7 @@ module.exports = {
         'release',
         'apps-helm-repositories',
         'apps-bitwarden',
-        'apps-development',
+        'apps-coder',
         'apps-downloaders',
         'apps-harbor',
         'apps-media',
