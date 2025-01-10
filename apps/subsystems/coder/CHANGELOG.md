@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.0.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.9...apps-coder-v0.0.10) (2025-01-10)
+## [0.0.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-development-v0.0.9...apps-coder-v0.0.10) (2025-01-10)
 
 
 ### 🚀 Enhancements + Bug Fixes
