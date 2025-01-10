@@ -55,7 +55,7 @@ spec:
       enabled: true
       image:
         name: mcr.microsoft.com/mssql/server
-        # renovate: datasource=docker depName=mcr.microsoft.com/mssql/server
+        # renovate: datasource=docker depName=mcr.microsoft.com/mssql/server versioning=loose
         tag: "2022-CU16-ubuntu-22.04"
       volume:
         backups:
