@@ -30,7 +30,7 @@ jobs:
       success_conditions: |-
         - resource: statefulset/bitwarden-self-host-mssql
           namespace: bitwarden
-          timeout: 1m
+          timeout: 5m
         - resource: deployment/bitwarden-self-host-admin
           namespace: bitwarden
           for: condition=available
