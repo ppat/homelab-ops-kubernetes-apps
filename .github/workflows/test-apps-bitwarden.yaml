@@ -1,0 +1,80 @@
+---
+# yamllint disable rule:line-length
+name: test-apps-bitwarden
+
+on:
+  pull_request:
+    paths:
+    - '.github/workflows/test-apps-bitwarden.yaml'
+    - '.github/kind-cluster-single-node.yaml'
+    - 'ci/test/apps-bitwarden/**.yaml'
+    - 'apps/subsystems/bitwarden/**.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-apps-bitwarden:
+    uses: ./.github/workflows/test-kubernetes-resources-workflow.yaml
+    with:
+      test_path: ./ci/test/apps-bitwarden
+      # yamllint disable-line rule:indentation
+      reconcile_items: |-
+        - name: apps-bitwarden
+          kind: kustomization
+          namespace: flux-system
+          timeout: 2m
+      # yamllint disable-line rule:indentation
+      success_conditions: |-
+        - resource: helmrelease/bitwarden-release
+          namespace: bitwarden
+          for: condition=ready
+          timeout: 3m
+        - resource: statefulset/bitwarden-self-host-mssql
+          namespace: bitwarden
+          timeout: 1m
+        - resource: deployment/bitwarden-self-host-admin
+          namespace: bitwarden
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/bitwarden-self-host-api
+          namespace: bitwarden
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/bitwarden-self-host-attachments
+          namespace: bitwarden
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/bitwarden-self-host-events
+          namespace: bitwarden
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/bitwarden-self-host-icons
+          namespace: bitwarden
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/bitwarden-self-host-identity
+          namespace: bitwarden
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/bitwarden-self-host-notifications
+          namespace: bitwarden
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/bitwarden-self-host-sso
+          namespace: bitwarden
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/bitwarden-self-host-web
+          namespace: bitwarden
+          for: condition=available
+          timeout: 1m
+      git_url: https://github.com/${{ github.repository }}.git
+      git_ref: ${{ github.head_ref || github.ref }}
+      kind_cluster_config: kind-cluster-single-node.yaml
+      # yamllint disable-line rule:indentation
+      custom_commands: |-
+        - name: show-events
+          command: 'kubectl get -n bitwarden events --sort-by=.lastTimestamp'

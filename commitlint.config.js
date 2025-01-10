@@ -39,6 +39,7 @@ module.exports = {
         'renovate',
         'release',
         'apps-helm-repositories',
+        'apps-bitwarden',
         'apps-development',
         'apps-downloaders',
         'apps-harbor',

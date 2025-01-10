@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test-apps-development:
+  test-apps-harbor:
     uses: ./.github/workflows/test-kubernetes-resources-workflow.yaml
     with:
       test_path: ./ci/test/apps-harbor
