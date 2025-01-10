@@ -22,7 +22,7 @@ jobs:
       test_path: ./ci/test/apps-harbor
       # yamllint disable-line rule:indentation
       reconcile_items: |-
-        - name: apps-habor
+        - name: apps-harbor
           kind: kustomization
           namespace: flux-system
           timeout: 2m
