@@ -81,6 +81,6 @@ jobs:
         - name: show-hr
           command: 'kubectl describe -n bitwarden hr bitwarden-release'
         - name: show-mssql-pod-logs
-          command: 'kubectl logs -n bitwarden pod/bitwarden-self-host-mssql-0'
+          command: 'kubectl logs -n bitwarden deployment/bitwarden-self-host-api'
         - name: show-mssql-pod
-          command: 'kubectl describe -n bitwarden pod/bitwarden-self-host-mssql-0'
+          command: 'kubectl describe -n bitwarden deployment/bitwarden-self-host-api'
