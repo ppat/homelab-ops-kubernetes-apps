@@ -2,7 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "packageRules": [
     {
-      "description": "exceptions | disable update of flux images by kubernetes manager (as they are solely managed by flux manager)",
+      "description": "disable update of flux images by kubernetes manager (as they are solely managed by flux manager)",
       "enabled": false,
       "matchDatasources": [
         "docker"
@@ -18,7 +18,7 @@
       ]
     },
     {
-      "description": "exceptions | renovate bug that attempts to update a flux helmrelease for OCI repositories",
+      "description": "renovate bug that attempts to update a flux helmrelease for OCI repositories",
       "enabled": false,
       "matchDatasources": [
         "docker"
@@ -34,7 +34,7 @@
       ]
     },
     {
-      "description": "exceptions | renovate bug that attempts to update image digests unnecessarily",
+      "description": "renovate bug that attempts to update image digests unnecessarily",
       "enabled": false,
       "matchDatasources": [
         "docker"

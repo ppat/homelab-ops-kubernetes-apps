@@ -2,7 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "packageRules": [
     {
-      "description": "subsystem=[all except infra subsystems] | configure version type separation",
+      "description": "configure version separation for non-infra subsystems",
       "matchFileNames": [
         "apps/helm-repositories/**",
         "apps/subsystems/**",
@@ -15,7 +15,7 @@
       "separateMultipleMinor": false
     },
     {
-      "description": "subsystem=infra-* | configure version type separation",
+      "description": "configure version separation for infra subsystems",
       "matchFileNames": [
         "infrastructure/subsystems/**"
       ],

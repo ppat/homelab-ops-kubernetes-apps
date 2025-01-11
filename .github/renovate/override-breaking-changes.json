@@ -3,14 +3,9 @@
   "packageRules": [
     {
       "commitBody": "BREAKING CHANGE",
-      "description": "subsystem=infra-* + updateType=major | configure breaking change",
+      "description": "configure breaking changes for infra subsystems",
       "matchFileNames": [
         "infrastructure/subsystems/**"
-      ],
-      "matchPackageNames": [
-        "!minio/minio",
-        "!pihole/pihole",
-        "!visibilityspots/cloudflared"
       ],
       "matchUpdateTypes": [
         "major"
@@ -20,12 +15,9 @@
     },
     {
       "commitBody": "BREAKING CHANGE",
-      "description": "subsystem=apps-* + updateType=major | configure breaking change",
+      "description": "configure breaking changes for apps subsystems",
       "matchFileNames": [
         "apps/subsystems/**"
-      ],
-      "matchPackageNames": [
-        "!self-host"
       ],
       "matchUpdateTypes": [
         "major"
@@ -35,7 +27,7 @@
     },
     {
       "commitBody": "BREAKING CHANGE",
-      "description": "subsystem=infra-helm-repositories + updateType=major | configure breaking change",
+      "description": "configure breaking changes for infra-helm-repositories",
       "matchFileNames": [
         "infrastructure/helm-repositories/**"
       ],
@@ -47,7 +39,7 @@
     },
     {
       "commitBody": "BREAKING CHANGE",
-      "description": "subsystem=apps-helm-repositories + updateType=major | configure breaking change",
+      "description": "configure breaking changes for apps-helm-repositories",
       "matchFileNames": [
         "apps/helm-repositories/**"
       ],
@@ -59,7 +51,7 @@
     },
     {
       "commitBody": "BREAKING CHANGE",
-      "description": "subsystem=infra-bootstrap-crds + updateType=major | configure breaking change",
+      "description": "configure breaking changes for infra-bootstrap-crds",
       "matchFileNames": [
         "infrastructure/bootstrap/crds/**"
       ],

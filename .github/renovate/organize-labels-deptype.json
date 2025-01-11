@@ -1,0 +1,32 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "addLabels": [
+        "dependency-type:crds"
+      ],
+      "description": "add dependency-type label for crds",
+      "matchFileNames": [
+        "infrastructure/bootstrap/crds/**"
+      ]
+    },
+    {
+      "addLabels": [
+        "dependency-type:docker-image"
+      ],
+      "description": "add dependency-type label for docker images",
+      "matchDatasources": [
+        "docker"
+      ]
+    },
+    {
+      "addLabels": [
+        "dependency-type:helm-chart"
+      ],
+      "description": "add dependency-type label for helm charts",
+      "matchDatasources": [
+        "helm"
+      ]
+    }
+  ]
+}

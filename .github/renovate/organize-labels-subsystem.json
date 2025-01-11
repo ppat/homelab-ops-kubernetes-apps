@@ -5,7 +5,7 @@
       "addLabels": [
         "subsystem:apps-{{ lookup (split packageFileDir '/') 2 }}"
       ],
-      "description": "subsystem=apps-* | add label subsystem",
+      "description": "add subsystem label for apps-* subsystems",
       "matchFileNames": [
         "apps/subsystems/**"
       ]
@@ -14,7 +14,7 @@
       "addLabels": [
         "subsystem:apps-helm-repositories"
       ],
-      "description": "subsystem=apps-helm-repos | add label subsystem",
+      "description": "add subsystem label for apps-helm-repositories",
       "matchFileNames": [
         "apps/helm-repositories/**"
       ]
@@ -23,7 +23,7 @@
       "addLabels": [
         "subsystem:infra-{{ lookup (split packageFileDir '/') 2 }}"
       ],
-      "description": "subsystem=infra-* | add label subsystem",
+      "description": "add subsystem label for infra-* subsystems",
       "matchFileNames": [
         "infrastructure/subsystems/**"
       ]
@@ -32,7 +32,7 @@
       "addLabels": [
         "subsystem:infra-helm-repositories"
       ],
-      "description": "subsystems-infra-helm-repos | add label subsystem",
+      "description": "add subsystem label for infra-helm-repositories",
       "matchFileNames": [
         "infrastructure/helm-repositories/**"
       ]
@@ -41,7 +41,7 @@
       "addLabels": [
         "subsystem:infra-bootstrap-crds"
       ],
-      "description": "subsystems-infra-crds | add label subsystem",
+      "description": "add subsystem label for infra-bootstrap-crds",
       "matchFileNames": [
         "infrastructure/bootstrap/crds/**"
       ]
