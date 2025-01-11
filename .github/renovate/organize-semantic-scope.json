@@ -2,35 +2,35 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "packageRules": [
     {
-      "description": "subsystem=apps-* | add semantic commit scope",
+      "description": "add semantic commit scope for apps-* subsystems",
       "matchFileNames": [
         "apps/subsystems/**"
       ],
       "semanticCommitScope": "apps-{{ lookup (split packageFileDir '/') 2 }}"
     },
     {
-      "description": "subsystem=apps-helm-repos | add semantic commit scope",
+      "description": "add semantic commit scope for apps-helm-repositories",
       "matchFileNames": [
         "apps/helm-repositories/**"
       ],
       "semanticCommitScope": "apps-helm-repositories"
     },
     {
-      "description": "subsystem=infra-* | add semantic commit scope",
+      "description": "add semantic commit scope for infra-* subsystems",
       "matchFileNames": [
         "infrastructure/subsystems/**"
       ],
       "semanticCommitScope": "infra-{{ lookup (split packageFileDir '/') 2 }}"
     },
     {
-      "description": "subsystem=infra-helm-repos | add semantic commit scope",
+      "description": "add semantic commit scope for infra-helm-repositories",
       "matchFileNames": [
         "infrastructure/helm-repositories/**"
       ],
       "semanticCommitScope": "infra-helm-repositories"
     },
     {
-      "description": "subsystem=infra-bootstrap-crds | add semantic commit scope",
+      "description": "add semantic commit scope for infra-bootstrap-crds",
       "matchFileNames": [
         "infrastructure/bootstrap/crds/**"
       ],

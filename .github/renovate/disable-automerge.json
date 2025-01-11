@@ -1,0 +1,32 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "automerge": false,
+      "addLabels": [
+        "automerge:off"
+      ],
+      "description": "disable automerge for specific packages",
+      "matchPackageNames": [
+        "docker.io/mongo",
+        "ghcr.io/linuxserver/unifi-network-application"
+      ],
+      "reviewers": [
+        "ppat"
+      ]
+    },
+    {
+      "automerge": false,
+      "addLabels": [
+        "automerge:off"
+      ],
+      "description": "disable automerge for specific file paths",
+      "matchFileNames": [
+        "infrastructure/bootstrap/crds/**"
+      ],
+      "reviewers": [
+        "ppat"
+      ]
+    }
+  ]
+}

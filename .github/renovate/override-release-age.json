@@ -1,0 +1,61 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "description": "delay patch updates to 7 days (from 1 day) for packages managed by flux",
+      "matchManagers": [
+        "flux"
+      ],
+      "matchPackageNames": [
+        "longhorn"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "description": "delay patch updates to 7 days (from 1 day) for packages managed by kubernetes",
+      "matchManagers": [
+        "kubernetes"
+      ],
+      "matchPackageNames": [
+        "docker.io/mongo",
+        "ghcr.io/linuxserver/unifi-network-application"
+      ],
+      "matchUpdateTypes": [
+        "digest",
+        "patch"
+      ],
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "description": "delay minor updates to 30 days (from 7 days) for packages managed by flux",
+      "matchManagers": [
+        "flux"
+      ],
+      "matchPackageNames": [
+        "coder",
+        "longhorn"
+      ],
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "minimumReleaseAge": "30 days"
+    },
+    {
+      "description": "delay minor updates to 30 days (from 7 days) for packages managed by kubernetes",
+      "matchManagers": [
+        "kubernetes"
+      ],
+      "matchPackageNames": [
+        "docker.io/mongo",
+        "ghcr.io/linuxserver/unifi-network-application"
+      ],
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "minimumReleaseAge": "30 days"
+    }
+  ]
+}

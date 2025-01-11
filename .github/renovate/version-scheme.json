@@ -2,7 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "packageRules": [
     {
-      "description": "packages=[ppatlabs images] | configure version scheme",
+      "description": "configure version scheme for ppatlabs images",
       "matchDatasources": [
         "docker"
       ],
@@ -12,7 +12,7 @@
       "versioning": "semver-coerced"
     },
     {
-      "description": "packages=[linuxserver images] | configure version scheme",
+      "description": "configure version scheme for linuxserver images",
       "matchDatasources": [
         "docker"
       ],
@@ -22,7 +22,7 @@
       "versioning": "semver-coerced"
     },
     {
-      "description": "packages=[various] | configure version scheme",
+      "description": "configure version scheme for various docker images needing loose versioning",
       "matchDatasources": [
         "docker"
       ],
@@ -33,7 +33,7 @@
       "versioning": "loose"
     },
     {
-      "description": "packages=[minio] | configure version scheme",
+      "description": "configure version scheme for minio images",
       "matchDatasources": [
         "docker"
       ],
