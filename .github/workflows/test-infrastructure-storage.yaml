@@ -6,6 +6,7 @@ on:
   pull_request:
     paths:
     - '.github/workflows/test-infrastructure-storage.yaml'
+    - '.github/workflows/test-kubernetes-resources-workflow.yaml'
     - '.github/kind-cluster-multi-node.yaml'
     - 'ci/test/infra-storage/**.yaml'
     - 'infrastructure/subsystems/storage-core/**.yaml'
