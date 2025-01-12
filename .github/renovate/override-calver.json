@@ -4,6 +4,7 @@
     {
       "automerge": true,
       "commitBody": "",
+      "commitMessagePrefix": "{{#if (or isMajor isMinor)}}feat{{else if isPatch}}fix{{else}}chore{{/if}}({{#if (equals (lookup (split packageFileDir '/') 0) 'apps')}}apps{{else}}infra{{/if}}-{{ lookup (split packageFileDir '/') 2 }}):",
       "description": "update calver versioned packages managed by custom.regex manager",
       "matchManagers": [
         "custom.regex"
@@ -11,19 +12,13 @@
       "matchPackageNames": [
         "minio/minio"
       ],
-      "matchUpdateTypes": [
-        "major",
-        "minor",
-        "patch"
-      ],
       "minimumReleaseAge": "14 days",
-      "semanticCommits": "enabled",
-      "semanticCommitScope": "{{#if (equals (lookup (split packageFileDir '/') 0) 'apps')}}apps{{else}}infra{{/if}}-{{ lookup (split packageFileDir '/') 2 }}",
-      "semanticCommitType": "{{#if (or isMajor isMinor)}}feat{{else if isPatch}}fix{{else}}chore{{/if}}"
+      "semanticCommits": "disabled"
     },
     {
       "automerge": true,
       "commitBody": "",
+      "commitMessagePrefix": "{{#if (or isMajor isMinor)}}feat{{else if isPatch}}fix{{else}}chore{{/if}}({{#if (equals (lookup (split packageFileDir '/') 0) 'apps')}}apps{{else}}infra{{/if}}-{{ lookup (split packageFileDir '/') 2 }}):",
       "description": "update calver versioned packages managed by kubernetes manager",
       "matchManagers": [
         "kubernetes"
@@ -32,19 +27,13 @@
         "pihole/pihole",
         "visibilityspots/cloudflared"
       ],
-      "matchUpdateTypes": [
-        "major",
-        "minor",
-        "patch"
-      ],
       "minimumReleaseAge": "14 days",
-      "semanticCommits": "enabled",
-      "semanticCommitScope": "{{#if (equals (lookup (split packageFileDir '/') 0) 'apps')}}apps{{else}}infra{{/if}}-{{ lookup (split packageFileDir '/') 2 }}",
-      "semanticCommitType": "{{#if (or isMajor isMinor)}}feat{{else if isPatch}}fix{{else}}chore{{/if}}"
+      "semanticCommits": "disabled"
     },
     {
       "automerge": true,
       "commitBody": "",
+      "commitMessagePrefix": "{{#if (or isMajor isMinor)}}feat{{else if isPatch}}fix{{else}}chore{{/if}}({{#if (equals (lookup (split packageFileDir '/') 0) 'apps')}}apps{{else}}infra{{/if}}-{{ lookup (split packageFileDir '/') 2 }}):",
       "description": "update calver versioned packages managed by flux manager",
       "matchManagers": [
         "flux"
@@ -52,15 +41,8 @@
       "matchPackageNames": [
         "self-host"
       ],
-      "matchUpdateTypes": [
-        "major",
-        "minor",
-        "patch"
-      ],
       "minimumReleaseAge": "14 days",
-      "semanticCommits": "enabled",
-      "semanticCommitScope": "{{#if (equals (lookup (split packageFileDir '/') 0) 'apps')}}apps{{else}}infra{{/if}}-{{ lookup (split packageFileDir '/') 2 }}",
-      "semanticCommitType": "{{#if (or isMajor isMinor)}}feat{{else if isPatch}}fix{{else}}chore{{/if}}"
+      "semanticCommits": "disabled"
     }
   ]
 }
