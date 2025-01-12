@@ -45,6 +45,10 @@ jobs:
         config: ".github/${{ inputs.kind_cluster_config }}"
         # renovate: datasource=github-releases depName=kubernetes-sigs/kind
         version: "v0.26.0"
+        # renovate: datasource=github-releases depName=kubernetes/kubernetes
+        kubectl_version: "v1.30.8"
+        # renovate-kind-image: datasource=docker versioning=docker
+        node_image: "kindest/node:v1.30.8@sha256:17cd608b3971338d9180b00776cb766c50d0a0b6b904ab4ff52fd3fc5c6369bf"
 
     - name: Setup kubectl
       uses: fluxcd/pkg/actions/kubectl@12ec4f3e8c955c62aa1335350fa947c0ca06d608

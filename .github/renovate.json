@@ -14,10 +14,10 @@
     {
       "customType": "regex",
       "fileMatch": [
-        "^.github/kind-cluster-.+\\.yaml$"
+        "^.github/workflows/.+\\.yaml$"
       ],
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>[a-z-.]+?)(\\s+repository=(?<registryUrl>[^\\s]+?))?(\\s+versioning=(?<versioning>[^\\s]+?))?\\s*\\n.+[\\:\\=]\\s?\"(?<depName>[^:]+)\\:(?<currentValue>[^\\s@]+)(@(?<currentDigest>sha256:[0-9a-f]*))?\""
+        "# renovate-kind-image: datasource=(?<datasource>[a-z-.]+?)(\\s+repository=(?<registryUrl>[^\\s]+?))?(\\s+versioning=(?<versioning>[^\\s]+?))?\\s*\\n.+[\\:\\=]\\s?\"(?<depName>[^:]+)\\:(?<currentValue>[^\\s@]+)(@(?<currentDigest>sha256:[0-9a-f]*))?\""
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     },
