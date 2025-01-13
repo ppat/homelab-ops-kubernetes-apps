@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.3.2...infra-observability-core-v0.3.3) (2025-01-13)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** streamline how system log scrape configuration is defined ([#573](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/573)) ([3c6ed99](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3c6ed99ea7af25b480512baa11196c36fe074483))
+* **infra-observability-core:** switch from loki-gateway to use of a simple k8s ingress ([#571](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/571)) ([a09a3e4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a09a3e4c97c3fd0d69bd03f2f81c353b803a17f0))
+
 ## [0.3.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.3.1...infra-observability-core-v0.3.2) (2025-01-09)
 
 
