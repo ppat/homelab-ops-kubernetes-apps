@@ -20,6 +20,5 @@ data:
   loki_singlebinary_storage_size: 1Gi
   loki_results_cache_memory: "512"
   loki_chunks_cache_memory: "512"
-  syslogng_loki_url: "loki-write.logging.svc.cluster.local:9095"
   # see: https://fluxcd.io/flux/components/kustomize/kustomizations/#post-build-substitution-of-numbers-and-booleans
   quote: '"'

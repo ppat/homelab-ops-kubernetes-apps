@@ -42,7 +42,7 @@ spec:
           streamLabels:
             job: event-exporter
             stream: event
-          url: http://loki-gateway.logging.svc.cluster.local./loki/api/v1/push
+          url: http://loki-write.logging.svc.cluster.local.:3100/loki/api/v1/push
         # webhook:
         #   endpoint: http://loki-gateway.logging.svc.cluster.local./loki/api/v1/push
         #   headers:

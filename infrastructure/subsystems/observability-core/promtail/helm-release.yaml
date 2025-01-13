@@ -23,6 +23,7 @@ spec:
   interval: 15m0s
   releaseName: promtail
   targetNamespace: logging
+  timeout: 10m0s
   upgrade:
     crds: CreateReplace
     cleanupOnFail: true
@@ -72,7 +73,7 @@ spec:
     config:
       enabled: true
       clients:
-      - url: http://loki-gateway.logging.svc.cluster.local./loki/api/v1/push
+      - url: http://loki-write.logging.svc.cluster.local.:3100/loki/api/v1/push
 
     resources: {}
     tolerations:

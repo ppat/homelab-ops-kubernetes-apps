@@ -26,6 +26,6 @@ datasources:
       type: loki
       uid: loki
       access: proxy
-      url: http://loki-gateway.logging.svc.cluster.local.
+      url: http://loki-read.logging.svc.cluster.local.:3100
       jsonData:
         tlsSkipVerify: true
