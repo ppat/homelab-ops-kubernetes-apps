@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.0.6...infra-observability-extra-v0.0.7) (2025-01-13)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** switch from loki-gateway to use of a simple k8s ingress ([#571](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/571)) ([a09a3e4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a09a3e4c97c3fd0d69bd03f2f81c353b803a17f0))
+* **infra-observability-core:** syslogng should reverse lookup ip addresses of remote hosts ([#569](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/569)) ([86b1e09](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/86b1e09e7e6f710a41ee01f30546281e92588b08))
+
 ## [0.0.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.0.5...infra-observability-extra-v0.0.6) (2025-01-11)
 
 
