@@ -116,37 +116,18 @@ spec:
     # Gateway + Ingress
     ######################################################################################################################
     gateway:
-      enabled: true
-      replicas: 1
-      containerPort: 8080
-      annotations: {}
-      resources: {}
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchLabels:
-                app.kubernetes.io/component: gateway
-            topologyKey: kubernetes.io/hostname
-      tolerations:
-      - key: node-role.kubernetes.io/control-plane
-        operator: Exists
+      enabled: false
       ingress:
-        enabled: true
-        ingressClassName: traefik
-        annotations:
-          external-dns.alpha.kubernetes.io/hostname: loki.${domain_name}
-          traefik.ingress.kubernetes.io/router.entrypoints: websecure
-          traefik.ingress.kubernetes.io/router.tls: "true"
-        hosts:
-        - host: loki.${domain_name}
-          paths:
-          - path: /
-            pathType: Prefix
-        tls: []
-      basicAuth:
         enabled: false
-
+    ingress:
+      enabled: true
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: loki.${domain_name}
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
+      hosts:
+      - loki.${domain_name}
+      tls: []
     ######################################################################################################################
     # Caches
     ######################################################################################################################
