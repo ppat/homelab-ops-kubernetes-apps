@@ -83,15 +83,5 @@ config:
         - targets:
           - localhost
           labels:
-            service_name: dmesg
-            __path__: /var/log/dmesg
-        - targets:
-          - localhost
-          labels:
-            service_name: cloud-init
-            __path__: /var/log/cloud-init-output.log
-        - targets:
-          - localhost
-          labels:
-            service_name: cloud-init
-            __path__: /var/log/cloud-init.log
+            service_name: system
+            __path__: /var/log/*.log

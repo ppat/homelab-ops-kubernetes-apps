@@ -37,15 +37,6 @@ defaultVolumeMounts:
   name: var-log
   readOnly: true
   subPath: journal
-- mountPath: /var/log/dmesg
+- mountPath: /var/log
   name: var-log
   readOnly: true
-  subPath: dmesg
-- mountPath: /var/log/cloud-init.log
-  name: var-log
-  readOnly: true
-  subPath: cloud-init.log
-- mountPath: /var/log/cloud-init-output.log
-  name: var-log
-  readOnly: true
-  subPath: cloud-init-output.log
