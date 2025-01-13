@@ -71,10 +71,6 @@ jobs:
           namespace: monitoring
           for: condition=available
           timeout: 1m
-        - resource: deployment/loki-gateway
-          namespace: logging
-          for: condition=available
-          timeout: 1m
         - resource: deployment/loki-read
           namespace: logging
           for: condition=available
@@ -91,6 +87,10 @@ jobs:
         - resource: statefulset/loki-write
           namespace: logging
           for: condition=available
+          timeout: 1m
+        - resource: ingress/loki
+          namespace: logging
+          for: jsonpath={.metadata.creationTimestamp}
           timeout: 1m
         - resource: daemonset/promtail
           namespace: logging
