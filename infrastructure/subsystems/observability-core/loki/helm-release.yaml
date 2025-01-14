@@ -61,6 +61,8 @@ spec:
     loki:
       analytics:
         reporting_enabled: false
+      annotations:
+        configmap.reloader.stakater.com/reload: "loki-extra-config"
       # Disable multi-tenant support
       auth_enabled: false
       compactor:
