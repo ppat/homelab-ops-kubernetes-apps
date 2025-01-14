@@ -43,8 +43,8 @@ spec:
     deschedulingInterval: 10m
     deschedulerPolicy:
       maxNoOfPodsToEvictPerNamespace: 2
-      # metricsCollector:
-      #   enabled: true
+      metricsCollector:
+        enabled: true
       profiles:
       - name: Default
         pluginConfig:
@@ -78,8 +78,8 @@ spec:
               cpu: 50
               memory: 50
               pods: 50
-            # metricsUtilization:
-            #   metricsServer: true
+            metricsUtilization:
+              metricsServer: true
             evictableNamespaces:
               exclude:
               - longhorn-system
@@ -95,3 +95,17 @@ spec:
             - RemovePodsViolatingInterPodAntiAffinity
             - RemovePodsViolatingNodeAffinity
             - RemovePodsViolatingNodeTaints
+  postRenderers:
+  - kustomize:
+      patches:
+      - target:
+          kind: ClusterRole
+          name: descheduler
+        # yamllint disable-line rule:indentation
+        patch: |-
+          - op: add
+            path: /rules/-
+            value:
+              apiGroups: ["metrics.k8s.io"]
+              resources: ["pods", "nodes"]
+              verbs: ["get", "list"]
