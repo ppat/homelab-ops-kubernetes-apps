@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.8...infra-kubernetes-extra-v0.0.9) (2025-01-14)
+
+
+### ✨ Features
+
+* **infra-kubernetes-extra:** enable descheduler's pod evictions for low node utilization as per metrics ([#582](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/582)) ([ba8551a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ba8551a472f37d3a6c56af6b9be76b304641621d))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-kubernetes-extra:** update descheduler (0.32.0 -&gt; 0.32.1) ([#528](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/528)) ([13dd943](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/13dd94365d7f0dde815595ff4534199bc8c17262))
+
 ## [0.0.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.7...infra-kubernetes-extra-v0.0.8) (2025-01-03)
 
 
