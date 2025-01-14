@@ -16,7 +16,6 @@ spec:
         namespace: flux-system
       version: 6.24.0
   install:
-    crds: CreateReplace
     createNamespace: false
     remediation:
       retries: 3
@@ -25,7 +24,6 @@ spec:
   targetNamespace: logging
   timeout: 15m0s
   upgrade:
-    crds: CreateReplace
     cleanupOnFail: true
     remediation:
       ignoreTestFailures: false
