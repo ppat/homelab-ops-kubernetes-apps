@@ -9,7 +9,8 @@ on:
     - '.github/workflows/test-kubernetes-resources-workflow.yaml'
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/apps-coder/**.yaml'
-    - 'apps/subsystems/coder/**.yaml'
+    - 'apps/subsystems/coder/**'
+    - '!apps/subsystems/coder/**.md'
   workflow_dispatch:
 
 concurrency:

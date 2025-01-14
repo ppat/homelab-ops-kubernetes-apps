@@ -9,7 +9,8 @@ on:
     - '.github/workflows/test-kubernetes-resources-workflow.yaml'
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/apps-harbor/**.yaml'
-    - 'apps/subsystems/harbor/**.yaml'
+    - 'apps/subsystems/harbor/**'
+    - '!apps/subsystems/harbor/**.md'
   workflow_dispatch:
 
 concurrency:

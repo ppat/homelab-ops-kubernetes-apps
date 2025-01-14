@@ -9,10 +9,10 @@ on:
     - '.github/workflows/test-kubernetes-resources-workflow.yaml'
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/infra-networking/**.yaml'
-    - 'infrastructure/subsystems/networking-core/**/*.yaml'
-    - 'infrastructure/subsystems/networking-core/**/*.sh'
-    - 'infrastructure/subsystems/networking-extra/**.yaml'
-    - 'infrastructure/subsystems/networking-extra/**.sh'
+    - 'infrastructure/subsystems/networking-core/**'
+    - 'infrastructure/subsystems/networking-extra/**'
+    - '!infrastructure/subsystems/networking-core/**.md'
+    - '!infrastructure/subsystems/networking-extra/**.md'
   workflow_dispatch:
 
 concurrency:

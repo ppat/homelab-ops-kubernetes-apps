@@ -11,6 +11,8 @@ on:
     - 'ci/test/infra-observability/**.yaml'
     - 'infrastructure/subsystems/observability-core/**'
     - 'infrastructure/subsystems/observability-extra/**'
+    - '!infrastructure/subsystems/observability-core/**.md'
+    - '!infrastructure/subsystems/observability-extra/**.md'
   workflow_dispatch:
 
 concurrency:
