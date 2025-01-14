@@ -9,7 +9,8 @@ on:
     - '.github/workflows/test-kubernetes-resources-workflow.yaml'
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/apps-bitwarden/**.yaml'
-    - 'apps/subsystems/bitwarden/**.yaml'
+    - 'apps/subsystems/bitwarden/**'
+    - '!apps/subsystems/bitwarden/**.md'
   workflow_dispatch:
 
 concurrency:

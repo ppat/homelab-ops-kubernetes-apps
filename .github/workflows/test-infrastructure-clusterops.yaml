@@ -9,8 +9,10 @@ on:
     - '.github/workflows/test-kubernetes-resources-workflow.yaml'
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/infra-clusterops/**.yaml'
-    - 'infrastructure/subsystems/clusterops-core/**.yaml'
-    - 'infrastructure/subsystems/clusterops-extra/**.yaml'
+    - 'infrastructure/subsystems/clusterops-core/**'
+    - 'infrastructure/subsystems/clusterops-extra/**'
+    - '!infrastructure/subsystems/clusterops-core/**.md'
+    - '!infrastructure/subsystems/clusterops-extra/**.md'
   workflow_dispatch:
 
 concurrency:
