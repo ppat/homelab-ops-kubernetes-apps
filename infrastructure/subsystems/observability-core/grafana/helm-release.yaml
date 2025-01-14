@@ -16,7 +16,6 @@ spec:
         namespace: flux-system
       version: 8.8.2
   install:
-    crds: CreateReplace
     createNamespace: false
     remediation:
       retries: 3
@@ -24,7 +23,6 @@ spec:
   releaseName: grafana
   targetNamespace: monitoring
   upgrade:
-    crds: CreateReplace
     cleanupOnFail: true
     remediation:
       ignoreTestFailures: false
