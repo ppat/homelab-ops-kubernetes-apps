@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.3.3...infra-observability-core-v0.3.4) (2025-01-14)
+
+
+### ✨ Features
+
+* **infra-observability-core:** specify extra ports for promtail in promtail-extra-config ([#576](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/576)) ([1099508](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/109950824e92bbab3ef14ec2d66fffca73acf1cd))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** automatically restart loki/promtail deployments/daemonsets if configmaps change ([#574](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/574)) ([c4b4785](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c4b4785ea4e71ebbf9c1b4a64f3e2db6685ceacd))
+* **infra-observability-core:** clean up unnecessary/no-op configuration in flux helm releases ([#579](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/579)) ([c17e286](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c17e2867991e93ec68a90e3dfc92d7d9608caf23))
+* **infra-observability-core:** updating loki/promtail updates when configmaps change requires a helm release ([#577](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/577)) ([865c8f6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/865c8f647620339c375e04b834aee11c8d9c823d))
+
 ## [0.3.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.3.2...infra-observability-core-v0.3.3) (2025-01-13)
 
 
