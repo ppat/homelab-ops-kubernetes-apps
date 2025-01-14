@@ -109,3 +109,9 @@ spec:
               apiGroups: ["metrics.k8s.io"]
               resources: ["pods", "nodes"]
               verbs: ["get", "list"]
+          - op: add
+            path: /rules/-
+            value:
+              apiGroups: ["policy"]
+              resources: ["poddisruptionbudgets"]
+              verbs: ["get", "watch", "list"]
