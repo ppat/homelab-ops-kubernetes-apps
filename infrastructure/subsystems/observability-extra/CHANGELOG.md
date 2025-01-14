@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.0.7...infra-observability-extra-v0.0.8) (2025-01-14)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-extra:** syslogng should not reverse lookup dns as its more accurate to have source specify host ([#580](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/580)) ([5bfda0a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5bfda0a29e54f19bf4e0d97212e9ac97130f208f))
+
 ## [0.0.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.0.6...infra-observability-extra-v0.0.7) (2025-01-13)
 
 
