@@ -47,6 +47,10 @@ spec:
     optional: true
   - kind: ConfigMap
     name: promtail-extra-config
+    valuesKey: extra-ports.yaml
+    optional: true
+  - kind: ConfigMap
+    name: promtail-extra-config
     valuesKey: extra-relabel-config.yaml
     optional: true
   - kind: ConfigMap
