@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
 - flux/
+- system-upgrade-controller/
 
 sortOptions:
   order: fifo
