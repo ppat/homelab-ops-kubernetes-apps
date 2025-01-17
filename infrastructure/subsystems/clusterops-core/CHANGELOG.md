@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-core-v0.0.3...infra-clusterops-core-v0.0.4) (2025-01-17)
+
+
+### ✨ Features
+
+* **infra-clusterops-core:** add system-upgrade-controller ([#606](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/606)) ([9af188d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9af188d767c50bf44e2e19392ce3af092fc8b038))
+
 ## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-core-v0.0.2...infra-clusterops-core-v0.0.3) (2024-11-10)
 
 
