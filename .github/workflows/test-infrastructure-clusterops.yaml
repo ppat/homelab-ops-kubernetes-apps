@@ -52,6 +52,10 @@ jobs:
           namespace: flux-system
           for: condition=available
           timeout: 1m
+        - resource: deployment/system-upgrade-controller
+          namespace: system-upgrade
+          for: condition=available
+          timeout: 1m
         - resource: deployment/goldilocks-controller
           namespace: goldilocks
           for: condition=available
