@@ -8,8 +8,8 @@ metadata:
     app.kubernetes.io/name: plex
     app.kubernetes.io/component: plex-tcp
   annotations:
-    metallb.universe.tf/allow-shared-ip: plex
-    metallb.universe.tf/address-pool: plex-pool
+    metallb.io/allow-shared-ip: plex
+    metallb.io/address-pool: plex-pool
 spec:
   selector:
     app.kubernetes.io/name: plex
@@ -30,8 +30,8 @@ metadata:
     app.kubernetes.io/name: plex
     app.kubernetes.io/component: plex-udp
   annotations:
-    metallb.universe.tf/allow-shared-ip: plex
-    metallb.universe.tf/address-pool: plex-pool
+    metallb.io/allow-shared-ip: plex
+    metallb.io/address-pool: plex-pool
 spec:
   selector:
     app.kubernetes.io/name: plex

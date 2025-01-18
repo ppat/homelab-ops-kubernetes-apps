@@ -40,8 +40,8 @@ metadata:
     app.kubernetes.io/part-of: unifi
     app.kubernetes.io/component: application-tcp
   annotations:
-    metallb.universe.tf/allow-shared-ip: unifi
-    metallb.universe.tf/address-pool: unifi-pool
+    metallb.io/allow-shared-ip: unifi
+    metallb.io/address-pool: unifi-pool
 spec:
   selector:
     app.kubernetes.io/name: unifi-network-application
@@ -73,8 +73,8 @@ metadata:
     app.kubernetes.io/part-of: unifi
     app.kubernetes.io/component: application-udp
   annotations:
-    metallb.universe.tf/allow-shared-ip: unifi
-    metallb.universe.tf/address-pool: unifi-pool
+    metallb.io/allow-shared-ip: unifi
+    metallb.io/address-pool: unifi-pool
 spec:
   selector:
     app.kubernetes.io/name: unifi-network-application
