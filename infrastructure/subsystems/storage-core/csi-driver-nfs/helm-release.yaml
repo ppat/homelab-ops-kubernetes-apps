@@ -34,17 +34,6 @@ spec:
       replicas: 1
       strategyType: Recreate
 
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-              - key: node-role.kubernetes.io/control-plane
-                operator: In
-                values:
-                - "true"
-
     externalSnapshotter:
       enabled: false
 

@@ -35,16 +35,6 @@ spec:
     crds:
       enabled: true
 
-    affinity:
-      nodeAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 1
-          preference:
-            matchExpressions:
-            - key: node-role.kubernetes.io/control-plane
-              operator: In
-              values:
-              - "true"
     resources: {}
       # requests:
       #   cpu: 10m
@@ -54,46 +44,16 @@ spec:
       operator: Exists
 
     cainjector:
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-              - key: node-role.kubernetes.io/control-plane
-                operator: In
-                values:
-                - "true"
       resources: {}
       tolerations:
       - key: node-role.kubernetes.io/control-plane
         operator: Exists
     webhook:
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-              - key: node-role.kubernetes.io/control-plane
-                operator: In
-                values:
-                - "true"
       resources: {}
       tolerations:
       - key: node-role.kubernetes.io/control-plane
         operator: Exists
     startupapicheck:
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-              - key: node-role.kubernetes.io/control-plane
-                operator: In
-                values:
-                - "true"
       resources: {}
       tolerations:
       - key: node-role.kubernetes.io/control-plane

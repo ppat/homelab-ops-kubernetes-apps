@@ -33,16 +33,6 @@ spec:
   values:
     recommender:
       enabled: true
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-              - key: node-role.kubernetes.io/control-plane
-                operator: In
-                values:
-                - "true"
       # resources:
       #   limits:
       #     cpu: 200m
