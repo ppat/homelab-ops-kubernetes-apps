@@ -25,8 +25,8 @@ metadata:
     app.kubernetes.io/name: pihole
     app.kubernetes.io/component: dns-tcp
   annotations:
-    metallb.universe.tf/allow-shared-ip: dns
-    metallb.universe.tf/address-pool: pihole-pool
+    metallb.io/allow-shared-ip: dns
+    metallb.io/address-pool: pihole-pool
 spec:
   selector:
     app.kubernetes.io/name: pihole
@@ -47,8 +47,8 @@ metadata:
     app.kubernetes.io/name: pihole
     app.kubernetes.io/component: dns-udp
   annotations:
-    metallb.universe.tf/allow-shared-ip: dns
-    metallb.universe.tf/address-pool: pihole-pool
+    metallb.io/allow-shared-ip: dns
+    metallb.io/address-pool: pihole-pool
 spec:
   selector:
     app.kubernetes.io/name: pihole

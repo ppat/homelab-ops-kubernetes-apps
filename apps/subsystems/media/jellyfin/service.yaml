@@ -8,8 +8,8 @@ metadata:
     app.kubernetes.io/name: jellyfin
     app.kubernetes.io/component: jellyfin-tcp
   annotations:
-    metallb.universe.tf/allow-shared-ip: jellyfin
-    metallb.universe.tf/address-pool: jellyfin-pool
+    metallb.io/allow-shared-ip: jellyfin
+    metallb.io/address-pool: jellyfin-pool
 spec:
   selector:
     app.kubernetes.io/name: jellyfin
@@ -30,8 +30,8 @@ metadata:
     app.kubernetes.io/name: jellyfin
     app.kubernetes.io/component: jellyfin-udp
   annotations:
-    metallb.universe.tf/allow-shared-ip: jellyfin
-    metallb.universe.tf/address-pool: jellyfin-pool
+    metallb.io/allow-shared-ip: jellyfin
+    metallb.io/address-pool: jellyfin-pool
 spec:
   selector:
     app.kubernetes.io/name: jellyfin

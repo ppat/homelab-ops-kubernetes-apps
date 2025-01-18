@@ -8,8 +8,8 @@ metadata:
     app.kubernetes.io/name: syslog
     app.kubernetes.io/component: syslog-tcp
   annotations:
-    metallb.universe.tf/allow-shared-ip: syslog
-    metallb.universe.tf/address-pool: syslog-pool
+    metallb.io/allow-shared-ip: syslog
+    metallb.io/address-pool: syslog-pool
 spec:
   selector:
     app.kubernetes.io/name: syslog
@@ -30,8 +30,8 @@ metadata:
     app.kubernetes.io/name: syslog
     app.kubernetes.io/component: syslog-udp
   annotations:
-    metallb.universe.tf/allow-shared-ip: syslog
-    metallb.universe.tf/address-pool: syslog-pool
+    metallb.io/allow-shared-ip: syslog
+    metallb.io/address-pool: syslog-pool
 spec:
   selector:
     app.kubernetes.io/name: syslog
