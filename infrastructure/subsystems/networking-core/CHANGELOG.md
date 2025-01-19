@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.4.1...infra-networking-core-v0.4.2) (2025-01-19)
+
+
+### ✨ Features
+
+* **infra-networking-core:** supply unifi and pihole as two alternate external-dns provider configurations ([#621](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/621)) ([9e62760](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9e62760b20563e23162784a2541518bd1bf4c696))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** rename post build variable external_dns_provider -&gt; externaldns_provider ([#624](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/624)) ([67d5852](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/67d5852cff8d634a5c9370172dc5f9101f4a6a93))
+* **infra-networking-core:** update digest busybox (2919d01 -&gt; a5d0ce4) ([#585](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/585)) ([7f058d4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7f058d43f0b0161605b4b3f20bb83ce79acff384))
+* remove node affinity preference for control plane nodes ([#614](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/614)) ([1766b6c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1766b6c5019b6faa22e29c77e44b29153318d60b))
+
 ## [0.4.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.4.0...infra-networking-core-v0.4.1) (2024-12-26)
 
 
