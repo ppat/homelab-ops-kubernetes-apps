@@ -40,9 +40,9 @@ spec:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
 
-    deschedulingInterval: 10m
+    deschedulingInterval: 15m
     deschedulerPolicy:
-      maxNoOfPodsToEvictPerNamespace: 2
+      maxNoOfPodsToEvictPerNamespace: 1
       metricsCollector:
         enabled: true
       profiles:
@@ -71,17 +71,16 @@ spec:
         - name: "LowNodeUtilization"
           args:
             thresholds:
-              cpu: 20
-              memory: 20
-              pods: 25
+              cpu: 30
+              memory: 30
             targetThresholds:
-              cpu: 50
-              memory: 50
-              pods: 50
+              cpu: 60
+              memory: 60
             metricsUtilization:
               metricsServer: true
             evictableNamespaces:
               exclude:
+              - kube-system
               - longhorn-system
               - logging
         plugins:
