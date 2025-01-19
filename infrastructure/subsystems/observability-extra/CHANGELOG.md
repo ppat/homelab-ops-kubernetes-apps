@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.0.9...infra-observability-extra-v0.0.10) (2025-01-19)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-extra:** update kubernetes-event-exporter (3.3.1 -&gt; 3.3.2) ([#612](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/612)) ([6bfca5c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6bfca5c3b5843932adfe9b0a413c0e23467e5ab9))
+* update metallb annotations (metallb.universe.tf -&gt; metallb.io) ([#619](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/619)) ([4321905](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4321905dc886039e571ad41bdcef7fd0a107c5a3))
+
 ## [0.0.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.0.8...infra-observability-extra-v0.0.9) (2025-01-16)
 
 
