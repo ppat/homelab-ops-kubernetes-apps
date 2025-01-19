@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-secrets-core-v0.0.8...infra-secrets-core-v0.0.9) (2025-01-19)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-secrets-core:** update cert-manager (v1.16.2 -&gt; v1.16.3) ([#604](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/604)) ([c82b4ba](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c82b4bad88d788fb53cb7e2b9d9984d441c965a4))
+* remove node affinity preference for control plane nodes ([#614](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/614)) ([1766b6c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1766b6c5019b6faa22e29c77e44b29153318d60b))
+
 ## [0.0.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-secrets-core-v0.0.7...infra-secrets-core-v0.0.8) (2025-01-03)
 
 
