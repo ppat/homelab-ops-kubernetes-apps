@@ -5,5 +5,13 @@ kind: Kustomization
 resources:
 - helm-release.yaml
 
-sortOptions:
-  order: fifo
+# Generate configMap with configuration for deployment modes
+configMapGenerator:
+- name: external-dns-provider-config
+  namespace: external-dns
+  files:
+  - conf.d/provider-pihole.yaml
+  - conf.d/provider-unifi.yaml
+
+configurations:
+- name-reference.yaml
