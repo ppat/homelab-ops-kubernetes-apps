@@ -5,9 +5,6 @@ metadata:
   name: infra-networking-extra
   namespace: flux-system
 spec:
-  dependsOn:
-  - name: infra-networking-core
-    namespace: flux-system
   interval: 15m0s
   path: ./infrastructure/subsystems/networking-extra
   postBuild:
