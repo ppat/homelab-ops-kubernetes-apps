@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.0.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.9...apps-media-v0.0.10) (2025-01-19)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** update ghcr.io/tautulli/tautulli (v2.15.0 -&gt; v2.15.1) ([#562](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/562)) ([2e0553c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2e0553cfc7fe64b0bbbabd3e4221743780806710))
+* **infra-networking-core:** update digest busybox (2919d01 -&gt; a5d0ce4) ([#585](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/585)) ([7f058d4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7f058d43f0b0161605b4b3f20bb83ce79acff384))
+* update metallb annotations (metallb.universe.tf -&gt; metallb.io) ([#619](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/619)) ([4321905](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4321905dc886039e571ad41bdcef7fd0a107c5a3))
+
 ## [0.0.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.8...apps-media-v0.0.9) (2024-12-26)
 
 
