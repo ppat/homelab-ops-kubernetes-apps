@@ -20,12 +20,17 @@ data:
       reload
       whoami
     }
-    ${domain_name}:53 {
-      forward . ${external_dns_ip_address}:53
+    homelab.${dns_zone}:53 {
+      forward . ${externaldns_ip_address}:53
+      import common_snippet
+      loadbalance
+    }
+    nas.${dns_zone}:53 {
+      forward . ${externaldns_ip_address}:53
       import common_snippet
       loadbalance
     }
     nodes.${dns_zone}:53 {
-      forward . ${external_dns_ip_address}:53
+      forward . ${externaldns_ip_address}:53
       import common_snippet
     }

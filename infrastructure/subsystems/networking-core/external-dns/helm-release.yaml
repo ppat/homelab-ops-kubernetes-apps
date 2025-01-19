@@ -33,7 +33,7 @@ spec:
   valuesFrom:
   - kind: ConfigMap
     name: external-dns-provider-config
-    valuesKey: provider-${external_dns_provider}.yaml
+    valuesKey: provider-${externaldns_provider}.yaml
     optional: false
   values:
     resources: {}
