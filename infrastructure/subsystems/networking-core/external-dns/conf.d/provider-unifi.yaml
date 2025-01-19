@@ -1,0 +1,51 @@
+---
+fullnameOverride: external-dns-unifi
+domainFilters:
+- ${domain_name}
+env: []
+extraArgs:
+- --ignore-ingress-tls-spec
+logLevel: ${externaldns_loglevel:=debug}
+policy: sync
+provider:
+  name: webhook
+  webhook:
+    image:
+      repository: ghcr.io/kashalls/external-dns-unifi-webhook
+      # renovate: datasource=github-releases depName=kashalls/external-dns-unifi-webhook
+      tag: "v0.3.1"
+    env:
+    - name: UNIFI_HOST
+      value: https://unifi.homelab.${dns_zone}
+    - name: UNIFI_EXTERNAL_CONTROLLER
+      value: "true"
+    - name: UNIFI_USER
+      valueFrom:
+        secretKeyRef:
+          name: external-dns-secrets
+          key: unifi_username
+    - name: UNIFI_PASS
+      valueFrom:
+        secretKeyRef:
+          name: external-dns-secrets
+          key: unifi_password
+    - name: LOG_LEVEL
+      value: ${externaldns_loglevel:=debug}
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: http-webhook
+      initialDelaySeconds: 10
+      timeoutSeconds: 5
+    readinessProbe:
+      httpGet:
+        path: /readyz
+        port: http-webhook
+      initialDelaySeconds: 10
+      timeoutSeconds: 5
+registry: txt
+sources:
+- ingress
+- service
+txtOwnerId: "${externaldns_txtowner_id:=k8s}-"
+txtPrefix: "${externaldns_txtowner_prefix:=k8s}."

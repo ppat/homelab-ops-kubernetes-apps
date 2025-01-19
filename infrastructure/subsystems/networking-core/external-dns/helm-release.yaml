@@ -30,6 +30,11 @@ spec:
       ignoreTestFailures: false
       retries: 3
       strategy: rollback
+  valuesFrom:
+  - kind: ConfigMap
+    name: external-dns-provider-config
+    valuesKey: provider-${external_dns_provider}.yaml
+    optional: false
   values:
     resources: {}
     tolerations:
