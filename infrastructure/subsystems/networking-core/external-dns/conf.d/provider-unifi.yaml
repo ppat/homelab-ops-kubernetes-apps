@@ -47,5 +47,5 @@ registry: txt
 sources:
 - ingress
 - service
-txtOwnerId: "${externaldns_txtowner_id:=k8s}-"
-txtPrefix: "${externaldns_txtowner_prefix:=k8s}."
+txtOwnerId: ${externaldns_txtowner_id:=k8s}
+txtPrefix: ${externaldns_txtowner_prefix:=k8s}
