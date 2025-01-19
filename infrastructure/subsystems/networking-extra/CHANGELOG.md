@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.4...infra-networking-extra-v0.1.5) (2025-01-19)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update digest docker.io/mongo (725b4cf -&gt; 24077ea) ([#595](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/595)) ([013e974](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/013e974e842a7a66b6af21edd6d2191d18917f7f))
+* update metallb annotations (metallb.universe.tf -&gt; metallb.io) ([#619](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/619)) ([4321905](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4321905dc886039e571ad41bdcef7fd0a107c5a3))
+
 ## [0.1.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.3...infra-networking-extra-v0.1.4) (2025-01-09)
 
 
