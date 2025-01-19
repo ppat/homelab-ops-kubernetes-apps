@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.0.3...infra-database-core-v0.0.4) (2025-01-19)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* remove node affinity preference for control plane nodes ([#614](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/614)) ([1766b6c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1766b6c5019b6faa22e29c77e44b29153318d60b))
+
 ## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.0.2...infra-database-core-v0.0.3) (2025-01-03)
 
 
