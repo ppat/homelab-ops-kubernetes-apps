@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.10...infra-kubernetes-extra-v0.0.11) (2025-01-19)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-kubernetes-extra:** update node-feature-discovery (0.17.0 -&gt; 0.17.1) ([#594](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/594)) ([200b6e5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/200b6e55ed6d1f9ca2f91ae75b87bc58b6e438df))
+* remove node affinity preference for control plane nodes ([#614](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/614)) ([1766b6c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1766b6c5019b6faa22e29c77e44b29153318d60b))
+
 ## [0.0.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.9...infra-kubernetes-extra-v0.0.10) (2025-01-14)
 
 
