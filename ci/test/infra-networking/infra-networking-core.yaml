@@ -9,7 +9,7 @@ spec:
   path: ./infrastructure/subsystems/networking-core
   postBuild:
     substitute:
-      external_dns_provider: pihole
+      externaldns_provider: pihole
     substituteFrom:
     - kind: ConfigMap
       name: cluster-common-conf
