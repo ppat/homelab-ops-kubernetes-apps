@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.4.2...infra-networking-core-v0.4.3) (2025-01-19)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** fix external-dns unifi webhook provider config ([#629](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/629)) ([9e32a97](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9e32a97f392275a28b37fbdfd1fd8d5fc653ab26))
+
 ## [0.4.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.4.1...infra-networking-core-v0.4.2) (2025-01-19)
 
 
