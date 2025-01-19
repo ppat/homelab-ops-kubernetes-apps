@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-core-v0.0.3...infra-kubernetes-core-v0.0.4) (2025-01-19)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** default coredns config should resolve dns for both k8s clusters ([#622](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/622)) ([e05207f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e05207fb008e79ae74724d143659401db5baeb30))
+
 ## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-core-v0.0.2...infra-kubernetes-core-v0.0.3) (2024-11-10)
 
 
