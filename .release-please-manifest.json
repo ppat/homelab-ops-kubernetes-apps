@@ -3,7 +3,7 @@
   "apps/subsystems/bitwarden": "0.0.1",
   "apps/subsystems/coder": "0.0.11",
   "apps/subsystems/downloaders": "0.1.8",
-  "apps/subsystems/harbor": "0.0.1",
+  "apps/subsystems/harbor": "0.0.2",
   "apps/subsystems/media": "0.0.10",
   "infrastructure/bootstrap/crds": "0.3.1",
   "infrastructure/helm-repositories": "0.0.5",
