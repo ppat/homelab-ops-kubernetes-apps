@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.10...apps-media-v0.0.11) (2025-01-23)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** update ghcr.io/jellyfin/jellyfin (10.10.3 -&gt; 10.10.4) ([#647](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/647)) ([5d3f5bb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5d3f5bb7f0c52acb10ec354c6c435aae7495549e))
+
 ## [0.0.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.9...apps-media-v0.0.10) (2025-01-19)
 
 
