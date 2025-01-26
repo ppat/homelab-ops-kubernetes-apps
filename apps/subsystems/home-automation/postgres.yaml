@@ -1,0 +1,24 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: home-automation-db
+  namespace: home-automation
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  bootstrap:
+    initdb:
+      database: home-assistant
+      owner: home-assistant
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.4
+  instances: 2
+  monitoring:
+    enablePodMonitor: true
+  primaryUpdateStrategy: unsupervised
+  resources: {}
+  startDelay: 300
+  stopDelay: 300
+  storage:
+    size: ${POSTGRES_DB_SIZE}
+    storageClass: ${POSTGRES_DB_STORAGE_CLASS}

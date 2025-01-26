@@ -1,0 +1,36 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps-home-automation
+  namespace: flux-system
+spec:
+  interval: 15m0s
+  path: ./apps/subsystems/home-automation
+  prune: false
+  postBuild:
+    substitute:
+      POSTGRES_DB_STORAGE_CLASS: standard
+      POSTGRES_DB_SIZE: 1Gi
+    substituteFrom:
+    - kind: ConfigMap
+      name: cluster-common-conf
+  sourceRef:
+    kind: GitRepository
+    name: test-source
+    namespace: flux-system
+  timeout: 2m0s
+  wait: false
+  patches:
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      # drop probes for home assistant as they don't appear to work within github actions
+      - op: remove
+        path: /spec/template/spec/containers/0/livenessProbe
+      - op: remove
+        path: /spec/template/spec/containers/0/readinessProbe
+      - op: remove
+        path: /spec/template/spec/containers/0/startupProbe
+    target:
+      kind: Deployment
+      name: home-assistant

@@ -1,0 +1,127 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: home-assistant
+  namespace: home-automation
+  labels:
+    app.kubernetes.io/name: home-assistant
+  annotations:
+    secret.reloader.stakater.com/reload: home-automation-secrets
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: home-assistant
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: home-assistant
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: home-assistant
+        args: ["--log-file", "/dev/stdout"]
+        env:
+        - name: TZ
+          value: US/Eastern
+        image: ghcr.io/onedr0p/home-assistant:2025.1.4@sha256:0d20c912e2c2a1a8f76b22f4689b575b4498c3cc334b807a91ecf82f2cd33094
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /auth/providers
+            port: 8123
+        ports:
+        - name: home-assistant
+          containerPort: 8123
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /auth/providers
+            port: 8123
+        resources:
+          requests:
+            cpu: 128m
+            memory: 1024Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        startupProbe:
+          httpGet:
+            path: /auth/providers
+            port: 8123
+        volumeMounts:
+        - mountPath: /config
+          name: home-assistant-data
+        - mountPath: /config/secrets.yaml
+          name: home-assistant-secrets
+          readOnly: true
+          subPath: homeassistant_secrets.yaml
+        - mountPath: /tmp
+          name: home-assistant-temp
+      - name: code-server
+        args: [
+          "--auth", "none",
+          "--user-data-dir", "/home/coder/.vscode",
+          "--extensions-dir", "/home/coder/.vscode",
+          "--port", "8080",
+          "--disable-telemetry",
+          "/config"
+        ]
+        image: ghcr.io/coder/code-server:4.96.4@sha256:f93810f7f6636b3af3b1a750faf612349cddb89fbb6d28d69123a214fc75ee9e
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+        ports:
+        - name: code-server
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+        resources:
+          requests:
+            cpu: 15m
+          limits:
+            memory: 512Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+        volumeMounts:
+        - mountPath: /home/coder
+          name: home-assistant-data
+          subPath: .coder
+        - mountPath: /config
+          name: home-assistant-data
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - name: home-assistant-data
+        persistentVolumeClaim:
+          claimName: home-assistant-data
+      - name: home-assistant-secrets
+        secret:
+          secretName: home-automation-secrets
+      - name: home-assistant-temp
+        emptyDir: {}

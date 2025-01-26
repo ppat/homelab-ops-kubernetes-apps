@@ -1,0 +1,69 @@
+---
+# yamllint disable rule:line-length
+name: test-apps-home-automation
+
+on:
+  pull_request:
+    paths:
+    - '.github/workflows/test-apps-home-automation.yaml'
+    - '.github/workflows/test-kubernetes-resources-workflow.yaml'
+    - '.github/kind-cluster-single-node.yaml'
+    - 'ci/test/apps-home-automation/**.yaml'
+    - 'apps/subsystems/home-automation/**'
+    - '!apps/subsystems/home-automation/**.md'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-apps-home-automation:
+    uses: ./.github/workflows/test-kubernetes-resources-workflow.yaml
+    with:
+      test_path: ./ci/test/apps-home-automation
+      # yamllint disable-line rule:indentation
+      reconcile_items: |-
+        - name: infra-database-core
+          kind: kustomization
+          namespace: flux-system
+          timeout: 1m
+        - name: apps-home-automation
+          kind: kustomization
+          namespace: flux-system
+          timeout: 2m
+      # yamllint disable-line rule:indentation
+      success_conditions: |-
+        - resource: deployment/cloudnative-pg
+          namespace: cnpg-system
+          for: condition=available
+          timeout: 1m
+        - resource: cluster.postgresql.cnpg.io/home-automation-db
+          namespace: home-automation
+          for: condition=ready
+          timeout: 3m
+        - resource: deployment/nanomq
+          namespace: home-automation
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/home-assistant
+          namespace: home-automation
+          for: condition=available
+          timeout: 2m
+      git_url: https://github.com/${{ github.repository }}.git
+      git_ref: ${{ github.head_ref || github.ref }}
+      kind_cluster_config: kind-cluster-multi-node.yaml
+      # yamllint disable-line rule:indentation
+      custom_commands: |-
+        - name: show-hr
+          command: 'kubectl get -n home-automation events --sort-by=.lastTimestamp'
+        - name: desc-nanomq
+          command: 'kubectl describe -n home-automation deployment nanomq'
+        - name: logs-nanomq
+          command: 'kubectl logs -n home-automation deployment/nanomq'
+        - name: desc-home-assistant
+          command: 'kubectl describe -n home-automation deployment home-assistant'
+        - name: get-home-assistant
+          command: 'kubectl get -n home-automation deployment home-assistant -o yaml'
+        - name: logs-home-assistant
+          command: 'kubectl logs -n home-automation deployment/home-assistant'

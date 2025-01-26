@@ -1,0 +1,91 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nanomq
+  namespace: home-automation
+  labels:
+    app.kubernetes.io/name: nanomq
+  annotations:
+    secret.reloader.stakater.com/reload: home-automation-secrets
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nanomq
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nanomq
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: nanomq
+        env:
+        - name: NANOMQ_CONF_PATH
+          value: /etc/nanomq.conf
+        - name: NANOMQ_HTTP_SERVER_ENABLE
+          value: "true"
+        - name: NANOMQ_HTTP_SERVER_PORT
+          value: "8081"
+        - name: NANOMQ_HTTP_SERVER_USERNAME
+          value: admin
+        - name: NANOMQ_HTTP_SERVER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: nanomq_admin_password
+              name: home-automation-secrets
+        image: emqx/nanomq:0.23.2-slim@sha256:964808d1317326cce1bd832556b9d6b1aec53c3b49db709301bd70134afc3de5
+        livenessProbe:
+          tcpSocket:
+            port: mqtt
+        ports:
+        - containerPort: 1883
+          name: mqtt
+        - containerPort: 8081
+          name: http
+        - containerPort: 8083
+          name: websocket
+        readinessProbe:
+          tcpSocket:
+            port: mqtt
+        resources:
+          requests:
+            cpu: 32m
+            memory: 128Mi
+          limits:
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        startupProbe:
+          tcpSocket:
+            port: mqtt
+        volumeMounts:
+        - mountPath: /etc/nanomq.conf
+          name: nanomq-config
+          subPath: nanomq.conf
+        - mountPath: /etc/nanomq_acl.conf
+          name: nanomq-config
+          subPath: nanomq_acl.conf
+        - mountPath: /etc/nanomq_pwd.conf
+          name: nanomq-secrets
+          readOnly: true
+          subPath: nanomq_pwd.conf
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      volumes:
+      - name: nanomq-config
+        configMap:
+          name: nanomq-config
+      - name: nanomq-secrets
+        secret:
+          secretName: home-automation-secrets
