@@ -21,3 +21,16 @@ spec:
     namespace: flux-system
   timeout: 2m0s
   wait: false
+  patches:
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      # drop probes for home assistant as they don't appear to work within github actions
+      - op: remove
+        path: /spec/template/spec/containers/0/livenessProbe
+      - op: remove
+        path: /spec/template/spec/containers/0/readinessProbe
+      - op: remove
+        path: /spec/template/spec/containers/0/startupProbe
+    target:
+      kind: Deployment
+      name: home-assistant
