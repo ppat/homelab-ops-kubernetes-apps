@@ -43,6 +43,7 @@ module.exports = {
         'apps-coder',
         'apps-downloaders',
         'apps-harbor',
+        'apps-home-automation',
         'apps-media',
         'infra-bootstrap-crds',
         'infra-helm-repositories',

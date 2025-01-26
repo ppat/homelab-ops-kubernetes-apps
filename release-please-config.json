@@ -46,6 +46,12 @@
       "component": "apps-harbor",
       "extra-label": "pr-type:release,subsystem:apps-harbor"
     },
+    "apps/subsystems/home-automation": {
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "component": "apps-home-automation",
+      "extra-label": "pr-type:release,subsystem:apps-home-automation"
+    },
     "apps/subsystems/media": {
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,

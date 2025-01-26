@@ -1,0 +1,48 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: home-assistant
+  namespace: home-automation
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: home-assistant.${domain_name}
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  # setting tls to [], so that default certficate will be assigned
+  tls: []
+  rules:
+  - host: home-assistant.${domain_name}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: home-assistant
+            port:
+              number: 8123
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: home-assistant-edit
+  namespace: home-automation
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: home-assistant-edit.${domain_name}
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  # setting tls to [], so that default certficate will be assigned
+  tls: []
+  rules:
+  - host: home-assistant-edit.${domain_name}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: home-assistant
+            port:
+              number: 8080
