@@ -1,6 +1,6 @@
 ---
 # yamllint disable rule:line-length
-name: test-apps-downloaders
+name: test-apps-home-automation
 
 on:
   pull_request:
@@ -42,14 +42,14 @@ jobs:
           namespace: home-automation
           for: condition=ready
           timeout: 3m
-        - resource: deployment/home-assistant
-          namespace: home-automation
-          for: condition=available
-          timeout: 1m
         - resource: deployment/nanomq
           namespace: home-automation
           for: condition=available
           timeout: 1m
+        - resource: deployment/home-assistant
+          namespace: home-automation
+          for: condition=available
+          timeout: 2m
       git_url: https://github.com/${{ github.repository }}.git
       git_ref: ${{ github.head_ref || github.ref }}
       kind_cluster_config: kind-cluster-multi-node.yaml
@@ -57,11 +57,13 @@ jobs:
       custom_commands: |-
         - name: show-hr
           command: 'kubectl get -n home-automation events --sort-by=.lastTimestamp'
-        - name: desc-radarr
-          command: 'kubectl describe -n home-automation deployment home-assistant'
-        - name: logs-radarr
-          command: 'kubectl logs -n home-automation deployment/home-assistant'
-        - name: desc-sabnzbd
+        - name: desc-nanomq
           command: 'kubectl describe -n home-automation deployment nanomq'
-        - name: logs-sabnzbd
+        - name: logs-nanomq
           command: 'kubectl logs -n home-automation deployment/nanomq'
+        - name: desc-home-assistant
+          command: 'kubectl describe -n home-automation deployment home-assistant'
+        - name: get-home-assistant
+          command: 'kubectl get -n home-automation deployment home-assistant -o yaml'
+        - name: logs-home-assistant
+          command: 'kubectl logs -n home-automation deployment/home-assistant'
