@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: csi-driver-nfs-repository
         namespace: flux-system
-      version: v4.9.0
+      version: v4.10.0
   install:
     createNamespace: false
     remediation:
