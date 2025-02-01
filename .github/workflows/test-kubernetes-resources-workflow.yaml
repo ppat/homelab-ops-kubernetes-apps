@@ -51,7 +51,7 @@ jobs:
         node_image: "kindest/node:v1.31.4@sha256:2cb39f7295fe7eafee0842b1052a599a4fb0f8bcf3f83d96c7f4864c357c6c30"
 
     - name: Setup kubectl
-      uses: fluxcd/pkg/actions/kubectl@528bc561beb5266fb551d39b36f612471802d017
+      uses: fluxcd/pkg/actions/kubectl@e454462cfa3e0d4cdb8bff0c8f898ce22eb83a72
       with:
         # renovate: datasource=github-releases depName=kubernetes/kubernetes
         version: "v1.31.5"
