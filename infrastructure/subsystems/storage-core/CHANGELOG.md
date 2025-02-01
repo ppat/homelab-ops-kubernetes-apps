@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.0.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.0.7...infra-storage-core-v0.0.8) (2025-02-01)
+
+
+### ✨ Features
+
+* **infra-storage-core:** update minio (5.3.0 -&gt; 5.4.0) ([#516](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/516)) ([b78ff9f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b78ff9f2939f33ae192503e2f28698f7edc7d3b8))
+* **infra-storage-core:** update minio/mc (RELEASE.2024-11-21T17-21-54Z -&gt; RELEASE.2025-01-17T23-25-50Z) ([#700](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/700)) ([174eb91](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/174eb91859eb80e83e6a8f13cc907ca29b853537))
+* **infra-storage-core:** update minio/minio (RELEASE.2024-12-18T13-15-44Z -&gt; RELEASE.2025-01-18T00-31-37Z) ([#694](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/694)) ([e40ab59](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e40ab597ea7a9e0d5cf24bd17314ecb6324619c2))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** keep the version of minio/mc image used for jobs upto date ([#695](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/695)) ([6169504](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/616950498a5bf5ff088d3e6904db830185838085))
+* remove node affinity preference for control plane nodes ([#614](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/614)) ([1766b6c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1766b6c5019b6faa22e29c77e44b29153318d60b))
+
 ## [0.0.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.0.6...infra-storage-core-v0.0.7) (2024-12-26)
 
 
