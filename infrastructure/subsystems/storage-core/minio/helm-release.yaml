@@ -60,7 +60,7 @@ spec:
     ignoreChartChecksums: true
     image:
       # renovate: datasource=docker depName=minio/minio
-      tag: "RELEASE.2024-12-18T13-15-44Z"
+      tag: "RELEASE.2025-01-18T00-31-37Z"
     deploymentUpdate:
       type: Recreate
     existingSecret: minio-admin-credentials
