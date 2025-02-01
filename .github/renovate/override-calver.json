@@ -10,7 +10,8 @@
         "custom.regex"
       ],
       "matchPackageNames": [
-        "minio/minio"
+        "minio/minio",
+        "minio/mc"
       ],
       "minimumReleaseAge": "14 days",
       "semanticCommits": "disabled"

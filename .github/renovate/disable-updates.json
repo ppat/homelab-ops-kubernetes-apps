@@ -40,7 +40,8 @@
         "docker"
       ],
       "matchPackageNames": [
-        "minio/minio"
+        "minio/minio",
+        "minio/mc"
       ],
       "matchUpdateTypes": [
         "digest",
