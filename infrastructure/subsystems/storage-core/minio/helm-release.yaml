@@ -63,7 +63,7 @@ spec:
       tag: "RELEASE.2025-01-18T00-31-37Z"
     mcImage:
       # renovate: datasource=docker depName=minio/mc
-      tag: "RELEASE.2024-11-21T17-21-54Z"
+      tag: "RELEASE.2025-01-17T23-25-50Z"
     deploymentUpdate:
       type: Recreate
     existingSecret: minio-admin-credentials
