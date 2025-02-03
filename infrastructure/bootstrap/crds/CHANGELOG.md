@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.3.1...infra-bootstrap-crds-v0.3.2) (2025-02-03)
+
+
+### ✨ Features
+
+* **infra-bootstrap-crds:** update external-secrets/external-secrets (v0.12.1 -&gt; v0.13.0) ([#673](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/673)) ([09295f4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/09295f4853f808d43280f886e02bc9f87135e258))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-bootstrap-crds:** update cert-manager/cert-manager (v1.16.2 -&gt; v1.16.3) ([#608](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/608)) ([d36df91](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d36df914de652bcd73442b1a98f38fd7783c68a7))
+
 ## [0.3.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.3.0...infra-bootstrap-crds-v0.3.1) (2025-01-03)
 
 
