@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.10...apps-downloaders-v0.1.11) (2025-02-06)
+
+
+### ✨ Features
+
+* **apps-downloaders:** update ghcr.io/linuxserver/lidarr (2.8.2 -&gt; 2.9.6) ([#703](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/703)) ([13110c2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/13110c27cae8a4ab81a03ece50a16fe54075f4e4))
+* **apps-downloaders:** update ghcr.io/linuxserver/radarr (5.17.2 -&gt; 5.18.4) ([#704](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/704)) ([0ed30af](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0ed30af3103b19e2de8026bf2d9bc176d4c760d3))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-downloaders:** update digest ghcr.io/linuxserver/radarr (6edb323 -&gt; e547a74) ([#701](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/701)) ([09ddbb8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/09ddbb8916a42462cce65f9cd8212d8299d5e4f0))
+
 ## [0.1.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.9...apps-downloaders-v0.1.10) (2025-02-01)
 
 
