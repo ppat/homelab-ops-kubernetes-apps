@@ -1,16 +1,16 @@
 ---
 # yamllint disable rule:line-length
-name: test-infrastructure-secrets
+name: test-infrastructure-security
 
 on:
   pull_request:
     paths:
-    - '.github/workflows/test-infrastructure-secrets.yaml'
+    - '.github/workflows/test-infrastructure-security.yaml'
     - '.github/workflows/test-kubernetes-resources-workflow.yaml'
     - '.github/kind-cluster-single-node.yaml'
-    - 'ci/test/infra-secrets/**.yaml'
-    - 'infrastructure/subsystems/secrets-core/**'
-    - '!infrastructure/subsystems/secrets-core/**.md'
+    - 'ci/test/infra-security/**.yaml'
+    - 'infrastructure/subsystems/security-core/**'
+    - '!infrastructure/subsystems/security-core/**.md'
   workflow_dispatch:
 
 concurrency:
@@ -18,13 +18,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test-infrastructure-secrets:
+  test-infrastructure-security:
     uses: ./.github/workflows/test-kubernetes-resources-workflow.yaml
     with:
-      test_path: ./ci/test/infra-secrets
+      test_path: ./ci/test/infra-security
       # yamllint disable-line rule:indentation
       reconcile_items: |-
-        - name: infra-secrets-core
+        - name: infra-security-core
           kind: kustomization
           namespace: flux-system
           timeout: 2m
