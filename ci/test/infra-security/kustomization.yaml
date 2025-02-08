@@ -5,7 +5,7 @@ kind: Kustomization
 resources:
 - test.yaml
 - cert-manager.yaml
-- infra-secrets-core.yaml
+- infra-security-core.yaml
 
 sortOptions:
   order: fifo
