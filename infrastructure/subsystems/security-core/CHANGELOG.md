@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.0.10...infra-security-core-v0.0.11) (2025-02-08)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-core:** rename subsytem infra-secrets-core -&gt; infra-security-core ([#723](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/723)) ([80e936b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/80e936b61df806580b6ee59cc700c71480343f7d))
+
 ## [0.0.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-secrets-core-v0.0.9...infra-secrets-core-v0.0.10) (2025-02-05)
 
 
