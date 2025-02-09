@@ -24,3 +24,14 @@ spec:
     namespace: flux-system
   timeout: 2m0s
   wait: true
+  patches:
+  # drop ExternalSecret as a secret store is not configured for tests
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      $patch: delete
+      kind: ExternalSecret
+      metadata:
+        name: authentik-credentials
+    target:
+      kind: ExternalSecret
+      name: authentik-credentials
