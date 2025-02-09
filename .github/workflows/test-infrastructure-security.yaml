@@ -153,6 +153,6 @@ jobs:
         - name: show-authentik-events
           command: 'kubectl get -n authentik events --sort-by=.lastTimestamp'
         - name: describe-authentik-deployment
-          command: 'kubectl describe -n authentik deployment/authentik-server
+          command: 'kubectl describe -n authentik deployment/authentik-server'
         - name: show-authentik-logs
-          command: 'kubectl logs -n authentik deployment/authentik-server
+          command: 'kubectl logs -n authentik deployment/authentik-server'
