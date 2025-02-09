@@ -23,7 +23,7 @@ spec:
   timeout: 2m0s
   wait: true
   patches:
-  # drop k3s-metrics endpoints as tests are run kind, not k3s
+  # drop k3s-metrics endpoints as tests are run within kind, not k3s
   # yamllint disable-line rule:indentation
   - patch: |-
       $patch: delete
