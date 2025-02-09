@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.0.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.0.10...infra-security-core-v0.0.11) (2025-02-08)
+## [0.0.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-secrets-core-v0.0.10...infra-security-core-v0.0.11) (2025-02-08)
 
 
 ### 🚀 Enhancements + Bug Fixes

@@ -40,6 +40,7 @@
         "flux"
       ],
       "matchPackageNames": [
+        "authentik",
         "self-host"
       ],
       "minimumReleaseAge": "14 days",

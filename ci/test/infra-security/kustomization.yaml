@@ -4,8 +4,9 @@ kind: Kustomization
 
 resources:
 - test.yaml
-- cert-manager.yaml
+- ../infra-database/infra-database-core.yaml
 - infra-security-core.yaml
+- infra-security-extra.yaml
 
 sortOptions:
   order: fifo

@@ -130,6 +130,12 @@
       "component": "infra-security-core",
       "extra-label": "pr-type:release,subsystem:infra-security-core"
     },
+    "infrastructure/subsystems/security-extra": {
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "component": "infra-security-extra",
+      "extra-label": "pr-type:release,subsystem:infra-security-extra"
+    },
     "infrastructure/subsystems/storage-core": {
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
