@@ -7,7 +7,7 @@
   "apps/subsystems/home-automation": "0.0.2",
   "apps/subsystems/media": "0.0.11",
   "infrastructure/bootstrap/crds": "0.3.1",
-  "infrastructure/helm-repositories": "0.0.5",
+  "infrastructure/helm-repositories": "0.0.6",
   "infrastructure/subsystems/clusterops-core": "0.0.5",
   "infrastructure/subsystems/clusterops-extra": "0.1.4",
   "infrastructure/subsystems/database-core": "0.0.4",
