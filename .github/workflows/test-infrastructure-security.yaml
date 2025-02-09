@@ -10,7 +10,9 @@ on:
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/infra-security/**.yaml'
     - 'infrastructure/subsystems/security-core/**'
+    - 'infrastructure/subsystems/security-extra/**'
     - '!infrastructure/subsystems/security-core/**.md'
+    - '!infrastructure/subsystems/security-extra/**.md'
   workflow_dispatch:
 
 concurrency:
@@ -25,6 +27,10 @@ jobs:
       # yamllint disable-line rule:indentation
       reconcile_items: |-
         - name: infra-security-core
+          kind: kustomization
+          namespace: flux-system
+          timeout: 2m
+        - name: infra-security-extra
           kind: kustomization
           namespace: flux-system
           timeout: 2m
@@ -94,9 +100,36 @@ jobs:
           namespace: test
           for: jsonpath={.metadata.creationTimestamp}
           timeout: 1m
+        - resource: deployment/cloudnative-pg
+          namespace: cnpg-system
+          for: condition=available
+          timeout: 1m
+        - resource: certificate/authentik-signing-cert
+          namespace: authentik
+          for: condition=ready
+          timeout: 1m
+        - resource: cluster.postgresql.cnpg.io/authentik-db
+          namespace: authentik
+          for: condition=ready
+          timeout: 3m
+        - resource: statefulset/authentik-redis-master
+          namespace: authentik
+          timeout: 1m
+        - resource: deployment/authentik-server
+          namespace: authentik
+          for: condition=available
+          timeout: 1m
+        - resource: deployment/authentik-worker
+          namespace: authentik
+          for: condition=available
+          timeout: 1m
+        - resource: poddisruptionbudget/authentik-server
+          namespace: authentik
+          for: jsonpath={.status.currentHealthy}=3
+          timeout: 1m
       git_url: https://github.com/${{ github.repository }}.git
       git_ref: ${{ github.head_ref || github.ref }}
-      kind_cluster_config: kind-cluster-single-node.yaml
+      kind_cluster_config: kind-cluster-multi-node.yaml
       # yamllint disable-line rule:indentation
       custom_commands: |-
         - name: show-events
@@ -117,3 +150,9 @@ jobs:
           command: 'kubectl describe -n external-secrets bundle bitwarden-ca-cert'
         - name: show-synced-ca-cert
           command: 'kubectl get -n test configmap bitwarden-ca-cert -o yaml'
+        - name: show-authentik-events
+          command: 'kubectl get -n authentik events --sort-by=.lastTimestamp'
+        - name: describe-authentik-deployment
+          command: 'kubectl describe -n authentik deployment/authentik-server'
+        - name: show-authentik-logs
+          command: 'kubectl logs -n authentik deployment/authentik-server'

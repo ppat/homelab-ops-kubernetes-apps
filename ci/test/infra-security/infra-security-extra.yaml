@@ -1,0 +1,37 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infra-security-extra
+  namespace: flux-system
+spec:
+  interval: 15m0s
+  path: ./infrastructure/subsystems/security-extra
+  postBuild:
+    substitute:
+      cert_issuer: selfsigned-issuer
+      POSTGRES_DB_STORAGE_CLASS: standard
+      POSTGRES_DB_SIZE: 1Gi
+      REDIS_STORAGE_CLASS: standard
+      REDIS_SIZE: 1Gi
+    substituteFrom:
+    - kind: ConfigMap
+      name: cluster-common-conf
+  prune: false
+  sourceRef:
+    kind: GitRepository
+    name: test-source
+    namespace: flux-system
+  timeout: 2m0s
+  wait: true
+  patches:
+  # drop ExternalSecret as a secret store is not configured for tests
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      $patch: delete
+      kind: ExternalSecret
+      metadata:
+        name: authentik-credentials
+    target:
+      kind: ExternalSecret
+      name: authentik-credentials
