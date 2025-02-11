@@ -4,7 +4,6 @@ kind: Kustomization
 
 resources:
 - certificate-signing.yaml
-- certificate-tls.yaml
 - postgres.yaml
 - secrets.yaml
 - helm-release.yaml

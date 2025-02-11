@@ -148,11 +148,6 @@ spec:
           traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
         - auth.${domain_name}
-        tls:
-        - secretName: authentik-tls-cert
-          hosts:
-          - 'auth.${domain_name}'
-          - '*.${domain_name}'
     worker:
       replicas: 1
       pdb:
