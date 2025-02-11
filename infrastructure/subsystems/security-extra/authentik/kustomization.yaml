@@ -3,7 +3,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- certificate.yaml
+- certificate-signing.yaml
+- certificate-tls.yaml
 - postgres.yaml
 - secrets.yaml
 - helm-release.yaml

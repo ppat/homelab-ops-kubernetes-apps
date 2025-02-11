@@ -1,0 +1,22 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: authentik-tls-cert
+  namespace: authentik
+  annotations:
+    # protect against exceeding letsencrypt api limits
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  issuerRef:
+    name: ${cert_issuer}
+    kind: ClusterIssuer
+  dnsNames:
+  - 'auth.${domain_name}'
+  - '*.${domain_name}'
+  # Certificate duration is fixed at 90d by LetsEncrypt and cannot be changed via this parameter.
+  # The parameter is set primarily for documentation purposes.
+  duration: 2160h # 90d
+  # Requesting renewal 60d before expiration, essentially configuring certificate renewal to occur every 30 days.
+  renewBefore: 1440h # 60d
+  secretName: authentik-tls-cert
