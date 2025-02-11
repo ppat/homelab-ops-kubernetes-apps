@@ -195,7 +195,7 @@ spec:
           - op: add
             path: /spec/rules/-
             value:
-              host: *.${domain_name}
+              host: "*.${domain_name}"
               http:
                 paths:
                 - backend:
