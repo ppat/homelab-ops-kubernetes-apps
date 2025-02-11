@@ -148,7 +148,6 @@ spec:
           traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
         - auth.${domain_name}
-
     worker:
       replicas: 1
       pdb:
@@ -185,3 +184,24 @@ spec:
           enabled: true
         prometheusRule:
           enabled: true
+  postRenderers:
+  - kustomize:
+      patches:
+      - target:
+          kind: Ingress
+          name: authentik-server
+        # yamllint disable-line rule:indentation
+        patch: |-
+          - op: add
+            path: /spec/rules/-
+            value:
+              host: "*.${domain_name}"
+              http:
+                paths:
+                - backend:
+                    service:
+                      name: ak-outpost-authentik-embedded-outpost
+                      port:
+                        number: 9000
+                  path: /outpost.goauthentik.io/
+                  pathType: Prefix
