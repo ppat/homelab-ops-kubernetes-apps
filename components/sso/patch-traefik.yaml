@@ -1,0 +1,9 @@
+---
+- op: add
+  path: /spec/values/ingressRoute/dashboard/middlewares/-
+  value:
+    name: forward-auth
+    namespace: authentik
+- op: replace
+  path: /spec/values/providers/kubernetesCRD/allowCrossNamespace
+  value: true

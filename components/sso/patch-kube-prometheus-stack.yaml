@@ -1,0 +1,7 @@
+---
+- op: add
+  path: /spec/values/alertmanager/ingress/annotations/traefik.ingress.kubernetes.io~1router.middlewares
+  value: authentik-forward-auth@kubernetescrd
+- op: add
+  path: /spec/values/prometheus/ingress/annotations/traefik.ingress.kubernetes.io~1router.middlewares
+  value: authentik-forward-auth@kubernetescrd

@@ -1,0 +1,4 @@
+---
+- op: replace
+  path: /metadata/annotations/traefik.ingress.kubernetes.io~1router.middlewares
+  value: authentik-forward-auth@kubernetescrd
