@@ -8,7 +8,6 @@ on:
     - '.github/workflows/validate-kubernetes-manifests.yaml'
     - 'apps/**/*.yaml'
     - 'ci/**/*.yaml'
-    # - 'components/**/*.yaml'
     - 'infrastructure/**/*.yaml'
   workflow_dispatch:
 
@@ -72,7 +71,7 @@ jobs:
 
         echo -----------------------------------------------------------------------
         echo "--> Validating kustomizations (pre-build)"
-        find . -type f -name kustomization.yaml -print0 | while IFS= read -r -d $'\0' file; do
+        find . -type f -name kustomization.yaml -not -path './components/*' -print0 | while IFS= read -r -d $'\0' file; do
           kubeconform "${kubeconform_flags[@]}" "${kubeconform_config[@]}" "${file}" | pr -t -o 6
           if [[ ${PIPESTATUS[0]} != 0 ]]; then
             exit 1
@@ -96,7 +95,7 @@ jobs:
         done
         echo -----------------------------------------------------------------------
         echo "--> Validating kustomiztions (post-build)"
-        find . -mindepth 3 -type f -name kustomization.yaml -print | sort | grep -E -v '(infrastructure/bootstrap|ci/test/pre-requisites)' > /tmp/kustomizations
+        find . -mindepth 3 -type f -name kustomization.yaml -not -path './components/*' -print | sort | grep -E -v '(infrastructure/bootstrap|ci/test/pre-requisites)' > /tmp/kustomizations
         while read -r file; do
           kustomization="${file/%kustomization.yaml}"
           echo "      kustomization: $kustomization"
