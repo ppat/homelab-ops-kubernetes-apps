@@ -10,5 +10,3 @@ patches:
 - path: patch-cluster.yaml
   target:
     kind: Cluster
-    name: ${db_name}
-    namespace: ${db_namespace}
