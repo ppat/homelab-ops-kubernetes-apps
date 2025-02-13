@@ -4,6 +4,7 @@ kind: Namespace
 metadata:
   name: monitoring
   annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
     kustomize.toolkit.fluxcd.io/ssa: merge
   labels:
     goldilocks.fairwinds.com/enabled: "true"
@@ -13,6 +14,7 @@ kind: Namespace
 metadata:
   name: logging
   annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
     kustomize.toolkit.fluxcd.io/ssa: merge
   labels:
     goldilocks.fairwinds.com/enabled: "true"

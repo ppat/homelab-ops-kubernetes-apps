@@ -4,6 +4,7 @@ kind: Namespace
 metadata:
   name: crossplane-system
   annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
     kustomize.toolkit.fluxcd.io/ssa: merge
   labels:
     goldilocks.fairwinds.com/enabled: "true"
@@ -13,6 +14,7 @@ kind: Namespace
 metadata:
   name: goldilocks
   annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
     kustomize.toolkit.fluxcd.io/ssa: merge
   labels:
     goldilocks.fairwinds.com/enabled: "true"
@@ -22,6 +24,7 @@ kind: Namespace
 metadata:
   name: stakater-reloader
   annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
     kustomize.toolkit.fluxcd.io/ssa: merge
   labels:
     goldilocks.fairwinds.com/enabled: "true"
