@@ -1,0 +1,12 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: ${db_name}-backups
+  namespace: ${db_namespace}
+spec:
+  schedule: "0 0 4,12,20 * * *"  # every 8 hours
+  immediate: true
+  backupOwnerReference: self
+  cluster:
+    name: ${db_name}
