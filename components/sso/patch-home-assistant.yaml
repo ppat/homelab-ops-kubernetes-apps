@@ -1,0 +1,6 @@
+---
+- op: add
+  path: /spec/template/spec/containers/0/env/-
+  value:
+    name: HOME_ASSISTANT__HACS_INSTALL
+    value: "true"

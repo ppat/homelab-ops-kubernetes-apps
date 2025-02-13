@@ -1,0 +1,13 @@
+---
+- op: add
+  path: /spec/values/oidc
+  value:
+    enabled: true
+    claimName: "policy"
+    configUrl: "https://auth.homelab.${dns_zone}/application/o/${oidc_minio_app_name}/.well-known/openid-configuration"
+    displayName: "authentik"
+    existingClientSecretName: "minio-sso-credentials"
+    existingClientIdKey: "oidc_minio_clientid"
+    existingClientSecretKey: "oidc_minio_clientsecret"
+    redirectUri: "https://minio-console.${domain_name}/oauth_callback"
+    scopes: "openid,email,profile,minio"

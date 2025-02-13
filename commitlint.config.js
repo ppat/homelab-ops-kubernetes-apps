@@ -45,6 +45,7 @@ module.exports = {
         'apps-harbor',
         'apps-home-automation',
         'apps-media',
+        'component-sso',
         'infra-bootstrap-crds',
         'infra-helm-repositories',
         'infra-clusterops-core',

@@ -1,0 +1,25 @@
+---
+- op: add
+  path: /spec/values/env
+  value:
+    GF_AUTH_AUTO_LOGIN: true
+    GF_AUTH_SIGNOUT_REDIRECT_URL: "https://auth.homelab.${dns_zone}/application/o/${oidc_app_name:=grafana}/end-session/"
+    GF_AUTH_GENERIC_OAUTH_NAME: authentik
+    GF_AUTH_GENERIC_OAUTH_ENABLED: true
+    GF_AUTH_GENERIC_OAUTH_API_URL: "https://auth.homelab.${dns_zone}/application/o/userinfo/"
+    GF_AUTH_GENERIC_OAUTH_AUTH_URL: "https://auth.homelab.${dns_zone}/application/o/authorize/"
+    # yamllint disable-line rule:line-length
+    GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: "contains(groups, 'homelab-admins') && 'Admin' || contains(groups, 'homelab-users') && 'Viewer'"
+    GF_AUTH_GENERIC_OAUTH_SCOPES: "openid profile email"
+    GF_AUTH_GENERIC_OAUTH_TOKEN_URL: "https://auth.homelab.${dns_zone}/application/o/token/"
+- op: add
+  path: /spec/values/envValueFrom
+  value:
+    GF_AUTH_GENERIC_OAUTH_CLIENT_ID:
+      secretKeyRef:
+        name: grafana-sso-credentials
+        key: oidc_grafana_clientid
+    GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
+      secretKeyRef:
+        name: grafana-sso-credentials
+        key: oidc_grafana_clientsecret
