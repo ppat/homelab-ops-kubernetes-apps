@@ -11,9 +11,6 @@ configMapGenerator:
   files:
   - conf.d/datasources.yaml
   - conf.d/grafana-ini.yaml
-  options:
-    annotations:
-      kustomize.toolkit.fluxcd.io/substitute: disabled
 
 configurations:
 - name-reference.yaml

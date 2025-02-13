@@ -42,17 +42,12 @@ spec:
     name: grafana-extra-config
     valuesKey: grafana-dashboards.yaml
     optional: true
-  - kind: ConfigMap
-    name: grafana-extra-config
-    valuesKey: grafana-plugins.yaml
-    optional: true
 
   values:
     admin:
       existingSecret: grafana-admin-credentials
       userKey: username
       passwordKey: password
-
     serviceMonitor:
       enabled: true
       labels:
@@ -83,6 +78,15 @@ spec:
 
     persistence:
       enabled: false
+
+    plugins:
+    - grafana-clock-panel
+    - grafana-lokiexplore-app
+    - grafana-piechart-panel
+    - grafana-worldmap-panel
+    - natel-discrete-panel
+    - pr0ps-trackmap-panel
+    - vonage-status-panel
 
     ## Sidecars that collect the configmaps with specified label and stores the included
     ## files them into the respective folders.
