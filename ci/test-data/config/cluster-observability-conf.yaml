@@ -11,7 +11,7 @@ data:
   prometheus_retention_size: 1GiB
   prometheus_retention_period: 2h
   prometheus_storage_class: standard
-  prometheus_storage_size: 256Mi
+  prometheus_storage_size: 1Gi
   prometheus_volume_name: pv-prometheus
   loki_deployment_mode: simple-scalable
   loki_storage_class: standard

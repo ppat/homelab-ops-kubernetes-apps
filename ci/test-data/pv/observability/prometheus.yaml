@@ -11,9 +11,9 @@ spec:
   accessModes:
   - ReadWriteOnce
   capacity:
-    storage: 256Mi
+    storage: 1Gi
   hostPath:
-    path: /tmp/prometheus-pv
+    path: /var/lib/prometheus-pv
     type: DirectoryOrCreate
   persistentVolumeReclaimPolicy: Retain
   storageClassName: standard
