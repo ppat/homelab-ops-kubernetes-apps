@@ -117,9 +117,7 @@ spec:
       prometheusSpec:
         enableAdminAPI: true
         enableFeatures:
-        - auto-gomemlimit
         - memory-snapshot-on-shutdown
-        - new-service-discovery-manager
         retention: ${prometheus_retention_period}
         retentionSize: ${prometheus_retention_size}
         routePrefix: /
