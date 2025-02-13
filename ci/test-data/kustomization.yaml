@@ -6,7 +6,6 @@ resources:
 - namespaces.yaml
 - config/
 - secrets/
-- pv/
 - pvc/
 
 sortOptions:
