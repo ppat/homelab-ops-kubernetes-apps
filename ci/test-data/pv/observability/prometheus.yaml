@@ -13,7 +13,7 @@ spec:
   capacity:
     storage: 1Gi
   hostPath:
-    path: /var/lib/prometheus-pv
+    path: /mnt/prometheus-pv
     type: DirectoryOrCreate
   persistentVolumeReclaimPolicy: Retain
   storageClassName: standard

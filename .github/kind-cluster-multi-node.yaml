@@ -3,5 +3,14 @@ kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
+  extraMounts:
+  - hostPath: /mnt/control-plane
+    containerPath: /mnt
 - role: worker
+  extraMounts:
+  - hostPath: /mnt/worker1
+    containerPath: /mnt
 - role: worker
+  extraMounts:
+  - hostPath: /mnt/worker2
+    containerPath: /mnt
