@@ -33,7 +33,7 @@ jobs:
         - name: infra-observability-core
           kind: kustomization
           namespace: flux-system
-          timeout: 5m
+          timeout: 3m
         - name: infra-observability-extra
           kind: kustomization
           namespace: flux-system
@@ -129,3 +129,7 @@ jobs:
           command: 'kubectl logs -n logging deployment/syslog'
         - name: show-snmp-logs
           command: 'kubectl logs -n monitoring deployment/prometheus-snmp-exporter'
+        - name: desc-prometheus
+          command: 'kubectl describe -n monitoring pod/prometheus-kube-prometheus-stack-0'
+        - name: show-prometheus-logs
+          command: 'kubectl logs -n monitoring pod/prometheus-kube-prometheus-stack-0'

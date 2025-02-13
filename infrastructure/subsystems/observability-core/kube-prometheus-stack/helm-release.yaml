@@ -117,9 +117,7 @@ spec:
       prometheusSpec:
         enableAdminAPI: true
         enableFeatures:
-        - auto-gomemlimit
         - memory-snapshot-on-shutdown
-        - new-service-discovery-manager
         retention: ${prometheus_retention_period}
         retentionSize: ${prometheus_retention_size}
         routePrefix: /
@@ -129,11 +127,12 @@ spec:
               annotations:
                 kustomize.toolkit.fluxcd.io/prune: disabled
             spec:
-              storageClassName: ${prometheus_storage_class}
               accessModes: ["ReadWriteOnce"]
               resources:
                 requests:
                   storage: ${prometheus_storage_size}
+              storageClassName: ${prometheus_storage_class}
+              volumeName: ${prometheus_volume_name}
         walCompression: true
 
         # Removing default filter Prometheus selectors (i.e. label release=kube-prometheus-stack)

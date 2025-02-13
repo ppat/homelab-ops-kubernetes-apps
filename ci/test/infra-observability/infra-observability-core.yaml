@@ -52,3 +52,11 @@ spec:
       kind: HelmRelease
       name: loki-release
       namespace: logging
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      - op: remove
+        path: /spec/values/prometheus/prometheusSpec/storageSpec/volumeClaimTemplate/spec/volumeName
+    target:
+      kind: HelmRelease
+      name: kube-prometheus-stack-release
+      namespace: monitoring
