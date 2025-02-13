@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.4.5...infra-observability-core-v0.4.6) (2025-02-13)
+
+
+### ✨ Features
+
+* **infra-observability-core:** allow prometheus to bind to an existing pv for its statefulset's pvc ([#763](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/763)) ([2cf341b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2cf341b20f5d52092e46593c4ffad1b681c71a19))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* fix up namespaces across subsystems ([#759](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/759)) ([2583eb6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2583eb69d35c6f85783e521d07313e1a46db3c41))
+
 ## [0.4.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.4.4...infra-observability-core-v0.4.5) (2025-02-13)
 
 
