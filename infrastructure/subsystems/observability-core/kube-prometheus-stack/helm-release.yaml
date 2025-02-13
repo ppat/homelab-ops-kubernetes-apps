@@ -133,10 +133,7 @@ spec:
               resources:
                 requests:
                   storage: ${prometheus_storage_size}
-              selector:
-                matchLabels:
-                  app.kubernetes.io/name: prometheus
-              storageClassName: ${prometheus_storage_class}
+              volumeName: ${prometheus_volume_name}
         walCompression: true
 
         # Removing default filter Prometheus selectors (i.e. label release=kube-prometheus-stack)
