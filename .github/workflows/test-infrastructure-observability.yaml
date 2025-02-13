@@ -129,3 +129,5 @@ jobs:
           command: 'kubectl logs -n logging deployment/syslog'
         - name: show-snmp-logs
           command: 'kubectl logs -n monitoring deployment/prometheus-snmp-exporter'
+        - name: show-prometheus-pvc
+          command: 'kubectl get -n monitoring pvc prometheus-kube-prometheus-stack-db-prometheus-kube-prometheus-stack-0 -o yaml'
