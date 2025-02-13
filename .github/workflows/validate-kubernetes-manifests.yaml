@@ -8,6 +8,7 @@ on:
     - '.github/workflows/validate-kubernetes-manifests.yaml'
     - 'apps/**/*.yaml'
     - 'ci/**/*.yaml'
+    - 'components/**/*.yaml'
     - 'infrastructure/**/*.yaml'
   workflow_dispatch:
 
