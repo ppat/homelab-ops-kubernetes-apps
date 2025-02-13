@@ -5,3 +5,16 @@
 grafana.ini:
   analytics:
     check_for_updates: false
+    reporting_enabled: false
+    check_for_plugin_updates: false
+  date_formats:
+    use_browser_locale: true
+  explore:
+    enabled: true
+  plugins:
+    allow_loading_unsigned_plugins: natel-discrete-panel,pr0ps-trackmap-panel
+  security:
+    allow_embedding: true
+    angular_support_enabled: true
+  server:
+    root_url: https://grafana.${domain_name}
