@@ -33,7 +33,7 @@ jobs:
         - name: infra-observability-core
           kind: kustomization
           namespace: flux-system
-          timeout: 5m
+          timeout: 3m
         - name: infra-observability-extra
           kind: kustomization
           namespace: flux-system
