@@ -46,6 +46,7 @@ module.exports = {
         'apps-home-automation',
         'apps-media',
         'component-sso',
+        'component-db-backups',
         'infra-bootstrap-crds',
         'infra-helm-repositories',
         'infra-clusterops-core',

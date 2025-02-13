@@ -1,0 +1,23 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: irrelevant
+spec:
+  backup:
+    barmanObjectStore:
+      data:
+        compression: snappy
+      destinationPath: s3://nas-cloudnativepg-backups/${db_name}/
+      endpointURL: https://s3.nas.${dns_zone}
+      s3Credentials:
+        accessKeyId:
+          name: ${db_name}-backup-credentials
+          key: s3_accesskeyid
+        secretAccessKey:
+          name: ${db_name}-backup-credentials
+          key: s3_secretaccesskey
+      wal:
+        compression: snappy
+        maxParallel: 8
+    retentionPolicy: "30d"
