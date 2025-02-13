@@ -16,5 +16,5 @@ spec:
     path: /mnt/prometheus-pv
     type: DirectoryOrCreate
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: standard
+  storageClassName: sc-prometheus
   volumeMode: Filesystem
