@@ -4,7 +4,7 @@
   "apps/subsystems/coder": "0.0.12",
   "apps/subsystems/downloaders": "0.1.11",
   "apps/subsystems/harbor": "0.0.2",
-  "apps/subsystems/home-automation": "0.0.3",
+  "apps/subsystems/home-automation": "0.0.4",
   "apps/subsystems/media": "0.0.11",
   "infrastructure/bootstrap/crds": "0.3.1",
   "infrastructure/helm-repositories": "0.0.6",
