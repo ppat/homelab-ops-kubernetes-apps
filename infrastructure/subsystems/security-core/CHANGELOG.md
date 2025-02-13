@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.0.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.0.11...infra-security-core-v0.0.12) (2025-02-13)
+
+
+### ✨ Features
+
+* **infra-security-core:** update cert-manager (v1.16.3 -&gt; v1.17.0) ([#733](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/733)) ([a30461b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a30461b310803ae4a7e92b1104294a123c9062cc))
+* **infra-security-core:** update external-secrets (0.13.0 -&gt; 0.14.0) ([#743](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/743)) ([92c6b08](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/92c6b0842a7e12e7903f94b84f340ead55da8259))
+* **infra-security-extra:** add security-extra subsystem with new app - Authentik ([#726](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/726)) ([d29aedb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d29aedb758f09caf68a51ce4ba51adbb2556354c))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-core:** update cert-manager (v1.17.0 -&gt; v1.17.1) ([#772](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/772)) ([bdfe6ca](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/bdfe6ca633db9360fddf66017e2f4ac1bc4484aa))
+* **infra-security-core:** update external-secrets (0.14.0 -&gt; 0.14.1) ([#750](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/750)) ([ad62bf9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ad62bf9032f6625263a51cbd5f497549f7e794c1))
+* **infra-security-core:** update external-secrets (0.14.1 -&gt; 0.14.2) ([#773](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/773)) ([8d9e875](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8d9e8757c193868bbda3f9d88878c9cf2cd790e2))
+
 ## [0.0.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-secrets-core-v0.0.10...infra-security-core-v0.0.11) (2025-02-08)
 
 
