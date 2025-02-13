@@ -133,6 +133,7 @@ spec:
               resources:
                 requests:
                   storage: ${prometheus_storage_size}
+              storageClassName: ${prometheus_storage_class}
               volumeName: ${prometheus_volume_name}
         walCompression: true
 
