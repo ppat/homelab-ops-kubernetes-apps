@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.0.4...apps-home-automation-v0.0.5) (2025-02-14)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-home-automation:** update ghcr.io/onedr0p/home-assistant (2025.2.3 -&gt; 2025.2.4) ([#787](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/787)) ([80c87c6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/80c87c66eab529589476303dc8b10654b0670b5b))
+
 ## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.0.3...apps-home-automation-v0.0.4) (2025-02-13)
 
 
