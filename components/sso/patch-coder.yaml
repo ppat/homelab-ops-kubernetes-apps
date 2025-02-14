@@ -35,3 +35,8 @@
   value:
     name: CODER_OIDC_ICON_URL
     value: https://auth.homelab.${dns_zone}/static/dist/assets/icons/icon_left_brand.svg
+- op: add
+  path: /spec/values/coder/env/-
+  value:
+    name: CODER_OIDC_USER_ROLE_FIELD
+    value: roles
