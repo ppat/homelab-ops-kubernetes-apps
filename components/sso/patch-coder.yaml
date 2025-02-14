@@ -1,0 +1,37 @@
+---
+- op: add
+  path: /spec/values/coder/env/-
+  value:
+    name: CODER_OIDC_ISSUER_URL
+    value: https://auth.homelab.${dns_zone}
+- op: add
+  path: /spec/values/coder/env/-
+  value:
+    name: CODER_OIDC_EMAIL_DOMAIN
+    value: ${oidc_email_domain}
+- op: add
+  path: /spec/values/coder/env/-
+  value:
+    name: CODER_OIDC_CLIENT_ID
+    valueFrom:
+      secretKeyRef:
+        name: coder-sso-credentials
+        key: oidc_coder_clientid
+- op: add
+  path: /spec/values/coder/env/-
+  value:
+    name: CODER_OIDC_CLIENT_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: coder-sso-credentials
+        key: oidc_coder_clientsecret
+- op: add
+  path: /spec/values/coder/env/-
+  value:
+    name: CODER_OIDC_SIGN_IN_TEXT
+    value: "Sign in with Authentik"
+- op: add
+  path: /spec/values/coder/env/-
+  value:
+    name: CODER_OIDC_ICON_URL
+    value: https://auth.homelab.${dns_zone}/static/dist/assets/icons/icon_left_brand.svg
