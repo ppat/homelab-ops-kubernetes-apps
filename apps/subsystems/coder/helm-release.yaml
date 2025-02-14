@@ -55,7 +55,7 @@ spec:
       - name: CODER_ENABLE_TERRAFORM_DEBUG_MODE
         value: "false"
       - name: CODER_VERBOSE
-        value: "${coder_verbose:=false}"
+        value: "true"
       ingress:
         enable: false
       replicaCount: 1
