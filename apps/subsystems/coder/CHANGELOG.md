@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.13](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.12...apps-coder-v0.0.13) (2025-02-15)
+
+
+### ✨ Features
+
+* **apps-coder:** update coder (2.18.5 -&gt; 2.19.0) ([#789](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/789)) ([12b2b3f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/12b2b3f1db8701559b192f786fc0930a2b3f4733))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-coder:** migrate coder's oidc configuration to sso kustomize component ([#792](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/792)) ([529e483](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/529e4832c6ce755b9d49b0727aa87a89eb85dc95))
+* fix up namespaces across subsystems ([#759](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/759)) ([2583eb6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2583eb69d35c6f85783e521d07313e1a46db3c41))
+
 ## [0.0.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.11...apps-coder-v0.0.12) (2025-02-01)
 
 
