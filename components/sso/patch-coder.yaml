@@ -3,7 +3,7 @@
   path: /spec/values/coder/env/-
   value:
     name: CODER_OIDC_ISSUER_URL
-    value: https://auth.homelab.${dns_zone}
+    value: https://auth.homelab.${dns_zone}/application/o/coder/
 - op: add
   path: /spec/values/coder/env/-
   value:
