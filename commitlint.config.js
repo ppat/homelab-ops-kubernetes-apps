@@ -36,6 +36,7 @@ module.exports = {
         '',
         'dev-tools',
         'github-actions',
+        'memory-bank',
         'renovate',
         'release',
         'apps-helm-repositories',

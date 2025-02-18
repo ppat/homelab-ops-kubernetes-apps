@@ -171,7 +171,7 @@ spec:
 - Required for end-user functionality
 - Not explicitly declared
 - Rely on Kubernetes's eventually consistent model
-- Monitored via Prometheus service monitors and rules
+- Monitored via Prometheus `ServiceMonitor`s and `PrometheusRule`s
 - Examples:
   - Ingress controller availability
   - Load balancer readiness
