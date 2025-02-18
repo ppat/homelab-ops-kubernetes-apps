@@ -1,10 +1,5 @@
 ---
 repos:
-- repo: https://github.com/DavidAnson/markdownlint-cli2
-  rev: v0.17.2
-  hooks:
-  - id: markdownlint-cli2
-    args: ["--fix", "--config", ".markdownlint.yaml"]
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v5.0.0
   hooks:
@@ -34,6 +29,11 @@ repos:
   hooks:
   - id: yamllint
     args: [--strict]
+- repo: https://github.com/DavidAnson/markdownlint-cli2
+  rev: v0.17.2
+  hooks:
+  - id: markdownlint-cli2
+    args: ["--fix", "--config", ".markdownlint-cli2.yaml"]
 - repo: https://github.com/shellcheck-py/shellcheck-py
   rev: v0.10.0.1
   hooks:

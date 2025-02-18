@@ -10,7 +10,6 @@
     "**/poetry.lock": true
   },
   "search.useIgnoreFiles": true,
-
   "[javascript]": {
     "editor.detectIndentation": false,
     "editor.indentSize": 2
