@@ -3,6 +3,7 @@
 ## Module Types and Organization
 
 ### Infrastructure Modules
+
 - **Strengths**:
   - Clear core/extra separation across multiple modules
   - Well-defined dependencies
@@ -14,6 +15,7 @@
   - Backup strategy needs development
 
 ### Application Modules
+
 - **Strengths**:
   - Consistent deployment structure
   - Good use of HelmReleases
@@ -24,6 +26,7 @@
   - Consider canary deployment patterns
 
 ### Component Modules
+
 - **Strengths**:
   - Consistent configuration patterns
   - Good integration guidelines
@@ -36,11 +39,12 @@
 ## Infrastructure Implementation Details
 
 ### Storage Implementation
+
 - **Strengths**:
   - Comprehensive storage solutions:
-    * Block storage for persistent volumes
-    * Object storage capabilities
-    * External NFS volume mount support
+    - Block storage for persistent volumes
+    - Object storage capabilities
+    - External NFS volume mount support
   - Clear dependency management
 - **Areas for Improvement**:
   - Document storage scaling guidelines
@@ -48,6 +52,7 @@
   - Consider storage optimization strategies
 
 ### Monitoring Implementation
+
 - **Strengths**:
   - Comprehensive metrics collection
   - Good integration with other modules
@@ -58,6 +63,7 @@
   - Need better alert documentation and standards
 
 ### Security Implementation
+
 - **Strengths**:
   - Certificate management via cert-manager
   - Secret management via external-secrets
@@ -70,6 +76,7 @@
 ## Testing Implementation
 
 ### Current GitHub Actions Workflow
+
 - **Strengths**:
   - Automated testing in CI
   - Structured workflow steps
@@ -80,6 +87,7 @@
   - Lack of local testing capability
 
 ### Planned Testing Framework
+
 - **Migration to kyverno/chainsaw**:
   - Will enable local testing during development
   - Provides clear kubernetes context awareness
@@ -87,6 +95,7 @@
   - Can run both locally and in CI
 
 ### Resource Validation
+
 - **Strengths**:
   - Effective use of kubeconform
   - Good CRD validation
@@ -99,6 +108,7 @@
 ## Version Management
 
 ### Automated Updates
+
 - **Strengths**:
   - Effective use of Renovate
   - Clear update policies
@@ -109,6 +119,7 @@
   - Enhance update notification system
 
 ### Release Process
+
 - **Strengths**:
   - Automated changelog generation
   - Clear versioning strategy
@@ -121,6 +132,7 @@
 ## Priority Improvements
 
 ### High Priority
+
 1. Documentation
    - Individual module documentation
    - Repository-wide documentation
@@ -134,6 +146,7 @@
    - Enhance kubernetes context awareness
 
 ### Backlog Items
+
 1. Infrastructure
    - Migration to cillium for CNI and load balancing
    - Implementation of default alerts

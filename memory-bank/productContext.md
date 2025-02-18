@@ -1,11 +1,13 @@
 # Product Context
 
 ## Project Purpose
+
 This repository provides a collection of reusable Kubernetes modules that can be composed to build complete cluster configurations. These modules are consumed by separate cluster configuration repositories where environment-specific settings are applied. The project enables consistent, maintainable, and automated infrastructure deployment through GitOps principles.
 
 ## Goals
 
 ### Primary Goals
+
 1. Module Reusability
    - Self-contained module definitions
    - Clear module interfaces
@@ -25,6 +27,7 @@ This repository provides a collection of reusable Kubernetes modules that can be
    - Reliable operations
 
 ### Success Metrics
+
 1. Module Metrics
    - Module reuse across clusters
    - Configuration flexibility
@@ -46,6 +49,7 @@ This repository provides a collection of reusable Kubernetes modules that can be
 ## Requirements
 
 ### Functional Requirements
+
 1. Module Implementation
    - Self-contained functionality
    - Clear dependencies
@@ -65,6 +69,7 @@ This repository provides a collection of reusable Kubernetes modules that can be
    - Deployment automation
 
 ### Non-Functional Requirements
+
 1. Reusability
    - Module independence
    - Clear interfaces
@@ -86,6 +91,7 @@ This repository provides a collection of reusable Kubernetes modules that can be
 ## Constraints
 
 ### Technical Constraints
+
 1. Module Design
    - Kubernetes platform
    - FluxCD for GitOps
@@ -105,6 +111,7 @@ This repository provides a collection of reusable Kubernetes modules that can be
    - Version control
 
 ### Operational Constraints
+
 1. Module Updates
    - Version management
    - Dependency tracking
@@ -120,6 +127,7 @@ This repository provides a collection of reusable Kubernetes modules that can be
 ## Future Considerations
 
 ### Short-term Roadmap
+
 1. Documentation Enhancement
    - Module usage documentation
    - Repository-wide standards
@@ -133,6 +141,7 @@ This repository provides a collection of reusable Kubernetes modules that can be
    - Validation enhancement
 
 ### Backlog Items
+
 1. Infrastructure Evolution
    - Migration to cillium for CNI and load balancing
    - Implementation of default alerts
