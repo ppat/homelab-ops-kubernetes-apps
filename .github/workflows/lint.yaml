@@ -97,24 +97,7 @@ jobs:
   markdown:
     needs: [detect-changes]
     if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.markdown_any_changed == 'true' }}
-    runs-on: ubuntu-24.04
-    steps:
-    - name: Checkout
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-
-    - name: Setup Node.js
-      uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
-      with:
-        cache: 'npm'
-
-    - name: Install markdownlint-cli2
-      run: npm install -g markdownlint-cli2
-
-    - name: Run markdownlint
-      # yamllint disable-line rule:indentation
-      run: |
-        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-          markdownlint-cli2 "**/*.md"
-        else
-          markdownlint-cli2 ${{ needs.detect-changes.outputs.markdown_all_changed_files }}
-        fi
+    uses: ppat/github-workflows/.github/workflows/lint-markdown.yaml@markdownlint
+    with:
+      git_ref: ${{ github.head_ref || github.ref }}
+      files: ${{ github.event_name == 'workflow_dispatch' && 'ALL' || needs.detect-changes.outputs.markdown_all_changed_files }}
