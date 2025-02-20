@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.5.2...infra-networking-core-v0.5.3) (2025-02-20)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** update external-dns (1.15.1 -&gt; 1.15.2) ([#798](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/798)) ([a5d0fc5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a5d0fc5cab2b8fe9482f8e0c5028af51ab0f80cd))
+
 ## [0.5.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.5.1...infra-networking-core-v0.5.2) (2025-02-15)
 
 
