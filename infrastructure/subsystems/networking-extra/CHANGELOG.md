@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.7...infra-networking-extra-v0.1.8) (2025-02-20)
+
+
+### ✨ Features
+
+* **infra-networking-extra:** update visibilityspots/cloudflared (v2025.1.1 -&gt; v2025.2.0) ([#815](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/815)) ([393b8da](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/393b8daf3f06d38c297f38d7fcfc9385799f11a3))
+
 ## [0.1.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.6...infra-networking-extra-v0.1.7) (2025-02-13)
 
 
