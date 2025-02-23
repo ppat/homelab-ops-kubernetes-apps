@@ -28,13 +28,13 @@ jobs:
         fetch-depth: 0
 
     - name: Setup kubeconform
-      uses: fluxcd/pkg/actions/kubeconform@e454462cfa3e0d4cdb8bff0c8f898ce22eb83a72
+      uses: fluxcd/pkg/actions/kubeconform@00d1ceb1c10ac3bcbb8d5793bc3aba176bfaec40
       with:
         # renovate: datasource=github-releases depName=yannh/kubeconform
         version: "v0.6.7"
 
     - name: Setup kustomize
-      uses: fluxcd/pkg/actions/kustomize@e454462cfa3e0d4cdb8bff0c8f898ce22eb83a72
+      uses: fluxcd/pkg/actions/kustomize@00d1ceb1c10ac3bcbb8d5793bc3aba176bfaec40
       with:
         # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize extractVersion=^kustomize/(?<version>.*)$
         version: "v5.6.0"
