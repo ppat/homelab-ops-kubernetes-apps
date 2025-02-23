@@ -47,6 +47,7 @@ jobs:
           - '**.yaml'
           markdown:
           - '**.md'
+          - '!**/CHANGELOG.md'
 
   commit-messages:
     if: ${{ github.event_name == 'pull_request' }}
