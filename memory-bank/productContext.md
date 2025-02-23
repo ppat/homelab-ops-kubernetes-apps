@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This repository provides reusable Kubernetes modules for GitOps-based deployment. Each module is a self-contained unit that can be composed to build complete cluster configurations.
+This repository provides a collection of reusable Kubernetes modules that can be composed to build complete cluster configurations. These modules are consumed by separate cluster configuration repositories where environment-specific settings are applied. The project enables consistent, maintainable, and automated infrastructure deployment through GitOps principles.
 
 ### Key Capabilities
 

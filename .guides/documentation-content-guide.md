@@ -90,18 +90,7 @@ Purpose: Document a specific module's capabilities and boundaries.
    - NO app module dependencies
    - NO external system dependencies
 
-8. Future Improvements
-   Format: Bulleted lists under categories
-   Required Content:
-   - Planned feature enhancements
-   - Known current limitations
-   - Potential integration opportunities
-   Content Constraints:
-   - NO specific implementation plans
-   - NO timeline commitments
-   - NO version numbers
-
-9. Notes
+8. Notes
    When to include: Module has important caveats or special considerations
    Format: Paragraphs with bullet points
    Required Content:
