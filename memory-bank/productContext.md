@@ -1,155 +1,131 @@
 # Product Context
 
-## Project Purpose
+## Project Overview
 
 This repository provides a collection of reusable Kubernetes modules that can be composed to build complete cluster configurations. These modules are consumed by separate cluster configuration repositories where environment-specific settings are applied. The project enables consistent, maintainable, and automated infrastructure deployment through GitOps principles.
 
-## Goals
+### Key Capabilities
 
-### Primary Goals
+- Infrastructure modules for core cluster services
+- Application modules for end-user functionality
+- Component modules for cross-cutting concerns
+- GitOps-based deployment via FluxCD
+- Comprehensive testing framework
+- Automated version management
 
-1. Module Reusability
-   - Self-contained module definitions
-   - Clear module interfaces
-   - Flexible configuration options
-   - Independent versioning
+## Module Types
 
-2. Infrastructure Standardization
-   - Consistent deployment patterns
-   - Standard operational procedures
-   - Common monitoring approach
-   - Unified configuration methods
+### Infrastructure Modules
 
-3. Operational Excellence
-   - Automated testing and validation
-   - Comprehensive documentation
-   - Clear upgrade paths
-   - Reliable operations
+- Provide foundational cluster capabilities
+- Focus on platform services and operations
+- Follow core/extra pattern for dependencies
+- Examples: networking, storage, security
 
-### Success Metrics
+### Application Modules
 
-1. Module Metrics
-   - Module reuse across clusters
-   - Configuration flexibility
-   - Version update success
-   - Testing coverage
+- Deliver end-user functionality
+- Depend on infrastructure capabilities
+- More focused in scope
+- Examples: media servers, home automation
 
-2. Operational Metrics
-   - Module deployment success
-   - Documentation completeness
-   - Testing effectiveness
-   - Integration efficiency
+### Component Modules
 
-3. Integration Metrics
-   - Module composition success
-   - Cross-module compatibility
-   - Configuration error rates
-   - Deployment reliability
+- Provide cross-cutting configuration
+- Apply consistent patterns across modules
+- Examples: SSO integration, backup configuration
 
-## Requirements
+## Design Principles
 
-### Functional Requirements
+### 1. Module Independence
 
-1. Module Implementation
-   - Self-contained functionality
-   - Clear dependencies
-   - Flexible configuration
-   - Version management
+- Self-contained functionality
+- Clear boundaries
+- Explicit dependencies
+- Environment-agnostic design
 
-2. Infrastructure Services
-   - Storage solutions (block, object, NFS)
-   - Monitoring capabilities
-   - Certificate and secret management
-   - Basic backup functionality
+### 2. Configuration Flexibility
 
-3. Operational Capabilities
-   - Testing framework
-   - Documentation system
-   - Version control
-   - Deployment automation
+- Multiple configuration methods
+- Environment-specific settings
+- Component-based customization
+- Patch-based modifications
 
-### Non-Functional Requirements
+### 3. Dependency Management
 
-1. Reusability
-   - Module independence
-   - Clear interfaces
-   - Flexible configuration
-   - Version compatibility
+- Explicit hard dependencies
+- Implicit soft dependencies
+- Dependency cycle prevention
+- Core/Extra pattern usage
 
-2. Reliability
-   - Comprehensive testing
-   - Dependency management
-   - Error handling
-   - Deployment validation
+### 4. Testing Integrity
 
-3. Maintainability
-   - Clear documentation
-   - Modular architecture
-   - Testing capabilities
-   - Update procedures
+- Module-level testing
+- Complete dependency validation
+- Resource state verification
 
-## Constraints
+### 5. Operational Clarity
 
-### Technical Constraints
+- Clear module categorization
+- Consistent naming patterns
+- Change tracking
+- Version update automation
 
-1. Module Design
-   - Kubernetes platform
-   - FluxCD for GitOps
-   - Version requirements
-   - Resource limitations
+## Short-term Roadmap
 
-2. Testing Framework
-   - Currently GitHub Actions workflows
-   - Moving to kyverno/chainsaw
-   - CI/CD integration
-   - Local testing support
+1. Testing Framework Migration
+   - Move from GitHub Actions to kyverno/chainsaw
+   - Enable local testing capabilities
+   - Improve test structure and validation
 
-3. Integration
-   - Module compatibility
-   - Dependency management
-   - Configuration methods
-   - Version control
-
-### Operational Constraints
-
-1. Module Updates
-   - Version management
-   - Dependency tracking
-   - Update procedures
-   - Compatibility testing
-
-2. Documentation
-   - Module documentation
-   - Integration guides
-   - Operational procedures
-   - Testing guidelines
-
-## Future Considerations
-
-### Short-term Roadmap
-
-1. Documentation Enhancement
-   - Module usage documentation
-   - Repository-wide standards
-   - Integration guides
-   - Operational procedures
-
-2. Testing Framework
-   - kyverno/chainsaw migration
-   - Local testing support
-   - Test coverage improvement
-   - Validation enhancement
-
-### Backlog Items
-
-1. Infrastructure Evolution
+2. Infrastructure Evolution
    - Migration to cillium for CNI and load balancing
    - Implementation of default alerts
-   - Comprehensive backup strategy
+   - Development of backup strategy
    - Security controls through kyverno
 
-2. Platform Enhancement
-   - Advanced deployment patterns
-   - Enhanced monitoring capabilities
-   - Improved operational tools
-   - Additional module types
+## Long-term Vision
+
+### 1. Infrastructure Maturity
+
+- Comprehensive monitoring and alerting
+- Advanced security controls
+- Automated operations
+- Resilient storage solutions
+
+### 2. Application Portfolio
+
+- Expanded application support
+- Enhanced integration capabilities
+- Improved user experience
+- Broader use case coverage
+
+### 3. Component Framework
+
+- Extended configuration patterns
+- Enhanced reusability
+- Simplified integration
+- Better customization options
+
+## Success Metrics
+
+### 1. Deployment Success
+
+- Module deployment success rates
+- Error rates and types
+- Recovery time metrics
+- Version upgrade success
+
+### 2. Operational Efficiency
+
+- Resource utilization
+- Performance metrics
+- Maintenance overhead
+- Update frequency
+
+### 3. User Experience
+
+- Deployment time
+- Configuration complexity
+- Issue resolution time
+- User satisfaction

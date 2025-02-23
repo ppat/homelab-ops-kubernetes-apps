@@ -10,10 +10,6 @@
 
 ## Active Initiatives
 
-- Documentation establishment
-  - Individual module documentation
-  - Repository-wide documentation
-  - Usage patterns and guidelines
 - Testing framework migration from GitHub Actions to kyverno/chainsaw
 
 ## Backlog Items
@@ -32,13 +28,7 @@
 
 ## Current Focus Areas
 
-1. Documentation
-   - Individual module documentation
-   - Repository-wide documentation standards
-   - Usage patterns and guidelines
-   - Integration documentation
-
-2. Testing Framework Migration
+1. Testing Framework Migration
    - Moving from GitHub Actions workflows to kyverno/chainsaw
    - Enable local testing capabilities
    - Improve test structure and validation
@@ -46,6 +36,7 @@
 
 ## Recent Changes
 
+- Documentation completion across infrastructure and application modules
 - Core/extra pattern implementation across various modules
 - Comprehensive storage solutions (block, object, NFS)
 - Module structure standardization

@@ -108,7 +108,7 @@ Component modules provide cross-cutting configuration and capabilities:
 
 Modules, particularly infrastructure modules, often follow a core/extra pattern to manage complex dependencies:
 
-```
+```text
 infrastructure/subsystems/
 ├── security-core/     # Core security services
 ├── security-extra/    # Additional security features
@@ -125,7 +125,7 @@ This pattern:
 
 Example scenario:
 
-```
+```text
 Module X (apps a,b,c) and Module Y (apps p,q)
 - If c depends on q, but p depends on a and b
 - Solution: Split into X-core (a,b) and X-extra (c)
