@@ -268,6 +268,62 @@
      - Flexible resource lookup
      - Comprehensive diff output
 
+### Finding F009: Chainsaw Operation File Support
+- **Source:** Chainsaw API Documentation (v1alpha1)
+- **Implications:**
+ - Different operations have different file support capabilities
+ - Some operations require inline resource definitions
+ - Template reuse strategy needs to be operation-specific
+- **Description:**
+ Operations fall into distinct categories based on their file support:
+ 1. Operations Supporting External Files:
+    - Apply: via ActionResourceRef.file
+    - Assert: via ActionCheckRef.file
+    - Create: via ActionResourceRef.file
+    - Delete: via direct file field
+    - Error: via ActionCheckRef.file
+    - Patch: via ActionResourceRef.file
+    - Update: via ActionResourceRef.file
+
+ 2. Operations Requiring Inline Resource Definitions:
+    - Wait: uses ActionObject + WaitFor structure
+    - Describe: uses ActionObject structure
+    - Events: uses ActionObjectSelector
+    - Get: uses ActionObject structure
+    - PodLogs: uses ActionObjectSelector
+    - Proxy: uses ObjectName + ObjectType
+
+ 3. Operations Using Direct Field Definitions:
+    - Command: uses entrypoint + args
+    - Script: uses content field
+    - Sleep: uses duration field
+
+### Finding F010: Chainsaw Template Support
+- **Source:** Chainsaw Documentation (resource-templating.md, templating.md, explicit.md)
+- **Implications:**
+- Templates work consistently across both inline and external files
+- Enables reuse of templated resources across tests
+- Supports dynamic configuration through bindings
+- Provides powerful JMESPath-based expressions
+- **Description:**
+Chainsaw's templating system provides flexible configuration:
+1. Template Locations:
+   - Works in inline resource definitions
+   - Works in external referenced files
+   - Consistent behavior across both approaches
+
+2. Template Features:
+   - Binding substitution (e.g., ($namespace))
+   - JMESPath expressions
+   - Function support (e.g., join, length)
+   - Dynamic value injection
+
+3. Template Use Cases:
+   - Resource naming and labels
+   - Configuration values
+   - Dynamic field values
+   - Cross-test resource sharing
+
 ## 2. Conclusions
 
 ### Conclusion C001: Feature Parity Analysis
@@ -356,6 +412,114 @@
      - Test Discovery: Chainsaw's recursive file discovery
      - Resource Validation: Chainsaw's assertion capabilities
 
+### Conclusion C004: Operation-Specific Reusability Constraints
+- **Statement:** Component reusability is determined by operation type support for external files
+- **Related Findings:** F009
+- **Basis:**
+  1. File-Supporting Operations:
+     - Operations like Apply, Assert, Create, Delete, Error, Patch, and Update
+     - Can externalize components into reusable files
+     - Enable sharing between tests
+     - Support modular organization
+     - Best suited for resource definitions and assertions
+
+  2. Inline-Only Operations:
+     - Operations like Wait, Describe, Events, Get, PodLogs, and Proxy
+     - Must be defined within test files
+     - Cannot be externalized
+     - Limited reuse through bindings
+     - Best suited for monitoring and inspection
+
+  3. Direct Field Operations:
+     - Operations like Command, Script, and Sleep
+     - Simple field-based configuration
+     - No component externalization
+     - Minimal reuse needs
+     - Best suited for utility operations
+
+  4. Impact on Component Strategy:
+     - Reusability depends on operation type
+     - External files only where supported
+     - Inline definitions where required
+     - Clear boundaries between approaches
+     - Operation type drives organization
+
+### Conclusion C005: Unified Template Strategy
+- **Statement:** Chainsaw's template capabilities enable a unified approach to resource reuse despite operation-specific file support limitations
+- **Related Findings:** F009, F010
+- **Basis:**
+ 1. Template-First Design:
+    - Templates work consistently in both inline and external files
+    - Bindings provide operation-agnostic value substitution
+    - JMESPath expressions work across all template locations
+    - Enables consistent patterns regardless of operation type
+
+ 2. Operation-Aware Implementation:
+    - File-supporting operations (Apply, Assert, etc.):
+      * Use external files with templates
+      * Enable direct resource reuse
+      * Support complex template patterns
+    - Inline-only operations (Wait, Describe, etc.):
+      * Use templates directly in test files
+      * Leverage bindings for value reuse
+      * Share patterns through binding definitions
+
+ 3. Reuse Patterns:
+    - Common values through global bindings
+    - Shared templates for file-supporting operations
+    - Binding-based templates for inline operations
+    - Consistent expression patterns across all uses
+
+ 4. Best Practices:
+    - Define reusable values as bindings
+    - Use external files when supported
+    - Maintain consistent template patterns
+    - Share bindings across related operations
+
+### Conclusion C006: Configuration Management Requirements
+- **Statement:** Effective test configuration requires a layered approach to handle different scopes and environments
+- **Related Findings:** F004, F005, F007
+- **Basis:**
+  1. Configuration Scopes:
+     - Global test settings (timeouts, error handling)
+     - Environment-specific values (URLs, namespaces)
+     - Test-specific bindings (component names, versions)
+     - Current approach uses workflow variables and ConfigMaps
+
+  2. Environment Adaptability:
+     - CI vs local execution differences
+     - Need for environment-specific values
+     - Consistent configuration interface
+     - Easy environment switching
+
+  3. Chainsaw Features:
+     - Built-in configuration file support
+     - Values file capabilities
+     - Command-line overrides
+     - Native binding system
+
+### Conclusion C007: Error Handling and Debug Requirements
+- **Statement:** Comprehensive error handling must combine step-specific debugging with proper resource cleanup
+- **Related Findings:** F004, F007, F008
+- **Basis:**
+  1. Current Capabilities:
+     - Workflow-level error reporting
+     - Resource state inspection
+     - Log access for debugging
+     - Manual cleanup steps
+
+  2. Chainsaw Features:
+     - Try/catch/finally blocks
+     - Operation-specific error handling
+     - Built-in cleanup mechanisms
+     - Detailed failure reporting
+
+  3. Integration Requirements:
+     - Step-specific debug information
+     - Consistent resource cleanup
+     - Clear error reporting
+     - Fail-fast behavior
+
 ## 3. Design Decisions
 
 ### Decision D001: Test Organization Structure
@@ -408,6 +572,149 @@
 
 - **Questions for Collaborator:**
   1. Do we need additional structure for FluxCD bootstrapping beyond the existing files?
+
+### Decision D002: Reusable Component Strategy
+
+- **Decision Topic:** How to identify and implement reusable components based on operation capabilities
+- **Related Findings and Conclusions:**
+  - F009: Operation File Support
+  - C004: Operation-Specific Reusability Constraints
+- **Key Capabilities:**
+  - Different operations support different file handling methods
+  - Some operations require inline resource definitions
+  - Component organization must align with operation constraints
+- **Options Considered:**
+  1. All Components as External Files:
+     - Pros:
+       - Maximum reusability
+       - Easier maintenance
+       - Clear separation of concerns
+     - Cons:
+       - Not supported by all operations
+       - Could lead to invalid configurations
+       - More complex file management
+
+  2. All Components Inline:
+     - Pros:
+       - Works with all operations
+       - Simpler file structure
+       - Direct visibility
+     - Cons:
+       - No reuse between tests
+       - Duplicate code
+       - Harder to maintain
+
+  3. Operation-Aware Component Strategy (Recommended):
+     - Pros:
+       - Respects operation capabilities
+       - Maximizes reuse where possible
+       - Clear guidelines for each type
+     - Cons:
+       - Different approaches for different operations
+       - Need to understand operation capabilities
+       - More initial setup
+
+- **Recommended Approach:**
+  1. File-Supporting Operations:
+     - Apply, Assert, Create, Delete, Error, Patch, Update
+     - Externalize only when component is reusable across tests
+     - Keep test-specific components inline or within test directory
+     - Example:
+       ```yaml
+       # common/resources/deployment.yaml (reusable component)
+       apiVersion: apps/v1
+       kind: Deployment
+       metadata:
+         name: nginx
+         namespace: web
+         labels:
+           app: nginx
+       spec:
+         replicas: 3
+         selector:
+           matchLabels:
+             app: nginx
+         template:
+           metadata:
+             labels:
+               app: nginx
+           spec:
+             containers:
+             - name: nginx
+               image: nginx:latest
+       ```
+
+       Usage in test:
+       ```yaml
+       steps:
+         - try:
+           - assert:
+               file: common/resources/deployment.yaml  # or test/my-test/resources/specific.yaml
+       ```
+
+  2. Inline-Required Operations:
+     - Wait, Describe, Events, Get, PodLogs, Proxy
+     - Define directly in test files
+     - Example:
+       ```yaml
+       # Operation in test file
+       wait:
+         apiVersion: apps/v1
+         kind: Deployment
+         name: nginx
+         namespace: web
+         for:
+           condition:
+             name: Available
+             value: "true"
+       ```
+
+  3. Direct Field Operations:
+     - Command, Script, Sleep
+     - Define with clear, static values
+     - Example:
+       ```yaml
+       # Operation in test file
+       command:
+         entrypoint: kubectl
+         args:
+           - get
+           - pods
+           - -n
+           - web
+       ```
+
+- **Implementation Guidelines:**
+  1. Component Organization:
+     - External files in common/ directory
+     - Group by operation type
+     - Clear naming conventions
+
+  2. Value Sharing:
+     - Use bindings for dynamic values
+     - Define common values at test level
+     - Keep operation-specific values close to use
+
+  3. Maintenance Strategy:
+     - Regular review of common components
+     - Version control for shared files
+     - Clear documentation of usage
+
+- **Rationale:**
+  1. Operation Support:
+     - Respects Chainsaw's operation capabilities
+     - Prevents invalid configurations
+     - Clear guidance for each type
+
+  2. Reusability:
+     - Maximizes reuse where supported
+     - Provides alternative patterns where needed
+     - Consistent approach across tests
+
+  3. Maintainability:
+     - Clear organization structure
+     - Easy to understand patterns
+     - Reduced duplication
 
 ### Decision D003: Success Condition Implementation
 
@@ -619,136 +926,6 @@
   1. Document these patterns for reuse
   2. Consider creating test templates for common cases
   3. Add timeout configuration at the assert operation level
-
-### Decision D002: Assertion Strategy
-
-- **Decision Topic:** How to implement and organize test assertions in Chainsaw
-- **Options to Consider:**
-  1. Inline Assertions:
-     - Pros:
-       - Direct visibility of test flow
-       - Easier to maintain ordering
-       - No file management overhead
-     - Cons:
-       - Larger test file
-       - No reuse across tests
-       - Harder to maintain complex assertions
-
-  2. Separate Files by Module:
-     - Pros:
-       - Clear module boundaries
-       - Easier to maintain module-specific checks
-       - Better for simple assertions
-     - Cons:
-       - May duplicate common patterns
-       - Could obscure test sequence
-       - Less flexible for shared components
-
-  3. Separate Files by Component:
-     - Pros:
-       - High reusability
-       - Clear component ownership
-       - Better for complex assertions
-     - Cons:
-       - More files to manage
-       - Need careful ordering
-       - Could fragment test logic
-
-  4. Hybrid Approach (To Be Discussed):
-     - Key Considerations:
-       - How to maintain strict ordering
-       - Where to define timeouts
-       - How to handle component dependencies
-       - Best practices for reusability
-- **Recommended Approach:**
-  Based on our implementation decisions in D003 and D004, we should use a hybrid approach:
-
-  1. Core Test Structure:
-
-     ```yaml
-     ci/test/infra-kubernetes/
-     ├── chainsaw-test.yaml           # Main test definition with steps
-     ├── templates/                   # Shared templates
-     │   ├── conditions/             # Condition checks (D003)
-     │   │   ├── available.yaml     # Available condition template
-     │   │   └── ready.yaml        # Ready condition template
-     │   └── rollouts/              # Rollout checks (D004)
-     │       ├── daemonset.yaml    # DaemonSet template
-     │       ├── deployment.yaml   # Deployment template
-     │       └── statefulset.yaml # StatefulSet template
-     └── tests/                     # Test-specific assertions
-         ├── core/                 # Core module checks
-         │   ├── coredns.yaml     # CoreDNS-specific checks
-         │   └── api.yaml         # API-specific checks
-         └── extra/               # Extra module checks
-             ├── nfd.yaml        # NFD-specific checks
-             └── plugins.yaml    # Plugin-specific checks
-     ```
-
-     Example Template (templates/rollouts/daemonset.yaml):
-
-     ```yaml
-     apiVersion: chainsaw.kyverno.io/v1alpha1
-     kind: Test
-     spec:
-       steps:
-       - try:
-         - assert:
-             resource:
-               apiVersion: apps/v1
-               kind: DaemonSet
-               metadata:
-                 name: ($name)
-                 namespace: ($namespace)
-               status:
-                 (numberReady == desiredNumberScheduled): true
-                 (numberAvailable == desiredNumberScheduled): true
-     ```
-
-     Example Usage (tests/extra/nfd.yaml):
-
-     ```yaml
-     apiVersion: chainsaw.kyverno.io/v1alpha1
-     kind: Test
-     spec:
-       steps:
-       - bindings:
-         - name: name
-           value: node-feature-discovery-worker
-         - name: namespace
-           value: kube-system
-         try:
-         - assert:
-             file: ../../templates/rollouts/daemonset.yaml
-     ```
-
-  2. Organization Strategy:
-     - Common patterns as templates (conditions, rollouts)
-     - Module-specific checks in separate files
-     - Component-specific checks when needed
-     - All timeouts defined at operation level
-
-  3. Implementation Benefits:
-     - Reusable templates for common checks
-     - Clear organization by module
-     - Easy to maintain and extend
-     - Consistent timeout handling
-
-- **Rationale:**
-  1. Template Reuse:
-     - Common condition checks (D003) as templates
-     - Standard rollout checks (D004) as templates
-     - Reduces duplication and maintenance
-
-  2. Module Organization:
-     - Keeps module-specific checks together
-     - Maintains test flow visibility
-     - Matches current workflow structure
-
-  3. Timeout Management:
-     - Operation-level timeouts for precise control
-     - Consistent with Chainsaw's design
-     - Matches current workflow timeouts
 
 ### Decision D005: Workflow Integration Strategy
 
@@ -1131,6 +1308,168 @@
   2. Do we need different timeout settings for CI vs local?
   3. Are there other values we should include in the values files?
 
+### Decision D008: Template Usage Strategy
+
+- **Decision Topic:** When and how to use templates for resource definitions and value reuse
+- **Related Findings and Conclusions:**
+  - F010: Template Support (consistent behavior across inline and external files)
+  - C005: Unified Template Strategy (consistent patterns across all uses)
+- **Key Capabilities:**
+  - Templates work consistently in both inline and externalized resources
+  - Same templating features available regardless of location
+  - Enables flexible component organization without sacrificing template functionality
+  - Supports operation-specific constraints while maintaining consistency
+- **Options Considered:**
+ 1. Template Everything:
+    - Pros:
+      - Maximum flexibility
+      - Consistent approach
+      - High reusability
+    - Cons:
+      - Unnecessary complexity for simple values
+      - Harder to debug
+      - Performance overhead
+
+ 2. Minimal Templates:
+    - Pros:
+      - Simpler to understand
+      - Direct visibility
+      - Faster execution
+    - Cons:
+      - Duplicate values
+      - Hard to maintain
+      - Limited reuse
+
+ 3. Value-Driven Template Strategy (Recommended):
+    - Pros:
+      - Templates where they add value
+      - Clear decision criteria
+      - Balance of reuse and simplicity
+    - Cons:
+      - Requires careful consideration
+      - Mixed approach
+      - Need clear guidelines
+
+- **Recommended Approach:**
+ 1. When to Use Templates:
+    - Dynamic values that change between environments
+    - Values used in multiple places
+    - Complex string manipulations
+    - Resource names that follow patterns
+    - Example:
+      ```yaml
+      # Use template for environment-specific values
+      metadata:
+        name: (join('-', [$namespace, 'config']))
+        namespace: ($namespace)
+      ```
+
+ 2. When to Use Static Values:
+    - Constants that don't change
+    - One-time use values
+    - Simple string literals
+    - Example:
+      ```yaml
+      # Use static for fixed values
+      metadata:
+        labels:
+          app: coredns
+          component: dns
+      ```
+
+ 3. Template Patterns:
+    - Inline Template (for operations requiring inline):
+      ```yaml
+      # In chainsaw-test.yaml
+      steps:
+        - try:
+          - wait:
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: ($deployment_name)
+                namespace: ($namespace)
+              for:
+                condition:
+                  name: Available
+                  value: 'true'
+      ```
+
+    - External Template (for file-supporting operations):
+      ```yaml
+      # common/resources/deployment.yaml
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: (join('-', [$namespace, $component]))
+        namespace: ($namespace)
+        labels:
+          app: ($component)
+          environment: (to_lower($env))
+      spec:
+        replicas: ($replicas)
+        selector:
+          matchLabels:
+            app: ($component)
+        template:
+          metadata:
+            labels:
+              app: ($component)
+          spec:
+            containers:
+            - name: ($component)
+              image: ($image)
+      ```
+
+      Usage in test:
+      ```yaml
+      steps:
+        - try:
+          - assert:
+              file: common/resources/deployment.yaml
+      ```
+
+    - Template Functions:
+      - Simple Binding: ($deployment_name)
+      - String Join: (join('-', [$namespace, 'config']))
+      - String Transform: (to_lower($env))
+      - Array Operations: (length($replicas))
+
+- **Implementation Guidelines:**
+ 1. Value Management:
+    - Define common values as bindings
+    - Use descriptive binding names
+    - Document binding purposes
+    - Group related bindings
+
+ 2. Template Organization:
+    - Keep templates close to usage
+    - Document complex templates
+    - Use consistent patterns
+    - Validate template output
+
+ 3. Best Practices:
+    - Start simple, add complexity when needed
+    - Document all bindings
+    - Use clear naming conventions
+    - Test template combinations
+
+- **Rationale:**
+ 1. Value-Based Decision Making:
+    - Templates add overhead
+    - Must justify complexity
+    - Clear criteria for usage
+
+ 2. Consistent Patterns:
+    - Predictable template usage
+    - Easy to understand
+    - Maintainable long-term
+
+ 3. Balance:
+    - Reuse where valuable
+    - Simplicity where possible
+    - Clear guidelines for decisions
+
 # Current Session State
 
 1. Research Status:
@@ -1148,12 +1487,13 @@
 2. Design Decisions:
    - Completed:
      - D001: Test Organization Structure
-     - D002: Assertion Strategy
+     - D002: Reusable Component Strategy
      - D003: Success Condition Implementation
      - D004: Rollout Status Implementation
      - D005: Workflow Integration Strategy
      - D006: Error Handling Strategy
      - D007: Test Configuration Strategy
+     - D008: Template Usage Strategy
    - In Discussion: None
    - Pending: None
 
@@ -1177,11 +1517,11 @@
 
 6. Activity Log:
    - Research Findings:
-      - Logged: F001-F008
+      - Logged: F001-F010
       - Remaining: None
    - Conclusions:
-      - Logged: C001-C003
+      - Logged: C001-C007
       - Remaining: None
    - Design Decisions:
-      - Logged: D001-D007
+      - Logged: D001-D008
       - Remaining: None

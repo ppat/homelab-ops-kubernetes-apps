@@ -35,13 +35,15 @@ spec:
 
     # Wait for source to be ready
     - wait:
-        file: ../chainsaw/templates/conditions/ready.yaml
-        values:
-          apiVersion: source.toolkit.fluxcd.io/v1
-          kind: GitRepository
-          name: test-source
-          namespace: ($values.namespaces.flux)
-          timeout: 1m
+        apiVersion: source.toolkit.fluxcd.io/v1
+        kind: GitRepository
+        name: test-source
+        namespace: ($values.namespaces.flux)
+        timeout: 1m
+        for:
+          condition:
+            name: Ready
+            value: "true"
 
     # Setup and wait for pre-requisites
     - command:
@@ -57,13 +59,15 @@ spec:
         entrypoint: kubectl
         args: ["apply", "--server-side", "-f", "-"]
     - wait:
-        file: ../chainsaw/templates/conditions/ready.yaml
-        values:
-          apiVersion: kustomize.toolkit.fluxcd.io/v1
-          kind: Kustomization
-          name: pre-requisites
-          namespace: ($values.namespaces.flux)
-          timeout: 1m
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: pre-requisites
+        namespace: ($values.namespaces.flux)
+        timeout: 1m
+        for:
+          condition:
+            name: Ready
+            value: "true"
 
     # Create and apply test kustomization
     - command:
@@ -89,13 +93,15 @@ spec:
 
     # Wait for kustomization to be ready
     - wait:
-        file: ../chainsaw/templates/conditions/ready.yaml
-        values:
-          apiVersion: kustomize.toolkit.fluxcd.io/v1
-          kind: Kustomization
-          name: test-kustomization
-          namespace: ($values.namespaces.flux)
-          timeout: 1m
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: test-kustomization
+        namespace: ($values.namespaces.flux)
+        timeout: 1m
+        for:
+          condition:
+            name: Ready
+            value: "true"
     finally:
     # Debug source issues if failed
     - describe:
@@ -119,13 +125,15 @@ spec:
         - ($values.modules.core.timeout)
     # Wait for CoreDNS
     - wait:
-        file: ../chainsaw/templates/conditions/available.yaml
-        values:
-          apiVersion: apps/v1
-          kind: Deployment
-          name: ($values.resources.coredns.deployment)
-          namespace: ($values.namespaces.core)
-          timeout: 1m
+        apiVersion: apps/v1
+        kind: Deployment
+        name: ($values.resources.coredns.deployment)
+        namespace: ($values.namespaces.core)
+        timeout: 1m
+        for:
+          condition:
+            name: Available
+            value: "true"
     finally:
     # Debug core issues if failed
     - describe:
@@ -152,52 +160,62 @@ spec:
         - ($values.modules.extra.timeout)
     # Wait for NFD components
     - wait:
-        file: ../chainsaw/templates/conditions/available.yaml
-        values:
-          apiVersion: apps/v1
-          kind: Deployment
-          name: ($values.resources.nfd.master)
-          namespace: ($values.namespaces.core)
-          timeout: 1m
+        apiVersion: apps/v1
+        kind: Deployment
+        name: ($values.resources.nfd.master)
+        namespace: ($values.namespaces.core)
+        timeout: 1m
+        for:
+          condition:
+            name: Available
+            value: "true"
     - assert:
         file: ../chainsaw/templates/rollouts/daemonset.yaml
         values:
           name: ($values.resources.nfd.worker)
           namespace: ($values.namespaces.core)
     - wait:
-        file: ../chainsaw/templates/conditions/available.yaml
-        values:
-          apiVersion: apps/v1
-          kind: Deployment
-          name: ($values.resources.nfd.gc)
-          namespace: ($values.namespaces.core)
-          timeout: 1m
+        apiVersion: apps/v1
+        kind: Deployment
+        name: ($values.resources.nfd.gc)
+        namespace: ($values.namespaces.core)
+        timeout: 1m
+        for:
+          condition:
+            name: Available
+            value: "true"
     # Wait for VPA
     - wait:
-        file: ../chainsaw/templates/conditions/available.yaml
-        values:
-          apiVersion: apps/v1
-          kind: Deployment
-          name: ($values.resources.vpa.recommender)
-          namespace: ($values.namespaces.core)
-          timeout: 1m
+        apiVersion: apps/v1
+        kind: Deployment
+        name: ($values.resources.vpa.recommender)
+        namespace: ($values.namespaces.core)
+        timeout: 1m
+        for:
+          condition:
+            name: Available
+            value: "true"
     # Wait for Device Plugins
     - wait:
-        file: ../chainsaw/templates/conditions/available.yaml
-        values:
-          apiVersion: apps/v1
-          kind: Deployment
-          name: ($values.resources.plugins.operator)
-          namespace: ($values.namespaces.intel)
-          timeout: 1m
+        apiVersion: apps/v1
+        kind: Deployment
+        name: ($values.resources.plugins.operator)
+        namespace: ($values.namespaces.intel)
+        timeout: 1m
+        for:
+          condition:
+            name: Available
+            value: "true"
     - wait:
-        file: ../chainsaw/templates/conditions/available.yaml
-        values:
-          apiVersion: apps/v1
-          kind: Deployment
-          name: ($values.resources.plugins.gpu)
-          namespace: ($values.namespaces.intel)
-          timeout: 1m
+        apiVersion: apps/v1
+        kind: Deployment
+        name: ($values.resources.plugins.gpu)
+        namespace: ($values.namespaces.intel)
+        timeout: 1m
+        for:
+          condition:
+            name: Available
+            value: "true"
     - assert:
         file: ../chainsaw/templates/rollouts/daemonset.yaml
         values:
@@ -205,13 +223,15 @@ spec:
           namespace: ($values.namespaces.core)
     # Wait for Descheduler
     - wait:
-        file: ../chainsaw/templates/conditions/available.yaml
-        values:
-          apiVersion: apps/v1
-          kind: Deployment
-          name: ($values.resources.descheduler.deployment)
-          namespace: ($values.namespaces.core)
-          timeout: 1m
+        apiVersion: apps/v1
+        kind: Deployment
+        name: ($values.resources.descheduler.deployment)
+        namespace: ($values.namespaces.core)
+        timeout: 1m
+        for:
+          condition:
+            name: Available
+            value: "true"
     finally:
     # Debug extra issues if failed
     - describe:
