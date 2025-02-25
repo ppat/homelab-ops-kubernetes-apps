@@ -1,0 +1,33 @@
+---
+# Resource configuration
+namespaces:
+  flux: flux-system
+  core: kube-system
+  intel: intel-device-plugins
+
+# Module configuration
+modules:
+  core:
+    name: infra-kubernetes-core
+    timeout: 3m
+  extra:
+    name: infra-kubernetes-extra
+    timeout: 3m
+
+# Resource names
+resources:
+  coredns:
+    configmap: coredns-custom
+    deployment: coredns
+  nfd:
+    master: node-feature-discovery-master
+    worker: node-feature-discovery-worker
+    gc: node-feature-discovery-gc
+  plugins:
+    operator: intel-plugin-operator-release
+    gpu: intel-gpu-plugin-release
+    generic: generic-device-plugin
+  vpa:
+    recommender: vertical-pod-autoscaler-vpa-recommender
+  descheduler:
+    deployment: descheduler

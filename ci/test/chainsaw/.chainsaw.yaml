@@ -1,0 +1,29 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha2
+kind: Configuration
+metadata:
+  name: infra-kubernetes-test
+spec:
+  # Common timeouts
+  timeouts:
+    apply: 3m
+    assert: 1m
+    cleanup: 30s
+    delete: 15s
+    error: 30s
+    exec: 5s
+
+  # Test execution settings
+  execution:
+    failFast: true
+    parallel: 1  # Run tests sequentially since they have dependencies
+
+  # Global error handlers
+  error:
+    catch:
+    - events: {}  # Collect cluster events on failure
+    - describe:
+        resource: kustomizations  # Show kustomization status
+    - describe:
+        resource: pods  # Show pod status
+        namespace: "*"  # All namespaces

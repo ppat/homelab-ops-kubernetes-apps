@@ -1,0 +1,1187 @@
+# Activity Log: Chainsaw Testing Migration PoC
+
+**Date:** 2024-02-24
+
+## 1. Research Findings
+
+### Finding F001: Project Structure and Testing Framework
+
+- **Source:** `/home/coder/code/homelab-ops-kubernetes-apps/projectBrief.md`
+- **Implications:**
+  - Must maintain existing module structure and dependencies
+  - Testing must validate both native K8s resources and CRDs
+  - Need to preserve FluxCD-based deployment in tests
+  - Must support Core/Extra pattern for module testing
+- **Description:**
+  The project uses a structured approach to Kubernetes modules with:
+  1. Core/Extra pattern for managing complex dependencies
+  2. Comprehensive testing strategy including:
+     - Module-level testing as complete units
+     - Resource validation against K8s specs and CRDs
+     - FluxCD-based deployment in tests
+     - Dependency validation (both hard and soft)
+  3. Strong emphasis on module independence and clear boundaries
+  4. Multiple configuration methods including Kustomize patches and FluxCD post-build variables
+
+### Finding F002: Current Core Module Testing
+
+- **Source:** `/home/coder/code/homelab-ops-kubernetes-apps/.github/workflows/test-infrastructure-kubernetes.yaml`
+- **Implications:**
+  - Must maintain exact validation sequence
+  - Must preserve all timeout configurations
+  - Must handle FluxCD-based deployment
+  - Need to support variable substitution
+- **Description:**
+  The current test implementation follows this sequence:
+  1. Reconciliation (First Step):
+     - Resource: kustomization/infra-kubernetes-core
+     - Namespace: flux-system
+     - Timeout: 3m
+     - Dependencies: cluster-common-conf, cluster-networking-conf
+  2. Success Conditions (In Order):
+     a. CoreDNS ConfigMap:
+        - Resource: configmap/coredns-custom
+        - Namespace: kube-system
+        - Check: jsonpath={.metadata.creationTimestamp}
+        - Timeout: 1m
+     b. CoreDNS Deployment:
+        - Resource: deployment/coredns
+        - Namespace: kube-system
+        - Check: condition=available
+        - Timeout: 1m
+     c. API Access:
+        - Resource: ingress/kubernetes-api
+        - Namespace: default
+        - Check: jsonpath={.metadata.creationTimestamp}
+        - Timeout: 1m
+
+### Finding F003: Current Extra Module Testing
+
+- **Source:** `/home/coder/code/homelab-ops-kubernetes-apps/.github/workflows/test-infrastructure-kubernetes.yaml`
+- **Implications:**
+  - Must maintain exact validation sequence
+  - Must preserve all timeout configurations
+  - Must handle CI-specific adaptations
+  - Need to support variable substitution
+- **Description:**
+  The current test implementation follows this sequence:
+  1. Reconciliation (Second Step):
+     - Resource: kustomization/infra-kubernetes-extra
+     - Namespace: flux-system
+     - Timeout: 3m
+     - Dependencies: cluster-common-conf
+  2. Success Conditions (In Order):
+     a. Node Feature Discovery:
+        - Resource: deployment/node-feature-discovery-master
+        - Namespace: kube-system
+        - Check: condition=available
+        - Timeout: 1m
+        - Resource: daemonset/node-feature-discovery-worker
+        - Namespace: kube-system
+        - Check: rollout status
+        - Timeout: 1m
+        - Resource: deployment/node-feature-discovery-gc
+        - Namespace: kube-system
+        - Check: condition=available
+        - Timeout: 1m
+     b. Resource Management:
+        - Resource: deployment/vertical-pod-autoscaler-vpa-recommender
+        - Namespace: kube-system
+        - Check: condition=available
+        - Timeout: 1m
+     c. Device Plugins:
+        - Resource: helmrelease/intel-plugin-operator-release
+        - Namespace: intel-device-plugins
+        - Check: jsonpath={.metadata.creationTimestamp}
+        - Timeout: 1m
+        - Resource: helmrelease/intel-gpu-plugin-release
+        - Namespace: intel-device-plugins
+        - Check: jsonpath={.metadata.creationTimestamp}
+        - Timeout: 1m
+        - Resource: daemonset/generic-device-plugin
+        - Namespace: kube-system
+        - Check: rollout status
+        - Timeout: 1m
+     d. Workload Management:
+        - Resource: deployment/descheduler
+        - Namespace: kube-system
+        - Check: condition=available
+        - Timeout: 1m
+
+### Finding F004: Current Testing Implementation
+
+- **Source:** `/home/coder/code/homelab-ops-kubernetes-apps/.github/workflows/test-kubernetes-resources-workflow.yaml`
+- **Implications:**
+  - Must replicate key testing capabilities in Chainsaw
+  - Need to maintain similar environment setup process
+  - Must support equivalent validation mechanisms
+  - Debug capabilities should be preserved
+- **Description:**
+  The current testing workflow provides several key capabilities:
+  1. Environment Setup:
+     - Kind cluster creation with specific K8s version
+     - FluxCD installation and configuration
+     - Git source bootstrapping
+  2. Test Execution:
+     - Pre-requisites deployment
+     - Module deployment via FluxCD
+     - Resource reconciliation
+     - Success condition validation
+  3. Validation Features:
+     - Wait for specific resource conditions
+     - Special handling for DaemonSets and StatefulSets
+     - Custom command execution support
+  4. Debug Capabilities:
+     - Detailed failure information
+     - Resource state inspection
+     - Controller logs access
+     - Status reporting
+
+### Finding F005: Test Workflow Orchestration
+
+- **Source:** Multiple files:
+  - test-infrastructure-kubernetes.yaml
+  - test-kubernetes-resources-workflow.yaml
+  - infra-kubernetes-core.yaml
+  - infra-kubernetes-extra.yaml
+- **Implications:**
+  - Must preserve strict execution order
+  - Need to maintain workflow integration points
+  - Must handle configuration inheritance
+  - Need equivalent debug capabilities
+- **Description:**
+  The test workflow enforces a specific execution order:
+  1. Ordered Reconciliation:
+     - First: infra-kubernetes-core (3m timeout)
+       - Requires: cluster-common-conf, cluster-networking-conf
+     - Second: infra-kubernetes-extra (3m timeout)
+       - Requires: cluster-common-conf
+  2. Ordered Success Validation:
+     - Core Module Checks:
+       - First: CoreDNS ConfigMap
+       - Second: CoreDNS Deployment
+       - Third: Kubernetes API ingress
+     - Extra Module Checks:
+       - First: Node Feature Discovery components (master, worker, gc)
+       - Second: VPA recommender
+       - Third: Intel device plugins and operator
+       - Fourth: Generic device plugin
+       - Fifth: Descheduler
+  3. Configuration Flow:
+     - FluxCD bootstraps git source
+     - Kustomizations apply module configs
+     - Post-build substitutions from ConfigMaps
+     - CI-specific patches for Intel plugins
+  4. Debug Sequence:
+     - First: Namespace events
+     - Second: Intel plugin status
+     - Third: HelmRelease details
+
+### Finding F006: Chainsaw Test Structure
+
+- **Source:** `/home/coder/code/chainsaw/website/docs/quick-start/first-test.md`
+- **Implications:**
+  - Tests can be organized in a clear folder structure
+  - Each test can have multiple steps and operations
+  - Operations are executed sequentially
+  - Test files can reference other files in the filesystem
+- **Description:**
+  Chainsaw provides a structured testing approach:
+  1. Test Organization:
+     - One folder per test
+     - Default test file: chainsaw-test.yaml
+     - Can reference external files and manifests
+  2. Test Structure:
+     - Tests contain ordered sequence of steps
+     - Steps contain ordered sequence of operations
+     - Operations include apply and assert capabilities
+  3. Test Execution:
+     - Sequential operation execution
+     - Fail-fast on operation failure
+     - Success requires all operations to succeed
+  4. Key Features:
+     - File-based resource definitions
+     - Resource creation verification
+     - Data validation capabilities
+     - Clear success/failure criteria
+
+### Finding F007: Chainsaw Test Execution
+
+- **Source:** `/home/coder/code/chainsaw/website/docs/quick-start/run-tests.md`
+- **Implications:**
+  - Need external cluster management (e.g., kind)
+  - Must configure appropriate timeouts
+  - Need to handle test discovery and organization
+  - Must manage namespace creation/cleanup
+- **Description:**
+  Chainsaw provides test execution features:
+  1. Test Discovery:
+     - Recursive test file discovery
+     - Default test file: chainsaw-test.yaml
+     - Configurable test directories
+  2. Execution Configuration:
+     - Configurable timeouts for different operations
+     - Namespace management
+     - Fail-fast option
+     - Test filtering capabilities
+  3. Operation Timeouts:
+     - Apply: 5s default
+     - Assert: 30s default
+     - Cleanup: 30s default
+     - Delete: 15s default
+     - Error: 30s default
+     - Exec: 5s default
+  4. Test Lifecycle:
+     - Setup phase (namespace creation)
+     - Test execution
+     - Cleanup phase (resource deletion)
+     - Detailed execution logging
+
+### Finding F008: Chainsaw Assertion Capabilities
+
+- **Source:** `/home/coder/code/chainsaw/website/docs/quick-start/assertion-trees.md`
+- **Implications:**
+  - Can handle complex validation scenarios
+  - Supports flexible resource matching
+  - Provides detailed failure reporting
+  - Can validate array-based configurations
+- **Description:**
+  Chainsaw offers powerful assertion features:
+  1. Resource Validation:
+     - Exact resource matching by name
+     - Label-based resource discovery
+     - Partial resource validation
+     - Complex condition evaluation
+  2. Advanced Assertions:
+     - Comparison operations beyond equality
+     - Array filtering and iteration
+     - Expression-based validation
+     - Condition status verification
+  3. Failure Reporting:
+     - Detailed error messages
+     - Resource diffs for failures
+     - Context-rich output
+     - Clear validation results
+  4. Key Features:
+     - JMESPath expression support
+     - Array element iteration
+     - Flexible resource lookup
+     - Comprehensive diff output
+
+## 2. Conclusions
+
+### Conclusion C001: Feature Parity Analysis
+
+- **Statement:** Chainsaw provides equivalent or superior capabilities for all current testing requirements
+- **Related Findings:** F004, F005, F006, F007, F008
+- **Basis:**
+  1. Test Workflow Integration (F004, F005):
+     - Current: GitHub Actions workflow with FluxCD integration
+     - Chainsaw: Step-based execution with external cluster management
+     - Equivalent: Both support orchestrated test execution
+
+  2. Test Organization (F004, F006):
+     - Current: Workflow-based test configuration
+     - Chainsaw: Structured test folders and files
+     - Advantage: Better organization and maintainability
+
+  3. Resource Validation (F004, F008):
+     - Current: Wait conditions and status checks
+     - Chainsaw: Assertion trees with complex validation
+     - Advantage: More powerful validation capabilities
+
+  4. Debug Capabilities (F004, F008):
+     - Current: Logs access and event inspection
+     - Chainsaw: Detailed diffs and failure reporting
+     - Advantage: More comprehensive debugging information
+
+### Conclusion C002: Module Test Migration Requirements
+
+- **Statement:** Current test validations for both modules can be effectively implemented using Chainsaw's assertion capabilities
+- **Related Findings:** F002, F003, F005, F008
+- **Basis:**
+  1. Core Module Tests (F002):
+     - Resource Validation:
+       - Current: CoreDNS ConfigMap and Deployment checks with 1m timeout
+       - Chainsaw Solution: Assert operations with configurable timeouts
+     - API Validation:
+       - Current: Kubernetes API ingress existence check
+       - Chainsaw Solution: Resource existence assertions
+     - Configuration:
+       - Current: FluxCD kustomization with 3m timeout
+       - Chainsaw Solution: Sequential apply and assert operations
+
+  2. Extra Module Tests (F003):
+     - Component Validation:
+       - Current: NFD deployments and DaemonSet checks
+       - Chainsaw Solution: Multi-resource assertions with status checks
+     - CI Adaptations:
+       - Current: Special handling for Intel plugins
+       - Chainsaw Solution: Conditional assertions and error handling
+     - Deployment Checks:
+       - Current: Multiple component availability checks
+       - Chainsaw Solution: Parallel resource validation
+
+  3. Common Requirements (F005, F008):
+     - Timeout Management:
+       - Current: Per-resource timeout configuration
+       - Chainsaw Solution: Operation-specific timeout settings
+     - Debug Support:
+       - Current: Event and status inspection
+       - Chainsaw Solution: Built-in failure reporting and diffs
+
+### Conclusion C003: Migration Strategy Requirements
+
+- **Statement:** A successful migration requires maintaining current capabilities while leveraging Chainsaw's enhanced features
+- **Related Findings:** F001, F004, F005, F006, F007
+- **Basis:**
+  1. Environment Setup (F004, F007):
+     - Current Approach: GitHub Actions workflow manages cluster setup
+     - Migration Need: Maintain kind cluster creation and FluxCD setup
+     - Solution: Use external cluster management with Chainsaw tests
+
+  2. Test Organization (F001, F006):
+     - Current Approach: Workflow-based test configuration
+     - Migration Need: Preserve module testing structure
+     - Solution: Map to Chainsaw's folder-based test organization
+
+  3. Validation Strategy (F005):
+     - Current Approach: Success conditions in workflow config
+     - Migration Need: Maintain all current validation checks
+     - Solution: Convert to Chainsaw assertion trees and timeouts
+
+  4. Tooling Requirements:
+     - Cluster Management: External kind setup
+     - FluxCD Integration: Pre-test environment setup
+     - Test Discovery: Chainsaw's recursive file discovery
+     - Resource Validation: Chainsaw's assertion capabilities
+
+## 3. Design Decisions
+
+### Decision D001: Test Organization Structure
+
+- **Decision Topic:** How to organize Chainsaw tests to maintain module dependencies and ordering
+- **Options Considered:**
+  1. Separate Test Files:
+     - Pros:
+       - Clear module separation
+       - Independent test definitions
+     - Cons:
+       - Hard to manage dependencies
+       - Could break required ordering
+       - Doesn't match current workflow
+
+  2. Single Test File with Sections:
+     - Pros:
+       - Maintains module coupling
+       - Clear test flow
+       - Easy to see dependencies
+     - Cons:
+       - Less modular
+       - Larger file to maintain
+
+  3. Combined Approach with Resource Separation (Recommended):
+     - Pros:
+       - Preserves core/extra coupling
+       - Clear resource organization
+       - Maintains test ordering
+       - Enables resource reuse
+     - Cons:
+       - Need careful resource management
+- **Recommended Approach:**
+
+  ```
+  ci/
+  ├── test/
+  │   ├── common/                          # Shared test resources
+  │   │   ├── configmaps/                  # Common ConfigMaps
+  │   │   │   ├── cluster-common.yaml      # Default test config
+  │   │   │   └── cluster-networking.yaml  # Network config
+  │   │   └── kind-cluster.yaml           # Cluster configuration
+  │   └── infra-kubernetes/               # Test directory
+  │       ├── chainsaw-test.yaml          # Main test definition
+  │       ├── configmaps/                 # Test-specific configs
+  │       │   └── test-config.yaml        # Test variables
+  │       ├── infra-kubernetes-core.yaml  # Core module config with patches
+  │       └── infra-kubernetes-extra.yaml # Extra module config with patches
+  ```
+
+- **Questions for Collaborator:**
+  1. Do we need additional structure for FluxCD bootstrapping beyond the existing files?
+
+### Decision D003: Success Condition Implementation
+
+- **Decision Topic:** How to implement kubectl wait status checks in Chainsaw
+- **Current Implementation Analysis:**
+  1. Condition Types:
+
+     ```bash
+     # Type 1: Wait for condition
+     kubectl wait -n kube-system --for=condition=available deployment/coredns
+
+     # Type 2: Wait for jsonpath
+     kubectl wait -n kube-system --for=jsonpath={.metadata.creationTimestamp} configmap/coredns-custom
+     ```
+
+- **Chainsaw Implementation:**
+  1. Using Wait Operation (Recommended):
+
+     ```yaml
+     # For condition=available
+     apiVersion: chainsaw.kyverno.io/v1alpha1
+     kind: Test
+     spec:
+       steps:
+       - try:
+         - wait:
+             apiVersion: apps/v1
+             kind: Deployment
+             name: coredns
+             namespace: kube-system
+             timeout: 1m
+             for:
+               condition:
+                 name: Available
+                 value: 'true'
+
+     # For jsonpath check
+     apiVersion: chainsaw.kyverno.io/v1alpha1
+     kind: Test
+     spec:
+       steps:
+       - try:
+         - wait:
+             apiVersion: v1
+             kind: ConfigMap
+             name: coredns-custom
+             namespace: kube-system
+             timeout: 1m
+             for:
+               jsonPath:
+                 path: '{.metadata.creationTimestamp}'
+     ```
+
+- **Rationale:**
+  1. Direct Mapping:
+     - Wait operation provides 1:1 mapping with kubectl wait
+     - Supports both condition and jsonpath checks
+     - Maintains same timeout behavior
+
+  2. Simplicity:
+     - Clear syntax matches existing commands
+     - Easy to understand and maintain
+     - Familiar to team members
+
+  3. Future Flexibility:
+     - Can use assert for more complex validations if needed
+     - Wait handles current test requirements effectively
+     - Preserves option to extend validation capabilities
+
+- **Next Steps:**
+  1. Document rollout status implementation in a separate decision
+  2. Proceed with wait operation for current kubectl wait commands
+  3. Consider assert operation for any new complex validations
+
+### Decision D004: Rollout Status Implementation
+
+- **Decision Topic:** How to implement kubectl rollout status checks in Chainsaw
+- **Current Implementation Analysis:**
+
+  ```bash
+  # Current command
+  kubectl -n $namespace rollout status $resource_kind $resource_name --timeout $timeout
+
+  # Example from test workflow
+  kubectl -n kube-system rollout status daemonset/node-feature-discovery-worker --timeout 1m
+  ```
+
+- **Chainsaw Implementation Options:**
+  1. Using Wait Operation:
+
+     ```yaml
+     # For DaemonSet rollout
+     apiVersion: chainsaw.kyverno.io/v1alpha1
+     kind: Test
+     spec:
+       steps:
+       - try:
+         - wait:
+             apiVersion: apps/v1
+             kind: DaemonSet
+             name: node-feature-discovery-worker
+             namespace: kube-system
+             timeout: 1m
+             for:
+               condition:
+                 name: Ready
+                 value: 'true'
+     ```
+
+  2. Using Assert Operation:
+
+     ```yaml
+     apiVersion: chainsaw.kyverno.io/v1alpha1
+     kind: Test
+     spec:
+       steps:
+       - try:
+         - assert:
+             resource:
+               apiVersion: apps/v1
+               kind: DaemonSet
+               metadata:
+                 name: node-feature-discovery-worker
+                 namespace: kube-system
+               status:
+                 (numberReady == desiredNumberScheduled): true
+     ```
+
+- **Recommended Approach:**
+  Since Chainsaw doesn't have a direct equivalent to `kubectl rollout status`, we should use assert operations with specific status field checks for each resource type:
+
+  1. DaemonSet:
+
+     ```yaml
+     apiVersion: chainsaw.kyverno.io/v1alpha1
+     kind: Test
+     spec:
+       steps:
+       - try:
+         - assert:
+             resource:
+               apiVersion: apps/v1
+               kind: DaemonSet
+               metadata:
+                 name: node-feature-discovery-worker
+                 namespace: kube-system
+               status:
+                 (numberReady == desiredNumberScheduled): true
+                 (numberAvailable == desiredNumberScheduled): true
+     ```
+
+  2. Deployment:
+
+     ```yaml
+     apiVersion: chainsaw.kyverno.io/v1alpha1
+     kind: Test
+     spec:
+       steps:
+       - try:
+         - assert:
+             resource:
+               apiVersion: apps/v1
+               kind: Deployment
+               metadata:
+                 name: coredns
+                 namespace: kube-system
+               status:
+                 (replicas == readyReplicas): true
+                 (replicas == availableReplicas): true
+     ```
+
+  3. StatefulSet:
+
+     ```yaml
+     apiVersion: chainsaw.kyverno.io/v1alpha1
+     kind: Test
+     spec:
+       steps:
+       - try:
+         - assert:
+             resource:
+               apiVersion: apps/v1
+               kind: StatefulSet
+               metadata:
+                 name: example
+                 namespace: default
+               status:
+                 (replicas == readyReplicas): true
+                 (currentReplicas == replicas): true
+     ```
+
+- **Rationale:**
+  1. Resource-Specific Checks:
+     - Each resource type has different status fields
+     - Assert allows precise validation of these fields
+     - More accurate than generic Ready condition
+
+  2. Complete Status Verification:
+     - Checks both readiness and availability
+     - Ensures proper rollout completion
+     - Matches kubectl rollout status behavior
+
+  3. Consistent Approach:
+     - Same pattern across resource types
+     - Clear status field validation
+     - Easy to maintain and understand
+
+- **Next Steps:**
+  1. Document these patterns for reuse
+  2. Consider creating test templates for common cases
+  3. Add timeout configuration at the assert operation level
+
+### Decision D002: Assertion Strategy
+
+- **Decision Topic:** How to implement and organize test assertions in Chainsaw
+- **Options to Consider:**
+  1. Inline Assertions:
+     - Pros:
+       - Direct visibility of test flow
+       - Easier to maintain ordering
+       - No file management overhead
+     - Cons:
+       - Larger test file
+       - No reuse across tests
+       - Harder to maintain complex assertions
+
+  2. Separate Files by Module:
+     - Pros:
+       - Clear module boundaries
+       - Easier to maintain module-specific checks
+       - Better for simple assertions
+     - Cons:
+       - May duplicate common patterns
+       - Could obscure test sequence
+       - Less flexible for shared components
+
+  3. Separate Files by Component:
+     - Pros:
+       - High reusability
+       - Clear component ownership
+       - Better for complex assertions
+     - Cons:
+       - More files to manage
+       - Need careful ordering
+       - Could fragment test logic
+
+  4. Hybrid Approach (To Be Discussed):
+     - Key Considerations:
+       - How to maintain strict ordering
+       - Where to define timeouts
+       - How to handle component dependencies
+       - Best practices for reusability
+- **Recommended Approach:**
+  Based on our implementation decisions in D003 and D004, we should use a hybrid approach:
+
+  1. Core Test Structure:
+
+     ```yaml
+     ci/test/infra-kubernetes/
+     ├── chainsaw-test.yaml           # Main test definition with steps
+     ├── templates/                   # Shared templates
+     │   ├── conditions/             # Condition checks (D003)
+     │   │   ├── available.yaml     # Available condition template
+     │   │   └── ready.yaml        # Ready condition template
+     │   └── rollouts/              # Rollout checks (D004)
+     │       ├── daemonset.yaml    # DaemonSet template
+     │       ├── deployment.yaml   # Deployment template
+     │       └── statefulset.yaml # StatefulSet template
+     └── tests/                     # Test-specific assertions
+         ├── core/                 # Core module checks
+         │   ├── coredns.yaml     # CoreDNS-specific checks
+         │   └── api.yaml         # API-specific checks
+         └── extra/               # Extra module checks
+             ├── nfd.yaml        # NFD-specific checks
+             └── plugins.yaml    # Plugin-specific checks
+     ```
+
+     Example Template (templates/rollouts/daemonset.yaml):
+
+     ```yaml
+     apiVersion: chainsaw.kyverno.io/v1alpha1
+     kind: Test
+     spec:
+       steps:
+       - try:
+         - assert:
+             resource:
+               apiVersion: apps/v1
+               kind: DaemonSet
+               metadata:
+                 name: ($name)
+                 namespace: ($namespace)
+               status:
+                 (numberReady == desiredNumberScheduled): true
+                 (numberAvailable == desiredNumberScheduled): true
+     ```
+
+     Example Usage (tests/extra/nfd.yaml):
+
+     ```yaml
+     apiVersion: chainsaw.kyverno.io/v1alpha1
+     kind: Test
+     spec:
+       steps:
+       - bindings:
+         - name: name
+           value: node-feature-discovery-worker
+         - name: namespace
+           value: kube-system
+         try:
+         - assert:
+             file: ../../templates/rollouts/daemonset.yaml
+     ```
+
+  2. Organization Strategy:
+     - Common patterns as templates (conditions, rollouts)
+     - Module-specific checks in separate files
+     - Component-specific checks when needed
+     - All timeouts defined at operation level
+
+  3. Implementation Benefits:
+     - Reusable templates for common checks
+     - Clear organization by module
+     - Easy to maintain and extend
+     - Consistent timeout handling
+
+- **Rationale:**
+  1. Template Reuse:
+     - Common condition checks (D003) as templates
+     - Standard rollout checks (D004) as templates
+     - Reduces duplication and maintenance
+
+  2. Module Organization:
+     - Keeps module-specific checks together
+     - Maintains test flow visibility
+     - Matches current workflow structure
+
+  3. Timeout Management:
+     - Operation-level timeouts for precise control
+     - Consistent with Chainsaw's design
+     - Matches current workflow timeouts
+
+### Decision D005: Workflow Integration Strategy
+
+- **Decision Topic:** How to split responsibilities between GitHub Actions workflow and Chainsaw tests
+
+- **Current Workflow Analysis:**
+  1. Environment Setup (GitHub Actions):
+
+     ```yaml
+     - Setup kind cluster
+     - Setup kubectl
+     - Setup flux
+     - Install flux in cluster
+     ```
+
+  2. Test Execution (Could Move to Chainsaw):
+
+     ```yaml
+     - Bootstrap flux from git source
+     - Reconcile kustomizations
+     - Wait for success conditions
+     - Run custom commands
+     ```
+
+  3. Debug Capabilities (Mix):
+
+     ```yaml
+     - Show status (all resources)
+     - Debug flux failures
+     - Debug success condition failures
+     ```
+
+- **FluxCD Integration Strategy:**
+  Moving FluxCD bootstrapping into Chainsaw provides better test isolation and debugging capabilities. The complete test implementation looks like this:
+
+  ```yaml
+  apiVersion: chainsaw.kyverno.io/v1alpha1
+  kind: Test
+  spec:
+    # Test-wide timeouts
+    timeouts:
+      apply: 3m
+      assert: 1m
+
+    # Test configuration
+    bindings:
+      - name: git_url
+        value: https://github.com/org/repo
+      - name: git_ref
+        value: main
+
+    steps:
+    # Step 1: Bootstrap FluxCD
+    - try:
+        # Create git source
+        - command:
+            entrypoint: flux
+            args:
+              - create
+              - source
+              - git
+              - test-source
+              - --url=($git_url)
+              - --branch=($git_ref)
+              - --export
+        # Apply git source
+        - command:
+            entrypoint: kubectl
+            args: ["apply", "--server-side", "-f", "-"]
+        # Wait for source
+        - wait:
+            apiVersion: source.toolkit.fluxcd.io/v1
+            kind: GitRepository
+            name: test-source
+            namespace: flux-system
+            timeout: 1m
+            for:
+              condition:
+                name: Ready
+                value: "true"
+      catch:
+        # Debug source issues
+        - command:
+            entrypoint: flux
+            args: ["get", "sources", "git", "-A"]
+        - describe:
+            apiVersion: source.toolkit.fluxcd.io/v1
+            kind: GitRepository
+            name: test-source
+            namespace: flux-system
+
+    # Step 2: Core Module
+    - try:
+        # Reconcile core module
+        - command:
+            entrypoint: flux
+            args: ["reconcile", "kustomization", "-n", "flux-system", "infra-kubernetes-core", "--timeout", "3m"]
+        # Wait for core components
+        - assert:
+            file: core/coredns.yaml
+        - assert:
+            file: core/api.yaml
+      catch:
+        # Component-specific debugging
+        - describe:
+            apiVersion: apps/v1
+            kind: Deployment
+            name: coredns
+            namespace: kube-system
+        - podLogs:
+            name: coredns
+            namespace: kube-system
+
+    # Step 3: Extra Module
+    - try:
+        # Reconcile extra module
+        - command:
+            entrypoint: flux
+            args: ["reconcile", "kustomization", "-n", "flux-system", "infra-kubernetes-extra", "--timeout", "3m"]
+        # Wait for extra components
+        - assert:
+            file: extra/nfd.yaml
+        - assert:
+            file: extra/plugins.yaml
+      catch:
+        # Component-specific debugging
+        - describe:
+            apiVersion: apps/v1
+            kind: DaemonSet
+            name: node-feature-discovery-worker
+            namespace: kube-system
+        - podLogs:
+            name: node-feature-discovery-worker
+            namespace: kube-system
+  ```
+
+  This approach:
+  1. Uses Chainsaw bindings for git configuration
+  2. Provides clear step-by-step test flow
+  3. Includes comprehensive error handling
+  4. Maintains all existing validat/home/coder/code/chainsaw/website/docs/configuration/file.mdion checks
+
+  GitHub Actions remains responsible for:
+  - Cluster setup and management
+  - FluxCD installation
+  - Global resource status reporting
+
+### Decision D006: Error Handling Strategy
+
+- **Decision Topic:** How to handle errors across multiple test steps to ensure proper test failure
+
+- **Current Implementation Analysis:**
+ According to Chainsaw documentation:
+
+ 1. Step Behavior:
+    - If an operation in `try` fails:
+      - Remaining operations in `try` are skipped
+      - All operations in `catch` are executed
+    - If all operations in `try` succeed:
+      - `catch` block is skipped entirely
+    - `finally` block always executes
+
+ 2. Test Behavior:
+    - Operations in `catch` and `finally` continue executing even if they fail
+    - Any operation failure marks the test as failed
+    - Test continues to next step after `catch`/`finally` complete
+
+- **Problem:**
+  We need to ensure:
+  1. Tests fail fast on any step failure
+  2. Step-specific debug info is collected
+  3. Resources are properly cleaned up
+
+- **Recommended Solution:**
+  Use try/finally blocks with step-specific debugging:
+
+  ```yaml
+  steps:
+  # Step 1: Bootstrap FluxCD
+  - try:
+      - command:
+          entrypoint: flux
+          args: ["create", "source", "git"...]
+      - wait:
+          apiVersion: source.toolkit.fluxcd.io/v1
+          kind: GitRepository
+          name: test-source
+          for:
+            condition:
+              name: Ready
+    finally:
+      - describe:
+          apiVersion: source.toolkit.fluxcd.io/v1
+          kind: GitRepository
+          name: test-source
+          namespace: flux-system
+
+  # Step 2: Core Module (only runs if previous step succeeded)
+  - try:
+      - command:
+          entrypoint: flux
+          args: ["reconcile", "kustomization", "infra-kubernetes-core"...]
+      - assert:
+          file: core/coredns.yaml
+      - assert:
+          file: core/api.yaml
+    finally:
+      - describe:
+          apiVersion: apps/v1
+          kind: Deployment
+          name: coredns
+          namespace: kube-system
+      - podLogs:
+          name: coredns
+          namespace: kube-system
+
+  # Step 3: Extra Module (only runs if previous step succeeded)
+  - try:
+      - command:
+          entrypoint: flux
+          args: ["reconcile", "kustomization", "infra-kubernetes-extra"...]
+      - assert:
+          file: extra/nfd.yaml
+      - assert:
+          file: extra/plugins.yaml
+    finally:
+      - describe:
+          apiVersion: apps/v1
+          kind: DaemonSet
+          name: node-feature-discovery-worker
+          namespace: kube-system
+      - podLogs:
+          name: node-feature-discovery-worker
+          namespace: kube-system
+      # Clean up git source in last step's finally
+      - delete:
+          apiVersion: source.toolkit.fluxcd.io/v1
+          kind: GitRepository
+          name: test-source
+  ```
+
+- **Benefits:**
+  1. Step-specific debugging:
+     - Debug commands tailored to each step
+     - Only run debug commands for failed step
+     - Clear connection between failure and debug info
+
+  2. Fail-fast behavior:
+     - Each step fails independently
+     - Later steps don't execute after failure
+     - Test status preserved for debug scripts
+
+  3. Reliable cleanup:
+     - Finally block in last step ensures cleanup
+     - Cleanup runs regardless of test outcome
+     - Consistent test environment
+
+- **Questions for Collaborator:**
+
+ 1. Should we add any other debug commands to the catch block?
+ 2. Do we need additional cleanup in the finally block?
+
+- **Next Steps:**
+  1. Create assertion templates for common patterns
+  2. Implement module-specific checks
+  3. Add any additional debug capabilities needed
+
+### Decision D007: Test Configuration Strategy
+
+- **Decision Topic:** How to handle environment-specific configuration values consistently between CI and local environments
+
+- **Current Configuration Analysis:**
+  1. Configuration Types:
+     - Git repository details (URL, branch)
+     - Operation timeouts
+     - Resource names and namespaces
+     - CI-specific patches
+
+  2. Available Chainsaw Features:
+     - Values flag: Pass arbitrary values via `--values` file
+     - Configuration file: Global settings in `.chainsaw.yaml`
+     - Command-line flags: Override specific settings
+
+- **Recommended Solution:**
+  1. Global Configuration (`.chainsaw.yaml`):
+
+  ```yaml
+  apiVersion: chainsaw.kyverno.io/v1alpha2
+  kind: Configuration
+  metadata:
+    name: infra-kubernetes-test
+  spec:
+    # Common timeouts
+    timeouts:
+      apply: 3m
+      assert: 1m
+      cleanup: 30s
+    # Test execution settings
+    execution:
+      failFast: true
+    # Global error handlers
+    error:
+      catch:
+        - events: {}
+        - describe:
+            resource: kustomizations
+  ```
+
+  2. Environment Values (`values-ci.yaml`/`values-local.yaml`):
+
+  ```yaml
+  # Git configuration
+  git:
+    url: https://github.com/org/repo  # or http://localhost:3000/test-repo
+    ref: main                         # or dev
+
+  # Resource configuration
+  namespaces:
+    flux: flux-system
+    core: kube-system
+  ```
+
+  3. Test Implementation:
+
+  ```yaml
+  apiVersion: chainsaw.kyverno.io/v1alpha1
+  kind: Test
+  spec:
+    steps:
+    - try:
+        - command:
+            entrypoint: flux
+            args:
+              - create
+              - source
+              - git
+              - test-source
+              - --url=($values.git.url)
+              - --branch=($values.git.ref)
+              - --namespace=($values.namespaces.flux)
+  ```
+
+  4. Usage in GitHub Actions:
+
+  ```yaml
+  - name: Run Tests
+    run: |
+      chainsaw test ./ci/test/infra-kubernetes \
+        --config .chainsaw.yaml \
+        --values values-ci.yaml \
+        --fail-fast
+  ```
+
+  5. Usage Locally:
+
+  ```bash
+  chainsaw test ./ci/test/infra-kubernetes \
+    --config .chainsaw.yaml \
+    --values values-local.yaml
+  ```
+
+- **Benefits:**
+  1. Clear Separation:
+     - Global settings in `.chainsaw.yaml`
+     - Environment values in values files
+     - CLI flags for one-off overrides
+
+  2. Native Chainsaw Features:
+     - Uses built-in values system
+     - Leverages standard configuration
+     - No custom configuration loading
+
+  3. Flexible Usage:
+     - Easy to switch environments
+     - Simple command-line interface
+     - Works in both CI and local
+
+- **Questions for Collaborator:**
+  1. Should we add any global error handlers beyond events and kustomizations?
+  2. Do we need different timeout settings for CI vs local?
+  3. Are there other values we should include in the values files?
+
+# Current Session State
+
+1. Research Status:
+   - Completed:
+     - /home/coder/code/homelab-ops-kubernetes-apps/projectBrief.md
+     - /home/coder/code/homelab-ops-kubernetes-apps/infrastructure/subsystems/kubernetes-core/README.md
+     - /home/coder/code/homelab-ops-kubernetes-apps/infrastructure/subsystems/kubernetes-extra/README.md
+     - /home/coder/code/homelab-ops-kubernetes-apps/.github/workflows/test-kubernetes-resources-workflow.yaml
+     - /home/coder/code/chainsaw/website/docs/quick-start/* (all sections)
+     - /home/coder/code/chainsaw/website/docs/test/* (all sections)
+     - /home/coder/code/chainsaw/website/docs/operations/* (all sections)
+   - In Progress: None
+   - Pending: None
+
+2. Design Decisions:
+   - Completed:
+     - D001: Test Organization Structure
+     - D002: Assertion Strategy
+     - D003: Success Condition Implementation
+     - D004: Rollout Status Implementation
+     - D005: Workflow Integration Strategy
+     - D006: Error Handling Strategy
+     - D007: Test Configuration Strategy
+   - In Discussion: None
+   - Pending: None
+
+3. Clarifications:
+   - Resolved:
+     - FluxCD bootstrapping approach
+     - Error handling with try/finally
+     - Configuration management strategy
+   - Awaiting Response: None
+   - To Be Discussed: None
+
+4. Discussion Context:
+   - Current Topic: Ready to proceed to Implementation
+   - Related Decisions: All decisions completed
+   - Open Questions: None
+
+5. Implementation:
+   - Completed: None
+   - In Progress: None
+   - Remaining: Full PoC implementation
+
+6. Activity Log:
+   - Research Findings:
+      - Logged: F001-F008
+      - Remaining: None
+   - Conclusions:
+      - Logged: C001-C003
+      - Remaining: None
+   - Design Decisions:
+      - Logged: D001-D007
+      - Remaining: None

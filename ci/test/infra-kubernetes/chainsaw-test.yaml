@@ -1,0 +1,230 @@
+---
+# Main test file for infrastructure kubernetes modules
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: infra-kubernetes
+spec:
+  steps:
+  # Step 1: Bootstrap FluxCD
+  - try:
+    # Create and apply git source
+    - command:
+        entrypoint: flux
+        args:
+        - create
+        - source
+        - git
+        - test-source
+        - --url=($values.git.url)
+        - --branch=($values.git.ref)
+        - --namespace=($values.namespaces.flux)
+        - --export
+    - command:
+        entrypoint: kubectl
+        args: ["apply", "--server-side", "-f", "-"]
+
+    # Show git source status
+    - command:
+        entrypoint: flux
+        args:
+        - get
+        - source
+        - git
+        - test-source
+
+    # Wait for source to be ready
+    - wait:
+        file: ../chainsaw/templates/conditions/ready.yaml
+        values:
+          apiVersion: source.toolkit.fluxcd.io/v1
+          kind: GitRepository
+          name: test-source
+          namespace: ($values.namespaces.flux)
+          timeout: 1m
+
+    # Setup and wait for pre-requisites
+    - command:
+        entrypoint: flux
+        args:
+        - create
+        - kustomization
+        - pre-requisites
+        - --source=test-source
+        - --path=./ci/test/pre-requisites
+        - --export
+    - command:
+        entrypoint: kubectl
+        args: ["apply", "--server-side", "-f", "-"]
+    - wait:
+        file: ../chainsaw/templates/conditions/ready.yaml
+        values:
+          apiVersion: kustomize.toolkit.fluxcd.io/v1
+          kind: Kustomization
+          name: pre-requisites
+          namespace: ($values.namespaces.flux)
+          timeout: 1m
+
+    # Create and apply test kustomization
+    - command:
+        entrypoint: flux
+        args:
+        - create
+        - kustomization
+        - test-kustomization
+        - --source=test-source
+        - --path=./ci/test/infra-kubernetes
+        - --export
+    - command:
+        entrypoint: kubectl
+        args: ["apply", "--server-side", "-f", "-"]
+
+    # Show kustomization status
+    - command:
+        entrypoint: flux
+        args:
+        - get
+        - kustomizations
+        - test-kustomization
+
+    # Wait for kustomization to be ready
+    - wait:
+        file: ../chainsaw/templates/conditions/ready.yaml
+        values:
+          apiVersion: kustomize.toolkit.fluxcd.io/v1
+          kind: Kustomization
+          name: test-kustomization
+          namespace: ($values.namespaces.flux)
+          timeout: 1m
+    finally:
+    # Debug source issues if failed
+    - describe:
+        apiVersion: source.toolkit.fluxcd.io/v1
+        kind: GitRepository
+        name: test-source
+        namespace: ($values.namespaces.flux)
+
+  # Step 2: Core Module
+  - try:
+    # Reconcile core module
+    - command:
+        entrypoint: flux
+        args:
+        - reconcile
+        - kustomization
+        - -n
+        - ($values.namespaces.flux)
+        - ($values.modules.core.name)
+        - --timeout
+        - ($values.modules.core.timeout)
+    # Wait for CoreDNS
+    - wait:
+        file: ../chainsaw/templates/conditions/available.yaml
+        values:
+          apiVersion: apps/v1
+          kind: Deployment
+          name: ($values.resources.coredns.deployment)
+          namespace: ($values.namespaces.core)
+          timeout: 1m
+    finally:
+    # Debug core issues if failed
+    - describe:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: ($values.resources.coredns.deployment)
+        namespace: ($values.namespaces.core)
+    - podLogs:
+        name: ($values.resources.coredns.deployment)
+        namespace: ($values.namespaces.core)
+
+  # Step 3: Extra Module
+  - try:
+    # Reconcile extra module
+    - command:
+        entrypoint: flux
+        args:
+        - reconcile
+        - kustomization
+        - -n
+        - ($values.namespaces.flux)
+        - ($values.modules.extra.name)
+        - --timeout
+        - ($values.modules.extra.timeout)
+    # Wait for NFD components
+    - wait:
+        file: ../chainsaw/templates/conditions/available.yaml
+        values:
+          apiVersion: apps/v1
+          kind: Deployment
+          name: ($values.resources.nfd.master)
+          namespace: ($values.namespaces.core)
+          timeout: 1m
+    - assert:
+        file: ../chainsaw/templates/rollouts/daemonset.yaml
+        values:
+          name: ($values.resources.nfd.worker)
+          namespace: ($values.namespaces.core)
+    - wait:
+        file: ../chainsaw/templates/conditions/available.yaml
+        values:
+          apiVersion: apps/v1
+          kind: Deployment
+          name: ($values.resources.nfd.gc)
+          namespace: ($values.namespaces.core)
+          timeout: 1m
+    # Wait for VPA
+    - wait:
+        file: ../chainsaw/templates/conditions/available.yaml
+        values:
+          apiVersion: apps/v1
+          kind: Deployment
+          name: ($values.resources.vpa.recommender)
+          namespace: ($values.namespaces.core)
+          timeout: 1m
+    # Wait for Device Plugins
+    - wait:
+        file: ../chainsaw/templates/conditions/available.yaml
+        values:
+          apiVersion: apps/v1
+          kind: Deployment
+          name: ($values.resources.plugins.operator)
+          namespace: ($values.namespaces.intel)
+          timeout: 1m
+    - wait:
+        file: ../chainsaw/templates/conditions/available.yaml
+        values:
+          apiVersion: apps/v1
+          kind: Deployment
+          name: ($values.resources.plugins.gpu)
+          namespace: ($values.namespaces.intel)
+          timeout: 1m
+    - assert:
+        file: ../chainsaw/templates/rollouts/daemonset.yaml
+        values:
+          name: ($values.resources.plugins.generic)
+          namespace: ($values.namespaces.core)
+    # Wait for Descheduler
+    - wait:
+        file: ../chainsaw/templates/conditions/available.yaml
+        values:
+          apiVersion: apps/v1
+          kind: Deployment
+          name: ($values.resources.descheduler.deployment)
+          namespace: ($values.namespaces.core)
+          timeout: 1m
+    finally:
+    # Debug extra issues if failed
+    - describe:
+        apiVersion: apps/v1
+        kind: DaemonSet
+        name: ($values.resources.nfd.worker)
+        namespace: ($values.namespaces.core)
+    - podLogs:
+        name: ($values.resources.nfd.worker)
+        namespace: ($values.namespaces.core)
+    # Clean up git source
+    - delete:
+        apiVersion: source.toolkit.fluxcd.io/v1
+        kind: GitRepository
+        name: test-source
+        namespace: ($values.namespaces.flux)

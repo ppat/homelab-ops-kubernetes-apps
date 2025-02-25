@@ -1,0 +1,90 @@
+---
+name: Chainsaw Infrastructure Kubernetes
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ["main"]
+    paths:
+    - "infrastructure/subsystems/kubernetes-core/**"
+    - "infrastructure/subsystems/kubernetes-extra/**"
+    - "ci/test/infra-kubernetes/**"
+    - ".github/workflows/chainsaw-infrastructure-kubernetes.yaml"
+
+jobs:
+  test:
+    name: Chainsaw Test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+    - name: Checkout
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup kind cluster
+      uses: helm/kind-action@a1b0e391336a6ee6713a0583f8c6240d70863de3 # v1.12.0
+      with:
+        cluster_name: dev
+        config: ".github/kind-config.yaml"
+        # renovate: datasource=github-releases depName=kubernetes-sigs/kind
+        version: "v0.26.0"
+        # renovate: datasource=github-releases depName=kubernetes/kubernetes
+        kubectl_version: "v1.31.6"
+        # renovate-kind-image: datasource=docker versioning=docker
+        node_image: "kindest/node:v1.31.4@sha256:2cb39f7295fe7eafee0842b1052a599a4fb0f8bcf3f83d96c7f4864c357c6c30"
+
+    - name: Setup kubectl
+      uses: fluxcd/pkg/actions/kubectl@00d1ceb1c10ac3bcbb8d5793bc3aba176bfaec40
+      with:
+        # renovate: datasource=github-releases depName=kubernetes/kubernetes
+        version: "v1.31.6"
+
+    - name: Setup flux
+      uses: fluxcd/flux2/action@5350425cdcd5fa015337e09fa502153c0275bd4b # v2.4.0
+      with:
+        # renovate: datasource=github-releases depName=fluxcd/flux2
+        version: "v2.4.0"
+
+    - name: Install flux in kind cluster
+      env:
+        # renovate: datasource=github-releases depName=fluxcd/flux2
+        FLUX_VERSION: "v2.4.0"
+      run: |
+        flux install --version ${FLUX_VERSION} --log-level debug
+
+    - name: Setup Chainsaw
+      uses: kyverno/action-install-chainsaw@v0.2.12
+      with:
+        release: v0.2.12
+        verify: true
+
+    - name: Verify Chainsaw Installation
+      run: chainsaw version
+
+    - name: Run Chainsaw Tests
+      # yamllint disable-line rule:indentation
+      run: |
+        # Append dynamic git values to values-ci.yaml
+        cat >> ./ci/test/infra-kubernetes/values-ci.yaml <<'EOF'
+
+        # Git configuration (from CI)
+        git:
+          url: '${{ github.server_url }}/${{ github.repository }}'
+          ref: '${{ github.head_ref || github.ref_name }}'
+        EOF
+
+        # Run tests with combined values
+        chainsaw test ./ci/test/infra-kubernetes \
+          --config ./ci/test/chainsaw/.chainsaw.yaml \
+          --values values-ci.yaml \
+          --fail-fast
+
+    - name: Show Status
+      if: always()
+      run: |
+        echo "-----------------------------------------------------------------------"
+        flux get all --all-namespaces
+        echo "-----------------------------------------------------------------------"
+        kubectl get -A crd,cm,secret,po,svc,ing,deploy,ds,sts,pv,pvc,es,cert
+        echo "-----------------------------------------------------------------------"
