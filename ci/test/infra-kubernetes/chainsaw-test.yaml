@@ -9,16 +9,26 @@ spec:
   # Step 1: Bootstrap FluxCD
   - try:
     # Create and apply git source
-    - command:
-        entrypoint: flux
-        args:
-        - create
-        - source
-        - git
-        - test-source
-        - --url=($values.git.url)
-        - --branch=($values.git.ref)
-        - --namespace=($values.namespaces.flux)
+    - script:
+        env:
+          # combined bindings together using the `join` functions and
+          # assign the result to the GREETINGS environment variable
+        - name: GIT_URL
+          value: ($values.git.url)
+        - name: GIT_BRANCH
+          value: ($values.git.branch)
+        content: |
+          flux create source git test-source --url=$GIT_URL --branch=$GIT_BRANCH --namespace=flux-system
+    # - command:
+    #     entrypoint: flux
+    #     args:
+    #     - create
+    #     - source
+    #     - git
+    #     - test-source
+    #     - --url=($values.git.url)
+    #     - --branch=($values.git.ref)
+    #     - --namespace=($values.namespaces.flux)
 
     # Show git source status
     - command:

@@ -76,7 +76,7 @@ jobs:
         # Git configuration (from CI)
         git:
           url: '${GIT_URL}'
-          ref: '${GIT_REF}'
+          branch: '${GIT_REF}'
         EOF
 
         cat /tmp/values-ci.yaml
@@ -85,6 +85,7 @@ jobs:
         echo
         
         # Run tests with combined values
+        set -x
         chainsaw test ./ci/test/infra-kubernetes \
           --config ./ci/test/chainsaw/.chainsaw.yaml \
           --values /tmp/values-ci.yaml \
