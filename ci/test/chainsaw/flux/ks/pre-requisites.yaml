@@ -1,0 +1,14 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pre-requisites
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  path: ./ci/test/pre-requisites
+  prune: false
+  sourceRef:
+    kind: GitRepository
+    name: test-source
+  wait: true
