@@ -22,8 +22,8 @@ spec:
   error:
     catch:
     - events: {}  # Collect cluster events on failure
-    - describe:
-        resource: kustomizations  # Show kustomization status
-    - describe:
-        resource: pods  # Show pod status
-        namespace: "*"  # All namespaces
+    # - describe:
+    #     resource: kustomizations  # Show kustomization status
+    # - describe:
+    #     resource: pods  # Show pod status
+    #     namespace: "*"  # All namespaces
