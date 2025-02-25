@@ -64,7 +64,7 @@ spec:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
         name: pre-requisites
-        namespace: ($values.namespaces.flux)
+        namespace: flux-system
         timeout: 1m
         for:
           condition:
@@ -94,7 +94,7 @@ spec:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
         name: test-kustomization
-        namespace: ($values.namespaces.flux)
+        namespace: flux-system
         timeout: 1m
         for:
           condition:
@@ -106,7 +106,17 @@ spec:
         apiVersion: source.toolkit.fluxcd.io/v1
         kind: GitRepository
         name: test-source
-        namespace: ($values.namespaces.flux)
+        namespace: flux-system
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: pre-requisites
+        namespace: flux-system
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: test-kustomization
+        namespace: flux-system
 
   # Step 2: Core Module
   - try:
