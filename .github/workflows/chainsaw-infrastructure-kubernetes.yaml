@@ -70,13 +70,18 @@ jobs:
         GIT_REF: ${{ github.head_ref || github.ref }}
       # yamllint disable-line rule:indentation
       run: |
-        # Append dynamic git values to values-ci.yaml
+        if [[ "${GIT_REF}" == "refs/heads/main" ]]; then
+          GIT_BRANCH="main"
+        else
+          GIT_BRANCH="${GIT_REF}"
+        fi
+
         cat ./ci/test/infra-kubernetes/values-ci.yaml - <<EOF > /tmp/values-ci.yaml
 
         # Git configuration (from CI)
         git:
           url: '${GIT_URL}'
-          branch: '${GIT_REF}'
+          branch: '${GIT_BRANCH}'
         EOF
 
         cat /tmp/values-ci.yaml

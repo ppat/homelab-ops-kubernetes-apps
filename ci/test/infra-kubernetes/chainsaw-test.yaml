@@ -5,103 +5,41 @@ kind: Test
 metadata:
   name: infra-kubernetes
 spec:
+  bindings:
+  - name: test_path
+    value: ./ci/test/infra-kubernetes
   steps:
   # Step 1: Bootstrap FluxCD
   - try:
     # Create and apply git source
     - script:
         env:
-          # combined bindings together using the `join` functions and
-          # assign the result to the GREETINGS environment variable
         - name: GIT_URL
           value: ($values.git.url)
         - name: GIT_BRANCH
           value: ($values.git.branch)
+        - name: TEST_PATH
+          value: ($test_path)
         content: |
+          echo "Creating git source for branch $GIT_BRANCH..."
           flux create source git test-source --url=$GIT_URL --branch=$GIT_BRANCH --namespace=flux-system
-    # - command:
-    #     entrypoint: flux
-    #     args:
-    #     - create
-    #     - source
-    #     - git
-    #     - test-source
-    #     - --url=($values.git.url)
-    #     - --branch=($values.git.ref)
-    #     - --namespace=($values.namespaces.flux)
+          echo Show git source...
+          flux get source git test-source
+          echo Wait for git source to be ready...
+          kubectl -n flux-system wait GitRepository/test-source --for=condition=ready --timeout=1m
 
-    # Show git source status
-    - command:
-        entrypoint: flux
-        args:
-        - get
-        - source
-        - git
-        - test-source
+          echo Setting up pre-requisites...
+          flux create kustomization pre-requisites --source=test-source --path=./ci/test/pre-requisites
+          echo Waiting for pre-requisites to be ready...
+          kubectl -n flux-system wait Kustomization/pre-requisites --for=condition=ready --timeout=1m
 
-    # Wait for source to be ready
-    - wait:
-        apiVersion: source.toolkit.fluxcd.io/v1
-        kind: GitRepository
-        name: test-source
-        namespace: ($values.namespaces.flux)
-        timeout: 1m
-        for:
-          condition:
-            name: Ready
-            value: "true"
-
-    # Setup and wait for pre-requisites
-    - command:
-        entrypoint: flux
-        args:
-        - create
-        - kustomization
-        - pre-requisites
-        - --source=test-source
-        - --path=./ci/test/pre-requisites
-    - wait:
-        apiVersion: kustomize.toolkit.fluxcd.io/v1
-        kind: Kustomization
-        name: pre-requisites
-        namespace: flux-system
-        timeout: 1m
-        for:
-          condition:
-            name: Ready
-            value: "true"
-
-    # Create and apply test kustomization
-    - command:
-        entrypoint: flux
-        args:
-        - create
-        - kustomization
-        - test-kustomization
-        - --source=test-source
-        - --path=./ci/test/infra-kubernetes
-
-    # Show kustomization status
-    - command:
-        entrypoint: flux
-        args:
-        - get
-        - kustomizations
-        - test-kustomization
-
-    # Wait for kustomization to be ready
-    - wait:
-        apiVersion: kustomize.toolkit.fluxcd.io/v1
-        kind: Kustomization
-        name: test-kustomization
-        namespace: flux-system
-        timeout: 1m
-        for:
-          condition:
-            name: Ready
-            value: "true"
+          echo Create kustomization for $TEST_PATH...
+          flux create kustomization test-kustomization --source=test-source --path=$TEST_PATH
+          echo Show kustomization...
+          flux get kustomizations test-kustomization
+          echo Wait for kustomization to be ready...
+          kubectl -n flux-system wait Kustomization/test-kustomization --for=condition=ready --timeout=1m
     finally:
-    # Debug source issues if failed
     - describe:
         apiVersion: source.toolkit.fluxcd.io/v1
         kind: GitRepository
