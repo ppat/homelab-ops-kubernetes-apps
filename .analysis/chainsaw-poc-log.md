@@ -1426,6 +1426,17 @@ Chainsaw's templating system provides flexible configuration:
       steps:
         - try:
           - assert:
+              bindings:
+                - name: component
+                  value: nginx
+                - name: namespace
+                  value: web
+                - name: replicas
+                  value: 3
+                - name: image
+                  value: nginx:latest
+                - name: env
+                  value: production
               file: common/resources/deployment.yaml
       ```
 
