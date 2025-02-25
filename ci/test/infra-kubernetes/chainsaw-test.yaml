@@ -171,9 +171,11 @@ spec:
             value: "true"
     - assert:
         file: ../chainsaw/templates/rollouts/daemonset.yaml
-        values:
-          name: ($values.resources.nfd.worker)
-          namespace: ($values.namespaces.core)
+        bindings:
+          - name: name
+            value: ($values.resources.nfd.worker)
+          - name: namespace
+            value: ($values.namespaces.core)
     - wait:
         apiVersion: apps/v1
         kind: Deployment
@@ -218,9 +220,11 @@ spec:
             value: "true"
     - assert:
         file: ../chainsaw/templates/rollouts/daemonset.yaml
-        values:
-          name: ($values.resources.plugins.generic)
-          namespace: ($values.namespaces.core)
+        bindings:
+          - name: name
+            value: ($values.resources.plugins.generic)
+          - name: namespace
+            value: ($values.namespaces.core)
     # Wait for Descheduler
     - wait:
         apiVersion: apps/v1
