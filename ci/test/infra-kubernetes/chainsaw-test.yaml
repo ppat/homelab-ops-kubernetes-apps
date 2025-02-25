@@ -22,7 +22,7 @@ spec:
           value: ($test_path)
         content: |
           echo "Creating git source for branch $GIT_BRANCH..."
-          flux create source git test-source --url=$GIT_URL --branch=$GIT_BRANCH --namespace=flux-system
+          flux create source git test-source --url=$GIT_URL --branch=$GIT_BRANCH --namespace=flux-system --export | kubectl apply --server-side -f -
           echo Show git source...
           flux get source git test-source
           echo Wait for git source to be ready...
