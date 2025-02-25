@@ -244,7 +244,8 @@ spec:
         namespace: ($values.namespaces.core)
     # Clean up git source
     - delete:
-        apiVersion: source.toolkit.fluxcd.io/v1
-        kind: GitRepository
-        name: test-source
-        namespace: ($values.namespaces.flux)
+        ref:
+          apiVersion: source.toolkit.fluxcd.io/v1
+          kind: GitRepository
+          name: test-source
+          namespace: ($values.namespaces.flux)

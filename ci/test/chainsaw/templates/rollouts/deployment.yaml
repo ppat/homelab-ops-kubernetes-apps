@@ -1,18 +1,11 @@
 ---
-# Template for checking Deployment rollout status
-apiVersion: chainsaw.kyverno.io/v1alpha1
-kind: Test
-spec:
-  steps:
-  - try:
-    - assert:
-        resource:
-          apiVersion: apps/v1
-          kind: Deployment
-          metadata:
-            name: ($name)              # e.g., coredns
-            namespace: ($namespace)     # e.g., kube-system
-          status:
-            # All replicas should be ready and available
-            (replicas == readyReplicas): true
-            (replicas == availableReplicas): true
+# Template for Deployment rollout status check
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ($name)              # e.g., coredns
+  namespace: ($namespace)     # e.g., kube-system
+status:
+  # All replicas should be ready and available
+  (replicas == readyReplicas): true
+  (replicas == availableReplicas): true

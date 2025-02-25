@@ -1,18 +1,11 @@
 ---
-# Template for checking DaemonSet rollout status
-apiVersion: chainsaw.kyverno.io/v1alpha1
-kind: Test
-spec:
-  steps:
-  - try:
-    - assert:
-        resource:
-          apiVersion: apps/v1
-          kind: DaemonSet
-          metadata:
-            name: ($name)              # e.g., node-feature-discovery-worker
-            namespace: ($namespace)     # e.g., kube-system
-          status:
-            # All desired pods should be ready and available
-            (numberReady == desiredNumberScheduled): true
-            (numberAvailable == desiredNumberScheduled): true
+# Template for DaemonSet rollout status check
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ($name)              # e.g., node-feature-discovery-worker
+  namespace: ($namespace)     # e.g., kube-system
+status:
+  # All desired pods should be ready and available
+  (numberReady == desiredNumberScheduled): true
+  (numberAvailable == desiredNumberScheduled): true

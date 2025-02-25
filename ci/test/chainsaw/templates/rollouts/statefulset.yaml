@@ -1,18 +1,11 @@
 ---
-# Template for checking StatefulSet rollout status
-apiVersion: chainsaw.kyverno.io/v1alpha1
-kind: Test
-spec:
-  steps:
-  - try:
-    - assert:
-        resource:
-          apiVersion: apps/v1
-          kind: StatefulSet
-          metadata:
-            name: ($name)              # e.g., example
-            namespace: ($namespace)     # e.g., default
-          status:
-            # All replicas should be ready and current
-            (replicas == readyReplicas): true
-            (currentReplicas == replicas): true
+# Template for StatefulSet rollout status check
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ($name)              # e.g., example
+  namespace: ($namespace)     # e.g., default
+status:
+  # All replicas should be ready and current
+  (replicas == readyReplicas): true
+  (currentReplicas == replicas): true
