@@ -19,10 +19,6 @@ spec:
         - --url=($values.git.url)
         - --branch=($values.git.ref)
         - --namespace=($values.namespaces.flux)
-        - --export
-    - command:
-        entrypoint: kubectl
-        args: ["apply", "--server-side", "-f", "-"]
 
     # Show git source status
     - command:
@@ -54,10 +50,6 @@ spec:
         - pre-requisites
         - --source=test-source
         - --path=./ci/test/pre-requisites
-        - --export
-    - command:
-        entrypoint: kubectl
-        args: ["apply", "--server-side", "-f", "-"]
     - wait:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
@@ -78,10 +70,6 @@ spec:
         - test-kustomization
         - --source=test-source
         - --path=./ci/test/infra-kubernetes
-        - --export
-    - command:
-        entrypoint: kubectl
-        args: ["apply", "--server-side", "-f", "-"]
 
     # Show kustomization status
     - command:
