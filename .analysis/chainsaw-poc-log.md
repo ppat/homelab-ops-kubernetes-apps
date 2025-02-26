@@ -279,13 +279,13 @@
 - **Description:**
   Operations fall into distinct categories based on their file support:
   1. Operations Supporting External Files:
-    - Apply: via ActionResourceRef.file
-    - Assert: via ActionCheckRef.file
-    - Create: via ActionResourceRef.file
-    - Delete: via direct file field
-    - Error: via ActionCheckRef.file
-    - Patch: via ActionResourceRef.file
-    - Update: via ActionResourceRef.file
+     - Apply: via ActionResourceRef.file
+     - Assert: via ActionCheckRef.file
+     - Create: via ActionResourceRef.file
+     - Delete: via direct file field
+     - Error: via ActionCheckRef.file
+     - Patch: via ActionResourceRef.file
+     - Update: via ActionResourceRef.file
 
  2. Operations Requiring Inline Resource Definitions:
     - Wait: uses ActionObject + WaitFor structure
@@ -651,6 +651,7 @@
      - Externalize only when component is reusable across tests
      - Keep test-specific components inline or within test directory
      - Example:
+
        ```yaml
        # common/resources/deployment.yaml (reusable component)
        apiVersion: apps/v1
@@ -676,6 +677,7 @@
        ```
 
        Usage in test:
+
        ```yaml
        steps:
          - try:
@@ -687,6 +689,7 @@
      - Wait, Describe, Events, Get, PodLogs, Proxy
      - Define directly in test files
      - Example:
+
        ```yaml
        # Operation in test file
        wait:
@@ -704,6 +707,7 @@
      - Command, Script, Sleep
      - Define with clear, static values
      - Example:
+
        ```yaml
        # Operation in test file
        command:
@@ -1381,167 +1385,173 @@
   - Same templating features available regardless of location
   - Enables flexible component organization without sacrificing template functionality
   - Supports operation-specific constraints while maintaining consistency
+
 - **Options Considered:**
- 1. Template Everything:
-    - Pros:
-      - Maximum flexibility
-      - Consistent approach
-      - High reusability
-    - Cons:
-      - Unnecessary complexity for simple values
-      - Harder to debug
-      - Performance overhead
+  1. Template Everything:
+      - Pros:
+        - Maximum flexibility
+        - Consistent approach
+        - High reusability
+      - Cons:
+        - Unnecessary complexity for simple values
+        - Harder to debug
+        - Performance overhead
 
- 2. Minimal Templates:
-    - Pros:
-      - Simpler to understand
-      - Direct visibility
-      - Faster execution
-    - Cons:
-      - Duplicate values
-      - Hard to maintain
-      - Limited reuse
+  2. Minimal Templates:
+      - Pros:
+        - Simpler to understand
+        - Direct visibility
+        - Faster execution
+      - Cons:
+        - Duplicate values
+        - Hard to maintain
+        - Limited reuse
 
- 3. Value-Driven Template Strategy (Recommended):
-    - Pros:
-      - Templates where they add value
-      - Clear decision criteria
-      - Balance of reuse and simplicity
-    - Cons:
-      - Requires careful consideration
-      - Mixed approach
-      - Need clear guidelines
+  3. Value-Driven Template Strategy (Recommended):
+      - Pros:
+        - Templates where they add value
+        - Clear decision criteria
+        - Balance of reuse and simplicity
+      - Cons:
+        - Requires careful consideration
+        - Mixed approach
+        - Need clear guidelines
 
 - **Recommended Approach:**
- 1. When to Use Templates:
-    - Dynamic values that change between environments
-    - Values used in multiple places
-    - Complex string manipulations
-    - Resource names that follow patterns
-    - Example:
-      ```yaml
-      # Use template for environment-specific values
-      metadata:
-        name: (join('-', [$namespace, 'config']))
-        namespace: ($namespace)
-      ```
+  1. When to Use Templates:
+      - Dynamic values that change between environments
+      - Values used in multiple places
+      - Complex string manipulations
+      - Resource names that follow patterns
+      - Example:
 
- 2. When to Use Static Values:
-    - Constants that don't change
-    - One-time use values
-    - Simple string literals
-    - Example:
-      ```yaml
-      # Use static for fixed values
-      metadata:
-        labels:
-          app: coredns
-          component: dns
-      ```
+        ```yaml
+        # Use template for environment-specific values
+        metadata:
+          name: (join('-', [$namespace, 'config']))
+          namespace: ($namespace)
+        ```
 
- 3. Template Patterns:
-    - Inline Template (for operations requiring inline):
-      ```yaml
-      # In chainsaw-test.yaml
-      steps:
-        - try:
-          - wait:
-              apiVersion: apps/v1
-              kind: Deployment
-              metadata:
-                name: ($deployment_name)
-                namespace: ($namespace)
-              for:
-                condition:
-                  name: Available
-                  value: 'true'
-      ```
+  2. When to Use Static Values:
+      - Constants that don't change
+      - One-time use values
+      - Simple string literals
+      - Example:
 
-    - External Template (for file-supporting operations):
-      ```yaml
-      # common/resources/deployment.yaml
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: (join('-', [$namespace, $component]))
-        namespace: ($namespace)
-        labels:
-          app: ($component)
-          environment: (to_lower($env))
-      spec:
-        replicas: ($replicas)
-        selector:
-          matchLabels:
+        ```yaml
+        # Use static for fixed values
+        metadata:
+          labels:
+            app: coredns
+            component: dns
+        ```
+
+  3. Template Patterns:
+      - Inline Template (for operations requiring inline):
+
+        ```yaml
+        # In chainsaw-test.yaml
+        steps:
+          - try:
+            - wait:
+                apiVersion: apps/v1
+                kind: Deployment
+                metadata:
+                  name: ($deployment_name)
+                  namespace: ($namespace)
+                for:
+                  condition:
+                    name: Available
+                    value: 'true'
+        ```
+
+      - External Template (for file-supporting operations):
+
+        ```yaml
+        # common/resources/deployment.yaml
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: (join('-', [$namespace, $component]))
+          namespace: ($namespace)
+          labels:
             app: ($component)
-        template:
-          metadata:
-            labels:
+            environment: (to_lower($env))
+        spec:
+          replicas: ($replicas)
+          selector:
+            matchLabels:
               app: ($component)
-          spec:
-            containers:
-            - name: ($component)
-              image: ($image)
-      ```
+          template:
+            metadata:
+              labels:
+                app: ($component)
+            spec:
+              containers:
+              - name: ($component)
+                image: ($image)
+        ```
 
-      Usage in test:
-      ```yaml
-      steps:
-        - try:
-          - assert:
-              bindings:
-                - name: component
-                  value: nginx
-                - name: namespace
-                  value: web
-                - name: replicas
-                  value: 3
-                - name: image
-                  value: nginx:latest
-                - name: env
-                  value: production
-              file: common/resources/deployment.yaml
-      ```
+        Usage in test:
 
-    - Template Functions:
-      - Simple Binding: ($deployment_name)
-      - String Join: (join('-', [$namespace, 'config']))
-      - String Transform: (to_lower($env))
-      - Array Operations: (length($replicas))
+        ```yaml
+        steps:
+          - try:
+            - assert:
+                bindings:
+                  - name: component
+                    value: nginx
+                  - name: namespace
+                    value: web
+                  - name: replicas
+                    value: 3
+                  - name: image
+                    value: nginx:latest
+                  - name: env
+                    value: production
+                file: common/resources/deployment.yaml
+        ```
+
+      - Template Functions:
+        - Simple Binding: ($deployment_name)
+        - String Join: (join('-', [$namespace, 'config']))
+        - String Transform: (to_lower($env))
+        - Array Operations: (length($replicas))
 
 - **Implementation Guidelines:**
- 1. Value Management:
-    - Define common values as bindings
-    - Use descriptive binding names
-    - Document binding purposes
-    - Group related bindings
+  1. Value Management:
+      - Define common values as bindings
+      - Use descriptive binding names
+      - Document binding purposes
+      - Group related bindings
 
- 2. Template Organization:
-    - Keep templates close to usage
-    - Document complex templates
-    - Use consistent patterns
-    - Validate template output
+  2. Template Organization:
+      - Keep templates close to usage
+      - Document complex templates
+      - Use consistent patterns
+      - Validate template output
 
- 3. Best Practices:
-    - Start simple, add complexity when needed
-    - Document all bindings
-    - Use clear naming conventions
-    - Test template combinations
+  3. Best Practices:
+      - Start simple, add complexity when needed
+      - Document all bindings
+      - Use clear naming conventions
+      - Test template combinations
 
 - **Rationale:**
- 1. Value-Based Decision Making:
-    - Templates add overhead
-    - Must justify complexity
-    - Clear criteria for usage
+  1. Value-Based Decision Making:
+      - Templates add overhead
+      - Must justify complexity
+      - Clear criteria for usage
 
- 2. Consistent Patterns:
-    - Predictable template usage
-    - Easy to understand
-    - Maintainable long-term
+  2. Consistent Patterns:
+      - Predictable template usage
+      - Easy to understand
+      - Maintainable long-term
 
- 3. Balance:
-    - Reuse where valuable
-    - Simplicity where possible
-    - Clear guidelines for decisions
+  3. Balance:
+      - Reuse where valuable
+      - Simplicity where possible
+      - Clear guidelines for decisions
 
 ### Decision D009: Step Templates for Reusable Test Sequences
 
@@ -1575,6 +1585,7 @@
        - May hide implementation details
 
 - **Implementation:**
+
   ```yaml
   # Step template definition (../chainsaw/steps/sample-template.yaml)
   apiVersion: chainsaw.kyverno.io/v1alpha1
@@ -1662,6 +1673,7 @@
        - Additional files to maintain
 
 - **Implementation:**
+
   ```bash
   # ./flux-get-ks.sh
   #!/bin/bash

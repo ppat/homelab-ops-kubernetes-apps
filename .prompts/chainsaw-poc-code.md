@@ -261,6 +261,7 @@ Maintain a living log of PoC activity that documents all research findings, conc
 - Updates MUST make use of apply_diff to only change the section with changes OR write the complete document with NO PLACEHOLDERS or TRUNCATION.
 - Output format structure should follow the structure enclosed within <activity_log_output_format/> below.
 
+   <!-- markdownlint-disable MD046 -->
    <activity_log_output_format>
       # Activity Log: [Project Name]
       **Date:** [Current Date]
@@ -292,6 +293,7 @@ Maintain a living log of PoC activity that documents all research findings, conc
             [Code after implementing decision]
             ```
    </activity_log_output_format>
+   <!-- markdownlint-enable MD046 -->
 
 ## Verification Checklist
 
