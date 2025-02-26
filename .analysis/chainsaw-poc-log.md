@@ -520,6 +520,27 @@ Chainsaw's templating system provides flexible configuration:
      - Clear error reporting
      - Fail-fast behavior
 
+### Conclusion C008: Template-Based Testing Effectiveness
+
+- **Statement:** Template-based testing significantly reduces maintenance overhead and improves test consistency
+- **Related Findings:** F006, F010
+- **Related Decisions:** D003, D004, D008, D009
+- **Basis:**
+  1. Code Reduction:
+     - 75% reduction in test YAML size through templates
+     - Consistent timeout handling across 12+ resources
+     - Single source of truth for assertions
+   
+  2. Maintenance Benefits:
+     - Changes to validation logic only needed in one place
+     - Assert-based validation with conditional checks provides precise status validation
+     - Common operations centralized in step templates
+   
+  3. Consistency Improvements:
+     - Standardized validation patterns across resources
+     - Uniform approach to FluxCD bootstrapping
+     - Consistent error handling and debugging
+
 ## 3. Design Decisions
 
 ### Decision D001: Test Organization Structure
@@ -1679,26 +1700,6 @@ Chainsaw's templating system provides flexible configuration:
      - Consistent implementation across all tests
      - Simplified test files with descriptive operation names
 
-### Conclusion C008: Template-Based Testing Effectiveness
-
-- **Statement:** Template-based testing significantly reduces maintenance overhead and improves test consistency
-- **Related Findings:** F006, F010
-- **Related Decisions:** D003, D004, D008, D009
-- **Basis:**
-  1. Code Reduction:
-     - 75% reduction in test YAML size through templates
-     - Consistent timeout handling across 12+ resources
-     - Single source of truth for assertions
-  
-  2. Maintenance Benefits:
-     - Changes to validation logic only needed in one place
-     - Assert-based validation with conditional checks provides precise status validation
-     - Common operations centralized in step templates
-  
-  3. Consistency Improvements:
-     - Standardized validation patterns across resources
-     - Uniform approach to FluxCD bootstrapping
-     - Consistent error handling and debugging
 
 # Current Session State
 
