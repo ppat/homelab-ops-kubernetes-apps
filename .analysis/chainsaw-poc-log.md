@@ -814,17 +814,17 @@
 
 - **Updated Recommendation:**
   While the `wait` operation provides a direct mapping to `kubectl wait`, the `assert` operation with conditional checks offers several advantages:
-  
+
   1. Enhanced Validation:
      - Can check multiple conditions simultaneously
      - Supports complex JMESPath expressions
      - Enables precise status field validation
-  
+
   2. Resource-Specific Validation:
      - Deployment: `(replicas == readyReplicas)` and `(replicas == availableReplicas)`
      - DaemonSet: `(numberReady == desiredNumberScheduled)` and `(numberAvailable == desiredNumberScheduled)`
      - StatefulSet: `(replicas == readyReplicas)` and `(currentReplicas == replicas)`
-  
+
   3. Improved Test UX:
      - Richer failure reporting with detailed diffs
      - Clear indication of which conditions failed
@@ -835,12 +835,12 @@
      - Uses Chainsaw's powerful assertion capabilities
      - Leverages built-in waiting mechanism (retries until timeout)
      - Provides more detailed failure information
-  
+
   2. Flexibility:
      - Can validate complex resource states beyond simple conditions
      - Supports both simple and advanced validation patterns
      - Works consistently across all resource types
-  
+
   3. Maintainability:
      - Clearer expression of validation requirements
      - More precise validation of resource state
@@ -1634,7 +1634,6 @@
      - Maintains consistent structure while allowing variation
      - Reduces need for conditional logic in test files
 
-
 ### Decision D011: Script-Based Operations for Complex Commands
 
 - **Decision Topic:** How to handle complex command operations
@@ -1709,7 +1708,6 @@
      - Changes to command logic only needed in one place
      - Consistent implementation across all tests
      - Simplified test files with descriptive operation names
-
 
 # Current Session State
 
