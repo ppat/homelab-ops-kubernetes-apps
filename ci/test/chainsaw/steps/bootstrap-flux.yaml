@@ -26,7 +26,7 @@ spec:
       bindings:
       - name: name
         value: test-source
-      file: ../assertions/gitrepository-ready.yaml
+      file: ../chainsaw/assertions/gitrepository-ready.yaml
   - description: Create pre-requisites kustomization
     apply:
       resource:
@@ -47,7 +47,7 @@ spec:
       bindings:
       - name: name
         value: pre-requisites
-      file: ../assertions/kustomization-ready.yaml
+      file: ../chainsaw/assertions/kustomization-ready.yaml
   - description: Create test kustomization
     apply:
       resource:
@@ -68,7 +68,7 @@ spec:
       bindings:
       - name: name
         value: test-kustomization
-      file: ../assertions/kustomization-ready.yaml
+      file: ../chainsaw/assertions/kustomization-ready.yaml
   catch:
   - describe:
       apiVersion: source.toolkit.fluxcd.io/v1
