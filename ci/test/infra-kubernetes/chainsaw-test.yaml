@@ -76,7 +76,6 @@ spec:
             sourceRef:
               kind: GitRepository
               name: test-source
-            wait: true        
     - description: Wait for test kustomization
       wait:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
