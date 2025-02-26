@@ -37,7 +37,7 @@ spec:
           value: coredns
         - name: deployment_namespace
           value: kube-system
-        file: ../chainsaw/assertion/deployment-ready.yaml
+        file: ../chainsaw/assertions/deployment-ready.yaml
     - description: Assert ingress/kubernetes-api
       assert:
         resource:
