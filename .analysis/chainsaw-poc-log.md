@@ -1182,7 +1182,7 @@
           for:
             condition:
               name: Ready
-    finally:
+    catch:
       - describe:
           apiVersion: source.toolkit.fluxcd.io/v1
           kind: GitRepository
@@ -1198,7 +1198,7 @@
           file: core/coredns.yaml
       - assert:
           file: core/api.yaml
-    finally:
+    catch:
       - describe:
           apiVersion: apps/v1
           kind: Deployment
@@ -1217,7 +1217,7 @@
           file: extra/nfd.yaml
       - assert:
           file: extra/plugins.yaml
-    finally:
+    catch:
       - describe:
           apiVersion: apps/v1
           kind: DaemonSet
@@ -1226,11 +1226,6 @@
       - podLogs:
           name: node-feature-discovery-worker
           namespace: kube-system
-      # Clean up git source in last step's finally
-      - delete:
-          apiVersion: source.toolkit.fluxcd.io/v1
-          kind: GitRepository
-          name: test-source
   ```
 
 - **Benefits:**
@@ -1245,7 +1240,6 @@
      - Test status preserved for debug scripts
 
   3. Reliable cleanup:
-     - Finally block in last step ensures cleanup
      - Cleanup runs regardless of test outcome
      - Consistent test environment
 
@@ -1753,7 +1747,7 @@
 3. Clarifications:
    - Resolved:
       - FluxCD bootstrapping approach
-      - Error handling with try/finally
+      - Error handling with try/catch
       - Configuration management strategy
    - Awaiting Response: None
    - To Be Discussed: None
