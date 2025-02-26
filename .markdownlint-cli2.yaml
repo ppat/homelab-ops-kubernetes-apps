@@ -15,6 +15,9 @@ config:
     # Allow different nesting levels
     allow_different_nesting: true
 
+  # MD029/ol-prefix - Ordered list item prefix
+  MD029: false
+
   # MD033/no-inline-html - Inline HTML
   MD033:
     # Allow specific HTML elements
@@ -22,8 +25,12 @@ config:
     - a
     - br
     - details
+    - hr
     - summary
     - sup
+
+  # MD040/fenced-code-language - Fenced code blocks should have a language specified
+  MD040: false
 
   # MD041/first-line-heading - First line in a file should be a heading
   MD041: false

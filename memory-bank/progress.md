@@ -4,11 +4,21 @@
 
 ### Testing Framework (High Priority)
 
-- [ ] Migration to kyverno/chainsaw
-  - Framework setup
-  - Local testing implementation
-  - CI integration
-  - Documentation update
+- [x] PoC completed for kyverno/chainsaw migration
+  - Successfully migrated kubernetes-core/extra modules tests
+  - Documented learnings and design decisions in `.analysis/chainsaw-poc.md`
+- [ ] Migration of remaining modules to kyverno/chainsaw
+  - [ ] networking-core/extra modules
+  - [ ] security-core/extra modules
+  - [ ] storage-core module
+  - [ ] clusterops-core/extra modules
+  - [ ] observability-core/extra modules
+  - [ ] database-core module
+  - [ ] media app modules
+  - [ ] home-automation app modules
+  - [ ] downloaders app modules
+  - [ ] coder app module
+  - [ ] harbor app module
 - [ ] Current GitHub Actions workflows
   - Structured workflow steps
   - Shell script based operations
@@ -57,7 +67,9 @@
 ### Current Focus
 
 1. Testing Framework Migration
-   - [ ] kyverno/chainsaw setup
+   - [x] kyverno/chainsaw setup and PoC
+   - [x] Documentation of learnings and design decisions
+   - [ ] Migration of remaining modules (2 at a time)
    - [ ] Local testing capability
    - [ ] CI integration
 
@@ -111,10 +123,12 @@
 ### Immediate Actions
 
 1. Testing Framework Migration
-   - Set up kyverno/chainsaw
-   - Implement local testing
-   - Update CI pipeline
-   - Create documentation
+   - [x] Set up kyverno/chainsaw and complete PoC
+   - [x] Document learnings and design decisions
+   - [ ] Migrate remaining modules (2 at a time, core/extra in tandem)
+   - [ ] Implement local testing
+   - [ ] Update CI pipeline
+   - [ ] Complete documentation
 
 ### Future Plans
 

@@ -1,0 +1,29 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha2
+kind: Configuration
+metadata:
+  name: infra-kubernetes-test
+spec:
+  timeouts:
+    apply: 1m
+    assert: 1m
+    cleanup: 30s
+    delete: 15s
+    error: 30s
+    exec: 5s
+
+  execution:
+    failFast: true
+    parallel: 1  # Run tests sequentially since they have dependencies
+
+  error:
+    catch:
+    - events:
+        namespace: '*'
+    - script:
+        content: |
+          echo -----------------------------------------------------------------------
+          flux get all --all-namespaces
+          echo -----------------------------------------------------------------------
+          kubectl get -A crd,cm,secret,po,svc,ing,deploy,ds,sts,cj,job,pv,pvc,es,cert
+          echo -----------------------------------------------------------------------

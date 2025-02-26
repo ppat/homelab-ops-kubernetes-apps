@@ -1,0 +1,9 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: ($name)
+  namespace: ($namespace)
+status:
+  (conditions[?type == 'Ready']):
+  - status: 'True'

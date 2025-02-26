@@ -1,0 +1,9 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ($name)
+  namespace: ($namespace)
+status:
+  (conditions[?type == 'Ready']):
+  - status: 'True'

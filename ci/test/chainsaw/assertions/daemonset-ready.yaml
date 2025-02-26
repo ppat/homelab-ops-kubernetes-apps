@@ -1,0 +1,10 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ($name)
+  namespace: ($namespace)
+status:
+  # All desired pods should be ready and available
+  (numberReady == desiredNumberScheduled): true
+  (numberAvailable == desiredNumberScheduled): true

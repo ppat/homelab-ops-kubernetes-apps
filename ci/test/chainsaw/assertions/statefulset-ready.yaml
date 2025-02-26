@@ -1,0 +1,10 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ($name)
+  namespace: ($namespace)
+status:
+  # All replicas should be ready and current
+  (replicas == readyReplicas): true
+  (currentReplicas == replicas): true

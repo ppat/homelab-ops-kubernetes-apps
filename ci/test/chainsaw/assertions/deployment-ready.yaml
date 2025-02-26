@@ -1,0 +1,12 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ($name)
+  namespace: ($namespace)
+status:
+  # All replicas should be ready and available
+  (replicas == readyReplicas): true
+  (replicas == availableReplicas): true
+  (conditions[?type == 'Available']):
+  - status: 'True'
