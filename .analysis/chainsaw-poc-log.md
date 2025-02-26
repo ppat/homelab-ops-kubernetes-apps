@@ -1545,39 +1545,30 @@ Chainsaw's templating system provides flexible configuration:
 
 - **Implementation:**
   ```yaml
-  # Step template definition (bootstrap-flux.yaml)
+  # Step template definition (../chainsaw/steps/sample-template.yaml)
   apiVersion: chainsaw.kyverno.io/v1alpha1
   kind: StepTemplate
   metadata:
-    name: bootstrap-fluxcd
+    name: sequence-example
   spec:
     try:
-    - description: Create git source
-      apply:
-        resource:
-          apiVersion: source.toolkit.fluxcd.io/v1
-          kind: GitRepository
-          metadata:
-            name: test-source
-            namespace: flux-system
-          spec:
-            interval: 1m0s
-            ref:
-              branch: ($values.git.branch)
-            url: ($values.git.url)
-    # Additional operations...
+    - apply:
+        file: ../chainsaw/resources/sample-resource.yaml
+    - script:
+        content: ../chainsaw/scripts/sample-script.sh --param=($sample_param)
+    - assert:
+        file: ../chainsaw/assertions/sample-assertion.yaml
   ```
 
   ```yaml
-  # Usage in test file (chainsaw-test.yaml)
+  # Usage
   steps:
-    - name: Bootstrap FluxCD
-      use:
-        template: ../chainsaw/steps/bootstrap-flux.yaml
+    - use:
+        template: ../chainsaw/steps/sample-template.yaml
         with:
           bindings:
-            - name: test_path
-              value: ./ci/test/infra-kubernetes
+            - name: sample_param
+              value: example
   ```
 
 - **When to Use Step Templates:**
@@ -1642,51 +1633,16 @@ Chainsaw's templating system provides flexible configuration:
 
 - **Implementation:**
   ```bash
-  # Script file (flux-reconcile.sh)
+  # ./flux-get-ks.sh
   #!/bin/bash
-  set -euo pipefail
-
-  RESOURCE_TYPE=""
-  RESOURCE_NAME=""
-  NAMESPACE="flux-system"
-  TIMEOUT="1m"
-
-  # Parse parameters
-  for param in "$@"
-  do
-    case $param in
-      --resource-type=*)
-        RESOURCE_TYPE="${param#*=}"
-        shift
-        ;;
-      --resource-name=*)
-        RESOURCE_NAME="${param#*=}"
-        shift
-        ;;
-      --namespace=*)
-        NAMESPACE="${param#*=}"
-        shift
-        ;;
-      --timeout=*)
-        TIMEOUT="${param#*=}"
-        shift
-        ;;
-      *)
-        echo "Unknown parameter: $param"
-        exit 1
-        ;;
-    esac
-  done
-
-  flux reconcile $RESOURCE_TYPE $RESOURCE_NAME -n $NAMESPACE --timeout $TIMEOUT
+  set -eu
+  flux get -n flux-system ks $1
   ```
 
   ```yaml
-  # Usage in test file (chainsaw-test.yaml)
-  - description: Reconcile kustomization/infra-kubernetes-core
-    script:
-      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-kubernetes-core --timeout=3m
-      timeout: 3m
+  # Usage
+  - script:
+      content: ./flux-get-ks.sh ($ks_name)
   ```
 
 - **When to Use Script-Based Operations:**
