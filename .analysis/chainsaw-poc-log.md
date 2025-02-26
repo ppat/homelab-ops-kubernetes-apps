@@ -269,14 +269,16 @@
      - Comprehensive diff output
 
 ### Finding F009: Chainsaw Operation File Support
+
 - **Source:** Chainsaw API Documentation (v1alpha1)
 - **Implications:**
- - Different operations have different file support capabilities
- - Some operations require inline resource definitions
- - Template reuse strategy needs to be operation-specific
+  - Different operations have different file support capabilities
+  - Some operations require inline resource definitions
+  - Template reuse strategy needs to be operation-specific
+
 - **Description:**
- Operations fall into distinct categories based on their file support:
- 1. Operations Supporting External Files:
+  Operations fall into distinct categories based on their file support:
+  1. Operations Supporting External Files:
     - Apply: via ActionResourceRef.file
     - Assert: via ActionCheckRef.file
     - Create: via ActionResourceRef.file
@@ -299,14 +301,17 @@
     - Sleep: uses duration field
 
 ### Finding F010: Chainsaw Template Support
+
 - **Source:** Chainsaw Documentation (resource-templating.md, templating.md, explicit.md)
 - **Implications:**
-- Templates work consistently across both inline and external files
-- Enables reuse of templated resources across tests
-- Supports dynamic configuration through bindings
-- Provides powerful JMESPath-based expressions
+  - Templates work consistently across both inline and external files
+  - Enables reuse of templated resources across tests
+  - Supports dynamic configuration through bindings
+  - Provides powerful JMESPath-based expressions
+
 - **Description:**
-Chainsaw's templating system provides flexible configuration:
+  Chainsaw's templating system provides flexible configuration:
+
 1. Template Locations:
    - Works in inline resource definitions
    - Works in external referenced files
@@ -413,6 +418,7 @@ Chainsaw's templating system provides flexible configuration:
      - Resource Validation: Chainsaw's assertion capabilities
 
 ### Conclusion C004: Operation-Specific Reusability Constraints
+
 - **Statement:** Component reusability is determined by operation type support for external files
 - **Related Findings:** F009
 - **Basis:**
@@ -445,38 +451,41 @@ Chainsaw's templating system provides flexible configuration:
      - Operation type drives organization
 
 ### Conclusion C005: Unified Template Strategy
+
 - **Statement:** Chainsaw's template capabilities enable a unified approach to resource reuse despite operation-specific file support limitations
 - **Related Findings:** F009, F010
 - **Basis:**
- 1. Template-First Design:
-    - Templates work consistently in both inline and external files
-    - Bindings provide operation-agnostic value substitution
-    - JMESPath expressions work across all template locations
-    - Enables consistent patterns regardless of operation type
 
- 2. Operation-Aware Implementation:
-    - File-supporting operations (Apply, Assert, etc.):
-      * Use external files with templates
-      * Enable direct resource reuse
-      * Support complex template patterns
-    - Inline-only operations (Wait, Describe, etc.):
-      * Use templates directly in test files
-      * Leverage bindings for value reuse
-      * Share patterns through binding definitions
+1. Template-First Design:
+   - Templates work consistently in both inline and external files
+   - Bindings provide operation-agnostic value substitution
+   - JMESPath expressions work across all template locations
+   - Enables consistent patterns regardless of operation type
 
- 3. Reuse Patterns:
-    - Common values through global bindings
-    - Shared templates for file-supporting operations
-    - Binding-based templates for inline operations
-    - Consistent expression patterns across all uses
+2. Operation-Aware Implementation:
+   - File-supporting operations (Apply, Assert, etc.):
+     - Use external files with templates
+     - Enable direct resource reuse
+     - Support complex template patterns
+   - Inline-only operations (Wait, Describe, etc.):
+     - Use templates directly in test files
+     - Leverage bindings for value reuse
+     - Share patterns through binding definitions
 
- 4. Best Practices:
-    - Define reusable values as bindings
-    - Use external files when supported
-    - Maintain consistent template patterns
-    - Share bindings across related operations
+3. Reuse Patterns:
+   - Common values through global bindings
+   - Shared templates for file-supporting operations
+   - Binding-based templates for inline operations
+   - Consistent expression patterns across all uses
+
+4. Best Practices:
+   - Define reusable values as bindings
+   - Use external files when supported
+   - Maintain consistent template patterns
+   - Share bindings across related operations
 
 ### Conclusion C006: Configuration Management Requirements
+
 - **Statement:** Effective test configuration requires a layered approach to handle different scopes and environments
 - **Related Findings:** F004, F005, F007
 - **Basis:**
@@ -499,6 +508,7 @@ Chainsaw's templating system provides flexible configuration:
      - Native binding system
 
 ### Conclusion C007: Error Handling and Debug Requirements
+
 - **Statement:** Comprehensive error handling must combine step-specific debugging with proper resource cleanup
 - **Related Findings:** F004, F007, F008
 - **Basis:**
@@ -530,13 +540,13 @@ Chainsaw's templating system provides flexible configuration:
      - 75% reduction in test YAML size through templates
      - Consistent timeout handling across 12+ resources
      - Single source of truth for assertions
-   
-  2. Maintenance Benefits:
+
+ 2. Maintenance Benefits:
      - Changes to validation logic only needed in one place
      - Assert-based validation with conditional checks provides precise status validation
      - Common operations centralized in step templates
-   
-  3. Consistency Improvements:
+
+ 3. Consistency Improvements:
      - Standardized validation patterns across resources
      - Uniform approach to FluxCD bootstrapping
      - Consistent error handling and debugging
