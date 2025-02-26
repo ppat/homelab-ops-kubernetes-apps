@@ -2,6 +2,13 @@
 
 **Date:** 2024-02-24
 
+## Table of Contents
+
+- [1. Research Findings](#1-research-findings)
+- [2. Conclusions](#2-conclusions)
+- [3. Design Decisions](#3-design-decisions)
+- [4. Current Session State](#4-current-session-state)
+
 ## 1. Research Findings
 
 ### Finding F001: Project Structure and Testing Framework
@@ -1715,7 +1722,7 @@
      - Consistent implementation across all tests
      - Simplified test files with descriptive operation names
 
-## Current Session State
+## 4. Current Session State
 
 1. Research Status:
    - Completed:
