@@ -1,0 +1,51 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-infra-kubernetes-extra
+spec:
+  bindings:
+  - name: namespace
+    value: kube-system
+  try:
+  - description: Reconcile infra-kubernetes-extra
+    script:
+      # yamllint disable-line rule:line-length
+      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-kubernetes-extra --timeout=3m
+      timeout: 3m
+  - description: Assert deployment/node-feature-discovery-master
+    assert:
+      bindings:
+      - name: name
+        value: node-feature-discovery-master
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert daemonset/node-feature-discovery-worker
+    assert:
+      bindings:
+      - name: name
+        value: node-feature-discovery-worker
+      file: ../chainsaw/assertions/daemonset-ready.yaml
+  - description: Assert deployment/node-feature-discovery-gc
+    assert:
+      bindings:
+      - name: name
+        value: node-feature-discovery-gc
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/vertical-pod-autoscaler-vpa-recommender
+    assert:
+      bindings:
+      - name: name
+        value: vertical-pod-autoscaler-vpa-recommender
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert daemonset/generic-device-plugin
+    assert:
+      bindings:
+      - name: name
+        value: generic-device-plugin
+      file: ../chainsaw/assertions/daemonset-ready.yaml
+  - description: Assert deployment/descheduler
+    assert:
+      bindings:
+      - name: name
+        value: descheduler
+      file: ../chainsaw/assertions/deployment-ready.yaml

@@ -8,10 +8,6 @@ spec:
   - name: Bootstrap FluxCD
     use:
       template: ../chainsaw/steps/bootstrap-flux.yaml
-      with:
-        bindings:
-        - name: test_path
-          value: ./ci/test/infra-kubernetes
 
   - name: Apply infra-kubernetes modules
     try:
@@ -33,91 +29,10 @@ spec:
         name: infra-kubernetes-extra
         namespace: flux-system
 
-  - name: Test infra-kubernetes-core module
-    bindings:
-    - name: namespace
-      value: kube-system
-    try:
-    - description: Reconcile kustomization/infra-kubernetes-core
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization  --resource-name=infra-kubernetes-core --timeout=3m
-        timeout: 3m
-    - description: Assert configmap/coredns-custom
-      assert:
-        resource:
-          apiVersion: v1
-          kind: ConfigMap
-          metadata:
-            name: coredns-custom
-            namespace: kube-system
-    - description: Assert deployment/coredns
-      assert:
-        bindings:
-        - name: name
-          value: coredns
-        file: ../chainsaw/assertions/deployment-ready.yaml
-    - description: Assert ingress/kubernetes-api
-      assert:
-        resource:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
-          metadata:
-            name: kubernetes-api
-            namespace: default
-    catch:
-    - describe:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: coredns
-        namespace: kube-system
-    - podLogs:
-        name: coredns
-        namespace: kube-system
+  - name: Validate infra-kubernetes-core module
+    use:
+      template: ./validate-infra-kubernetes-core.yaml
 
-  - name: Test infra-kubernetes-extra module
-    bindings:
-    - name: namespace
-      value: kube-system
-    try:
-    - description: Reconcile infra-kubernetes-extra
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-kubernetes-extra --timeout=3m
-        timeout: 3m
-    - description: Assert deployment/node-feature-discovery-master
-      assert:
-        bindings:
-        - name: name
-          value: node-feature-discovery-master
-        file: ../chainsaw/assertions/deployment-ready.yaml
-    - description: Assert daemonset/node-feature-discovery-worker
-      assert:
-        bindings:
-        - name: name
-          value: node-feature-discovery-worker
-        file: ../chainsaw/assertions/daemonset-ready.yaml
-    - description: Assert deployment/node-feature-discovery-gc
-      assert:
-        bindings:
-        - name: name
-          value: node-feature-discovery-gc
-        file: ../chainsaw/assertions/deployment-ready.yaml
-    - description: Assert deployment/vertical-pod-autoscaler-vpa-recommender
-      assert:
-        bindings:
-        - name: name
-          value: vertical-pod-autoscaler-vpa-recommender
-        file: ../chainsaw/assertions/deployment-ready.yaml
-    - description: Assert daemonset/generic-device-plugin
-      assert:
-        bindings:
-        - name: name
-          value: generic-device-plugin
-        file: ../chainsaw/assertions/daemonset-ready.yaml
-    - description: Assert deployment/descheduler
-      assert:
-        bindings:
-        - name: name
-          value: descheduler
-        file: ../chainsaw/assertions/deployment-ready.yaml
+  - name: Validate infra-kubernetes-extra module
+    use:
+      template: ./validate-infra-kubernetes-extra.yaml

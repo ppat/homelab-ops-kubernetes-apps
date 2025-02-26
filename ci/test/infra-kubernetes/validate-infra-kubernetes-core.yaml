@@ -1,0 +1,46 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-infra-kubernetes-core
+spec:
+  bindings:
+  - name: namespace
+    value: kube-system
+  try:
+  - description: Reconcile kustomization/infra-kubernetes-core
+    script:
+      # yamllint disable-line rule:line-length
+      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization  --resource-name=infra-kubernetes-core --timeout=3m
+      timeout: 3m
+  - description: Assert configmap/coredns-custom
+    assert:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: coredns-custom
+          namespace: kube-system
+  - description: Assert deployment/coredns
+    assert:
+      bindings:
+      - name: name
+        value: coredns
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert ingress/kubernetes-api
+    assert:
+      resource:
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: kubernetes-api
+          namespace: default
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: coredns
+      namespace: kube-system
+  - podLogs:
+      name: coredns
+      namespace: kube-system
