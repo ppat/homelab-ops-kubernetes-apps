@@ -9,6 +9,8 @@
 - [3. Design Decisions](#3-design-decisions)
 - [4. Current Session State](#4-current-session-state)
 
+<hr style="border: 3px dashed #000;">
+
 ## 1. Research Findings
 
 ### Finding F001: Project Structure and Testing Framework
@@ -336,6 +338,8 @@
    - Dynamic field values
    - Cross-test resource sharing
 
+<hr style="border: 3px dashed #000;">
+
 ## 2. Conclusions
 
 ### Conclusion C001: Feature Parity Analysis
@@ -557,6 +561,8 @@
      - Standardized validation patterns across resources
      - Uniform approach to FluxCD bootstrapping
      - Consistent error handling and debugging
+
+<hr style="border: 3px dashed #000;">
 
 ## 3. Design Decisions
 
@@ -1721,6 +1727,8 @@
      - Changes to command logic only needed in one place
      - Consistent implementation across all tests
      - Simplified test files with descriptive operation names
+
+<hr style="border: 3px dashed #000;">
 
 ## 4. Current Session State
 

@@ -25,6 +25,7 @@ config:
     - a
     - br
     - details
+    - hr
     - summary
     - sup
 
