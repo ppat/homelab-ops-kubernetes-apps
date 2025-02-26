@@ -9,7 +9,7 @@
 - [3. Design Decisions](#3-design-decisions)
 - [4. Current Session State](#4-current-session-state)
 
-<hr style="border: 3px solid blue;">
+<hr style="border: 4px solid blue;">
 
 ## 1. Research Findings
 
@@ -356,7 +356,7 @@
    - Dynamic field values
    - Cross-test resource sharing
 
-<hr style="border: 3px solid blue;">
+<hr style="border: 4px solid blue;">
 
 ## 2. Conclusions
 
@@ -594,7 +594,7 @@
      - Uniform approach to FluxCD bootstrapping
      - Consistent error handling and debugging
 
-<hr style="border: 3px solid blue;">
+<hr style="border: 4px solid blue;">
 
 ## 3. Design Decisions
 
@@ -1778,7 +1778,7 @@
      - Consistent implementation across all tests
      - Simplified test files with descriptive operation names
 
-<hr style="border: 3px solid blue;">
+<hr style="border: 4px solid blue;">
 
 ## 4. Current Session State
 
