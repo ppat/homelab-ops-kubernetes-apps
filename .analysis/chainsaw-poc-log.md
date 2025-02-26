@@ -9,7 +9,7 @@
 - [3. Design Decisions](#3-design-decisions)
 - [4. Current Session State](#4-current-session-state)
 
-<hr style="border: 3px dashed #000;">
+<hr style="border: 3px solid black;">
 
 ## 1. Research Findings
 
@@ -31,6 +31,8 @@
      - Dependency validation (both hard and soft)
   3. Strong emphasis on module independence and clear boundaries
   4. Multiple configuration methods including Kustomize patches and FluxCD post-build variables
+
+<hr style="border: 1px dashed #000;">
 
 ### Finding F002: Current Core Module Testing
 
@@ -63,6 +65,8 @@
         - Namespace: default
         - Check: jsonpath={.metadata.creationTimestamp}
         - Timeout: 1m
+
+<hr style="border: 1px dashed #000;">
 
 ### Finding F003: Current Extra Module Testing
 
@@ -117,6 +121,8 @@
         - Check: condition=available
         - Timeout: 1m
 
+<hr style="border: 1px dashed #000;">
+
 ### Finding F004: Current Testing Implementation
 
 - **Source:** `~/code/homelab-ops-kubernetes-apps/.github/workflows/test-kubernetes-resources-workflow.yaml`
@@ -145,6 +151,8 @@
      - Resource state inspection
      - Controller logs access
      - Status reporting
+
+<hr style="border: 1px dashed #000;">
 
 ### Finding F005: Test Workflow Orchestration
 
@@ -186,6 +194,8 @@
      - Second: Intel plugin status
      - Third: HelmRelease details
 
+<hr style="border: 1px dashed #000;">
+
 ### Finding F006: Chainsaw Test Structure
 
 - **Source:** `~/code/chainsaw/website/docs/quick-start/first-test.md`
@@ -213,6 +223,8 @@
      - Resource creation verification
      - Data validation capabilities
      - Clear success/failure criteria
+
+<hr style="border: 1px dashed #000;">
 
 ### Finding F007: Chainsaw Test Execution
 
@@ -246,6 +258,8 @@
      - Cleanup phase (resource deletion)
      - Detailed execution logging
 
+<hr style="border: 1px dashed #000;">
+
 ### Finding F008: Chainsaw Assertion Capabilities
 
 - **Source:** `~/code/chainsaw/website/docs/quick-start/assertion-trees.md`
@@ -276,6 +290,8 @@
      - Array element iteration
      - Flexible resource lookup
      - Comprehensive diff output
+
+<hr style="border: 1px dashed #000;">
 
 ### Finding F009: Chainsaw Operation File Support
 
@@ -309,6 +325,8 @@
     - Script: uses content field
     - Sleep: uses duration field
 
+<hr style="border: 1px dashed #000;">
+
 ### Finding F010: Chainsaw Template Support
 
 - **Source:** Chainsaw Documentation (resource-templating.md, templating.md, explicit.md)
@@ -338,7 +356,7 @@
    - Dynamic field values
    - Cross-test resource sharing
 
-<hr style="border: 3px dashed #000;">
+<hr style="border: 3px solid black;">
 
 ## 2. Conclusions
 
@@ -366,6 +384,8 @@
      - Current: Logs access and event inspection
      - Chainsaw: Detailed diffs and failure reporting
      - Advantage: More comprehensive debugging information
+
+<hr style="border: 1px dashed #000;">
 
 ### Conclusion C002: Module Test Migration Requirements
 
@@ -402,6 +422,8 @@
        - Current: Event and status inspection
        - Chainsaw Solution: Built-in failure reporting and diffs
 
+<hr style="border: 1px dashed #000;">
+
 ### Conclusion C003: Migration Strategy Requirements
 
 - **Statement:** A successful migration requires maintaining current capabilities while leveraging Chainsaw's enhanced features
@@ -427,6 +449,8 @@
      - FluxCD Integration: Pre-test environment setup
      - Test Discovery: Chainsaw's recursive file discovery
      - Resource Validation: Chainsaw's assertion capabilities
+
+<hr style="border: 1px dashed #000;">
 
 ### Conclusion C004: Operation-Specific Reusability Constraints
 
@@ -460,6 +484,8 @@
      - Inline definitions where required
      - Clear boundaries between approaches
      - Operation type drives organization
+
+<hr style="border: 1px dashed #000;">
 
 ### Conclusion C005: Unified Template Strategy
 
@@ -495,6 +521,8 @@
    - Maintain consistent template patterns
    - Share bindings across related operations
 
+<hr style="border: 1px dashed #000;">
+
 ### Conclusion C006: Configuration Management Requirements
 
 - **Statement:** Effective test configuration requires a layered approach to handle different scopes and environments
@@ -517,6 +545,8 @@
      - Values file capabilities
      - Command-line overrides
      - Native binding system
+
+<hr style="border: 1px dashed #000;">
 
 ### Conclusion C007: Error Handling and Debug Requirements
 
@@ -541,6 +571,8 @@
      - Clear error reporting
      - Fail-fast behavior
 
+<hr style="border: 1px dashed #000;">
+
 ### Conclusion C008: Template-Based Testing Effectiveness
 
 - **Statement:** Template-based testing significantly reduces maintenance overhead and improves test consistency
@@ -562,7 +594,7 @@
      - Uniform approach to FluxCD bootstrapping
      - Consistent error handling and debugging
 
-<hr style="border: 3px dashed #000;">
+<hr style="border: 3px solid black;">
 
 ## 3. Design Decisions
 
@@ -616,6 +648,8 @@
 
 - **Questions for Collaborator:**
   1. Do we need additional structure for FluxCD bootstrapping beyond the existing files?
+
+<hr style="border: 1px dashed #000;">
 
 ### Decision D002: Reusable Component Strategy
 
@@ -770,6 +804,8 @@
      - Easy to understand patterns
      - Reduced duplication
 
+<hr style="border: 1px dashed #000;">
+
 ### Decision D003: Success Condition Implementation
 
 - **Decision Topic:** How to implement kubectl wait status checks in Chainsaw
@@ -867,6 +903,8 @@
   - Use assert operations with conditional checks for all resource validation
   - Define specific status field checks based on resource type
   - Configure appropriate timeouts at the operation or global level
+
+<hr style="border: 1px dashed #000;">
 
 ### Decision D004: Rollout Status Implementation
 
@@ -1005,6 +1043,8 @@
   1. Document these patterns for reuse
   2. Consider creating test templates for common cases
   3. Add timeout configuration at the assert operation level
+
+<hr style="border: 1px dashed #000;">
 
 ### Decision D005: Workflow Integration Strategy
 
@@ -1152,6 +1192,8 @@
   - FluxCD installation
   - Global resource status reporting
 
+<hr style="border: 1px dashed #000;">
+
 ### Decision D006: Error Handling Strategy
 
 - **Decision Topic:** How to handle errors across multiple test steps to ensure proper test failure
@@ -1265,6 +1307,8 @@
   1. Create assertion templates for common patterns
   2. Implement module-specific checks
   3. Add any additional debug capabilities needed
+
+<hr style="border: 1px dashed #000;">
 
 ### Decision D007: Test Configuration Strategy
 
@@ -1380,6 +1424,8 @@
   1. Should we add any global error handlers beyond events and kustomizations?
   2. Do we need different timeout settings for CI vs local?
   3. Are there other values we should include in the values files?
+
+<hr style="border: 1px dashed #000;">
 
 ### Decision D008: Template Usage Strategy
 
@@ -1560,6 +1606,8 @@
       - Simplicity where possible
       - Clear guidelines for decisions
 
+<hr style="border: 1px dashed #000;">
+
 ### Decision D009: Step Templates for Reusable Test Sequences
 
 - **Decision Topic:** How to implement reusable multi-operation sequences across tests
@@ -1652,7 +1700,9 @@
      - Maintains consistent structure while allowing variation
      - Reduces need for conditional logic in test files
 
-### Decision D011: Script-Based Operations for Complex Commands
+<hr style="border: 1px dashed #000;">
+
+### Decision D010: Script-Based Operations for Complex Commands
 
 - **Decision Topic:** How to handle complex command operations
 - **Related Decisions:** D002 (Reusable Component Strategy)
@@ -1728,7 +1778,7 @@
      - Consistent implementation across all tests
      - Simplified test files with descriptive operation names
 
-<hr style="border: 3px dashed #000;">
+<hr style="border: 3px solid black;">
 
 ## 4. Current Session State
 
@@ -1755,7 +1805,7 @@
       - D007: Test Configuration Strategy
       - D008: Template Usage Strategy
       - D009: Step Templates for Reusable Test Sequences
-      - D011: Script-Based Operations for Complex Commands
+      - D010: Script-Based Operations for Complex Commands
    - In Discussion: None
    - Pending: None
 
@@ -1789,5 +1839,5 @@
       - Logged: C001-C008
       - Remaining: None
    - Design Decisions:
-      - Logged: D001-D011
+      - Logged: D001-D010
       - Remaining: None
