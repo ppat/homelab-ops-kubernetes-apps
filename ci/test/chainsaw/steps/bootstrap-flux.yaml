@@ -15,7 +15,7 @@ spec:
         kind: GitRepository
         metadata:
           name: test-source
-          namespace: $(namespace)
+          namespace: ($namespace)
         spec:
           interval: 1m0s
           ref:
@@ -34,7 +34,7 @@ spec:
         kind: Kustomization
         metadata:
           name: pre-requisites
-          namespace: $(namespace)
+          namespace: ($namespace)
         spec:
           interval: 1m0s
           path: ./ci/test/pre-requisites
