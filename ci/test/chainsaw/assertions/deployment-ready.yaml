@@ -10,4 +10,4 @@ status:
   (replicas == readyReplicas): true
   (replicas == availableReplicas): true
   (conditions[?type == 'Available']):
-  - status: 'True'  
+  - status: 'True'

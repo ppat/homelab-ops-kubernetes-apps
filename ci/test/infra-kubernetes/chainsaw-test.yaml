@@ -27,7 +27,7 @@ spec:
       assert:
         resource:
           apiVersion: v1
-          kind: ConfigMap        
+          kind: ConfigMap
           metadata:
             name: coredns-custom
             namespace: kube-system
@@ -41,7 +41,7 @@ spec:
       assert:
         resource:
           apiVersion: networking.k8s.io/v1
-          kind: Ingress        
+          kind: Ingress
           metadata:
             name: kubernetes-api
             namespace: default
@@ -78,13 +78,13 @@ spec:
         bindings:
         - name: name
           value: node-feature-discovery-gc
-        file: ../chainsaw/assertions/deployment-ready.yaml        
+        file: ../chainsaw/assertions/deployment-ready.yaml
     - description: Assert deployment/vertical-pod-autoscaler-vpa-recommender
       assert:
         bindings:
         - name: name
           value: vertical-pod-autoscaler-vpa-recommender
-        file: ../chainsaw/assertions/deployment-ready.yaml        
+        file: ../chainsaw/assertions/deployment-ready.yaml
     - description: Assert daemonset/generic-device-plugin
       assert:
         bindings:
@@ -96,4 +96,4 @@ spec:
         bindings:
         - name: name
           value: descheduler
-        file: ../chainsaw/assertions/deployment-ready.yaml        
+        file: ../chainsaw/assertions/deployment-ready.yaml

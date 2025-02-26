@@ -83,7 +83,7 @@ jobs:
         EOF
 
         cat /tmp/values-ci.yaml
-        
+
         # Run tests with combined values
         set -x
         chainsaw test ./ci/test/infra-kubernetes \

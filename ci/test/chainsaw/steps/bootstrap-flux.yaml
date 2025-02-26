@@ -27,7 +27,7 @@ spec:
           namespace: flux-system
         status:
           (conditions[?type == 'Ready']):
-          - status: 'True'  
+          - status: 'True'
   - description: Create pre-requisites kustomization
     apply:
       resource:
@@ -53,7 +53,7 @@ spec:
           namespace: flux-system
         status:
           (conditions[?type == 'Ready']):
-          - status: 'True'  
+          - status: 'True'
   - description: Create test kustomization
     apply:
       resource:
