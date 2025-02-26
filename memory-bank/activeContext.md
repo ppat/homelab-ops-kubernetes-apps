@@ -11,6 +11,9 @@
 ## Active Initiatives
 
 - Testing framework migration from GitHub Actions to kyverno/chainsaw
+  - PoC completed successfully with kubernetes-core/extra modules
+  - Learnings and design decisions documented in `.analysis/chainsaw-poc.md`
+  - Remaining modules to be migrated (2 at a time, core/extra in tandem)
 
 ## Backlog Items
 
@@ -30,14 +33,17 @@
 
 1. Testing Framework Migration
    - Moving from GitHub Actions workflows to kyverno/chainsaw
+   - PoC completed with kubernetes-core/extra modules
+   - Migrating remaining modules (2 at a time, core/extra modules in tandem)
    - Enable local testing capabilities
    - Improve test structure and validation
    - Enhance kubernetes context awareness
 
 ## Recent Changes
 
+- Successful PoC completion for kyverno/chainsaw migration with kubernetes-core/extra modules
+- Documentation of chainsaw migration learnings and design decisions
 - Documentation completion across infrastructure and application modules
 - Core/extra pattern implementation across various modules
 - Comprehensive storage solutions (block, object, NFS)
 - Module structure standardization
-- Initial testing framework setup
