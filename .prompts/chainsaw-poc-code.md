@@ -255,7 +255,7 @@ Current Session State:
 
 ## Activity Log
 
-Maintain a living log of PoC activity that documents all research findings, conclusions and decisions at ~/code/homelab-ops-kubernetes-apps/.analysis/chainsaw-poc-log.md. If this file does not exist, create it.
+Maintain a living log of PoC activity that documents all research findings, conclusions and decisions at ~/code/homelab-ops-kubernetes-apps/.analysis/chainsaw-poc.md. If this file does not exist, create it.
 
 - The document must be updated after each corresponding activity within this session.
 - Updates MUST make use of apply_diff to only change the section with changes OR write the complete document with NO PLACEHOLDERS or TRUNCATION.
