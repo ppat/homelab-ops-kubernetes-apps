@@ -1,14 +1,13 @@
 ---
 # yamllint disable rule:line-length
-name: test-infrastructure-kubernetes
+name: test-infrastructure-kubernetes-chainsaw
 
 on:
   pull_request:
     paths:
     - '.github/workflows/test-infrastructure-kubernetes.yaml'
-    - '.github/workflows/test-kubernetes-resources-workflow.yaml'
     - '.github/kind-cluster-single-node.yaml'
-    - 'ci/test/infra-kubernetes/**.yaml'
+    - 'ci/test/infra-kubernetes/**'
     - 'infrastructure/subsystems/kubernetes-core/**'
     - 'infrastructure/subsystems/kubernetes-extra/**'
     - '!infrastructure/subsystems/kubernetes-core/**.md'
@@ -21,73 +20,73 @@ concurrency:
 
 jobs:
   test-infrastructure-kubernetes:
-    uses: ./.github/workflows/test-kubernetes-resources-workflow.yaml
-    with:
-      test_path: ./ci/test/infra-kubernetes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+    - name: Checkout
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup kind cluster
+      uses: helm/kind-action@a1b0e391336a6ee6713a0583f8c6240d70863de3 # v1.12.0
+      with:
+        cluster_name: dev
+        config: ".github/kind-cluster-multi-node.yaml"
+        # renovate: datasource=github-releases depName=kubernetes-sigs/kind
+        version: "v0.26.0"
+        # renovate: datasource=github-releases depName=kubernetes/kubernetes
+        kubectl_version: "v1.31.6"
+        # renovate-kind-image: datasource=docker versioning=docker
+        node_image: "kindest/node:v1.31.4@sha256:2cb39f7295fe7eafee0842b1052a599a4fb0f8bcf3f83d96c7f4864c357c6c30"
+
+    - name: Setup kubectl
+      uses: fluxcd/pkg/actions/kubectl@00d1ceb1c10ac3bcbb8d5793bc3aba176bfaec40
+      with:
+        # renovate: datasource=github-releases depName=kubernetes/kubernetes
+        version: "v1.31.6"
+
+    - name: Setup flux
+      uses: fluxcd/flux2/action@5350425cdcd5fa015337e09fa502153c0275bd4b # v2.4.0
+      with:
+        # renovate: datasource=github-releases depName=fluxcd/flux2
+        version: "v2.4.0"
+
+    - name: Setup Chainsaw
+      uses: kyverno/action-install-chainsaw@v0.2.12
+      with:
+        release: v0.2.12
+
+    - name: Install flux in kind cluster
+      env:
+        # renovate: datasource=github-releases depName=fluxcd/flux2
+        FLUX_VERSION: "v2.4.0"
+      run: |
+        flux install --version ${FLUX_VERSION} --log-level debug
+
+    - name: Run Chainsaw Tests
+      env:
+        GIT_URL: https://github.com/${{ github.repository }}.git
+        GIT_REF: ${{ github.head_ref || github.ref }}
       # yamllint disable-line rule:indentation
-      reconcile_items: |-
-        - name: infra-kubernetes-core
-          kind: kustomization
-          namespace: flux-system
-          timeout: 3m
-        - name: infra-kubernetes-extra
-          kind: kustomization
-          namespace: flux-system
-          timeout: 3m
-      # yamllint disable-line rule:indentation
-      success_conditions: |-
-        - resource: configmap/coredns-custom
-          namespace: kube-system
-          for: jsonpath={.metadata.creationTimestamp}
-          timeout: 1m
-        - resource: deployment/coredns
-          namespace: kube-system
-          for: condition=available
-          timeout: 1m
-        - resource: ingress/kubernetes-api
-          namespace: default
-          for: jsonpath={.metadata.creationTimestamp}
-          timeout: 1m
-        - resource: deployment/node-feature-discovery-master
-          namespace: kube-system
-          for: condition=available
-          timeout: 1m
-        - resource: daemonset/node-feature-discovery-worker
-          namespace: kube-system
-          timeout: 1m
-        - resource: deployment/node-feature-discovery-gc
-          namespace: kube-system
-          for: condition=available
-          timeout: 1m
-        - resource: deployment/vertical-pod-autoscaler-vpa-recommender
-          namespace: kube-system
-          for: condition=available
-          timeout: 1m
-        - resource: helmrelease/intel-plugin-operator-release
-          namespace: intel-device-plugins
-          for: jsonpath={.metadata.creationTimestamp}
-          timeout: 1m
-        - resource: helmrelease/intel-gpu-plugin-release
-          namespace: intel-device-plugins
-          for: jsonpath={.metadata.creationTimestamp}
-          timeout: 1m
-        - resource: daemonset/generic-device-plugin
-          namespace: kube-system
-          timeout: 1m
-        - resource: deployment/descheduler
-          namespace: kube-system
-          for: condition=available
-          timeout: 1m
-      git_url: https://github.com/${{ github.repository }}.git
-      git_ref: ${{ github.head_ref || github.ref }}
-      kind_cluster_config: kind-cluster-multi-node.yaml
-      # yamllint disable-line rule:indentation
-      custom_commands: |-
-        - name: show-events1
-          command: 'kubectl get -n kube-system events --sort-by=.lastTimestamp'
-        - name: show-events2
-          command: 'kubectl get -n intel-device-plugins events --sort-by=.lastTimestamp'
-        - name: show-hr1
-          command: 'kubectl describe -n intel-device-plugins hr intel-plugin-operator-release'
-        - name: show-hr2
-          command: 'kubectl describe -n intel-device-plugins hr intel-gpu-plugin-release'
+      run: |
+        if [[ "${GIT_REF}" == "refs/heads/main" ]]; then
+          GIT_BRANCH="main"
+        else
+          GIT_BRANCH="${GIT_REF}"
+        fi
+
+        cat > /tmp/values-ci.yaml <<EOF
+        git:
+          url: '${GIT_URL}'
+          branch: '${GIT_BRANCH}'
+        EOF
+
+        cat /tmp/values-ci.yaml
+
+        # Run tests with combined values
+        set -x
+        chainsaw test ./ci/test/infra-kubernetes \
+          --config ./ci/test/chainsaw/.chainsaw.yaml \
+          --values /tmp/values-ci.yaml \
+          --fail-fast

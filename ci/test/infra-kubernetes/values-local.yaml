@@ -1,5 +1,0 @@
----
-# Git configuration
-git:
-  url: http://localhost:3000/homelab-ops-kubernetes-apps  # Local git server
-  ref: dev  # Development branch
