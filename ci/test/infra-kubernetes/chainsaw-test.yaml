@@ -17,38 +17,52 @@ spec:
         - name: test_path
           value: ./ci/test/infra-kubernetes
 
-  # Step 2: Core Module
-  - try:
-    - description: Reconcile infra-kubernetes-core
+  - name: Test infra-kubernetes-core module
+    try:
+    - description: Reconcile kustomization/infra-kubernetes-core
       script:
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization  --resource-name=infra-kubernetes-core --timeout=3m
-    # Wait for CoreDNS
-    - wait:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: ($values.resources.coredns.deployment)
-        namespace: ($values.namespaces.core)
-        timeout: 1m
-        for:
-          condition:
-            name: Available
-            value: "true"
+    - description: Assert configmap/coredns-custom
+      assert:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap        
+          metadata:
+            name: coredns-custom
+            namespace: kube-system
+    - description: Assert deployment/coredns
+      assert:
+        bindings:
+        - name: deployment_name
+          value: coredns
+        - name: deployment_namespace
+          value: kube-system
+        file: ../chainsaw/assertion/deployment-ready.yaml
+    - description: Assert ingress/kubernetes-api
+      assert:
+        resource:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress        
+          metadata:
+            name: kubernetes-api
+            namespace: default
     finally:
-    # Debug core issues if failed
     - describe:
         apiVersion: apps/v1
         kind: Deployment
-        name: ($values.resources.coredns.deployment)
-        namespace: ($values.namespaces.core)
+        name: coredns
+        namespace: kube-system
     - podLogs:
-        name: ($values.resources.coredns.deployment)
-        namespace: ($values.namespaces.core)
+        name: coredns
+        namespace: kube-system
+    - events:
+        namespace: kube-system
 
-  # Step 3: Extra Module
-  - try:
+  - name: Test infra-kubernetes-extra module
+    try:
     - description: Reconcile infra-kubernetes-extra
       script:
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization  --resource-name=infra-kubernetes-extra --timeout=3m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-kubernetes-extra --timeout=3m
     # Wait for NFD components
     - wait:
         apiVersion: apps/v1

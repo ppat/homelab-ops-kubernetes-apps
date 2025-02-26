@@ -3,9 +3,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ($name)              # e.g., coredns
-  namespace: ($namespace)     # e.g., kube-system
+  name: ($deployment_name)
+  namespace: ($deployment_namespace)
 status:
   # All replicas should be ready and available
   (replicas == readyReplicas): true
   (replicas == availableReplicas): true
+  (conditions[?type == 'Available']):
+  - status: 'True'  
