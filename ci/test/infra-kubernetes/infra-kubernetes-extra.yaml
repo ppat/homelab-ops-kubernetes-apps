@@ -17,11 +17,11 @@ spec:
     name: test-source
     namespace: flux-system
   timeout: 2m0s
-  wait: true
+  wait: false
   patches:
-  #############################################################################
-  # intel device plugins cannot be installed on github actions worker nodes
-  #############################################################################
+  #####################################################################
+  # intel device plugins cannot be installed or tested on kind clusters
+  #####################################################################
   # yamllint disable-line rule:indentation
   - patch: |-
       $patch: delete

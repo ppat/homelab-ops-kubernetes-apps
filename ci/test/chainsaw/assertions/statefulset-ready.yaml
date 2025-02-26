@@ -1,5 +1,4 @@
 ---
-# Template for StatefulSet rollout status check
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:

@@ -1,5 +1,4 @@
 ---
-# Main test file for infrastructure kubernetes modules
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
@@ -13,6 +12,26 @@ spec:
         bindings:
         - name: test_path
           value: ./ci/test/infra-kubernetes
+
+  - name: Apply infra-kubernetes modules
+    try:
+    - description: Apply infra-kubernetes-core
+      apply:
+        file: ./infra-kubernetes-core.yaml
+    - description: Apply infra-kubernetes-extra
+      apply:
+        file: ./infra-kubernetes-extra.yaml
+    catch:
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: infra-kubernetes-core
+        namespace: flux-system
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: infra-kubernetes-extra
+        namespace: flux-system
 
   - name: Test infra-kubernetes-core module
     bindings:

@@ -4,21 +4,18 @@ kind: Configuration
 metadata:
   name: infra-kubernetes-test
 spec:
-  # Common timeouts
   timeouts:
-    apply: 3m
+    apply: 1m
     assert: 1m
     cleanup: 30s
     delete: 15s
     error: 30s
     exec: 5s
 
-  # Test execution settings
   execution:
     failFast: true
     parallel: 1  # Run tests sequentially since they have dependencies
 
-  # Global error handlers
   error:
     catch:
     - events:
@@ -28,5 +25,5 @@ spec:
           echo -----------------------------------------------------------------------
           flux get all --all-namespaces
           echo -----------------------------------------------------------------------
-          kubectl get -A crd,cm,secret,po,svc,ing,deploy,ds,sts,pv,pvc,es,cert
+          kubectl get -A crd,cm,secret,po,svc,ing,deploy,ds,sts,cj,job,pv,pvc,es,cert
           echo -----------------------------------------------------------------------

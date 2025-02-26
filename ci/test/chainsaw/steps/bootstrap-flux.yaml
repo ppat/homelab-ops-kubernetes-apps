@@ -48,27 +48,27 @@ spec:
       - name: name
         value: pre-requisites
       file: ../chainsaw/assertions/kustomization-ready.yaml
-  - description: Create test kustomization
-    apply:
-      resource:
-        apiVersion: kustomize.toolkit.fluxcd.io/v1
-        kind: Kustomization
-        metadata:
-          name: test-kustomization
-          namespace: flux-system
-        spec:
-          interval: 1m0s
-          path: ($test_path)
-          prune: false
-          sourceRef:
-            kind: GitRepository
-            name: test-source
-  - description: Assert test kustomization
-    assert:
-      bindings:
-      - name: name
-        value: test-kustomization
-      file: ../chainsaw/assertions/kustomization-ready.yaml
+  # - description: Create test kustomization
+  #   apply:
+  #     resource:
+  #       apiVersion: kustomize.toolkit.fluxcd.io/v1
+  #       kind: Kustomization
+  #       metadata:
+  #         name: test-kustomization
+  #         namespace: flux-system
+  #       spec:
+  #         interval: 1m0s
+  #         path: ($test_path)
+  #         prune: false
+  #         sourceRef:
+  #           kind: GitRepository
+  #           name: test-source
+  # - description: Assert test kustomization
+  #   assert:
+  #     bindings:
+  #     - name: name
+  #       value: test-kustomization
+  #     file: ../chainsaw/assertions/kustomization-ready.yaml
   catch:
   - describe:
       apiVersion: source.toolkit.fluxcd.io/v1
@@ -80,8 +80,8 @@ spec:
       kind: Kustomization
       name: pre-requisites
       namespace: flux-system
-  - describe:
-      apiVersion: kustomize.toolkit.fluxcd.io/v1
-      kind: Kustomization
-      name: test-kustomization
-      namespace: flux-system
+  # - describe:
+  #     apiVersion: kustomize.toolkit.fluxcd.io/v1
+  #     kind: Kustomization
+  #     name: test-kustomization
+  #     namespace: flux-system
