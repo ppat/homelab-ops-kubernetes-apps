@@ -5,15 +5,6 @@ namespaces:
   core: kube-system
   intel: intel-device-plugins
 
-# Module configuration
-modules:
-  core:
-    name: infra-kubernetes-core
-    timeout: 3m
-  extra:
-    name: infra-kubernetes-extra
-    timeout: 3m
-
 # Resource names
 resources:
   coredns:
