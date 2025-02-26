@@ -1,6 +1,6 @@
 ---
 # yamllint disable rule:line-length
-name: test-infrastructure-kubernetes-chainsaw
+name: test-infrastructure-kubernetes
 
 on:
   pull_request:
