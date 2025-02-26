@@ -5,9 +5,6 @@ kind: Test
 metadata:
   name: infra-kubernetes
 spec:
-  bindings:
-  - name: namespace
-    value: kube-system
   steps:
   - name: Bootstrap FluxCD
     use:
@@ -18,9 +15,13 @@ spec:
           value: ./ci/test/infra-kubernetes
 
   - name: Test infra-kubernetes-core module
+    bindings:
+    - name: namespace
+      value: kube-system
     try:
     - description: Reconcile kustomization/infra-kubernetes-core
       script:
+        # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization  --resource-name=infra-kubernetes-core --timeout=3m
         timeout: 3m
     - description: Assert configmap/coredns-custom
@@ -56,9 +57,13 @@ spec:
         namespace: kube-system
 
   - name: Test infra-kubernetes-extra module
+    bindings:
+    - name: namespace
+      value: kube-system
     try:
     - description: Reconcile infra-kubernetes-extra
       script:
+        # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-kubernetes-extra --timeout=3m
         timeout: 3m
     - description: Assert deployment/node-feature-discovery-master
