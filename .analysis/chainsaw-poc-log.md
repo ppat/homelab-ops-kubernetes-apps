@@ -6,7 +6,7 @@
 
 ### Finding F001: Project Structure and Testing Framework
 
-- **Source:** `/home/coder/code/homelab-ops-kubernetes-apps/projectBrief.md`
+- **Source:** `~/code/homelab-ops-kubernetes-apps/projectBrief.md`
 - **Implications:**
   - Must maintain existing module structure and dependencies
   - Testing must validate both native K8s resources and CRDs
@@ -25,7 +25,7 @@
 
 ### Finding F002: Current Core Module Testing
 
-- **Source:** `/home/coder/code/homelab-ops-kubernetes-apps/.github/workflows/test-infrastructure-kubernetes.yaml`
+- **Source:** `~/code/homelab-ops-kubernetes-apps/.github/workflows/test-infrastructure-kubernetes.yaml`
 - **Implications:**
   - Must maintain exact validation sequence
   - Must preserve all timeout configurations
@@ -57,7 +57,7 @@
 
 ### Finding F003: Current Extra Module Testing
 
-- **Source:** `/home/coder/code/homelab-ops-kubernetes-apps/.github/workflows/test-infrastructure-kubernetes.yaml`
+- **Source:** `~/code/homelab-ops-kubernetes-apps/.github/workflows/test-infrastructure-kubernetes.yaml`
 - **Implications:**
   - Must maintain exact validation sequence
   - Must preserve all timeout configurations
@@ -110,7 +110,7 @@
 
 ### Finding F004: Current Testing Implementation
 
-- **Source:** `/home/coder/code/homelab-ops-kubernetes-apps/.github/workflows/test-kubernetes-resources-workflow.yaml`
+- **Source:** `~/code/homelab-ops-kubernetes-apps/.github/workflows/test-kubernetes-resources-workflow.yaml`
 - **Implications:**
   - Must replicate key testing capabilities in Chainsaw
   - Need to maintain similar environment setup process
@@ -179,7 +179,7 @@
 
 ### Finding F006: Chainsaw Test Structure
 
-- **Source:** `/home/coder/code/chainsaw/website/docs/quick-start/first-test.md`
+- **Source:** `~/code/chainsaw/website/docs/quick-start/first-test.md`
 - **Implications:**
   - Tests can be organized in a clear folder structure
   - Each test can have multiple steps and operations
@@ -207,7 +207,7 @@
 
 ### Finding F007: Chainsaw Test Execution
 
-- **Source:** `/home/coder/code/chainsaw/website/docs/quick-start/run-tests.md`
+- **Source:** `~/code/chainsaw/website/docs/quick-start/run-tests.md`
 - **Implications:**
   - Need external cluster management (e.g., kind)
   - Must configure appropriate timeouts
@@ -239,7 +239,7 @@
 
 ### Finding F008: Chainsaw Assertion Capabilities
 
-- **Source:** `/home/coder/code/chainsaw/website/docs/quick-start/assertion-trees.md`
+- **Source:** `~/code/chainsaw/website/docs/quick-start/assertion-trees.md`
 - **Implications:**
   - Can handle complex validation scenarios
   - Supports flexible resource matching
@@ -1132,7 +1132,7 @@
   1. Uses Chainsaw bindings for git configuration
   2. Provides clear step-by-step test flow
   3. Includes comprehensive error handling
-  4. Maintains all existing validat/home/coder/code/chainsaw/website/docs/configuration/file.mdion checks
+  4. Maintains all existing validat~/code/chainsaw/website/docs/configuration/file.mdion checks
 
   GitHub Actions remains responsible for:
   - Cluster setup and management
@@ -1725,13 +1725,13 @@
 
 1. Research Status:
    - Completed:
-      - /home/coder/code/homelab-ops-kubernetes-apps/projectBrief.md
-      - /home/coder/code/homelab-ops-kubernetes-apps/infrastructure/subsystems/kubernetes-core/README.md
-      - /home/coder/code/homelab-ops-kubernetes-apps/infrastructure/subsystems/kubernetes-extra/README.md
-      - /home/coder/code/homelab-ops-kubernetes-apps/.github/workflows/test-kubernetes-resources-workflow.yaml
-      - /home/coder/code/chainsaw/website/docs/quick-start/* (all sections)
-      - /home/coder/code/chainsaw/website/docs/test/* (all sections)
-      - /home/coder/code/chainsaw/website/docs/operations/* (all sections)
+      - ~/code/homelab-ops-kubernetes-apps/projectBrief.md
+      - ~/code/homelab-ops-kubernetes-apps/infrastructure/subsystems/kubernetes-core/README.md
+      - ~/code/homelab-ops-kubernetes-apps/infrastructure/subsystems/kubernetes-extra/README.md
+      - ~/code/homelab-ops-kubernetes-apps/.github/workflows/test-kubernetes-resources-workflow.yaml
+      - ~/code/chainsaw/website/docs/quick-start/* (all sections)
+      - ~/code/chainsaw/website/docs/test/* (all sections)
+      - ~/code/chainsaw/website/docs/operations/* (all sections)
    - In Progress: None
    - Pending: None
 

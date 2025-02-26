@@ -251,11 +251,11 @@ Current Session State:
    - Custom kubernetes resource types must be validated against their CRD spec
 
 2. YAML files must be linted with yamllint:
-   - YAML files must meet rules specified in /home/coder/code/homelab-ops-kubernetes-apps/.yamllint
+   - YAML files must meet rules specified in ~/code/homelab-ops-kubernetes-apps/.yamllint
 
 ## Activity Log
 
-Maintain a living log of PoC activity that documents all research findings, conclusions and decisions at /home/coder/code/homelab-ops-kubernetes-apps/.analysis/chainsaw-poc-log.md. If this file does not exist, create it.
+Maintain a living log of PoC activity that documents all research findings, conclusions and decisions at ~/code/homelab-ops-kubernetes-apps/.analysis/chainsaw-poc-log.md. If this file does not exist, create it.
 
 - The document must be updated after each corresponding activity within this session.
 - Updates MUST make use of apply_diff to only change the section with changes OR write the complete document with NO PLACEHOLDERS or TRUNCATION.
@@ -338,18 +338,18 @@ This section defines what needs to be reviewed enabling you to,
 - learn how chainsaw framework works and how to use it in service of our task objective
 
 1. Project Context:
-   - /home/coder/code/homelab-ops-kubernetes-apps/projectBrief.md
+   - ~/code/homelab-ops-kubernetes-apps/projectBrief.md
      Purpose: Understand project scope, goals, structure, and principles
 
 2. Module Understanding:
    A. Module Documentation:
-      - /home/coder/code/homelab-ops-kubernetes-apps/infrastructure/subsystems/kubernetes-core/README.md
-      - /home/coder/code/homelab-ops-kubernetes-apps/infrastructure/subsystems/kubernetes-extra/README.md
+      - ~/code/homelab-ops-kubernetes-apps/infrastructure/subsystems/kubernetes-core/README.md
+      - ~/code/homelab-ops-kubernetes-apps/infrastructure/subsystems/kubernetes-extra/README.md
       Purpose: Module documentation, requirements, and usage
 
    B. Module Composition:
-      - /home/coder/code/homelab-ops-kubernetes-apps/infrastructure/subsystems/kubernetes-core/kustomization.yaml
-      - /home/coder/code/homelab-ops-kubernetes-apps/infrastructure/subsystems/kubernetes-extra/kustomization.yaml
+      - ~/code/homelab-ops-kubernetes-apps/infrastructure/subsystems/kubernetes-core/kustomization.yaml
+      - ~/code/homelab-ops-kubernetes-apps/infrastructure/subsystems/kubernetes-extra/kustomization.yaml
       Purpose: Entry points for module composition
       Action: For each module:
         1. Start with kustomization.yaml
@@ -357,47 +357,47 @@ This section defines what needs to be reviewed enabling you to,
         3. Document resource types and relationships
 
 3. Test Implementation:
-   - /home/coder/code/homelab-ops-kubernetes-apps/.github/workflows/test-kubernetes-resources-workflow.yaml
+   - ~/code/homelab-ops-kubernetes-apps/.github/workflows/test-kubernetes-resources-workflow.yaml
      Purpose: Core reusable workflow defining test orchestration and validation
-   - /home/coder/code/homelab-ops-kubernetes-apps/.github/workflows/test-infrastructure-kubernetes.yaml
+   - ~/code/homelab-ops-kubernetes-apps/.github/workflows/test-infrastructure-kubernetes.yaml
      Purpose: Specific test configuration for these modules
-   - /home/coder/code/homelab-ops-kubernetes-apps/ci/test/infra-kubernetes/infra-kubernetes-core.yaml
-   - /home/coder/code/homelab-ops-kubernetes-apps/ci/test/infra-kubernetes/infra-kubernetes-extra.yaml
+   - ~/code/homelab-ops-kubernetes-apps/ci/test/infra-kubernetes/infra-kubernetes-core.yaml
+   - ~/code/homelab-ops-kubernetes-apps/ci/test/infra-kubernetes/infra-kubernetes-extra.yaml
      Purpose: Test-specific module configurations and prerequisites
 
 4. Chainsaw Documentation:
    Priority Review Order:
    1. Quick Start & Core Concepts:
-      - /home/coder/code/chainsaw/website/docs/quick-start/first-test.md
-      - /home/coder/code/chainsaw/website/docs/quick-start/run-tests.md
-      - /home/coder/code/chainsaw/website/docs/quick-start/assertion-trees.md
-      - /home/coder/code/chainsaw/website/docs/quick-start/operation-outputs.md
+      - ~/code/chainsaw/website/docs/quick-start/first-test.md
+      - ~/code/chainsaw/website/docs/quick-start/run-tests.md
+      - ~/code/chainsaw/website/docs/quick-start/assertion-trees.md
+      - ~/code/chainsaw/website/docs/quick-start/operation-outputs.md
    2. Test Structure & Assertions:
-      - /home/coder/code/chainsaw/website/docs/test/explicit.md
-      - /home/coder/code/chainsaw/website/docs/test/spec/index.md
-      - /home/coder/code/chainsaw/website/docs/operations/assert.md
+      - ~/code/chainsaw/website/docs/test/explicit.md
+      - ~/code/chainsaw/website/docs/test/spec/index.md
+      - ~/code/chainsaw/website/docs/operations/assert.md
    3. Resource Handling:
-      - /home/coder/code/chainsaw/website/docs/quick-start/bindings.md
-      - /home/coder/code/chainsaw/website/docs/quick-start/resource-templating.md
-      - /home/coder/code/chainsaw/website/docs/operations/script.md
-      - /home/coder/code/chainsaw/website/docs/operations/command.md
-      - /home/coder/code/chainsaw/website/docs/operations/helpers/wait.md
-      - /home/coder/code/chainsaw/website/docs/operations/apply.md
-      - /home/coder/code/chainsaw/website/docs/operations/create.md
-      - /home/coder/code/chainsaw/website/docs/operations/delete.md
-      - /home/coder/code/chainsaw/website/docs/operations/error.md
-      - /home/coder/code/chainsaw/website/docs/operations/helpers/describe.md
-      - /home/coder/code/chainsaw/website/docs/operations/helpers/events.md
-      - /home/coder/code/chainsaw/website/docs/operations/helpers/get.md
-      - /home/coder/code/chainsaw/website/docs/operations/helpers/logs.md
-      - /home/coder/code/chainsaw/website/docs/operations/patch.md
+      - ~/code/chainsaw/website/docs/quick-start/bindings.md
+      - ~/code/chainsaw/website/docs/quick-start/resource-templating.md
+      - ~/code/chainsaw/website/docs/operations/script.md
+      - ~/code/chainsaw/website/docs/operations/command.md
+      - ~/code/chainsaw/website/docs/operations/helpers/wait.md
+      - ~/code/chainsaw/website/docs/operations/apply.md
+      - ~/code/chainsaw/website/docs/operations/create.md
+      - ~/code/chainsaw/website/docs/operations/delete.md
+      - ~/code/chainsaw/website/docs/operations/error.md
+      - ~/code/chainsaw/website/docs/operations/helpers/describe.md
+      - ~/code/chainsaw/website/docs/operations/helpers/events.md
+      - ~/code/chainsaw/website/docs/operations/helpers/get.md
+      - ~/code/chainsaw/website/docs/operations/helpers/logs.md
+      - ~/code/chainsaw/website/docs/operations/patch.md
    4. Advanced Features:
-      - /home/coder/code/chainsaw/website/docs/quick-start/try-catch.md
-      - /home/coder/code/chainsaw/website/docs/examples/test-output.md
-      - /home/coder/code/chainsaw/website/docs/examples/negative-testing.md
+      - ~/code/chainsaw/website/docs/quick-start/try-catch.md
+      - ~/code/chainsaw/website/docs/examples/test-output.md
+      - ~/code/chainsaw/website/docs/examples/negative-testing.md
    5. Reference:
-      - /home/coder/code/chainsaw/website/docs/reference/apis/chainsaw.v1alpha2.md
-      - /home/coder/code/chainsaw/website/docs/reference/builtins.md
-      - /home/coder/code/chainsaw/website/docs/reference/jp/functions.md
+      - ~/code/chainsaw/website/docs/reference/apis/chainsaw.v1alpha2.md
+      - ~/code/chainsaw/website/docs/reference/builtins.md
+      - ~/code/chainsaw/website/docs/reference/jp/functions.md
 
 BEGIN by starting the process as outlined under `Collaboration Framework`.
