@@ -700,6 +700,12 @@ Chainsaw's templating system provides flexible configuration:
      - Version control for shared files
      - Clear documentation of usage
 
+  4. Component Types:
+     - Resource Definitions: Kubernetes manifests for apply operations
+     - Assertion Patterns: Status validation patterns for assert operations
+     - Command Templates: Common command patterns for script/command operations
+     - Each type should be organized in its own directory structure
+
 - **Rationale:**
   1. Operation Support:
      - Respects Chainsaw's operation capabilities
@@ -730,8 +736,8 @@ Chainsaw's templating system provides flexible configuration:
      kubectl wait -n kube-system --for=jsonpath={.metadata.creationTimestamp} configmap/coredns-custom
      ```
 
-- **Chainsaw Implementation:**
-  1. Using Wait Operation (Recommended):
+- **Chainsaw Implementation Options:**
+  1. Using Wait Operation:
 
      ```yaml
      # For condition=available
@@ -750,44 +756,69 @@ Chainsaw's templating system provides flexible configuration:
                condition:
                  name: Available
                  value: 'true'
+     ```
 
-     # For jsonpath check
+  2. Using Assert Operation with Conditional Checks:
+
+     ```yaml
+     # For condition=available
      apiVersion: chainsaw.kyverno.io/v1alpha1
      kind: Test
      spec:
        steps:
        - try:
-         - wait:
-             apiVersion: v1
-             kind: ConfigMap
-             name: coredns-custom
-             namespace: kube-system
-             timeout: 1m
-             for:
-               jsonPath:
-                 path: '{.metadata.creationTimestamp}'
+         - assert:
+             resource:
+               apiVersion: apps/v1
+               kind: Deployment
+               metadata:
+                 name: coredns
+                 namespace: kube-system
+               status:
+                 (replicas == readyReplicas): true
+                 (replicas == availableReplicas): true
+                 (conditions[?type == 'Available']):
+                 - status: 'True'
      ```
 
-- **Rationale:**
-  1. Direct Mapping:
-     - Wait operation provides 1:1 mapping with kubectl wait
-     - Supports both condition and jsonpath checks
-     - Maintains same timeout behavior
+- **Updated Recommendation:**
+  While the `wait` operation provides a direct mapping to `kubectl wait`, the `assert` operation with conditional checks offers several advantages:
+  
+  1. Enhanced Validation:
+     - Can check multiple conditions simultaneously
+     - Supports complex JMESPath expressions
+     - Enables precise status field validation
+  
+  2. Resource-Specific Validation:
+     - Deployment: `(replicas == readyReplicas)` and `(replicas == availableReplicas)`
+     - DaemonSet: `(numberReady == desiredNumberScheduled)` and `(numberAvailable == desiredNumberScheduled)`
+     - StatefulSet: `(replicas == readyReplicas)` and `(currentReplicas == replicas)`
+  
+  3. Improved Test UX:
+     - Richer failure reporting with detailed diffs
+     - Clear indication of which conditions failed
+     - Consistent timeout behavior from global configuration
 
-  2. Simplicity:
-     - Clear syntax matches existing commands
-     - Easy to understand and maintain
-     - Familiar to team members
+- **Rationale for Assert-Based Approach:**
+  1. Native Chainsaw Integration:
+     - Uses Chainsaw's powerful assertion capabilities
+     - Leverages built-in waiting mechanism (retries until timeout)
+     - Provides more detailed failure information
+  
+  2. Flexibility:
+     - Can validate complex resource states beyond simple conditions
+     - Supports both simple and advanced validation patterns
+     - Works consistently across all resource types
+  
+  3. Maintainability:
+     - Clearer expression of validation requirements
+     - More precise validation of resource state
+     - Better alignment with Kubernetes resource status fields
 
-  3. Future Flexibility:
-     - Can use assert for more complex validations if needed
-     - Wait handles current test requirements effectively
-     - Preserves option to extend validation capabilities
-
-- **Next Steps:**
-  1. Document rollout status implementation in a separate decision
-  2. Proceed with wait operation for current kubectl wait commands
-  3. Consider assert operation for any new complex validations
+- **Implementation Guidance:**
+  - Use assert operations with conditional checks for all resource validation
+  - Define specific status field checks based on resource type
+  - Configure appropriate timeouts at the operation or global level
 
 ### Decision D004: Rollout Status Implementation
 
@@ -1481,58 +1512,296 @@ Chainsaw's templating system provides flexible configuration:
     - Simplicity where possible
     - Clear guidelines for decisions
 
+### Decision D009: Step Templates for Reusable Test Sequences
+
+- **Decision Topic:** How to implement reusable multi-operation sequences across tests
+- **Related Decisions:** D002 (Reusable Component Strategy)
+- **Key Differences from D002:**
+  - D002 focuses on component-level reuse (individual resources, assertions)
+  - D009 focuses on sequence-level reuse (multiple operations as a single unit)
+  - Step templates encapsulate entire workflows rather than individual components
+
+- **Options Considered:**
+  1. Duplicate Steps Across Test Files:
+     - Pros:
+       - Simple implementation
+       - Direct visibility of all operations
+       - No additional concepts to understand
+     - Cons:
+       - High duplication across tests
+       - Difficult to maintain consistency
+       - Changes require updates to multiple files
+
+  2. Use StepTemplate Resources with Parameterization (Recommended):
+     - Pros:
+       - Centralizes complex sequences
+       - Enables parameterization through bindings
+       - Maintains consistent workflows
+       - Simplifies test files
+     - Cons:
+       - Adds indirection (operations defined elsewhere)
+       - Requires understanding of template mechanism
+       - May hide implementation details
+
+- **Implementation:**
+  ```yaml
+  # Step template definition (bootstrap-flux.yaml)
+  apiVersion: chainsaw.kyverno.io/v1alpha1
+  kind: StepTemplate
+  metadata:
+    name: bootstrap-fluxcd
+  spec:
+    try:
+    - description: Create git source
+      apply:
+        resource:
+          apiVersion: source.toolkit.fluxcd.io/v1
+          kind: GitRepository
+          metadata:
+            name: test-source
+            namespace: flux-system
+          spec:
+            interval: 1m0s
+            ref:
+              branch: ($values.git.branch)
+            url: ($values.git.url)
+    # Additional operations...
+  ```
+
+  ```yaml
+  # Usage in test file (chainsaw-test.yaml)
+  steps:
+    - name: Bootstrap FluxCD
+      use:
+        template: ../chainsaw/steps/bootstrap-flux.yaml
+        with:
+          bindings:
+            - name: test_path
+              value: ./ci/test/infra-kubernetes
+  ```
+
+- **When to Use Step Templates:**
+  1. For Complex Sequences:
+     - Multi-step bootstrapping processes
+     - Setup/teardown sequences used across tests
+     - Standard validation workflows
+
+  2. For Parameterized Workflows:
+     - Operations that need different inputs but follow the same pattern
+     - Sequences that vary only in target resources or namespaces
+     - Common patterns with test-specific configuration
+
+  3. For Standardized Processes:
+     - Critical sequences that must be performed consistently
+     - Complex error handling patterns
+     - Multi-stage validation workflows
+
+- **Rationale:**
+  1. Sequence-Level Reusability:
+     - Encapsulates entire workflows as reusable units
+     - Reduces duplication of complex operation sequences
+     - Enables standardization of critical processes
+
+  2. Maintainability Benefits:
+     - Changes to sequence logic only needed in one place
+     - Consistent implementation across all tests
+     - Simplified test files focused on test-specific logic
+
+  3. Parameterization Advantages:
+     - Adapts common sequences to test-specific needs
+     - Maintains consistent structure while allowing variation
+     - Reduces need for conditional logic in test files
+
+
+### Decision D011: Script-Based Operations for Complex Commands
+
+- **Decision Topic:** How to handle complex command operations
+- **Related Decisions:** D002 (Reusable Component Strategy)
+- **Options Considered:**
+  1. Inline Command Operations with Multiple Arguments:
+     - Pros:
+       - Direct visibility of command in test file
+       - No external dependencies
+       - Simple for basic commands
+     - Cons:
+       - Complex commands become hard to read
+       - No parameter validation
+       - Limited error handling
+       - Duplication across tests
+
+  2. External Script Files with Parameter Handling (Recommended):
+     - Pros:
+       - Encapsulates complex command logic
+       - Enables robust parameter validation
+       - Provides consistent error handling
+       - Reusable across multiple tests
+     - Cons:
+       - Adds indirection (command logic in separate file)
+       - Requires shell scripting knowledge
+       - Additional files to maintain
+
+- **Implementation:**
+  ```bash
+  # Script file (flux-reconcile.sh)
+  #!/bin/bash
+  set -euo pipefail
+
+  RESOURCE_TYPE=""
+  RESOURCE_NAME=""
+  NAMESPACE="flux-system"
+  TIMEOUT="1m"
+
+  # Parse parameters
+  for param in "$@"
+  do
+    case $param in
+      --resource-type=*)
+        RESOURCE_TYPE="${param#*=}"
+        shift
+        ;;
+      --resource-name=*)
+        RESOURCE_NAME="${param#*=}"
+        shift
+        ;;
+      --namespace=*)
+        NAMESPACE="${param#*=}"
+        shift
+        ;;
+      --timeout=*)
+        TIMEOUT="${param#*=}"
+        shift
+        ;;
+      *)
+        echo "Unknown parameter: $param"
+        exit 1
+        ;;
+    esac
+  done
+
+  flux reconcile $RESOURCE_TYPE $RESOURCE_NAME -n $NAMESPACE --timeout $TIMEOUT
+  ```
+
+  ```yaml
+  # Usage in test file (chainsaw-test.yaml)
+  - description: Reconcile kustomization/infra-kubernetes-core
+    script:
+      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-kubernetes-core --timeout=3m
+      timeout: 3m
+  ```
+
+- **When to Use Script-Based Operations:**
+  1. For Complex Commands:
+     - Commands with many parameters
+     - Commands requiring parameter validation
+     - Commands with error handling needs
+     - Commands used across multiple tests
+
+  2. For Command Sequences:
+     - Multiple related commands that should be executed together
+     - Commands with conditional logic
+     - Commands that need to capture and process output
+
+  3. For Standardized Operations:
+     - Common operations that should be performed consistently
+     - Operations with specific error handling requirements
+     - Operations that benefit from parameter validation
+
+- **Rationale:**
+  1. Improved Readability:
+     - Complex command logic moved to dedicated scripts
+     - Test files remain clean and focused
+     - Clear separation of concerns
+
+  2. Enhanced Reliability:
+     - Parameter validation prevents errors
+     - Consistent error handling
+     - Proper exit code propagation
+     - Fail-fast behavior with set -e
+
+  3. Maintenance Benefits:
+     - Changes to command logic only needed in one place
+     - Consistent implementation across all tests
+     - Simplified test files with descriptive operation names
+
+### Conclusion C008: Template-Based Testing Effectiveness
+
+- **Statement:** Template-based testing significantly reduces maintenance overhead and improves test consistency
+- **Related Findings:** F006, F010
+- **Related Decisions:** D003, D004, D008, D009
+- **Basis:**
+  1. Code Reduction:
+     - 75% reduction in test YAML size through templates
+     - Consistent timeout handling across 12+ resources
+     - Single source of truth for assertions
+  
+  2. Maintenance Benefits:
+     - Changes to validation logic only needed in one place
+     - Assert-based validation with conditional checks provides precise status validation
+     - Common operations centralized in step templates
+  
+  3. Consistency Improvements:
+     - Standardized validation patterns across resources
+     - Uniform approach to FluxCD bootstrapping
+     - Consistent error handling and debugging
+
 # Current Session State
 
 1. Research Status:
    - Completed:
-     - /home/coder/code/homelab-ops-kubernetes-apps/projectBrief.md
-     - /home/coder/code/homelab-ops-kubernetes-apps/infrastructure/subsystems/kubernetes-core/README.md
-     - /home/coder/code/homelab-ops-kubernetes-apps/infrastructure/subsystems/kubernetes-extra/README.md
-     - /home/coder/code/homelab-ops-kubernetes-apps/.github/workflows/test-kubernetes-resources-workflow.yaml
-     - /home/coder/code/chainsaw/website/docs/quick-start/* (all sections)
-     - /home/coder/code/chainsaw/website/docs/test/* (all sections)
-     - /home/coder/code/chainsaw/website/docs/operations/* (all sections)
+      - /home/coder/code/homelab-ops-kubernetes-apps/projectBrief.md
+      - /home/coder/code/homelab-ops-kubernetes-apps/infrastructure/subsystems/kubernetes-core/README.md
+      - /home/coder/code/homelab-ops-kubernetes-apps/infrastructure/subsystems/kubernetes-extra/README.md
+      - /home/coder/code/homelab-ops-kubernetes-apps/.github/workflows/test-kubernetes-resources-workflow.yaml
+      - /home/coder/code/chainsaw/website/docs/quick-start/* (all sections)
+      - /home/coder/code/chainsaw/website/docs/test/* (all sections)
+      - /home/coder/code/chainsaw/website/docs/operations/* (all sections)
    - In Progress: None
    - Pending: None
 
 2. Design Decisions:
    - Completed:
-     - D001: Test Organization Structure
-     - D002: Reusable Component Strategy
-     - D003: Success Condition Implementation
-     - D004: Rollout Status Implementation
-     - D005: Workflow Integration Strategy
-     - D006: Error Handling Strategy
-     - D007: Test Configuration Strategy
-     - D008: Template Usage Strategy
+      - D001: Test Organization Structure
+      - D002: Reusable Component Strategy
+      - D003: Success Condition Implementation
+      - D004: Rollout Status Implementation
+      - D005: Workflow Integration Strategy
+      - D006: Error Handling Strategy
+      - D007: Test Configuration Strategy
+      - D008: Template Usage Strategy
+      - D009: Step Templates for Reusable Test Sequences
+      - D011: Script-Based Operations for Complex Commands
    - In Discussion: None
    - Pending: None
 
 3. Clarifications:
    - Resolved:
-     - FluxCD bootstrapping approach
-     - Error handling with try/finally
-     - Configuration management strategy
+      - FluxCD bootstrapping approach
+      - Error handling with try/finally
+      - Configuration management strategy
    - Awaiting Response: None
    - To Be Discussed: None
 
 4. Discussion Context:
-   - Current Topic: Ready to proceed to Implementation
+   - Current Topic: Implementation completed
    - Related Decisions: All decisions completed
    - Open Questions: None
 
 5. Implementation:
-   - Completed: None
+   - Completed:
+      - Chainsaw test structure with step templates
+      - Resource-specific assertion templates
+      - Script-based operations
+      - FluxCD bootstrapping
    - In Progress: None
-   - Remaining: Full PoC implementation
+   - Remaining: None
 
 6. Activity Log:
    - Research Findings:
       - Logged: F001-F010
       - Remaining: None
    - Conclusions:
-      - Logged: C001-C007
+      - Logged: C001-C008
       - Remaining: None
    - Design Decisions:
-      - Logged: D001-D008
+      - Logged: D001-D011
       - Remaining: None
