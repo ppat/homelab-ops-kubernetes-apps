@@ -22,6 +22,7 @@ spec:
     - description: Reconcile kustomization/infra-kubernetes-core
       script:
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization  --resource-name=infra-kubernetes-core --timeout=3m
+        timeout: 3m
     - description: Assert configmap/coredns-custom
       assert:
         resource:
@@ -59,6 +60,7 @@ spec:
     - description: Reconcile infra-kubernetes-extra
       script:
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-kubernetes-extra --timeout=3m
+        timeout: 3m
     - description: Assert deployment/node-feature-discovery-master
       assert:
         bindings:
