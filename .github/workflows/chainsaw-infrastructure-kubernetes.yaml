@@ -76,18 +76,13 @@ jobs:
           GIT_BRANCH="${GIT_REF}"
         fi
 
-        cat ./ci/test/infra-kubernetes/values-ci.yaml - <<EOF > /tmp/values-ci.yaml
-
-        # Git configuration (from CI)
+        cat > /tmp/values-ci.yaml <<EOF
         git:
           url: '${GIT_URL}'
           branch: '${GIT_BRANCH}'
         EOF
 
         cat /tmp/values-ci.yaml
-        cat ./ci/test/chainsaw/.chainsaw.yaml
-        ls -al ./ci/test/infra-kubernetes
-        echo
         
         # Run tests with combined values
         set -x
@@ -95,12 +90,3 @@ jobs:
           --config ./ci/test/chainsaw/.chainsaw.yaml \
           --values /tmp/values-ci.yaml \
           --fail-fast
-
-    - name: Show Status
-      if: always()
-      run: |
-        echo "-----------------------------------------------------------------------"
-        flux get all --all-namespaces
-        echo "-----------------------------------------------------------------------"
-        kubectl get -A crd,cm,secret,po,svc,ing,deploy,ds,sts,pv,pvc,es,cert
-        echo "-----------------------------------------------------------------------"

@@ -3,8 +3,8 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: ($name)              # e.g., example
-  namespace: ($namespace)     # e.g., default
+  name: ($name)
+  namespace: ($namespace)
 status:
   # All replicas should be ready and current
   (replicas == readyReplicas): true

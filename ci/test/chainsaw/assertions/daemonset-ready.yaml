@@ -3,8 +3,8 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: ($name)              # e.g., node-feature-discovery-worker
-  namespace: ($namespace)     # e.g., kube-system
+  name: ($name)
+  namespace: ($namespace)
 status:
   # All desired pods should be ready and available
   (numberReady == desiredNumberScheduled): true

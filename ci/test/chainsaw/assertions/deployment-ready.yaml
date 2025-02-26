@@ -3,8 +3,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ($deployment_name)
-  namespace: ($deployment_namespace)
+  name: ($name)
+  namespace: ($namespace)
 status:
   # All replicas should be ready and available
   (replicas == readyReplicas): true

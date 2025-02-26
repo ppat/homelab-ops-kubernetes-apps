@@ -21,4 +21,13 @@ spec:
   # Global error handlers
   error:
     catch:
-    - events: {}
+    - events:
+        namespace: '*'
+    - script:
+        content: |
+          echo -----------------------------------------------------------------------
+          flux get all --all-namespaces
+          echo -----------------------------------------------------------------------
+          kubectl get -A crd,cm,secret,po,svc,ing,deploy,ds,sts,pv,pvc,es,cert
+          echo -----------------------------------------------------------------------
+          echo "All done!"        

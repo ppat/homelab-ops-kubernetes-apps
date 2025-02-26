@@ -5,9 +5,9 @@ kind: Test
 metadata:
   name: infra-kubernetes
 spec:
-  # bindings:
-  # - name: test_path
-  #   value: ./ci/test/infra-kubernetes
+  bindings:
+  - name: namespace
+    value: kube-system
   steps:
   - name: Bootstrap FluxCD
     use:
@@ -33,10 +33,8 @@ spec:
     - description: Assert deployment/coredns
       assert:
         bindings:
-        - name: deployment_name
+        - name: name
           value: coredns
-        - name: deployment_namespace
-          value: kube-system
         file: ../chainsaw/assertions/deployment-ready.yaml
     - description: Assert ingress/kubernetes-api
       assert:
@@ -46,7 +44,7 @@ spec:
           metadata:
             name: kubernetes-api
             namespace: default
-    finally:
+    catch:
     - describe:
         apiVersion: apps/v1
         kind: Deployment
@@ -63,98 +61,45 @@ spec:
     - description: Reconcile infra-kubernetes-extra
       script:
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-kubernetes-extra --timeout=3m
-    # Wait for NFD components
-    - wait:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: ($values.resources.nfd.master)
-        namespace: ($values.namespaces.core)
-        timeout: 1m
-        for:
-          condition:
-            name: Available
-            value: "true"
-    - assert:
+    - description: Assert deployment/node-feature-discovery-master
+      assert:
         bindings:
-          - name: name
-            value: ($values.resources.nfd.worker)
-          - name: namespace
-            value: ($values.namespaces.core)
-        file: ../chainsaw/templates/rollouts/daemonset.yaml
-    - wait:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: ($values.resources.nfd.gc)
-        namespace: ($values.namespaces.core)
-        timeout: 1m
-        for:
-          condition:
-            name: Available
-            value: "true"
-    # Wait for VPA
-    - wait:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: ($values.resources.vpa.recommender)
-        namespace: ($values.namespaces.core)
-        timeout: 1m
-        for:
-          condition:
-            name: Available
-            value: "true"
-    # Wait for Device Plugins
-    - wait:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: ($values.resources.plugins.operator)
-        namespace: ($values.namespaces.intel)
-        timeout: 1m
-        for:
-          condition:
-            name: Available
-            value: "true"
-    - wait:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: ($values.resources.plugins.gpu)
-        namespace: ($values.namespaces.intel)
-        timeout: 1m
-        for:
-          condition:
-            name: Available
-            value: "true"
-    - assert:
+        - name: name
+          value: node-feature-discovery-master
+        file: ../chainsaw/assertions/deployment-ready.yaml
+    - description: Assert daemonset/node-feature-discovery-worker
+      assert:
         bindings:
-          - name: name
-            value: ($values.resources.plugins.generic)
-          - name: namespace
-            value: ($values.namespaces.core)
-        file: ../chainsaw/templates/rollouts/daemonset.yaml
-    # Wait for Descheduler
-    - wait:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: ($values.resources.descheduler.deployment)
-        namespace: ($values.namespaces.core)
-        timeout: 1m
-        for:
-          condition:
-            name: Available
-            value: "true"
-    finally:
-    # Debug extra issues if failed
+        - name: name
+          value: node-feature-discovery-worker
+        file: ../chainsaw/assertions/daemonset-ready.yaml
+    - description: Assert deployment/node-feature-discovery-gc
+      assert:
+        bindings:
+        - name: name
+          value: node-feature-discovery-gc
+        file: ../chainsaw/assertions/deployment-ready.yaml        
+    - description: Assert deployment/vertical-pod-autoscaler-vpa-recommender
+      assert:
+        bindings:
+        - name: name
+          value: vertical-pod-autoscaler-vpa-recommender
+        file: ../chainsaw/assertions/deployment-ready.yaml        
+    - description: Assert daemonset/generic-device-plugin
+      assert:
+        bindings:
+        - name: name
+          value: generic-device-plugin
+        file: ../chainsaw/assertions/daemonset-ready.yaml
+    - description: Assert deployment/descheduler
+      assert:
+        bindings:
+        - name: name
+          value: descheduler
+        file: ../chainsaw/assertions/deployment-ready.yaml        
+    catch:
     - describe:
         apiVersion: apps/v1
         kind: DaemonSet
-        name: ($values.resources.nfd.worker)
-        namespace: ($values.namespaces.core)
-    - podLogs:
-        name: ($values.resources.nfd.worker)
-        namespace: ($values.namespaces.core)
-    # Clean up git source
-    - delete:
-        ref:
-          apiVersion: source.toolkit.fluxcd.io/v1
-          kind: GitRepository
-          name: test-source
-          namespace: ($values.namespaces.flux)
+        name: generic-device-plugin
+        namespace: kube-system    
