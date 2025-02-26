@@ -53,8 +53,6 @@ spec:
     - podLogs:
         name: coredns
         namespace: kube-system
-    - events:
-        namespace: kube-system
 
   - name: Test infra-kubernetes-extra module
     try:
@@ -85,12 +83,15 @@ spec:
         - name: name
           value: vertical-pod-autoscaler-vpa-recommender
         file: ../chainsaw/assertions/deployment-ready.yaml        
+    - description: Assert daemonset/generic-device-plugin
+      assert:
+        bindings:
+        - name: name
+          value: generic-device-plugin
+        file: ../chainsaw/assertions/daemonset-ready.yaml
     - description: Assert deployment/descheduler
       assert:
         bindings:
         - name: name
           value: descheduler
         file: ../chainsaw/assertions/deployment-ready.yaml        
-    catch:
-    - events:
-        namespace: kube-system
