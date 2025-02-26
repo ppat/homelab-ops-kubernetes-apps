@@ -75,6 +75,7 @@ jobs:
         else
           GIT_BRANCH="${GIT_REF}"
         fi
+        kubectl get sc
 
         cat ./ci/test/infra-kubernetes/values-ci.yaml - <<EOF > /tmp/values-ci.yaml
 
