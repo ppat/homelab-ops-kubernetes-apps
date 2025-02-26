@@ -55,6 +55,7 @@ jobs:
     - name: Setup Chainsaw
       uses: kyverno/action-install-chainsaw@v0.2.12
       with:
+        # renovate: datasource=github-releases depName=kyverno/chainsaw
         release: v0.2.12
 
     - name: Install flux in kind cluster
