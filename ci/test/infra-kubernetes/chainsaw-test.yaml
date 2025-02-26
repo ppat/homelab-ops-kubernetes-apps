@@ -80,14 +80,14 @@ spec:
       wait:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
-        name: test-kustomization
+        name: tsest-kustomization
         namespace: flux-system
         timeout: 1m
         for:
           condition:
             name: Ready
             value: 'true'
-    finally:
+    catch:
     - describe:
         apiVersion: source.toolkit.fluxcd.io/v1
         kind: GitRepository
