@@ -8,6 +8,8 @@ resources:
 - postgres-credentials.yaml
 - home-assistant/
 - nanomq/
+- piper/
+- whisper/
 
 sortOptions:
   order: fifo

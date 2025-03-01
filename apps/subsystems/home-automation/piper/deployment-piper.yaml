@@ -1,0 +1,49 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wyoming-piper
+  namespace: home-automation
+  labels:
+    app.kubernetes.io/name: wyoming-piper
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wyoming-piper
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: wyoming-piper
+    spec:
+      containers:
+      - name: wyoming-piper
+        image: rhasspy/wyoming-piper:1.5.0
+        args: ["--voice", "en_US-lessac-medium"]
+        livenessProbe:
+          tcpSocket:
+            port: 10200
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        ports:
+        - containerPort: 10200
+        readinessProbe:
+          tcpSocket:
+            port: 10200
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: dev-shm
+          mountPath: /dev/shm
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: wyoming-piper-data
+      - name: dev-shm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 256Mi

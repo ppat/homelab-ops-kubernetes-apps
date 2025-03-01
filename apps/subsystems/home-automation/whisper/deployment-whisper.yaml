@@ -1,0 +1,49 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wyoming-whisper
+  namespace: home-automation
+  labels:
+    app.kubernetes.io/name: wyoming-whisper
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wyoming-whisper
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: wyoming-whisper
+    spec:
+      containers:
+      - name: wyoming-whisper
+        image: rhasspy/wyoming-whisper:2.4.0
+        args: ["--model", "medium-int8"]
+        livenessProbe:
+          tcpSocket:
+            port: 10300
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        ports:
+        - containerPort: 10300
+        readinessProbe:
+          tcpSocket:
+            port: 10300
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: dev-shm
+          mountPath: /dev/shm
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: wyoming-whisper-data
+      - name: dev-shm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 256Mi
