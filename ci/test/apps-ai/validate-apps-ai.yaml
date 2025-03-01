@@ -41,14 +41,8 @@ spec:
       kind: Deployment
       name: ollama
       namespace: ai
-  - podLogs:
-      name: ollama
-      namespace: ai
   - describe:
       apiVersion: apps/v1
       kind: statefulset
-      name: open-webui
-      namespace: ai
-  - podLogs:
       name: open-webui
       namespace: ai
