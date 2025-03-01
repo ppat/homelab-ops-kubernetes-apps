@@ -6,3 +6,5 @@ resources:
 - bitwarden.yaml
 - coder.yaml
 - harbor.yaml
+- ollama.yaml
+- openwebui.yaml
