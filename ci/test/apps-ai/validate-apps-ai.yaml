@@ -1,0 +1,44 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-apps-ai
+spec:
+  bindings:
+  - name: namespace
+    value: ai
+  try:
+  - description: Reconcile kustomization/apps-ai
+    script:
+      # yamllint disable-line rule:line-length
+      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-ai --timeout=3m
+      timeout: 3m
+  - description: Assert deployment/ollama
+    assert:
+      bindings:
+      - name: name
+        value: ollama
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert statefulset/open-webui
+    assert:
+      bindings:
+      - name: name
+        value: open-webui
+      file: ../chainsaw/assertions/statefulset-ready.yaml
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: ollama
+      namespace: ai
+  - podLogs:
+      name: ollama
+      namespace: ai
+  - describe:
+      apiVersion: apps/v1
+      kind: statefulset
+      name: open-webui
+      namespace: ai
+  - podLogs:
+      name: open-webui
+      namespace: ai
