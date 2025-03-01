@@ -41,7 +41,7 @@ jobs:
         node_image: "kindest/node:v1.31.6@sha256:28b7cbb993dfe093c76641a0c95807637213c9109b761f1d422c2400e22b8e87"
 
     - name: Setup kubectl
-      uses: fluxcd/pkg/actions/kubectl@00d1ceb1c10ac3bcbb8d5793bc3aba176bfaec40
+      uses: fluxcd/pkg/actions/kubectl@ff04927148b1b1407f07f58ffc3bcded59eb7a14
       with:
         # renovate: datasource=github-releases depName=kubernetes/kubernetes
         version: "v1.31.6"
@@ -53,7 +53,7 @@ jobs:
         version: "v2.4.0"
 
     - name: Setup Chainsaw
-      uses: kyverno/action-install-chainsaw@v0.2.12
+      uses: kyverno/action-install-chainsaw@f2b47b97dc889c12702113753d713f01ec268de5 # v0.2.12
       with:
         # renovate: datasource=github-releases depName=kyverno/chainsaw
         release: v0.2.12
