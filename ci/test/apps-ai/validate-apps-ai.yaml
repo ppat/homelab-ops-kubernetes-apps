@@ -1,0 +1,61 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-apps-ai
+spec:
+  bindings:
+  - name: namespace
+    value: ai
+  try:
+  - description: Reconcile kustomization/apps-ai
+    script:
+      # yamllint disable-line rule:line-length
+      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-ai --timeout=3m
+      timeout: 3m
+  - description: Assert deployment/ollama
+    assert:
+      bindings:
+      - name: name
+        value: ollama
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 3m
+  - description: Assert statefulset/open-webui
+    assert:
+      bindings:
+      - name: name
+        value: open-webui
+      file: ../chainsaw/assertions/statefulset-ready.yaml
+  - description: Assert ollama-release
+    assert:
+      bindings:
+      - name: name
+        value: ollama-release
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+  - description: Assert node-feature-discovery-release
+    assert:
+      bindings:
+      - name: name
+        value: openwebui-release
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+  catch:
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: ollama-release
+      namespace: ai
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: openwebui-release
+      namespace: ai
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: ollama
+      namespace: ai
+  - describe:
+      apiVersion: apps/v1
+      kind: statefulset
+      name: open-webui
+      namespace: ai

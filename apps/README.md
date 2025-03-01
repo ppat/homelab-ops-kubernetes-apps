@@ -6,6 +6,7 @@ This directory contains application modules that provide end-user functionality 
 
 | Category | Functional Areas | Module Capabilities |
 |----------|-----------------|-------------------|
+| AI | Language Models<br/>Chat Interfaces<br/>Model Management | [ai](./subsystems/ai):<br/>• Hosts large language models locally through <a href="https://github.com/ollama/ollama" target="_blank">Ollama</a><br/>• Provides web-based chat interface via <a href="https://github.com/open-webui/open-webui" target="_blank">OpenWebUI</a><br/>• Enables model selection and configuration<br/>• Supports conversation history management |
 | Security & Credentials | Password Management<br/>Secrets Storage<br/>Identity Management | [bitwarden](./subsystems/bitwarden):<br/>• Provides <a href="https://bitwarden.com/help/password-manager-overview/" target="_blank">end-to-end encrypted password vault</a> with zero-knowledge architecture<br/>• Enables credential autofill in browsers and mobile apps with browser extensions<br/>• Supports two-factor authentication and secure password generation<br/>• Integrates with enterprise SSO and directory systems |
 | Development Tools | Remote Development<br/>Cloud Workspaces<br/>IDE Support | [coder](./subsystems/coder):<br/>• Creates <a href="https://coder.com/docs/about" target="_blank">cloud-based development environments</a> with any IDE (VS Code, JetBrains, Web)<br/>• Provides server-grade compute resources for faster development<br/>• Enables consistent environments through infrastructure tools (Terraform, Docker)<br/>• Supports secure remote access through HTTPS/SSH |
 | Container Registry | Image Management<br/>Security Scanning<br/>Access Control | [harbor](./subsystems/harbor):<br/>• Stores and manages <a href="https://github.com/goharbor/harbor/blob/main/README.md" target="_blank">container images and Helm charts</a> with role-based access<br/>• Performs vulnerability scanning on container images with policy enforcement<br/>• Enables image signing and content trust through Notary<br/>• Provides automated garbage collection and image cleanup |
@@ -42,6 +43,7 @@ flowchart BT
     subgraph Apps["Application Modules"]
         direction TB
         apps_connection[ ]:::invisible
+        ai[ai]:::apps
         bitwarden[bitwarden]:::apps
         coder[coder]:::apps
         harbor[harbor]:::apps
