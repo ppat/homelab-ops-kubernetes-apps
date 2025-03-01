@@ -33,8 +33,6 @@ spec:
     extraEnv:
     - name: OLLAMA_HOST
       value: "0.0.0.0:11434"
-    - name: OLLAMA_DEBUG
-      value: "${ollama_debug:=0}"
     ingress:
       enabled: true
       annotations:
