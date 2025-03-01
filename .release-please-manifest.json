@@ -19,5 +19,5 @@
   "infrastructure/subsystems/observability-extra": "0.0.10",
   "infrastructure/subsystems/security-core": "0.0.12",
   "infrastructure/subsystems/security-extra": "0.0.2",
-  "infrastructure/subsystems/storage-core": "0.0.10"
+  "infrastructure/subsystems/storage-core": "0.0.11"
 }
