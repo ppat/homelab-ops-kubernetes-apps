@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.0.6...apps-home-automation-v0.0.7) (2025-03-01)
+
+
+### ✨ Features
+
+* **apps-home-automation:** add wyoming piper + whisper to enable speech-to-text and text-to-speech in home-assistant ([#868](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/868)) ([b40b722](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b40b722317b93fcad98f7aae9b7b24e3f974e429))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-home-automation:** update digest ghcr.io/onedr0p/home-assistant (0e6dfed -&gt; 3ffef76) ([#847](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/847)) ([0f88cd0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0f88cd03a514543ef76454bc627df3beb743b1a9))
+* **apps-home-automation:** update digest ghcr.io/onedr0p/home-assistant (3ffef76 -&gt; 595ced2) ([#863](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/863)) ([86fd7e1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/86fd7e154cedab3b9a6c117805183ccf4a2c073f))
+
 ## [0.0.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.0.5...apps-home-automation-v0.0.6) (2025-02-23)
 
 
