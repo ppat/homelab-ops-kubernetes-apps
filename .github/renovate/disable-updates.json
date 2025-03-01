@@ -48,6 +48,13 @@
         "pin",
         "pinDigest"
       ]
+    },
+    {
+      "description": "do not update pihole until blocky trial is done",
+      "enabled": false,
+      "matchPackageNames": [
+        "pihole/pihole"
+      ]
     }
   ]
 }
