@@ -1,5 +1,5 @@
 {
-  "apps/helm-repositories": "0.0.2",
+  "apps/helm-repositories": "0.0.3",
   "apps/subsystems/ai": "0.0.1",
   "apps/subsystems/bitwarden": "0.0.1",
   "apps/subsystems/coder": "0.0.13",

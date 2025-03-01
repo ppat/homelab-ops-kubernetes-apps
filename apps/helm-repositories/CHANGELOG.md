@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-helm-repositories-v0.0.2...apps-helm-repositories-v0.0.3) (2025-03-01)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** move helm repositories for apps-ai into apps-helm-repositories + add release-please config ([#874](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/874)) ([278aae5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/278aae5cf816933a699684fa8281ae444d0965b8))
+
 ## [0.0.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-helm-repositories-v0.0.1...apps-helm-repositories-v0.0.2) (2025-01-10)
 
 
