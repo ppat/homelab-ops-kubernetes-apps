@@ -9,17 +9,12 @@ spec:
     use:
       template: ../chainsaw/steps/bootstrap-flux.yaml
 
-  - name: Apply infra-kubernetes modules
+  - name: Apply apps-ai module
     try:
     - description: Apply apps-ai
       apply:
         file: ./apps-ai.yaml
     catch:
-    - describe:
-        apiVersion: kustomize.toolkit.fluxcd.io/v1
-        kind: Kustomization
-        name: apps-ai
-        namespace: flux-system
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization

@@ -54,10 +54,3 @@ spec:
     persistentVolume:
       enabled: true
       existingClaim: ollama
-    resources:
-      requests:
-        memory: 8Gi
-        cpu: 4000m
-      limits:
-        memory: 32Gi
-        cpu: 8000m
