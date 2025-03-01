@@ -22,6 +22,12 @@
       "component": "apps-helm-repositories",
       "extra-label": "pr-type:release,subsystem:apps-helm-repositories"
     },
+    "apps/subsystems/ai": {
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "component": "apps-ai",
+      "extra-label": "pr-type:release,subsystem:apps-ai"
+    },
     "apps/subsystems/bitwarden": {
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
