@@ -36,6 +36,7 @@ module.exports = {
         '',
         'dev-tools',
         'github-actions',
+        'kubernetes-api',
         'memory-bank',
         'renovate',
         'release',
