@@ -247,6 +247,7 @@ flowchart TB
         clusterops-extra[clusterops-extra]:::extra
         security-extra[security-extra]:::extra
         networking-extra[networking-extra]:::extra
+        observability-extra[observability-extra]:::core
     end
 
     %% Core Dependencies
@@ -257,13 +258,18 @@ flowchart TB
     clusterops-extra --> clusterops-core
     security-extra --> security-core & storage-core & database-core
     networking-extra --> security-core & storage-core & networking-core
+    observability-extra --> observability-core
+    kubernetes-extra --> kubernetes-core
 
     subgraph Apps["Applications"]
-        direction LR
-        apps-downloaders[downloaders]:::apps
-        apps-media[media]:::apps
+        direction TB
+        apps-ai[ai]:::apps
+        apps-bitwarden[bitwarden]:::apps
         apps-coder[coder]:::apps
+        apps-downloaders[downloaders]:::apps
+        apps-harbor[harbor]:::apps
         apps-home-automation[home-automation]:::apps
+        apps-media[media]:::apps
     end
 
     %% Main dependency
@@ -510,7 +516,7 @@ flowchart LR
         L1[Pre-commit Hooks]
     end
 
-    subgraph pr [Pull Request Checks]
+    subgraph static [Static Analysis]
         direction TB
         subgraph resource [Resource Validation]
             R1[Kubeconform]
@@ -536,6 +542,7 @@ flowchart LR
     C --> workflow
     C --> config
     C --> syntax
+    static --> M
 
     note[Release process handled separately
     via release-please]
@@ -544,22 +551,22 @@ flowchart LR
 ### Version Management
 
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph updates [Version Updates]
-        direction TB
+        direction LR
         R[Renovate Bot] --> PR1[Version Upgrade PR]
         DEV[Developer] --> PR2[Feature PR]
     end
 
     subgraph validation [Validation]
-        direction TB
+        direction LR
         T1[Module Tests]
         T2[Pre-commit Checks]
         T3[CI Validation]
     end
 
     subgraph release [Release Process]
-        direction TB
+        direction LR
         RP[Release-please PR]
         RM[Land Release PR]
         CL[Changelog Update]
@@ -578,9 +585,6 @@ flowchart LR
     M --> RP --> RM
     RM --> CL --> TAG
 
-    style updates fill:#d1fae5
-    style validation fill:#dbeafe
-    style release fill:#fee2e2
 ```
 
 #### Automated Updates
