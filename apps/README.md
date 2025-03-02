@@ -42,24 +42,22 @@ flowchart BT
     %% Apps Layer with visible border
     subgraph Apps["Application Modules"]
         direction TB
-        apps_connection[ ]:::invisible
+        coder[coder]:::apps
+        downloaders[downloaders]:::apps
+        home-automation[home-automation]:::apps
         ai[ai]:::apps
         bitwarden[bitwarden]:::apps
-        coder[coder]:::apps
         harbor[harbor]:::apps
-        home-automation[home-automation]:::apps
         media[media]:::apps
-        downloaders[downloaders]:::apps
     end
     class Apps appbox
 
     %% Universal Dependencies (every app) with thicker arrow from connection point
-    apps_connection ====> UniversalDeps
+    Apps ====> UniversalDeps
 
     %% Specific Database Dependencies
     coder --> database
     downloaders --> database
-    harbor --> database
     home-automation --> database
 ```
 
