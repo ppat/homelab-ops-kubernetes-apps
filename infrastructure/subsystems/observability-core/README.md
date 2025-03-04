@@ -185,4 +185,3 @@ flowchart TB
 - [security-core](../security-core) (for TLS certificates)
 - [storage-core](../storage-core) (for persistent storage)
 - [networking-core](../networking-core) (for ingress)
-

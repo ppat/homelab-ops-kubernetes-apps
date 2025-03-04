@@ -14,16 +14,22 @@ repos:
   - id: check-shebang-scripts-are-executable
   - id: detect-private-key
   - id: end-of-file-fixer
+    exclude: ^\.static/images/.*$
   - id: forbid-new-submodules
   - id: mixed-line-ending
     args: [--fix=lf]
+    exclude: ^\.static/images/.*$
   - id: trailing-whitespace
+    exclude: ^\.static/images/.*$
 - repo: https://github.com/sirosen/texthooks
   rev: 0.6.8
   hooks:
   - id: fix-smartquotes
+    exclude: ^\.static/images/.*$
   - id: fix-ligatures
+    exclude: ^\.static/images/.*$
   - id: fix-spaces
+    exclude: ^\.static/images/.*$
 - repo: https://github.com/adrienverge/yamllint.git
   rev: v1.35.1
   hooks:
