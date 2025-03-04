@@ -4,7 +4,7 @@ Self-hosted development environment platform enabling secure, reproducible, and 
 
 ## Quick Links
 
-- [Coder Documentation](https://github.com/coder/coder)
+<a href="https://coder.com/docs/about" target="_blank"><img src="../../../.static/images/logos/coder.svg" width="32" height="32" alt="Coder"></a>
 
 ## Overview
 

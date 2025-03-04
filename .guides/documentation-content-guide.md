@@ -19,14 +19,18 @@ Purpose: Document a specific module's capabilities and boundaries.
    - Focus on role and capabilities
 
 2. Quick Links
-   Format: Bulleted list with markdown links and descriptions
+   Format: Image-based links with logos
    Required Content:
-   - Link to official product/project documentation
-   - Link to source code repository (e.g., GitHub)
+   - Application logos as clickable links to official documentation
+   - Each logo sized at 32x32 pixels
+   - Links configured to open in new tabs with target="_blank"
+   - Alt text containing the application name
+   - Applications sorted alphabetically by name
    Content Constraints:
    - NO links to files within this repository
    - NO links to specific software versions
    - NO links to temporary or unstable URLs
+   - Prefer official websites over GitHub repositories when both are available
 
 3. Overview
    Format: Single paragraph followed by capability groups
@@ -171,12 +175,20 @@ Purpose: Document capabilities and patterns across a collection of related modul
 Purpose: Provide entry point and high-level understanding of the entire project
 
 1. What This Project Provides
-   Format: Two bullet-point groups
+   Format: Two bullet-point groups followed by a comprehensive module table
    Required Content:
    - Infrastructure capabilities (5-6 bullets)
    - End-user applications (5-6 bullets)
    - Action verbs (Deploy, Manage, Configure)
    - Complete the phrase "This platform enables you to..."
+   - Module table with three columns:
+     - Column 1: Module name and link to its readme
+     - Column 2: List of apps within each module (with logos and links to official sites)
+       - Each logo sized at 16x16 pixels
+       - Links configured to open in new tabs with target="_blank"
+       - Alt text containing the application name
+     - Column 3: Short description of module capabilities in bullet point format
+   - Applications within each module sorted alphabetically by name
    Content Constraints:
    - NO version numbers
    - NO implementation details

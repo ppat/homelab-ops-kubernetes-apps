@@ -4,10 +4,7 @@ This module provides comprehensive monitoring, logging, and visualization capabi
 
 ## Quick Links
 
-- [Prometheus Operator Documentation](https://prometheus-operator.dev/)
-- [Loki Documentation](https://grafana.com/docs/loki/latest/)
-- [Promtail Documentation](https://grafana.com/docs/loki/latest/clients/promtail/)
-- [Grafana Documentation](https://grafana.com/docs/grafana/latest/)
+ <a href="https://grafana.com/" target="_blank"><img src="../../../.static/images/logos/grafana.svg" width="32" height="32" alt="Grafana"></a> <a href="https://grafana.com/oss/loki/" target="_blank"><img src="../../../.static/images/logos/loki.svg" width="32" height="32" alt="Loki"></a> <a href="https://prometheus.io/" target="_blank"><img src="../../../.static/images/logos/prometheus.svg" width="32" height="32" alt="Prometheus"></a>
 
 ## Overview
 
@@ -188,3 +185,4 @@ flowchart TB
 - [security-core](../security-core) (for TLS certificates)
 - [storage-core](../storage-core) (for persistent storage)
 - [networking-core](../networking-core) (for ingress)
+

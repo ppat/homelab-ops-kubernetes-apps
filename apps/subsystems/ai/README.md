@@ -4,10 +4,7 @@ Self-hosted AI platform providing local large language model capabilities and a 
 
 ## Quick Links
 
-- [Ollama Documentation](https://github.com/ollama/ollama)
-- [Ollama GitHub Repository](https://github.com/ollama/ollama)
-- [OpenWebUI Documentation](https://docs.openwebui.com/)
-- [OpenWebUI GitHub Repository](https://github.com/open-webui/open-webui)
+<a href="https://github.com/ollama/ollama" target="_blank"><img src="../../../.static/images/logos/ollama.png" width="32" height="32" alt="Ollama"></a> <a href="https://github.com/open-webui/open-webui" target="_blank"><img src="../../../.static/images/logos/open-webui.png" width="32" height="32" alt="OpenWebUI"></a>
 
 ## Overview
 

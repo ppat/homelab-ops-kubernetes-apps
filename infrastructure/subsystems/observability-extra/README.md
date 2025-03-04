@@ -4,11 +4,7 @@ This module extends the core observability stack with specialized collectors and
 
 ## Quick Links
 
-- [Kubernetes Event Exporter Documentation](https://github.com/opsgenie/kubernetes-event-exporter)
-- [Node Problem Detector Documentation](https://github.com/kubernetes/node-problem-detector)
-- [SNMP Exporter Documentation](https://github.com/prometheus/snmp_exporter)
-- [Syslog-ng Documentation](https://www.syslog-ng.com/technical-documents/doc/syslog-ng-open-source-edition/3.37/administration-guide/)
-- [UniFi Poller Documentation](https://unpoller.com/)
+<a href="https://github.com/resmoio/kubernetes-event-exporter" target="_blank"><img src="../../../.static/images/logos/resmoio.png" width="32" height="32" alt="Kubernetes Event Exporter"></a> <a href="https://github.com/kubernetes/node-problem-detector" target="_blank"><img src="../../../.static/images/logos/kubernetes.svg" width="32" height="32" alt="Node Problem Detector"></a> <a href="https://github.com/prometheus/snmp_exporter" target="_blank"><img src="../../../.static/images/logos/prometheus.svg" width="32" height="32" alt="SNMP Exporter"></a> <a href="https://www.syslog-ng.com/technical-documents/doc/syslog-ng-open-source-edition/3.37/administration-guide/" target="_blank"><img src="../../../.static/images/logos/syslog-ng.png" width="32" height="32" alt="Syslog-ng"></a> <a href="https://unpoller.com/" target="_blank"><img src="../../../.static/images/logos/unifi-poller.png" width="32" height="32" alt="UniFi Poller"></a>
 
 ## Overview
 

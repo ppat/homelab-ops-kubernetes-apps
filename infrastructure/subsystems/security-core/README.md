@@ -4,9 +4,7 @@ Provides foundational security services that enable cluster services to obtain c
 
 ## Quick Links
 
-- [cert-manager Documentation](https://cert-manager.io/docs/)
-- [external-secrets Documentation](https://external-secrets.io/)
-- [trust-manager Documentation](https://cert-manager.io/docs/trust/trust-manager/)
+<a href="https://cert-manager.io/" target="_blank"><img src="../../../.static/images/logos/cert-manager.svg" width="32" height="32" alt="cert-manager"></a> <a href="https://external-secrets.io/" target="_blank"><img src="../../../.static/images/logos/external-secrets.svg" width="32" height="32" alt="external-secrets"></a> <a href="https://cert-manager.io/docs/trust/trust-manager/" target="_blank"><img src="../../../.static/images/logos/cert-manager.svg" width="32" height="32" alt="trust-manager"></a> <a href="https://bitwarden.com/" target="_blank"><img src="../../../.static/images/logos/bitwarden.svg" width="32" height="32" alt="Bitwarden SDK Server"></a>
 
 ## Overview
 

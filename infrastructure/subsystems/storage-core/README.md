@@ -4,9 +4,7 @@ Provides storage capabilities for the cluster through distributed block storage,
 
 ## Quick Links
 
-- [Longhorn Documentation](https://longhorn.io/docs/)
-- [MinIO Documentation](https://min.io/docs/minio/kubernetes/upstream/)
-- [CSI Driver NFS Documentation](https://github.com/kubernetes-csi/csi-driver-nfs/blob/master/docs/README.md)
+<a href="https://longhorn.io/" target="_blank"><img src="../../../.static/images/logos/longhorn.svg" width="32" height="32" alt="Longhorn"></a> <a href="https://min.io/" target="_blank"><img src="../../../.static/images/logos/minio.svg" width="32" height="32" alt="MinIO"></a> <a href="https://github.com/kubernetes-csi/csi-driver-nfs" target="_blank"><img src="../../../.static/images/logos/nfs-csi-driver.png" width="32" height="32" alt="NFS CSI Driver"></a>
 
 ## Overview
 

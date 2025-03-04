@@ -4,11 +4,7 @@ Home automation platform centered around Home Assistant, enabling integration wi
 
 ## Quick Links
 
-- [Home Assistant Documentation](https://github.com/home-assistant/core)
-- [NanoMQ Documentation](https://github.com/emqx/nanomq)
-- [Code Server Documentation](https://github.com/coder/code-server)
-- [Wyoming Piper Documentation](https://github.com/rhasspy/wyoming-piper)
-- [Wyoming Whisper Documentation](https://github.com/rhasspy/wyoming-faster-whisper)
+<a href="https://www.home-assistant.io/" target="_blank"><img src="../../../.static/images/logos/home-assistant.svg" width="32" height="32" alt="Home Assistant"></a> <a href="https://github.com/emqx/nanomq" target="_blank"><img src="../../../.static/images/logos/nanomq.png" width="32" height="32" alt="NanoMQ"></a> <a href="https://github.com/coder/code-server" target="_blank"><img src="../../../.static/images/logos/vscode.svg" width="32" height="32" alt="Code Server"></a> 
 
 ## Overview
 

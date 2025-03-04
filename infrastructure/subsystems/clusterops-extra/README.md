@@ -4,9 +4,7 @@ This module extends cluster operational capabilities with resource optimization 
 
 ## Quick Links
 
-- [Goldilocks Documentation](https://goldilocks.docs.fairwinds.com/)
-- [Stakater Reloader Documentation](https://github.com/stakater/Reloader)
-- [TF-controller Documentation](https://weaveworks.github.io/tf-controller/)
+<a href="https://github.com/FairwindsOps/goldilocks" target="_blank"><img src="../../../.static/images/logos/goldilocks.svg" width="32" height="32" alt="Goldilocks"></a> <a href="https://github.com/stakater/Reloader" target="_blank"><img src="../../../.static/images/logos/reloader.png" width="32" height="32" alt="Reloader"></a> <a href="https://github.com/weaveworks/tf-controller" target="_blank"><img src="../../../.static/images/logos/terraform.svg" width="32" height="32" alt="Terraform controller"></a>
 
 ## Overview
 

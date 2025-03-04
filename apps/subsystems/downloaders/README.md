@@ -4,12 +4,7 @@ Integrated media management solution enabling automated downloading and organiza
 
 ## Quick Links
 
-- [Radarr Documentation](https://github.com/Radarr/Radarr)
-- [Sonarr Documentation](https://github.com/Sonarr/Sonarr)
-- [Lidarr Documentation](https://github.com/lidarr/Lidarr)
-- [Prowlarr Documentation](https://github.com/Prowlarr/Prowlarr)
-- [SABnzbd Documentation](https://github.com/sabnzbd/sabnzbd)
-- [Recyclarr Documentation](https://github.com/recyclarr/recyclarr)
+<a href="https://github.com/lidarr/Lidarr" target="_blank"><img src="../../../.static/images/logos/lidarr.svg" width="32" height="32" alt="Lidarr"></a> <a href="https://github.com/Prowlarr/Prowlarr" target="_blank"><img src="../../../.static/images/logos/prowlarr.svg" width="32" height="32" alt="Prowlarr"></a> <a href="https://github.com/Radarr/Radarr" target="_blank"><img src="../../../.static/images/logos/radarr.svg" width="32" height="32" alt="Radarr"></a> <a href="https://github.com/recyclarr/recyclarr" target="_blank"><img src="../../../.static/images/logos/recyclarr.png" width="32" height="32" alt="Recyclarr"></a> <a href="https://sabnzbd.org/" target="_blank"><img src="../../../.static/images/logos/sabnzbd.svg" width="32" height="32" alt="SABnzbd"></a> <a href="https://github.com/Sonarr/Sonarr" target="_blank"><img src="../../../.static/images/logos/sonarr.svg" width="32" height="32" alt="Sonarr"></a>
 
 ## Overview
 

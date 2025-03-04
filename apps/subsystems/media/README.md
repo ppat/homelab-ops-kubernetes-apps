@@ -4,10 +4,7 @@ Media streaming and management platform providing multiple specialized services 
 
 ## Quick Links
 
-- [Jellyfin Documentation](https://github.com/jellyfin/jellyfin)
-- [Plex Documentation](https://www.plex.tv/)
-- [FreeTube Documentation](https://github.com/FreeTubeApp/FreeTube)
-- [Tautulli Documentation](https://github.com/Tautulli/Tautulli)
+ <a href="https://freetubeapp.io/" target="_blank"><img src="../../../.static/images/logos/freetube.svg" width="32" height="32" alt="FreeTube"></a> <a href="https://jellyfin.org/" target="_blank"><img src="../../../.static/images/logos/jellyfin.svg" width="32" height="32" alt="Jellyfin"></a> <a href="https://www.plex.tv/" target="_blank"><img src="../../../.static/images/logos/plex.svg" width="32" height="32" alt="Plex"></a> <a href="https://tautulli.com/" target="_blank"><img src="../../../.static/images/logos/tautulli.svg" width="32" height="32" alt="Tautulli"></a>
 
 ## Overview
 
