@@ -4,8 +4,7 @@ This module provides essential cluster operational capabilities, including GitOp
 
 ## Quick Links
 
-- [Flux Documentation](https://fluxcd.io/flux/)
-- [System Upgrade Controller Documentation](https://github.com/rancher/system-upgrade-controller)
+<a href="https://fluxcd.io/" target="_blank"><img src="../../../.static/images/logos/fluxcd.png" width="32" height="32" alt="Flux CD"></a> <a href="https://github.com/rancher/system-upgrade-controller" target="_blank"><img src="../../../.static/images/logos/rancher.svg" width="32" height="32" alt="system-upgrade-controller"></a>
 
 ## Overview
 

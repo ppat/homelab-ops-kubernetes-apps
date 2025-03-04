@@ -4,9 +4,7 @@ This module provides foundational networking capabilities for the cluster, enabl
 
 ## Quick Links
 
-- [MetalLB Documentation](https://metallb.universe.tf/)
-- [ExternalDNS Documentation](https://github.com/kubernetes-sigs/external-dns)
-- [Traefik Documentation](https://doc.traefik.io/traefik/)
+<a href="https://github.com/kubernetes-sigs/external-dns" target="_blank"><img src="../../../.static/images/logos/kubernetes.svg" width="32" height="32" alt="ExternalDNS"></a> <a href="https://metallb.universe.tf/" target="_blank"><img src="../../../.static/images/logos/metallb.png" width="32" height="32" alt="MetalLB"></a> <a href="https://traefik.io/" target="_blank"><img src="../../../.static/images/logos/traefik.svg" width="32" height="32" alt="Traefik"></a>
 
 ## Overview
 

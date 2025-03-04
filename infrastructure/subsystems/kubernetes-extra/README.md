@@ -4,10 +4,7 @@ This module extends Kubernetes with advanced operational capabilities: hardware 
 
 ## Quick Links
 
-- [Node Feature Discovery Documentation](https://kubernetes-sigs.github.io/node-feature-discovery/)
-- [Vertical Pod Autoscaler Documentation](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)
-- [Intel Device Plugins Documentation](https://github.com/intel/intel-device-plugins-for-kubernetes)
-- [Descheduler Documentation](https://github.com/kubernetes-sigs/descheduler)
+<a href="https://github.com/kubernetes-sigs/descheduler" target="_blank"><img src="../../../.static/images/logos/kubernetes.svg" width="32" height="32" alt="Descheduler"></a> <a href="https://github.com/intel/intel-device-plugins-for-kubernetes" target="_blank"><img src="../../../.static/images/logos/intel.png" width="32" height="32" alt="Intel Device Plugins"></a> <a href="https://kubernetes-sigs.github.io/node-feature-discovery/" target="_blank"><img src="../../../.static/images/logos/kubernetes.svg" width="32" height="32" alt="Node Feature Discovery"></a> <a href="https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler" target="_blank"><img src="../../../.static/images/logos/kubernetes.svg" width="32" height="32" alt="Vertical Pod Autoscaler"></a>
 
 ## Overview
 

@@ -6,8 +6,7 @@ Note: This module only installs the operator - actual PostgreSQL clusters are cr
 
 ## Quick Links
 
-- [CloudNativePG Documentation](https://cloudnative-pg.io/documentation/)
-- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+<a href="https://cloudnative-pg.io/" target="_blank"><img src="../../../.static/images/logos/cloudnative-pg.svg" width="32" height="32" alt="CloudNativePG"></a>
 
 ## Overview
 

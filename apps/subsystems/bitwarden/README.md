@@ -4,8 +4,7 @@ Self-hosted password management solution providing secure credential storage and
 
 ## Quick Links
 
-- [Official Documentation](https://bitwarden.com/help/install-on-premise/)
-- [GitHub Repository](https://github.com/bitwarden/server)
+<a href="https://bitwarden.com/help/password-manager-overview/" target="_blank"><img src="../../../.static/images/logos/bitwarden.svg" width="32" height="32" alt="Bitwarden"></a>
 
 ## Overview
 

@@ -7,8 +7,7 @@ This module provides essential Kubernetes infrastructure services that enable cl
 
 ## Quick Links
 
-- [CoreDNS Documentation](https://coredns.io/manual/toc/)
-- [Kubernetes API Documentation](https://kubernetes.io/docs/concepts/overview/kubernetes-api/)
+<a href="https://coredns.io/" target="_blank"><img src="../../../.static/images/logos/coredns.svg" width="32" height="32" alt="CoreDNS"></a> <a href="https://kubernetes.io/docs/concepts/overview/kubernetes-api/" target="_blank"><img src="../../../.static/images/logos/kubernetes.svg" width="32" height="32" alt="Kubernetes API"></a>
 
 ## Overview
 

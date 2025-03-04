@@ -1,8 +1,4 @@
 ---
-# Files to ignore
-ignores:
-- "**/CHANGELOG.md"
-
 config:
   # Default state for all rules
   default: true
@@ -26,6 +22,7 @@ config:
     - br
     - details
     - hr
+    - img
     - summary
     - sup
 
@@ -42,3 +39,7 @@ config:
   # MD048/code-fence-style - Code fence style
   MD048:
     style: backtick
+
+ignores:
+- "**/CHANGELOG.md"
+- ".static/images/**"

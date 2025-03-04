@@ -4,8 +4,7 @@ This module provides advanced identity and access management through Authentik, 
 
 ## Quick Links
 
-- [Authentik Documentation](https://goauthentik.io/docs/)
-- [Forward Auth Documentation](https://goauthentik.io/docs/providers/proxy/forward_auth)
+<a href="https://goauthentik.io/" target="_blank"><img src="../../../.static/images/logos/authentik.svg" width="32" height="32" alt="Authentik"></a>
 
 ## Overview
 

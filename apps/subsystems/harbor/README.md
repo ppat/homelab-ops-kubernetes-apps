@@ -4,8 +4,7 @@ Private container registry platform with built-in security scanning, RBAC, and a
 
 ## Quick Links
 
-- [Official Documentation](https://goharbor.io/)
-- [GitHub Repository](https://github.com/goharbor/harbor)
+<a href="https://github.com/goharbor/harbor" target="_blank"><img src="../../../.static/images/logos/harbor.svg" width="32" height="32" alt="Harbor"></a>
 
 ## Overview
 

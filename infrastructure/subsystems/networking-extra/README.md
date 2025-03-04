@@ -4,11 +4,7 @@ This module provides advanced networking capabilities through DNS filtering, VPN
 
 ## Quick Links
 
-- [Pi-hole Documentation](https://docs.pi-hole.net/)
-- [Cloudflared Documentation](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/tunnel-guide/)
-- [Unbound Documentation](https://nlnetlabs.nl/documentation/unbound/)
-- [Tailscale Documentation](https://tailscale.com/kb/)
-- [UniFi Documentation](https://help.ui.com/hc/en-us/categories/200320654-UniFi-Network)
+<a href="https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/tunnel-guide/" target="_blank"><img src="../../../.static/images/logos/cloudflared.png" width="32" height="32" alt="Cloudflared"></a> <a href="https://pi-hole.net/" target="_blank"><img src="../../../.static/images/logos/pi-hole.svg" width="32" height="32" alt="Pi-hole"></a> <a href="https://tailscale.com/" target="_blank"><img src="../../../.static/images/logos/tailscale.png" width="32" height="32" alt="Tailscale"></a> <a href="https://nlnetlabs.nl/documentation/unbound/" target="_blank"><img src="../../../.static/images/logos/unbound.png" width="32" height="32" alt="Unbound"></a> <a href="https://ui.com/" target="_blank"><img src="../../../.static/images/logos/unifi.svg" width="32" height="32" alt="UniFi"></a>
 
 ## Overview
 
