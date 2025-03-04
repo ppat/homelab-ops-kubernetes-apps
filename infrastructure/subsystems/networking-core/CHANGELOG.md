@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.5.4...infra-networking-core-v0.5.5) (2025-03-04)
+
+
+### 🛠 Improvements
+
+* document module&lt;-&gt;app mapping and use app logos for each app ([#889](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/889)) ([6cb97bb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6cb97bb71826434291de7b067983830376f0d12b))
+
 ## [0.5.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.5.3...infra-networking-core-v0.5.4) (2025-03-01)
 
 
