@@ -26,6 +26,7 @@ config:
     - br
     - details
     - hr
+    - img
     - summary
     - sup
 
