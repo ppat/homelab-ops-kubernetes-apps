@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-helm-repositories-v0.0.3...apps-helm-repositories-v0.1.0) (2025-03-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* **kubernetes-api:** update HelmRepository (source.toolkit.fluxcd.io/v1beta2 -> source.toolkit.fluxcd.io/v1) ([#879](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/879))
+
+### ✨ Features
+
+* **kubernetes-api:** update HelmRepository (source.toolkit.fluxcd.io/v1beta2 -&gt; source.toolkit.fluxcd.io/v1) ([#879](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/879)) ([d53b7f4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d53b7f4d3b917f80be37e30e7fc4a25610715a72))
+
 ## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-helm-repositories-v0.0.2...apps-helm-repositories-v0.0.3) (2025-03-01)
 
 
