@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.15](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.14...apps-downloaders-v0.1.15) (2025-03-04)
+
+
+### 🛠 Improvements
+
+* document module&lt;-&gt;app mapping and use app logos for each app ([#889](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/889)) ([6cb97bb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6cb97bb71826434291de7b067983830376f0d12b))
+
 ## [0.1.14](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.13...apps-downloaders-v0.1.14) (2025-03-01)
 
 
