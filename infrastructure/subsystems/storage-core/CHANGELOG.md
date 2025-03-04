@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.0.11...infra-storage-core-v0.0.12) (2025-03-04)
+
+
+### 🛠 Improvements
+
+* document module&lt;-&gt;app mapping and use app logos for each app ([#889](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/889)) ([6cb97bb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6cb97bb71826434291de7b067983830376f0d12b))
+
 ## [0.0.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.0.10...infra-storage-core-v0.0.11) (2025-03-01)
 
 
