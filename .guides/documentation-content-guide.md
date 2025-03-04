@@ -24,7 +24,8 @@ Purpose: Document a specific module's capabilities and boundaries.
    - Application logos as clickable links to official documentation
    - Each logo sized at 32x32 pixels
    - Links configured to open in new tabs with target="_blank"
-   - Alt text containing the application name
+   - Alt text containing just the application name (format: "application-name")
+   - Alt text is required for all images for accessibility and to pass markdown linting
    - Applications sorted alphabetically by name
    Content Constraints:
    - NO links to files within this repository
@@ -186,7 +187,8 @@ Purpose: Provide entry point and high-level understanding of the entire project
      - Column 2: List of apps within each module (with logos and links to official sites)
        - Each logo sized at 16x16 pixels
        - Links configured to open in new tabs with target="_blank"
-       - Alt text containing the application name
+       - Alt text containing just the application name (format: "application-name")
+       - Alt text is required for all images for accessibility and to pass markdown linting
      - Column 3: Short description of module capabilities in bullet point format
    - Applications within each module sorted alphabetically by name
    Content Constraints:
