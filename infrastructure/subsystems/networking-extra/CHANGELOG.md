@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.1.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.7...infra-networking-extra-v0.1.8) (2025-03-07)
+
+
+### 🛠 Improvements
+
+* create initial documentation ([#833](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/833)) ([e5b84c0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e5b84c03920d34e3055bea987b465e04092af030))
+* document module&lt;-&gt;app mapping and use app logos for each app ([#889](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/889)) ([6cb97bb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6cb97bb71826434291de7b067983830376f0d12b))
+
+
+### ✨ Features
+
+* **infra-networking-extra:** update ghcr.io/fluxcd/flux-cli (v2.4.0 -&gt; v2.5.0) ([#821](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/821)) ([08c8cd5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/08c8cd583c806a123cb6f2787a5412f4229bf344))
+* **infra-networking-extra:** update visibilityspots/cloudflared (v2025.1.1 -&gt; v2025.2.0) ([#815](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/815)) ([393b8da](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/393b8daf3f06d38c297f38d7fcfc9385799f11a3))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update ghcr.io/fluxcd/flux-cli (v2.5.0 -&gt; v2.5.1) ([#852](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/852)) ([b29db66](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b29db66480e8bfbd9ecb054f527cc50619884440))
+* **infra-networking-extra:** update tailscale-operator (1.80.0 -&gt; 1.80.3) ([#905](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/905)) ([523a371](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/523a371f3f48317fde3d5070d44e414759cf524f))
+* **infra-networking-extra:** update visibilityspots/cloudflared (v2025.2.0 -&gt; v2025.2.1) ([#882](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/882)) ([27c89ee](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/27c89ee78e99253fe3ccbd2f8c5931383e51c9a1))
+
 ## [0.1.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.6...infra-networking-extra-v0.1.7) (2025-02-13)
 
 
