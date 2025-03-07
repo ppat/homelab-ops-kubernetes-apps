@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-extra-v0.1.5...infra-clusterops-extra-v0.1.6) (2025-03-07)
+
+
+### 🛠 Improvements
+
+* create initial documentation ([#833](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/833)) ([e5b84c0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e5b84c03920d34e3055bea987b465e04092af030))
+* document module&lt;-&gt;app mapping and use app logos for each app ([#889](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/889)) ([6cb97bb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6cb97bb71826434291de7b067983830376f0d12b))
+
+
+### ✨ Features
+
+* **infra-clusterops-extra:** update reloader (1.2.1 -&gt; 1.3.0) ([#846](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/846)) ([b070555](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b070555279d4603b20049950b581003fe5cdc38d))
+
 ## [0.1.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-extra-v0.1.4...infra-clusterops-extra-v0.1.5) (2025-02-13)
 
 

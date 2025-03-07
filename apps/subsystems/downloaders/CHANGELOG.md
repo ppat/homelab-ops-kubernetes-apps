@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.15](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.14...apps-downloaders-v0.1.15) (2025-03-07)
+
+
+### 🛠 Improvements
+
+* document module&lt;-&gt;app mapping and use app logos for each app ([#889](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/889)) ([6cb97bb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6cb97bb71826434291de7b067983830376f0d12b))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-downloaders:** update digest ghcr.io/linuxserver/bazarr (6e901cc -&gt; 36f4ba6) ([#896](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/896)) ([26688ea](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/26688ea3b12292608b34a7abb0375aee8971d551))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/lidarr (f6cfa62 -&gt; 66514ac) ([#901](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/901)) ([aa5b68d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/aa5b68daba3ed997b81e3f29a76a2dc0b78200c5))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sabnzbd (d5f659a -&gt; c74f6a8) ([#907](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/907)) ([2ed62b1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2ed62b1ee12edb7e3a90568fdbd1e981bb7b7f34))
+
 ## [0.1.14](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.13...apps-downloaders-v0.1.14) (2025-03-01)
 
 
