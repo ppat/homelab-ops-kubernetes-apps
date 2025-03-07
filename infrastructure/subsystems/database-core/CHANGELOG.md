@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.0.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.0.4...infra-database-core-v0.0.5) (2025-03-07)
+
+
+### 🛠 Improvements
+
+* create initial documentation ([#833](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/833)) ([e5b84c0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e5b84c03920d34e3055bea987b465e04092af030))
+* document module&lt;-&gt;app mapping and use app logos for each app ([#889](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/889)) ([6cb97bb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6cb97bb71826434291de7b067983830376f0d12b))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-database-core:** update cloudnative-pg (0.23.0 -&gt; 0.23.1) ([#903](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/903)) ([d068d73](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d068d731359ef3b4b71eec5ae297a7241f9a1bf0))
+* **infra-database-core:** update cloudnative-pg (0.23.1 -&gt; 0.23.2) ([#909](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/909)) ([f6e2631](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f6e26314171bbd272aea959ca5d0a9365a0a1414))
+
 ## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.0.3...infra-database-core-v0.0.4) (2025-01-19)
 
 
