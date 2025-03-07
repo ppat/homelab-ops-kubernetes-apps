@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.5.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.5.3...infra-observability-core-v0.5.4) (2025-03-07)
+
+
+### 🛠 Improvements
+
+* document module&lt;-&gt;app mapping and use app logos for each app ([#889](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/889)) ([6cb97bb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6cb97bb71826434291de7b067983830376f0d12b))
+
+
+### ✨ Features
+
+* **infra-observability-core:** update kube-prometheus-stack (69.5.2 -&gt; 69.7.2) ([#900](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/900)) ([635b0ea](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/635b0ea4e686fa8a4ee2f369d0a1c904d59f22d6))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** update kube-prometheus-stack (69.7.2 -&gt; 69.7.3) ([#910](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/910)) ([1da64c1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1da64c151202d4ef58aa761a44e4b175b6ac3e99))
+* **infra-observability-core:** update kube-prometheus-stack (69.7.3 -&gt; 69.7.4) ([#911](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/911)) ([7a190d5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7a190d5c351eb53ec9f1907c64dc30447fdff623))
+
 ## [0.5.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.5.2...infra-observability-core-v0.5.3) (2025-03-01)
 
 
