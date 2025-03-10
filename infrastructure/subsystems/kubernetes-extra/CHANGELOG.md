@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.14](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.13...infra-kubernetes-extra-v0.0.14) (2025-03-10)
+
+
+### 🛠 Improvements
+
+* document module&lt;-&gt;app mapping and use app logos for each app ([#889](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/889)) ([6cb97bb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6cb97bb71826434291de7b067983830376f0d12b))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-kubernetes-extra:** update digest squat/generic-device-plugin (ba6f0b4 -&gt; 12fec77) ([#913](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/913)) ([eb166d9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/eb166d9ae26cbca1b949493c59525a78adcffe4a))
+
 ## [0.0.13](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.12...infra-kubernetes-extra-v0.0.13) (2025-02-26)
 
 
