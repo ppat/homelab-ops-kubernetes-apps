@@ -16,11 +16,14 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
 
+permissions: {}
+
 jobs:
   release:
     name: release
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    environment: release
     steps:
     - name: Generate github app token for renovate
       uses: actions/create-github-app-token@0d564482f06ca65fa9e77e2510873638c82206f2 # v1
