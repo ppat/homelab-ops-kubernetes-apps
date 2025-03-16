@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.14](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.13...apps-coder-v0.0.14) (2025-03-16)
+
+
+### 🛠 Improvements
+
+* create initial documentation ([#833](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/833)) ([e5b84c0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e5b84c03920d34e3055bea987b465e04092af030))
+* document module&lt;-&gt;app mapping and use app logos for each app ([#889](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/889)) ([6cb97bb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6cb97bb71826434291de7b067983830376f0d12b))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-coder:** update coder (2.19.0 -&gt; 2.19.1) ([#915](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/915)) ([673c820](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/673c820faf3f0046fc02eb8a537465c0f4ce5db0))
+
 ## [0.0.13](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.12...apps-coder-v0.0.13) (2025-02-15)
 
 
