@@ -6,7 +6,7 @@
   "apps/subsystems/downloaders": "0.1.15",
   "apps/subsystems/harbor": "0.0.2",
   "apps/subsystems/home-automation": "0.0.8",
-  "apps/subsystems/media": "0.0.13",
+  "apps/subsystems/media": "0.0.14",
   "infrastructure/bootstrap/crds": "0.3.1",
   "infrastructure/helm-repositories": "0.0.6",
   "infrastructure/subsystems/clusterops-core": "0.0.6",
