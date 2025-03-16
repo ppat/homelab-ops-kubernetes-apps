@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.5.5...infra-networking-core-v0.5.6) (2025-03-16)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** update kashalls/external-dns-unifi-webhook (v0.4.2 -&gt; v0.4.3) ([#919](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/919)) ([725f26d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/725f26dc94580ba4767f89f4bc3e4224a1921f79))
+
 ## [0.5.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.5.4...infra-networking-core-v0.5.5) (2025-03-07)
 
 

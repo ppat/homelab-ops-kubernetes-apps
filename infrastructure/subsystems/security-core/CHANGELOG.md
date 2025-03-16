@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.14](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.0.13...infra-security-core-v0.0.14) (2025-03-16)
+
+
+### 🛠 Improvements
+
+* document module&lt;-&gt;app mapping and use app logos for each app ([#889](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/889)) ([6cb97bb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6cb97bb71826434291de7b067983830376f0d12b))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-core:** update external-secrets (0.14.3 -&gt; 0.14.4) ([#937](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/937)) ([7c4752f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7c4752f0d0a3b4bea42aab9933b555ed8becdfde))
+
 ## [0.0.13](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.0.12...infra-security-core-v0.0.13) (2025-03-01)
 
 
