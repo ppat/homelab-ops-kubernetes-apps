@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: openwebui-repository
         namespace: flux-system
-      version: 5.20.0
+      version: 5.21.0
   install:
     createNamespace: false
     remediation:
