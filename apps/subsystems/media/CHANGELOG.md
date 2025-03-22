@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.15](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.14...apps-media-v0.0.15) (2025-03-22)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** update digest busybox (498a000 -&gt; 37f7b37) ([#970](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/970)) ([f1c46d0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f1c46d0fa9466c415fcf798006d4f55d91cf0de9))
+
 ## [0.0.14](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.13...apps-media-v0.0.14) (2025-03-16)
 
 
