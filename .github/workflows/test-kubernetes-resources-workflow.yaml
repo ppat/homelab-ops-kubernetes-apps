@@ -60,14 +60,14 @@ jobs:
       uses: fluxcd/flux2/action@5350425cdcd5fa015337e09fa502153c0275bd4b # v2.4.0
       with:
         # renovate: datasource=github-releases depName=fluxcd/flux2
-        version: "v2.4.0"
+        version: "v2.5.1"
 
     - name: Install flux in kind cluster
       id: install-flux
       shell: bash
       env:
         # renovate: datasource=github-releases depName=fluxcd/flux2
-        FLUX_VERSION: "v2.4.0"
+        FLUX_VERSION: "v2.5.1"
       # yamllint disable-line rule:indentation
       run: |
         flux install \
