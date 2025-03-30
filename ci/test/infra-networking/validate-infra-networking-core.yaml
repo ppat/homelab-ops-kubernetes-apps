@@ -1,0 +1,147 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-infra-networking-core
+spec:
+  try:
+  - description: Reconcile kustomization/infra-networking-core
+    script:
+      # yamllint disable-line rule:line-length
+      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-networking-core --timeout=5m
+      timeout: 5m
+
+  # MetalLB resources
+  - description: Assert deployment/metallb-controller
+    assert:
+      bindings:
+      - name: name
+        value: metallb-controller
+      - name: namespace
+        value: metallb-system
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert daemonset/metallb-speaker
+    assert:
+      bindings:
+      - name: name
+        value: metallb-speaker
+      - name: namespace
+        value: metallb-system
+      file: ../chainsaw/assertions/daemonset-ready.yaml
+  - description: Assert L2Advertisement/l2-advertisement
+    assert:
+      resource:
+        apiVersion: metallb.io/v1beta1
+        kind: L2Advertisement
+        metadata:
+          name: l2-advertisement
+          namespace: metallb-system
+  - description: Assert IPAddressPool/standard-pool
+    assert:
+      resource:
+        apiVersion: metallb.io/v1beta1
+        kind: IPAddressPool
+        metadata:
+          name: standard-pool
+          namespace: metallb-system
+
+  # Traefik resources
+  - description: Assert daemonset/traefik
+    assert:
+      bindings:
+      - name: name
+        value: traefik
+      - name: namespace
+        value: traefik
+      file: ../chainsaw/assertions/daemonset-ready.yaml
+  - description: Assert deployment/whoami
+    assert:
+      bindings:
+      - name: name
+        value: whoami
+      - name: namespace
+        value: traefik
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert service/traefik
+    assert:
+      bindings:
+      - name: name
+        value: traefik
+      - name: namespace
+        value: traefik
+      file: ../chainsaw/assertions/service-loadbalancer-ready.yaml
+  - description: Assert middleware/header-forwarded
+    assert:
+      resource:
+        apiVersion: traefik.io/v1alpha1
+        kind: Middleware
+        metadata:
+          name: header-forwarded
+          namespace: traefik
+  - description: Assert middleware/redirect
+    assert:
+      resource:
+        apiVersion: traefik.io/v1alpha1
+        kind: Middleware
+        metadata:
+          name: redirect
+          namespace: traefik
+  - description: Assert tlsstore/default
+    assert:
+      resource:
+        apiVersion: traefik.io/v1alpha1
+        kind: TLSStore
+        metadata:
+          name: default
+          namespace: traefik
+  - description: Assert tlsoption/default
+    assert:
+      resource:
+        apiVersion: traefik.io/v1alpha1
+        kind: TLSOption
+        metadata:
+          name: default
+          namespace: traefik
+  - description: Assert serverstransport/insecure-skip-verify
+    assert:
+      resource:
+        apiVersion: traefik.io/v1alpha1
+        kind: ServersTransport
+        metadata:
+          name: insecure-skip-verify
+          namespace: traefik
+
+  catch:
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: metallb-release
+      namespace: metallb-system
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: traefik-release
+      namespace: traefik
+
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: metallb-controller
+      namespace: metallb-system
+  - describe:
+      apiVersion: apps/v1
+      kind: DaemonSet
+      name: metallb-speaker
+      namespace: metallb-system
+  - describe:
+      apiVersion: apps/v1
+      kind: DaemonSet
+      name: traefik
+      namespace: traefik
+
+  - podLogs:
+      name: metallb-controller
+      namespace: metallb-system
+  - podLogs:
+      name: traefik
+      namespace: traefik

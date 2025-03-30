@@ -21,7 +21,7 @@ spec:
     name: test-source
     namespace: flux-system
   timeout: 2m0s
-  wait: true
+  wait: false
   patches:
   # patch cert-manager helm values to include dns01RecursiveNameservers config
   # yamllint disable-line rule:indentation
