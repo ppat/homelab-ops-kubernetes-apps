@@ -7,4 +7,4 @@ metadata:
 status:
   # Verify that loadBalancer.ingress exists and has at least one element
   # This ensures the ingress has been assigned an external IP/hostname
-  (length(loadBalancer.ingress) > 0): true
+  (length(loadBalancer.ingress) > `0`): true
