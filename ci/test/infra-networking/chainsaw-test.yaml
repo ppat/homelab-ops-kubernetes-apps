@@ -1,0 +1,38 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: infra-networking
+spec:
+  steps:
+  - name: Bootstrap FluxCD
+    use:
+      template: ../chainsaw/steps/bootstrap-flux.yaml
+
+  - name: Apply infra-networking modules
+    try:
+    - description: Apply infra-networking-core
+      apply:
+        file: ./infra-networking-core.yaml
+    - description: Apply infra-networking-extra
+      apply:
+        file: ./infra-networking-extra.yaml
+    catch:
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: infra-networking-core
+        namespace: flux-system
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: infra-networking-extra
+        namespace: flux-system
+
+  - name: Validate infra-networking-core module
+    use:
+      template: ./validate-infra-networking-core.yaml
+
+  - name: Validate infra-networking-extra module
+    use:
+      template: ./validate-infra-networking-extra.yaml

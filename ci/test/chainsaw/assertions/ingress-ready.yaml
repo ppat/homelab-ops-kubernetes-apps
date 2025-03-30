@@ -1,0 +1,10 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ($name)
+  namespace: ($namespace)
+status:
+  # Verify that loadBalancer.ingress exists and has at least one element
+  # This ensures the ingress has been assigned an external IP/hostname
+  (length(loadBalancer.ingress) > 0): true
