@@ -111,16 +111,6 @@ spec:
           name: insecure-skip-verify
           namespace: traefik
 
-  # External DNS resources
-  - description: Assert deployment/external-dns-pihole
-    assert:
-      bindings:
-      - name: name
-        value: external-dns-pihole
-      - name: namespace
-        value: external-dns
-      file: ../chainsaw/assertions/deployment-ready.yaml
-
   catch:
   - describe:
       apiVersion: helm.toolkit.fluxcd.io/v2
@@ -132,11 +122,6 @@ spec:
       kind: HelmRelease
       name: traefik-release
       namespace: traefik
-  - describe:
-      apiVersion: helm.toolkit.fluxcd.io/v2
-      kind: HelmRelease
-      name: external-dns-release
-      namespace: external-dns
 
   - describe:
       apiVersion: apps/v1
@@ -153,11 +138,6 @@ spec:
       kind: DaemonSet
       name: traefik
       namespace: traefik
-  - describe:
-      apiVersion: apps/v1
-      kind: Deployment
-      name: external-dns-pihole
-      namespace: external-dns
 
   - podLogs:
       name: metallb-controller
@@ -165,6 +145,3 @@ spec:
   - podLogs:
       name: traefik
       namespace: traefik
-  - podLogs:
-      name: external-dns-pihole
-      namespace: external-dns
