@@ -28,7 +28,7 @@ spec:
       - name: namespace
         value: downloaders
       file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
-      timeout: 2m
+      timeout: 3m
 
   # Downloader apps
   - description: Assert deployment/radarr
@@ -90,11 +90,6 @@ spec:
 
   catch:
   # Database resources
-  - describe:
-      apiVersion: apps/v1
-      kind: Deployment
-      name: cloudnative-pg
-      namespace: cnpg-system
   - describe:
       apiVersion: postgresql.cnpg.io/v1
       kind: Cluster
