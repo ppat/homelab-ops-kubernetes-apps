@@ -6,9 +6,8 @@ on:
   pull_request:
     paths:
     - '.github/workflows/test-apps-home-automation.yaml'
-    - '.github/workflows/test-kubernetes-resources-workflow.yaml'
-    - '.github/kind-cluster-single-node.yaml'
-    - 'ci/test/apps-home-automation/**.yaml'
+    - '.github/kind-cluster-multi-node.yaml'
+    - 'ci/test/apps-home-automation/**'
     - 'apps/subsystems/home-automation/**'
     - '!apps/subsystems/home-automation/**.md'
   workflow_dispatch:
@@ -22,59 +21,74 @@ permissions:
 
 jobs:
   test-apps-home-automation:
-    uses: ./.github/workflows/test-kubernetes-resources-workflow.yaml
-    with:
-      test_path: ./ci/test/apps-home-automation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+    - name: Checkout
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup kind cluster
+      uses: helm/kind-action@a1b0e391336a6ee6713a0583f8c6240d70863de3 # v1.12.0
+      with:
+        cluster_name: dev
+        config: ".github/kind-cluster-multi-node.yaml"
+        # renovate: datasource=github-releases depName=kubernetes-sigs/kind
+        version: "v0.27.0"
+        # renovate: datasource=github-releases depName=kubernetes/kubernetes
+        kubectl_version: "v1.32.3"
+        # renovate-kind-image: datasource=docker versioning=docker
+        node_image: "kindest/node:v1.32.3@sha256:b36e76b4ad37b88539ce5e07425f77b29f73a8eaaebf3f1a8bc9c764401d118c"
+
+    - name: Setup kubectl
+      uses: fluxcd/pkg/actions/kubectl@ff04927148b1b1407f07f58ffc3bcded59eb7a14
+      with:
+        # renovate: datasource=github-releases depName=kubernetes/kubernetes
+        version: "v1.32.3"
+
+    - name: Setup flux
+      uses: fluxcd/flux2/action@5350425cdcd5fa015337e09fa502153c0275bd4b # v2.4.0
+      with:
+        # renovate: datasource=github-releases depName=fluxcd/flux2
+        version: "v2.4.0"
+
+    - name: Setup Chainsaw
+      uses: kyverno/action-install-chainsaw@f2b47b97dc889c12702113753d713f01ec268de5 # v0.2.12
+      with:
+        # renovate: datasource=github-releases depName=kyverno/chainsaw
+        release: v0.2.12
+
+    - name: Install flux in kind cluster
+      env:
+        # renovate: datasource=github-releases depName=fluxcd/flux2
+        FLUX_VERSION: "v2.4.0"
+      run: |
+        flux install --version ${FLUX_VERSION} --log-level debug
+
+    - name: Run Chainsaw Tests
+      env:
+        GIT_URL: https://github.com/${{ github.repository }}.git
+        GIT_REF: ${{ github.head_ref || github.ref }}
       # yamllint disable-line rule:indentation
-      reconcile_items: |-
-        - name: infra-database-core
-          kind: kustomization
-          namespace: flux-system
-          timeout: 1m
-        - name: apps-home-automation
-          kind: kustomization
-          namespace: flux-system
-          timeout: 2m
-      # yamllint disable-line rule:indentation
-      success_conditions: |-
-        - resource: deployment/cloudnative-pg
-          namespace: cnpg-system
-          for: condition=available
-          timeout: 1m
-        - resource: cluster.postgresql.cnpg.io/home-automation-db
-          namespace: home-automation
-          for: condition=ready
-          timeout: 3m
-        - resource: deployment/nanomq
-          namespace: home-automation
-          for: condition=available
-          timeout: 1m
-        - resource: deployment/home-assistant
-          namespace: home-automation
-          for: condition=available
-          timeout: 2m
-        - resource: deployment/wyoming-piper
-          namespace: home-automation
-          for: condition=available
-          timeout: 1m
-        - resource: deployment/wyoming-whisper
-          namespace: home-automation
-          for: condition=available
-          timeout: 1m
-      git_url: https://github.com/${{ github.repository }}.git
-      git_ref: ${{ github.head_ref || github.ref }}
-      kind_cluster_config: kind-cluster-multi-node.yaml
-      # yamllint disable-line rule:indentation
-      custom_commands: |-
-        - name: show-hr
-          command: 'kubectl get -n home-automation events --sort-by=.lastTimestamp'
-        - name: desc-nanomq
-          command: 'kubectl describe -n home-automation deployment nanomq'
-        - name: logs-nanomq
-          command: 'kubectl logs -n home-automation deployment/nanomq'
-        - name: desc-home-assistant
-          command: 'kubectl describe -n home-automation deployment home-assistant'
-        - name: get-home-assistant
-          command: 'kubectl get -n home-automation deployment home-assistant -o yaml'
-        - name: logs-home-assistant
-          command: 'kubectl logs -n home-automation deployment/home-assistant'
+      run: |
+        if [[ "${GIT_REF}" == "refs/heads/main" ]]; then
+          GIT_BRANCH="main"
+        else
+          GIT_BRANCH="${GIT_REF}"
+        fi
+
+        cat > /tmp/values-ci.yaml <<EOF
+        git:
+          url: '${GIT_URL}'
+          branch: '${GIT_BRANCH}'
+        EOF
+
+        cat /tmp/values-ci.yaml
+
+        # Run tests with combined values
+        set -x
+        chainsaw test ./ci/test/apps-home-automation \
+          --config ./ci/test/chainsaw/.chainsaw.yaml \
+          --values /tmp/values-ci.yaml \
+          --fail-fast
