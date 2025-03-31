@@ -50,7 +50,7 @@ spec:
     assert:
       bindings:
       - name: name
-        value: reloader-release
+        value: stakater-reloader-release
       - name: namespace
         value: stakater-reloader
       file: ../chainsaw/assertions/helmrelease-ready.yaml
