@@ -1,0 +1,106 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-apps-coder
+spec:
+  try:
+  - description: Reconcile kustomization/apps-coder
+    script:
+      # yamllint disable-line rule:line-length
+      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-coder --timeout=2m
+      timeout: 2m
+
+  # Database resources
+  - description: Assert helmrelease/cloudnative-pg-release
+    assert:
+      bindings:
+      - name: name
+        value: cloudnative-pg-release
+      - name: namespace
+        value: cnpg-system
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+  - description: Assert cluster.postgresql.cnpg.io/downloaders-db
+    assert:
+      bindings:
+      - name: name
+        value: downloaders-db
+      - name: namespace
+        value: downloaders
+      file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
+      timeout: 3m
+
+  # Database resources
+  - description: Assert helmrelease/cloudnative-pg-release
+    assert:
+      bindings:
+      - name: name
+        value: cloudnative-pg-release
+      - name: namespace
+        value: cnpg-system
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+  - description: Assert cluster.postgresql.cnpg.io/downloaders-db
+    assert:
+      bindings:
+      - name: name
+        value: coder-db
+      - name: namespace
+        value: coder
+      file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
+      timeout: 3m
+
+  # Coder resources
+  - description: Assert deployment/coder
+    assert:
+      bindings:
+      - name: name
+        value: coder
+      - name: namespace
+        value: coder
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert helmrelease/coder-release
+    assert:
+      bindings:
+      - name: name
+        value: coder-release
+      - name: namespace
+        value: coder
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+
+  catch:
+  # HelmRelease
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: coder-release
+      namespace: coder
+
+  # Database resources
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: cloudnative-pg
+      namespace: cnpg-system
+  - describe:
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      name: coder-db
+      namespace: coder
+
+  # Coder resources
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: coder
+      namespace: coder
+
+  # Events
+  - describe:
+      apiVersion: v1
+      kind: Event
+      namespace: coder
+
+  # Pod logs
+  - podLogs:
+      name: coder
+      namespace: coder
