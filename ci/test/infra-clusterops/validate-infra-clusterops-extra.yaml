@@ -1,0 +1,129 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-infra-clusterops-extra
+spec:
+  try:
+  - description: Reconcile kustomization/infra-clusterops-extra
+    script:
+      # yamllint disable-line rule:line-length
+      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-clusterops-extra --timeout=2m
+      timeout: 2m
+
+  # Goldilocks resources
+  - description: Assert deployment/goldilocks-controller
+    assert:
+      bindings:
+      - name: name
+        value: goldilocks-controller
+      - name: namespace
+        value: goldilocks
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/goldilocks-dashboard
+    assert:
+      bindings:
+      - name: name
+        value: goldilocks-dashboard
+      - name: namespace
+        value: goldilocks
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert helmrelease/goldilocks-release
+    assert:
+      bindings:
+      - name: name
+        value: goldilocks-release
+      - name: namespace
+        value: goldilocks
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+
+  # Reloader resources
+  - description: Assert deployment/stakater-reloader-reloader
+    assert:
+      bindings:
+      - name: name
+        value: stakater-reloader-reloader
+      - name: namespace
+        value: stakater-reloader
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert helmrelease/reloader-release
+    assert:
+      bindings:
+      - name: name
+        value: stakater-reloader-release
+      - name: namespace
+        value: stakater-reloader
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+
+  # Terraform Controller
+  - description: Assert deployment/tf-controller
+    assert:
+      bindings:
+      - name: name
+        value: tf-controller
+      - name: namespace
+        value: flux-system
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert helmrelease/tf-controller-release
+    assert:
+      bindings:
+      - name: name
+        value: tf-controller-release
+      - name: namespace
+        value: flux-system
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+
+  catch:
+  # HelmRelease resources
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: goldilocks-release
+      namespace: goldilocks
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: reloader-release
+      namespace: stakater-reloader
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: tf-controller-release
+      namespace: flux-system
+
+  # Goldilocks resources
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: goldilocks-controller
+      namespace: goldilocks
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: goldilocks-dashboard
+      namespace: goldilocks
+
+  # Reloader resources
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: stakater-reloader-reloader
+      namespace: stakater-reloader
+
+  # Terraform Controller
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: tf-controller
+      namespace: flux-system
+
+  # Pod logs
+  - podLogs:
+      selector: app.kubernetes.io/name=goldilocks
+      namespace: goldilocks
+  - podLogs:
+      selector: app.kubernetes.io/name=reloader
+      namespace: stakater-reloader
+  - podLogs:
+      name: tf-controller
+      namespace: flux-system
