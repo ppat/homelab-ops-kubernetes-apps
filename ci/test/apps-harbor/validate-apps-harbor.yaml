@@ -79,6 +79,16 @@ spec:
         value: harbor
       file: ../chainsaw/assertions/deployment-ready.yaml
 
+  # Harbor HelmRelease
+  - description: Assert helmrelease/harbor-release
+    assert:
+      bindings:
+      - name: name
+        value: harbor-release
+      - name: namespace
+        value: harbor
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+
   catch:
   # HelmRelease
   - describe:
