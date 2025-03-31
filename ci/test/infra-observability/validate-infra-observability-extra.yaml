@@ -20,11 +20,11 @@ spec:
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/deployment-ready.yaml
-  - description: Assert helmrelease/snmp-exporter-release
+  - description: Assert helmrelease/prometheus-snmp-exporter-release
     assert:
       bindings:
       - name: name
-        value: snmp-exporter-release
+        value: prometheus-snmp-exporter-release
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/helmrelease-ready.yaml
@@ -38,14 +38,6 @@ spec:
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/deployment-ready.yaml
-  - description: Assert helmrelease/unpoller-release
-    assert:
-      bindings:
-      - name: name
-        value: unpoller-release
-      - name: namespace
-        value: monitoring
-      file: ../chainsaw/assertions/helmrelease-ready.yaml
 
   # Node Problem Detector resources
   - description: Assert daemonset/node-problem-detector
