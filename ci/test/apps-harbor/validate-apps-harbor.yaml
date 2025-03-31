@@ -1,0 +1,143 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-apps-harbor
+spec:
+  try:
+  - description: Reconcile kustomization/apps-harbor
+    script:
+      # yamllint disable-line rule:line-length
+      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-harbor --timeout=2m
+      timeout: 2m
+
+  # Harbor StatefulSets
+  - description: Assert statefulset/harbor-database
+    assert:
+      bindings:
+      - name: name
+        value: harbor-database
+      - name: namespace
+        value: harbor
+      file: ../chainsaw/assertions/statefulset-ready.yaml
+  - description: Assert statefulset/harbor-redis
+    assert:
+      bindings:
+      - name: name
+        value: harbor-redis
+      - name: namespace
+        value: harbor
+      file: ../chainsaw/assertions/statefulset-ready.yaml
+  - description: Assert statefulset/harbor-trivy
+    assert:
+      bindings:
+      - name: name
+        value: harbor-trivy
+      - name: namespace
+        value: harbor
+      file: ../chainsaw/assertions/statefulset-ready.yaml
+
+  # Harbor Deployments
+  - description: Assert deployment/harbor-core
+    assert:
+      bindings:
+      - name: name
+        value: harbor-core
+      - name: namespace
+        value: harbor
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/harbor-exporter
+    assert:
+      bindings:
+      - name: name
+        value: harbor-exporter
+      - name: namespace
+        value: harbor
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/harbor-jobservice
+    assert:
+      bindings:
+      - name: name
+        value: harbor-jobservice
+      - name: namespace
+        value: harbor
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/harbor-portal
+    assert:
+      bindings:
+      - name: name
+        value: harbor-portal
+      - name: namespace
+        value: harbor
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/harbor-registry
+    assert:
+      bindings:
+      - name: name
+        value: harbor-registry
+      - name: namespace
+        value: harbor
+      file: ../chainsaw/assertions/deployment-ready.yaml
+
+  catch:
+  # HelmRelease
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: harbor-release
+      namespace: harbor
+
+  # Harbor StatefulSets
+  - describe:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      name: harbor-database
+      namespace: harbor
+  - describe:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      name: harbor-redis
+      namespace: harbor
+  - describe:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      name: harbor-trivy
+      namespace: harbor
+
+  # Harbor Deployments
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: harbor-core
+      namespace: harbor
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: harbor-exporter
+      namespace: harbor
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: harbor-jobservice
+      namespace: harbor
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: harbor-portal
+      namespace: harbor
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: harbor-registry
+      namespace: harbor
+
+  # Events
+  - describe:
+      apiVersion: v1
+      kind: Event
+      namespace: harbor
+
+  # Pod logs
+  - podLogs:
+      selector: app.kubernetes.io/name=harbor
+      namespace: harbor

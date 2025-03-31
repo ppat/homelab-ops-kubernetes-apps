@@ -1,0 +1,26 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: apps-harbor
+spec:
+  steps:
+  - name: Bootstrap FluxCD
+    use:
+      template: ../chainsaw/steps/bootstrap-flux.yaml
+
+  - name: Apply apps-harbor module
+    try:
+    - description: Apply apps-harbor
+      apply:
+        file: ./apps-harbor.yaml
+    catch:
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: apps-harbor
+        namespace: flux-system
+
+  - name: Validate apps-harbor module
+    use:
+      template: ./validate-apps-harbor.yaml
