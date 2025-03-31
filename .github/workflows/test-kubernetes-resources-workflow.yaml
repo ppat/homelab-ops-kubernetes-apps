@@ -8,25 +8,11 @@ on:
       test_path:
         required: true
         type: string
-      reconcile_items:
-        required: true
-        type: string
-      success_conditions:
-        required: true
-        type: string
-      custom_commands:
-        required: false
-        default: ""
-        type: string
-      git_ref:
-        required: true
-        type: string
-      git_url:
-        required: true
-        type: string
+        description: "Path to the Chainsaw test directory"
       kind_cluster_config:
         required: true
         type: string
+        description: "Kind cluster configuration file to use (e.g., kind-cluster-single-node.yaml)"
 
 jobs:
   test:
@@ -62,215 +48,43 @@ jobs:
         # renovate: datasource=github-releases depName=fluxcd/flux2
         version: "v2.4.0"
 
+    - name: Setup Chainsaw
+      uses: kyverno/action-install-chainsaw@f2b47b97dc889c12702113753d713f01ec268de5 # v0.2.12
+      with:
+        # renovate: datasource=github-releases depName=kyverno/chainsaw
+        release: v0.2.12
+
     - name: Install flux in kind cluster
-      id: install-flux
-      shell: bash
       env:
         # renovate: datasource=github-releases depName=fluxcd/flux2
         FLUX_VERSION: "v2.4.0"
-      # yamllint disable-line rule:indentation
       run: |
-        flux install \
-          --version ${FLUX_VERSION} \
-          --log-level debug
+        flux install --version ${FLUX_VERSION} --log-level debug
 
-    - name: Bootstrap flux from git source
-      id: bootstrap-flux
-      shell: bash
+    - name: Run Chainsaw Tests
       env:
-        FLUX_TEST_PATH: ${{ inputs.test_path }}
-        FLUX_GIT_SOURCE: test-source
-        FLUX_GIT_REF: ${{ inputs.git_ref }}
-        FLUX_KUSTOMIZATION: test-kustomization
+        GIT_URL: https://github.com/${{ github.repository }}.git
+        GIT_REF: ${{ github.head_ref || github.ref }}
+        TEST_PATH: ${{ inputs.test_path }}
       # yamllint disable-line rule:indentation
       run: |
-        if [[ "${FLUX_GIT_REF}" == "refs/heads/main" ]]; then
+        if [[ "${GIT_REF}" == "refs/heads/main" ]]; then
           GIT_BRANCH="main"
         else
-          GIT_BRANCH="${FLUX_GIT_REF}"
+          GIT_BRANCH="${GIT_REF}"
         fi
-        echo "Creating git source for branch ${GIT_BRANCH} (ref=${FLUX_GIT_REF})..."
-        flux create source git ${FLUX_GIT_SOURCE} \
-          --url=${{ inputs.git_url }} \
-          --branch=${GIT_BRANCH} \
-          --export |\
-          kubectl apply --server-side -f -
 
-        echo Show git source...
-        flux get source git ${FLUX_GIT_SOURCE}
-
-        echo Wait for git source to be ready...
-        kubectl -n flux-system wait GitRepository/${FLUX_GIT_SOURCE} --for=condition=ready --timeout=1m
-
-        echo Setting up pre-requisites...
-        flux create kustomization pre-requisites \
-          --source=${FLUX_GIT_SOURCE} \
-          --path=./ci/test/pre-requisites
-
-        echo Waiting for pre-requisites to be ready...
-        kubectl -n flux-system wait Kustomization/pre-requisites --for=condition=ready --timeout=1m
-
-        echo Create kustomization for ${FLUX_TEST_PATH}...
-        flux create kustomization ${FLUX_KUSTOMIZATION} \
-          --source=${FLUX_GIT_SOURCE} \
-          --path=${FLUX_TEST_PATH}
-
-        echo Show kustomization...
-        flux get kustomizations ${FLUX_KUSTOMIZATION}
-
-        echo Wait for kustomization to be ready...
-        kubectl -n flux-system wait Kustomization/${FLUX_KUSTOMIZATION} --for=condition=ready --timeout=1m
-
-    - name: Reconcile
-      id: reconcile
-      shell: bash
-      # yamllint disable-line rule:indentation
-      run: |
-        echo Waiting 10 seconds before reconciling for flux to pick up inclusions from root kustomization
-        sleep 10
-        RECONCILE_YAML_FILE="$(mktemp --suffix .yaml)"
-        cat > $RECONCILE_YAML_FILE <<'EOF'
-        ${{ inputs.reconcile_items }}
+        cat > /tmp/values-ci.yaml <<EOF
+        git:
+          url: '${GIT_URL}'
+          branch: '${GIT_BRANCH}'
         EOF
-        echo -----------------------------------------------------------------------
-        for resource_name in $(yq -e '.[].name' $RECONCILE_YAML_FILE); do
-          resource_kind="$(yq -e '.[] | select(.name == "'$resource_name'") | .kind' $RECONCILE_YAML_FILE)"
-          resource_namespace="$(yq -e '.[] | select(.name == "'$resource_name'") | .namespace' $RECONCILE_YAML_FILE)"
-          reconcile_timeout="$(yq -e '.[] | select(.name == "'$resource_name'") | (select(has("timeout")) // {"timeout": "1m"}) | .timeout' $RECONCILE_YAML_FILE)"
-          set -x
-          flux reconcile $resource_kind -n $resource_namespace --timeout $reconcile_timeout $resource_name
-          set +x
-          echo -----------------------------------------------------------------------
-        done
-        echo "Reconcile done!"
 
-    - name: Wait for success conditions
-      id: wait-success-conditions
-      shell: bash
-      # yamllint disable-line rule:indentation
-      run: |
-        SUCCESS_CONDITIONS_FILE="$(mktemp --suffix .yaml)"
-        cat > $SUCCESS_CONDITIONS_FILE <<'EOF'
-        ${{ inputs.success_conditions }}
-        EOF
-        echo "SUCCESS_CONDITIONS_FILE=$SUCCESS_CONDITIONS_FILE" >> $GITHUB_ENV
-        echo -----------------------------------------------------------------------
-        for resource in $(yq -e '.[].resource' $SUCCESS_CONDITIONS_FILE); do
-          namespace="$(yq -e '.[] | select(.resource == "'$resource'") | .namespace' $SUCCESS_CONDITIONS_FILE)"
-          timeout="$(yq -e '.[] | select(.resource == "'$resource'") | .timeout' $SUCCESS_CONDITIONS_FILE)"
+        cat /tmp/values-ci.yaml
 
-          resource_kind=$(echo $resource | cut -d'/' -f1)
-          resource_name=$(echo $resource | cut -d'/' -f2)
-
-          if [[ "${namespace}" == "-" ]]; then
-            namespace_filter=""
-          else
-            namespace_filter="-n $namespace"
-          fi
-
-          if [[ "${resource_kind}" == "daemonset" || "${resource_kind}" == "statefulset" ]]; then
-            set -x
-            kubectl -n $namespace rollout status $resource_kind $resource_name --timeout $timeout
-            set +x
-          else
-            for_condition="$(yq -e '.[] | select(.resource == "'$resource'") | .for' $SUCCESS_CONDITIONS_FILE)"
-            set -x
-            kubectl $namespace_filter wait $resource --for=$for_condition --timeout=$timeout
-            set +x
-          fi
-
-          echo "LAST_SUCCESS_STATUS_RESOURCE=$resource_name" >> $GITHUB_ENV
-          echo "LAST_SUCCESS_STATUS_NAMESPACE=$namespace" >> $GITHUB_ENV
-        done
-        echo -----------------------------------------------------------------------
-        echo "All success conditions met!"
-
-    - name: Run custom commands
-      if: ${{ (success() || failure()) && inputs.custom_commands != '' }}
-      shell: bash
-      # yamllint disable-line rule:indentation
-      run: |
-        CUSTOM_COMMANDS_FILE="$(mktemp --suffix .yaml)"
-        cat > $CUSTOM_COMMANDS_FILE <<'EOF'
-        ${{ inputs.custom_commands }}
-        EOF
-        echo -----------------------------------------------------------------------
-        for command_name in $(yq -e '.[].name' $CUSTOM_COMMANDS_FILE); do
-          command="$(yq -e '.[] | select(.name == "'$command_name'") | .command' $CUSTOM_COMMANDS_FILE)"
-          echo "--> Running command: ${command}"
-          /bin/bash -e -o pipefail -c "${command}" 2>&1 | sed 's|^|        |'
-          echo -----------------------------------------------------------------------
-        done
-        echo "All done!"
-
-    - name: Show status
-      if: ${{ (success() || failure()) && steps.bootstrap-flux.outcome == 'success' }}
-      shell: bash
-      # yamllint disable-line rule:indentation
-      run: |
-        echo -----------------------------------------------------------------------
-        flux get all --all-namespaces
-        echo -----------------------------------------------------------------------
-        kubectl get -A crd,cm,secret,po,svc,ing,deploy,ds,sts,pv,pvc,es,cert
-        echo -----------------------------------------------------------------------
-        echo "All done!"
-
-    - name: Debug flux install/bootstrap failure
-      if: ${{ failure() && (steps.install-flux.outcome == 'failure' || steps.bootstrap-flux.outcome == 'failure') }}
-      shell: bash
-      # yamllint disable-line rule:indentation
-      run: |
-        echo
-        echo ------------------------------ flux check ------------------------------
-        flux check
-        echo ------------------------ flux-system resources -------------------------
-        kubectl -n flux-system get all
-        echo -----------------------------------------------------------------------
-        echo "All done!"
-
-    - name: Debug flux install/bootstrap/reconcile failure
-      if: ${{ failure() && (steps.install-flux.outcome == 'failure' || steps.bootstrap-flux.outcome == 'failure' || steps.reconcile.outcome == 'failure') }}
-      run: |
-        echo --------------------------- flux resources -----------------------------
-        flux get all --all-namespaces
-        echo --------------------------- flux source logs ---------------------------
-        kubectl -n flux-system logs deploy/source-controller
-        echo ------------------------- flux kustomize logs --------------------------
-        kubectl -n flux-system logs deploy/kustomize-controller
-        echo ---------------------------- flux helm logs ----------------------------
-        kubectl -n flux-system logs deploy/helm-controller
-        echo -----------------------------------------------------------------------
-        echo "All done!"
-
-    - name: Debug success condition failure
-      if: ${{ failure() && (steps.wait-success-conditions.outcome == 'failure' || steps.reconcile.outcome == 'failure') }}
-      env:
-        SUCCESS_NAMESPACE: ${{ env.LAST_SUCCESS_STATUS_RESOURCE }}
-        SUCCESS_RESOURCE: ${{ env.LAST_SUCCESS_STATUS_NAMESPACE }}
-      shell: bash
-      # yamllint disable-line rule:indentation
-      run: |
-        REACH_LAST_SUCCESS=0
-        for resource in $(yq -e '.[].resource' $SUCCESS_CONDITIONS_FILE); do
-          namespace="$(yq -e '.[] | select(.name == "'$resource'") | .namespace' $SUCCESS_CONDITIONS_FILE)"
-
-          if [[ "${REACH_LAST_SUCCESS}" == "1" ]]; then
-            break
-          fi
-          if [[ "${namespace}" == "${SUCCESS_NAMESPACE}" && "${resource}" == "${SUCCESS_RESOURCE}" ]]; then
-            REACH_LAST_SUCCESS=1
-          fi
-        done
-
-        echo Failed awaiting success condition for this resource...
-        echo -----------------------------------------------------------------------
-        if [[ "$namespace" == "-" ]]; then
-          kubectl get $resource -o yaml
-          echo =======================================================================
-          kubectl describe $resource
-        else
-          kubectl -n $namespace get $resource -o yaml
-          echo =======================================================================
-          kubectl -n $namespace describe $resource
-        fi
-        echo -----------------------------------------------------------------------
+        # Run tests with combined values
+        set -x
+        chainsaw test ${TEST_PATH} \
+          --config ./ci/test/chainsaw/.chainsaw.yaml \
+          --values /tmp/values-ci.yaml \
+          --fail-fast
