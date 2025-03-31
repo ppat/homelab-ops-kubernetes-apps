@@ -1,0 +1,232 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-infra-security-core
+spec:
+  try:
+  - description: Reconcile kustomization/infra-security-core
+    script:
+      # yamllint disable-line rule:line-length
+      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-core --timeout=2m
+      timeout: 2m
+
+  # Cert Manager resources
+  - description: Assert deployment/cert-manager
+    assert:
+      bindings:
+      - name: name
+        value: cert-manager
+      - name: namespace
+        value: cert-manager
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/cert-manager-cainjector
+    assert:
+      bindings:
+      - name: name
+        value: cert-manager-cainjector
+      - name: namespace
+        value: cert-manager
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/cert-manager-webhook
+    assert:
+      bindings:
+      - name: name
+        value: cert-manager-webhook
+      - name: namespace
+        value: cert-manager
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert clusterissuer/selfsigned-issuer
+    assert:
+      bindings:
+      - name: name
+        value: selfsigned-issuer
+      file: ../chainsaw/assertions/clusterissuer-ready.yaml
+  - description: Assert helmrelease/cert-manager-release
+    assert:
+      bindings:
+      - name: name
+        value: cert-manager-release
+      - name: namespace
+        value: cert-manager
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+
+  # External Secrets resources
+  - description: Assert deployment/external-secrets
+    assert:
+      bindings:
+      - name: name
+        value: external-secrets
+      - name: namespace
+        value: external-secrets
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/external-secrets-cert-controller
+    assert:
+      bindings:
+      - name: name
+        value: external-secrets-cert-controller
+      - name: namespace
+        value: external-secrets
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/external-secrets-webhook
+    assert:
+      bindings:
+      - name: name
+        value: external-secrets-webhook
+      - name: namespace
+        value: external-secrets
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert helmrelease/external-secrets-release
+    assert:
+      bindings:
+      - name: name
+        value: external-secrets-release
+      - name: namespace
+        value: external-secrets
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+
+  # Trust Manager resources
+  - description: Assert deployment/trust-manager
+    assert:
+      bindings:
+      - name: name
+        value: trust-manager
+      - name: namespace
+        value: external-secrets
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert helmrelease/trust-manager-release
+    assert:
+      bindings:
+      - name: name
+        value: trust-manager-release
+      - name: namespace
+        value: external-secrets
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+
+  # Bitwarden-SDK-Server resources
+  - description: Assert certificate/bitwarden-ca-cert
+    assert:
+      bindings:
+      - name: name
+        value: bitwarden-ca-cert
+      - name: namespace
+        value: external-secrets
+      file: ../chainsaw/assertions/certificate-ready.yaml
+  - description: Assert certificate/bitwarden-sdk-server-cert
+    assert:
+      bindings:
+      - name: name
+        value: bitwarden-sdk-server-cert
+      - name: namespace
+        value: external-secrets
+      file: ../chainsaw/assertions/certificate-ready.yaml
+  - description: Assert deployment/bitwarden-sdk-server
+    assert:
+      bindings:
+      - name: name
+        value: bitwarden-sdk-server
+      - name: namespace
+        value: external-secrets
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert bundle/bitwarden-ca-cert
+    assert:
+      bindings:
+      - name: name
+        value: bitwarden-ca-cert
+      - name: namespace
+        value: external-secrets
+      file: ../chainsaw/assertions/bundle-synced.yaml
+  - description: Assert configmap/bitwarden-ca-cert
+    assert:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: bitwarden-ca-cert
+          namespace: test
+
+  catch:
+  # HelmRelease resources
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: cert-manager-release
+      namespace: cert-manager
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: external-secrets-release
+      namespace: external-secrets
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: trust-manager-release
+      namespace: external-secrets
+
+  # Deployment resources
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: cert-manager
+      namespace: cert-manager
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: external-secrets
+      namespace: external-secrets
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: bitwarden-sdk-server
+      namespace: external-secrets
+
+  # Certificate resources
+  - describe:
+      apiVersion: cert-manager.io/v1
+      kind: ClusterIssuer
+      name: selfsigned-issuer
+  - describe:
+      apiVersion: cert-manager.io/v1
+      kind: Issuer
+      name: bitwarden-ca-issuer
+      namespace: external-secrets
+  - describe:
+      apiVersion: cert-manager.io/v1
+      kind: Certificate
+      name: bitwarden-ca-cert
+      namespace: external-secrets
+  - describe:
+      apiVersion: cert-manager.io/v1
+      kind: Issuer
+      name: bitwarden-cert-issuer
+      namespace: external-secrets
+  - describe:
+      apiVersion: cert-manager.io/v1
+      kind: Certificate
+      name: bitwarden-sdk-server-cert
+      namespace: external-secrets
+
+  # Bundle resources
+  - describe:
+      apiVersion: trust.cert-manager.io/v1alpha1
+      kind: Bundle
+      name: bitwarden-ca-cert
+      namespace: external-secrets
+
+  # ConfigMap resources
+  - describe:
+      apiVersion: v1
+      kind: ConfigMap
+      name: bitwarden-ca-cert
+      namespace: test
+
+  # Pod logs
+  - podLogs:
+      name: cert-manager
+      namespace: cert-manager
+  - podLogs:
+      name: external-secrets
+      namespace: external-secrets
+  - podLogs:
+      name: bitwarden-sdk-server
+      namespace: external-secrets

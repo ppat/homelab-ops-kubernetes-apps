@@ -1,0 +1,10 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ($name)
+  namespace: ($namespace)
+status:
+  # Verify that the Certificate is ready
+  (conditions[?type == 'Ready']):
+  - status: 'True'

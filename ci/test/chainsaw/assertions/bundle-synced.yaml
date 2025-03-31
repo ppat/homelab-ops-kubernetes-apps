@@ -1,0 +1,10 @@
+---
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  name: ($name)
+  namespace: ($namespace)
+status:
+  # Verify that the Bundle is synced
+  (conditions[?type == 'Synced']):
+  - status: 'True'
