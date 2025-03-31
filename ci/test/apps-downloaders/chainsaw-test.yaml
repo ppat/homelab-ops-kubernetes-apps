@@ -9,11 +9,14 @@ spec:
     use:
       template: ../chainsaw/steps/bootstrap-flux.yaml
 
-  - name: Apply apps-downloaders modules
+  - name: Apply pre-requisites
     try:
     - description: Apply infra-database-core
       apply:
         file: ../infra-database/infra-database-core.yaml
+
+  - name: Apply apps-downloaders modules
+    try:
     - description: Apply apps-downloaders
       apply:
         file: ./apps-downloaders.yaml

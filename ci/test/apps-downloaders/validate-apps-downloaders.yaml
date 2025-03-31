@@ -5,12 +5,6 @@ metadata:
   name: validate-apps-downloaders
 spec:
   try:
-  - description: Reconcile kustomization/infra-database-core
-    script:
-      # yamllint disable-line rule:line-length
-      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-database-core --timeout=1m
-      timeout: 1m
-
   - description: Reconcile kustomization/apps-downloaders
     script:
       # yamllint disable-line rule:line-length
@@ -18,14 +12,14 @@ spec:
       timeout: 2m
 
   # Database resources
-  - description: Assert deployment/cloudnative-pg
+  - description: Assert helmrelease/cloudnative-pg-release
     assert:
       bindings:
       - name: name
-        value: cloudnative-pg
+        value: cloudnative-pg-release
       - name: namespace
         value: cnpg-system
-      file: ../chainsaw/assertions/deployment-ready.yaml
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
   - description: Assert cluster.postgresql.cnpg.io/downloaders-db
     assert:
       bindings:
@@ -34,6 +28,7 @@ spec:
       - name: namespace
         value: downloaders
       file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
+      timeout: 2m
 
   # Downloader apps
   - description: Assert deployment/radarr
