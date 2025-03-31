@@ -128,21 +128,12 @@ spec:
       - name: namespace
         value: external-secrets
       file: ../chainsaw/assertions/deployment-ready.yaml
-  - command:
-      entrypoint: kubectl
-      args:
-      - get
-      - -A
-      - bundle
   - description: Assert bundle/bitwarden-ca-cert
     assert:
       bindings:
       - name: name
         value: bitwarden-ca-cert
-      - name: namespace
-        value: external-secrets
       file: ../chainsaw/assertions/bundle-synced.yaml
-      timeout: 3m
   - description: Assert configmap/bitwarden-ca-cert
     assert:
       resource:
