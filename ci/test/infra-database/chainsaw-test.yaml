@@ -1,0 +1,29 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: infra-database
+spec:
+  steps:
+  - name: Bootstrap FluxCD
+    use:
+      template: ../chainsaw/steps/bootstrap-flux.yaml
+
+  - name: Apply infra-database modules
+    try:
+    - description: Apply infra-database-core
+      apply:
+        file: ./infra-database-core.yaml
+    - description: Apply test-db
+      apply:
+        file: ./test-db.yaml
+    catch:
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: infra-database-core
+        namespace: flux-system
+
+  - name: Validate infra-database-core module
+    use:
+      template: ./validate-infra-database-core.yaml
