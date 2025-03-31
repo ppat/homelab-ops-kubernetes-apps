@@ -1,0 +1,34 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: apps-home-automation
+spec:
+  steps:
+  - name: Bootstrap FluxCD
+    use:
+      template: ../chainsaw/steps/bootstrap-flux.yaml
+
+  - name: Apply apps-home-automation modules
+    try:
+    - description: Apply infra-database-core
+      apply:
+        file: ../infra-database/infra-database-core.yaml
+    - description: Apply apps-home-automation
+      apply:
+        file: ./apps-home-automation.yaml
+    catch:
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: infra-database-core
+        namespace: flux-system
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: apps-home-automation
+        namespace: flux-system
+
+  - name: Validate apps-home-automation module
+    use:
+      template: ./validate-apps-home-automation.yaml
