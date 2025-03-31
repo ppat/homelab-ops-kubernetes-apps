@@ -1,0 +1,8 @@
+---
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  name: ($name)
+status:
+  (conditions[?type == 'Synced']):
+  - status: 'True'

@@ -1,0 +1,50 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: infra-security
+spec:
+  steps:
+  - name: Bootstrap FluxCD
+    use:
+      template: ../chainsaw/steps/bootstrap-flux.yaml
+
+  - name: Apply pre-requisites
+    try:
+    - description: Create test namespace
+      apply:
+        file: ./test.yaml
+    - description: Apply infra-database-core
+      apply:
+        file: ../infra-database/infra-database-core.yaml
+
+  - name: Apply infra-security modules
+    try:
+    - description: Apply infra-security-core
+      apply:
+        file: ./infra-security-core.yaml
+    - description: Apply infra-security-extra
+      apply:
+        file: ./infra-security-extra.yaml
+    - description: Apply test namespace
+      apply:
+        file: ./test.yaml
+    catch:
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: infra-security-core
+        namespace: flux-system
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: infra-security-extra
+        namespace: flux-system
+
+  - name: Validate infra-security-core module
+    use:
+      template: ./validate-infra-security-core.yaml
+
+  - name: Validate infra-security-extra module
+    use:
+      template: ./validate-infra-security-extra.yaml

@@ -1,0 +1,9 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ($name)
+  namespace: ($namespace)
+status:
+  # Verify that the PodDisruptionBudget has the expected number of healthy pods
+  (currentHealthy >= desiredHealthy): true

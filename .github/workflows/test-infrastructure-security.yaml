@@ -6,9 +6,8 @@ on:
   pull_request:
     paths:
     - '.github/workflows/test-infrastructure-security.yaml'
-    - '.github/workflows/test-kubernetes-resources-workflow.yaml'
-    - '.github/kind-cluster-single-node.yaml'
-    - 'ci/test/infra-security/**.yaml'
+    - '.github/kind-cluster-multi-node.yaml'
+    - 'ci/test/infra-security/**'
     - 'infrastructure/subsystems/security-core/**'
     - 'infrastructure/subsystems/security-extra/**'
     - '!infrastructure/subsystems/security-core/**.md'
@@ -24,138 +23,74 @@ permissions:
 
 jobs:
   test-infrastructure-security:
-    uses: ./.github/workflows/test-kubernetes-resources-workflow.yaml
-    with:
-      test_path: ./ci/test/infra-security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+    - name: Checkout
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup kind cluster
+      uses: helm/kind-action@a1b0e391336a6ee6713a0583f8c6240d70863de3 # v1.12.0
+      with:
+        cluster_name: dev
+        config: ".github/kind-cluster-multi-node.yaml"
+        # renovate: datasource=github-releases depName=kubernetes-sigs/kind
+        version: "v0.27.0"
+        # renovate: datasource=github-releases depName=kubernetes/kubernetes
+        kubectl_version: "v1.32.3"
+        # renovate-kind-image: datasource=docker versioning=docker
+        node_image: "kindest/node:v1.32.3@sha256:b36e76b4ad37b88539ce5e07425f77b29f73a8eaaebf3f1a8bc9c764401d118c"
+
+    - name: Setup kubectl
+      uses: fluxcd/pkg/actions/kubectl@ff04927148b1b1407f07f58ffc3bcded59eb7a14
+      with:
+        # renovate: datasource=github-releases depName=kubernetes/kubernetes
+        version: "v1.32.3"
+
+    - name: Setup flux
+      uses: fluxcd/flux2/action@5350425cdcd5fa015337e09fa502153c0275bd4b # v2.4.0
+      with:
+        # renovate: datasource=github-releases depName=fluxcd/flux2
+        version: "v2.4.0"
+
+    - name: Setup Chainsaw
+      uses: kyverno/action-install-chainsaw@f2b47b97dc889c12702113753d713f01ec268de5 # v0.2.12
+      with:
+        # renovate: datasource=github-releases depName=kyverno/chainsaw
+        release: v0.2.12
+
+    - name: Install flux in kind cluster
+      env:
+        # renovate: datasource=github-releases depName=fluxcd/flux2
+        FLUX_VERSION: "v2.4.0"
+      run: |
+        flux install --version ${FLUX_VERSION} --log-level debug
+
+    - name: Run Chainsaw Tests
+      env:
+        GIT_URL: https://github.com/${{ github.repository }}.git
+        GIT_REF: ${{ github.head_ref || github.ref }}
       # yamllint disable-line rule:indentation
-      reconcile_items: |-
-        - name: infra-security-core
-          kind: kustomization
-          namespace: flux-system
-          timeout: 2m
-        - name: infra-security-extra
-          kind: kustomization
-          namespace: flux-system
-          timeout: 2m
-      # yamllint disable-line rule:indentation
-      success_conditions: |-
-        - resource: helmrelease/cert-manager-release
-          namespace: cert-manager
-          for: condition=Ready
-          timeout: 2m
-        - resource: helmrelease/external-secrets-release
-          namespace: external-secrets
-          for: condition=Ready
-          timeout: 2m
-        - resource: helmrelease/trust-manager-release
-          namespace: external-secrets
-          for: condition=Ready
-          timeout: 2m
-        - resource: deployment/cert-manager
-          namespace: cert-manager
-          for: condition=available
-          timeout: 1m
-        - resource: deployment/cert-manager-cainjector
-          namespace: cert-manager
-          for: condition=available
-          timeout: 1m
-        - resource: deployment/cert-manager-webhook
-          namespace: cert-manager
-          for: condition=available
-          timeout: 1m
-        - resource: clusterissuer/selfsigned-issuer
-          namespace: "-"
-          for: condition=ready
-          timeout: 1m
-        - resource: deployment/external-secrets
-          namespace: external-secrets
-          for: condition=available
-          timeout: 1m
-        - resource: deployment/external-secrets-cert-controller
-          namespace: external-secrets
-          for: condition=available
-          timeout: 1m
-        - resource: deployment/external-secrets-webhook
-          namespace: external-secrets
-          for: condition=available
-          timeout: 1m
-        - resource: certificate/bitwarden-ca-cert
-          namespace: external-secrets
-          for: condition=ready
-          timeout: 1m
-        - resource: certificate/bitwarden-sdk-server-cert
-          namespace: external-secrets
-          for: condition=ready
-          timeout: 1m
-        - resource: deployment/bitwarden-sdk-server
-          namespace: external-secrets
-          for: condition=available
-          timeout: 1m
-        - resource: deployment/trust-manager
-          namespace: external-secrets
-          for: condition=available
-          timeout: 1m
-        - resource: bundle/bitwarden-ca-cert
-          namespace: external-secrets
-          for: condition=Synced=true
-          timeout: 1m
-        - resource: configmap/bitwarden-ca-cert
-          namespace: test
-          for: jsonpath={.metadata.creationTimestamp}
-          timeout: 1m
-        - resource: deployment/cloudnative-pg
-          namespace: cnpg-system
-          for: condition=available
-          timeout: 1m
-        - resource: certificate/authentik-signing-cert
-          namespace: authentik
-          for: condition=ready
-          timeout: 1m
-        - resource: cluster.postgresql.cnpg.io/authentik-db
-          namespace: authentik
-          for: condition=ready
-          timeout: 3m
-        - resource: statefulset/authentik-redis-master
-          namespace: authentik
-          timeout: 1m
-        - resource: deployment/authentik-server
-          namespace: authentik
-          for: condition=available
-          timeout: 1m
-        - resource: deployment/authentik-worker
-          namespace: authentik
-          for: condition=available
-          timeout: 1m
-        - resource: poddisruptionbudget/authentik-server
-          namespace: authentik
-          for: jsonpath={.status.currentHealthy}=3
-          timeout: 1m
-      git_url: https://github.com/${{ github.repository }}.git
-      git_ref: ${{ github.head_ref || github.ref }}
-      kind_cluster_config: kind-cluster-multi-node.yaml
-      # yamllint disable-line rule:indentation
-      custom_commands: |-
-        - name: show-events
-          command: 'kubectl get -n external-secrets events --sort-by=.metadata.creationTimestamp'
-        - name: describe-ca-issuer
-          command: 'kubectl describe -n external-secrets Issuer bitwarden-ca-issuer'
-        - name: describe-ca-cert
-          command: 'kubectl describe -n external-secrets cert bitwarden-ca-cert'
-        - name: describe-cert-Issuer
-          command: 'kubectl describe -n external-secrets Issuer bitwarden-cert-issuer'
-        - name: describe-cert
-          command: 'kubectl describe -n external-secrets cert bitwarden-sdk-server-cert'
-        - name: describe-deployment
-          command: 'kubectl describe -n external-secrets deployment/bitwarden-sdk-server'
-        - name: show-logs
-          command: 'kubectl logs -n external-secrets deployment/bitwarden-sdk-server'
-        - name: show-bundle
-          command: 'kubectl describe -n external-secrets bundle bitwarden-ca-cert'
-        - name: show-synced-ca-cert
-          command: 'kubectl get -n test configmap bitwarden-ca-cert -o yaml'
-        - name: show-authentik-events
-          command: 'kubectl get -n authentik events --sort-by=.lastTimestamp'
-        - name: describe-authentik-deployment
-          command: 'kubectl describe -n authentik deployment/authentik-server'
-        - name: show-authentik-logs
-          command: 'kubectl logs -n authentik deployment/authentik-server'
+      run: |
+        if [[ "${GIT_REF}" == "refs/heads/main" ]]; then
+          GIT_BRANCH="main"
+        else
+          GIT_BRANCH="${GIT_REF}"
+        fi
+
+        cat > /tmp/values-ci.yaml <<EOF
+        git:
+          url: '${GIT_URL}'
+          branch: '${GIT_BRANCH}'
+        EOF
+
+        cat /tmp/values-ci.yaml
+
+        # Run tests with combined values
+        set -x
+        chainsaw test ./ci/test/infra-security \
+          --config ./ci/test/chainsaw/.chainsaw.yaml \
+          --values /tmp/values-ci.yaml \
+          --fail-fast

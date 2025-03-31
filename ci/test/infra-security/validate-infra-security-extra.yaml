@@ -1,0 +1,145 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-infra-security-extra
+spec:
+  try:
+  - description: Reconcile kustomization/infra-security-extra
+    script:
+      # yamllint disable-line rule:line-length
+      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-extra --timeout=2m
+      timeout: 2m
+
+  # CloudNative PG resources
+  - description: Assert deployment/cloudnative-pg
+    assert:
+      bindings:
+      - name: name
+        value: cloudnative-pg
+      - name: namespace
+        value: cnpg-system
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert helmrelease/cloudnative-pg-release
+    assert:
+      bindings:
+      - name: name
+        value: cloudnative-pg-release
+      - name: namespace
+        value: cnpg-system
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+
+  # Authentik resources
+  - description: Assert certificate/authentik-signing-cert
+    assert:
+      bindings:
+      - name: name
+        value: authentik-signing-cert
+      - name: namespace
+        value: authentik
+      file: ../chainsaw/assertions/certificate-ready.yaml
+  - description: Assert statefulset/authentik-redis-master
+    assert:
+      bindings:
+      - name: name
+        value: authentik-redis-master
+      - name: namespace
+        value: authentik
+      file: ../chainsaw/assertions/statefulset-ready.yaml
+  - description: Assert cluster.postgresql.cnpg.io/authentik-db
+    assert:
+      bindings:
+      - name: name
+        value: authentik-db
+      - name: namespace
+        value: authentik
+      file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
+  - description: Assert deployment/authentik-server
+    assert:
+      bindings:
+      - name: name
+        value: authentik-server
+      - name: namespace
+        value: authentik
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/authentik-worker
+    assert:
+      bindings:
+      - name: name
+        value: authentik-worker
+      - name: namespace
+        value: authentik
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert poddisruptionbudget/authentik-server
+    assert:
+      bindings:
+      - name: name
+        value: authentik-server
+      - name: namespace
+        value: authentik
+      file: ../chainsaw/assertions/poddisruptionbudget-ready.yaml
+  - description: Assert helmrelease/authentik-release
+    assert:
+      bindings:
+      - name: name
+        value: authentik-release
+      - name: namespace
+        value: authentik
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+
+  catch:
+  # HelmRelease resources
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: cloudnative-pg-release
+      namespace: cnpg-system
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: authentik-release
+      namespace: authentik
+
+  # CloudNative PG resources
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: cloudnative-pg
+      namespace: cnpg-system
+
+  # Authentik resources
+  - describe:
+      apiVersion: cert-manager.io/v1
+      kind: Certificate
+      name: authentik-signing-cert
+      namespace: authentik
+  - describe:
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      name: authentik-db
+      namespace: authentik
+  - describe:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      name: authentik-redis-master
+      namespace: authentik
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: authentik-server
+      namespace: authentik
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: authentik-worker
+      namespace: authentik
+  - describe:
+      apiVersion: policy/v1
+      kind: PodDisruptionBudget
+      name: authentik-server
+      namespace: authentik
+
+  # Pod logs
+  - podLogs:
+      name: authentik-server
+      namespace: authentik
