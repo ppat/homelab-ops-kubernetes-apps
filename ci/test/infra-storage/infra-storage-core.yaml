@@ -17,7 +17,7 @@ spec:
     name: test-source
     namespace: flux-system
   timeout: 2m0s
-  wait: true
+  wait: false
   patches:
   # yamllint disable-line rule:indentation
   - patch: |-
