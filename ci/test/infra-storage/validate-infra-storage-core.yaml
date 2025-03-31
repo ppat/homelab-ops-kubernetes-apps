@@ -1,0 +1,255 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-infra-storage-core
+spec:
+  try:
+  - description: Reconcile kustomization/infra-storage-core
+    script:
+      # yamllint disable-line rule:line-length
+      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-storage-core --timeout=3m
+      timeout: 3m
+
+  # CSI NFS Driver resources
+  - description: Assert deployment/csi-nfs-controller
+    assert:
+      bindings:
+      - name: name
+        value: csi-nfs-controller
+      - name: namespace
+        value: csi-driver-nfs
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert daemonset/csi-nfs-node
+    assert:
+      bindings:
+      - name: name
+        value: csi-nfs-node
+      - name: namespace
+        value: csi-driver-nfs
+      file: ../chainsaw/assertions/daemonset-ready.yaml
+  - description: Assert helmrelease/csi-driver-nfs-release
+    assert:
+      bindings:
+      - name: name
+        value: csi-driver-nfs-release
+      - name: namespace
+        value: csi-driver-nfs
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+
+  # MinIO resources
+  - description: Assert deployment/minio
+    assert:
+      bindings:
+      - name: name
+        value: minio
+      - name: namespace
+        value: minio
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert helmrelease/minio-release
+    assert:
+      bindings:
+      - name: name
+        value: minio-release
+      - name: namespace
+        value: minio
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+
+  # Longhorn resources
+  - description: Assert deployment/longhorn-driver-deployer
+    assert:
+      bindings:
+      - name: name
+        value: longhorn-driver-deployer
+      - name: namespace
+        value: longhorn-system
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/longhorn-ui
+    assert:
+      bindings:
+      - name: name
+        value: longhorn-ui
+      - name: namespace
+        value: longhorn-system
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert daemonset/longhorn-manager
+    assert:
+      bindings:
+      - name: name
+        value: longhorn-manager
+      - name: namespace
+        value: longhorn-system
+      file: ../chainsaw/assertions/daemonset-ready.yaml
+  - description: Assert helmrelease/longhorn-release
+    assert:
+      bindings:
+      - name: name
+        value: longhorn-release
+      - name: namespace
+        value: longhorn-system
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+
+  # Longhorn CSI resources
+  - description: Assert deployment/csi-attacher
+    assert:
+      bindings:
+      - name: name
+        value: csi-attacher
+      - name: namespace
+        value: longhorn-system
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/csi-provisioner
+    assert:
+      bindings:
+      - name: name
+        value: csi-provisioner
+      - name: namespace
+        value: longhorn-system
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/csi-resizer
+    assert:
+      bindings:
+      - name: name
+        value: csi-resizer
+      - name: namespace
+        value: longhorn-system
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/csi-snapshotter
+    assert:
+      bindings:
+      - name: name
+        value: csi-snapshotter
+      - name: namespace
+        value: longhorn-system
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert daemonset/longhorn-csi-plugin
+    assert:
+      bindings:
+      - name: name
+        value: longhorn-csi-plugin
+      - name: namespace
+        value: longhorn-system
+      file: ../chainsaw/assertions/daemonset-ready.yaml
+
+  # Storage resources
+  - description: Assert storageclass/test-storage-class
+    assert:
+      resource:
+        apiVersion: storage.k8s.io/v1
+        kind: StorageClass
+        metadata:
+          name: test-storage-class
+  - description: Assert persistentvolumeclaim/test-pvc
+    assert:
+      bindings:
+      - name: name
+        value: test-pvc
+      - name: namespace
+        value: default
+      file: ../chainsaw/assertions/pvc-bound.yaml
+
+  catch:
+  # HelmRelease resources
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: csi-driver-nfs-release
+      namespace: csi-driver-nfs
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: minio-release
+      namespace: minio
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: longhorn-release
+      namespace: longhorn-system
+
+  # CSI NFS Driver resources
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: csi-nfs-controller
+      namespace: csi-driver-nfs
+  - describe:
+      apiVersion: apps/v1
+      kind: DaemonSet
+      name: csi-nfs-node
+      namespace: csi-driver-nfs
+
+  # MinIO resources
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: minio
+      namespace: minio
+
+  # Longhorn resources
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: longhorn-driver-deployer
+      namespace: longhorn-system
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: longhorn-ui
+      namespace: longhorn-system
+  - describe:
+      apiVersion: apps/v1
+      kind: DaemonSet
+      name: longhorn-manager
+      namespace: longhorn-system
+
+  # Longhorn CSI resources
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: csi-attacher
+      namespace: longhorn-system
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: csi-provisioner
+      namespace: longhorn-system
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: csi-resizer
+      namespace: longhorn-system
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: csi-snapshotter
+      namespace: longhorn-system
+  - describe:
+      apiVersion: apps/v1
+      kind: DaemonSet
+      name: longhorn-csi-plugin
+      namespace: longhorn-system
+
+  # Storage resources
+  - describe:
+      apiVersion: storage.k8s.io/v1
+      kind: StorageClass
+      name: test-storage-class
+  - describe:
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      name: test-pvc
+      namespace: default
+
+  # Pod logs
+  - podLogs:
+      selector: app=minio
+      namespace: minio
+  - podLogs:
+      selector: app=longhorn-manager
+      namespace: longhorn-system
+  - podLogs:
+      selector: app=longhorn-ui
+      namespace: longhorn-system
+  - podLogs:
+      selector: app=csi-nfs-controller
+      namespace: csi-driver-nfs
