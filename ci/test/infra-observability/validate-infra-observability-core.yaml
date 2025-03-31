@@ -1,0 +1,267 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-infra-observability-core
+spec:
+  try:
+  - description: Reconcile kustomization/minio
+    script:
+      # yamllint disable-line rule:line-length
+      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=minio --timeout=2m
+      timeout: 2m
+
+  - description: Reconcile kustomization/infra-observability-core
+    script:
+      # yamllint disable-line rule:line-length
+      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-observability-core --timeout=3m
+      timeout: 3m
+
+  # Prometheus Stack resources
+  - description: Assert daemonset/kube-prometheus-stack-prometheus-node-exporter
+    assert:
+      bindings:
+      - name: name
+        value: kube-prometheus-stack-prometheus-node-exporter
+      - name: namespace
+        value: monitoring
+      file: ../chainsaw/assertions/daemonset-ready.yaml
+  - description: Assert deployment/kube-prometheus-stack-kube-state-metrics
+    assert:
+      bindings:
+      - name: name
+        value: kube-prometheus-stack-kube-state-metrics
+      - name: namespace
+        value: monitoring
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/kube-prometheus-stack-operator
+    assert:
+      bindings:
+      - name: name
+        value: kube-prometheus-stack-operator
+      - name: namespace
+        value: monitoring
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert statefulset/alertmanager-kube-prometheus-stack
+    assert:
+      bindings:
+      - name: name
+        value: alertmanager-kube-prometheus-stack
+      - name: namespace
+        value: monitoring
+      file: ../chainsaw/assertions/statefulset-ready.yaml
+  - description: Assert statefulset/prometheus-kube-prometheus-stack
+    assert:
+      bindings:
+      - name: name
+        value: prometheus-kube-prometheus-stack
+      - name: namespace
+        value: monitoring
+      file: ../chainsaw/assertions/statefulset-ready.yaml
+  - description: Assert helmrelease/kube-prometheus-stack-release
+    assert:
+      bindings:
+      - name: name
+        value: kube-prometheus-stack-release
+      - name: namespace
+        value: monitoring
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+
+  # Grafana resources
+  - description: Assert deployment/grafana
+    assert:
+      bindings:
+      - name: name
+        value: grafana
+      - name: namespace
+        value: monitoring
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert helmrelease/grafana-release
+    assert:
+      bindings:
+      - name: name
+        value: grafana-release
+      - name: namespace
+        value: monitoring
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+
+  # Loki resources
+  - description: Assert deployment/loki-read
+    assert:
+      bindings:
+      - name: name
+        value: loki-read
+      - name: namespace
+        value: logging
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert statefulset/loki-backend
+    assert:
+      bindings:
+      - name: name
+        value: loki-backend
+      - name: namespace
+        value: logging
+      file: ../chainsaw/assertions/statefulset-ready.yaml
+  - description: Assert statefulset/loki-chunks-cache
+    assert:
+      bindings:
+      - name: name
+        value: loki-chunks-cache
+      - name: namespace
+        value: logging
+      file: ../chainsaw/assertions/statefulset-ready.yaml
+  - description: Assert statefulset/loki-results-cache
+    assert:
+      bindings:
+      - name: name
+        value: loki-results-cache
+      - name: namespace
+        value: logging
+      file: ../chainsaw/assertions/statefulset-ready.yaml
+  - description: Assert statefulset/loki-write
+    assert:
+      bindings:
+      - name: name
+        value: loki-write
+      - name: namespace
+        value: logging
+      file: ../chainsaw/assertions/statefulset-ready.yaml
+  - description: Assert ingress/loki
+    assert:
+      resource:
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: loki
+          namespace: logging
+  - description: Assert helmrelease/loki-release
+    assert:
+      bindings:
+      - name: name
+        value: loki-release
+      - name: namespace
+        value: logging
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+
+  # Promtail resources
+  - description: Assert daemonset/promtail
+    assert:
+      bindings:
+      - name: name
+        value: promtail
+      - name: namespace
+        value: logging
+      file: ../chainsaw/assertions/daemonset-ready.yaml
+  - description: Assert helmrelease/promtail-release
+    assert:
+      bindings:
+      - name: name
+        value: promtail-release
+      - name: namespace
+        value: logging
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+
+  catch:
+  # HelmRelease resources
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: kube-prometheus-stack-release
+      namespace: monitoring
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: grafana-release
+      namespace: monitoring
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: loki-release
+      namespace: logging
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: promtail-release
+      namespace: logging
+
+  # Prometheus Stack resources
+  - describe:
+      apiVersion: apps/v1
+      kind: DaemonSet
+      name: kube-prometheus-stack-prometheus-node-exporter
+      namespace: monitoring
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: kube-prometheus-stack-kube-state-metrics
+      namespace: monitoring
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: kube-prometheus-stack-operator
+      namespace: monitoring
+  - describe:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      name: alertmanager-kube-prometheus-stack
+      namespace: monitoring
+  - describe:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      name: prometheus-kube-prometheus-stack
+      namespace: monitoring
+
+  # Grafana resources
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: grafana
+      namespace: monitoring
+
+  # Loki resources
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: loki-read
+      namespace: logging
+  - describe:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      name: loki-backend
+      namespace: logging
+  - describe:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      name: loki-chunks-cache
+      namespace: logging
+  - describe:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      name: loki-results-cache
+      namespace: logging
+  - describe:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      name: loki-write
+      namespace: logging
+  - describe:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      name: loki
+      namespace: logging
+  - describe:
+      apiVersion: apps/v1
+      kind: DaemonSet
+      name: promtail
+      namespace: logging
+
+  # Pod logs
+  - podLogs:
+      name: prometheus-kube-prometheus-stack-0
+      namespace: monitoring
+  - podLogs:
+      selector: app=syslog
+      namespace: logging
+  - podLogs:
+      selector: app=prometheus-snmp-exporter
+      namespace: monitoring

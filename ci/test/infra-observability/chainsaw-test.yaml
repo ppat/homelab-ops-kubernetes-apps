@@ -1,0 +1,46 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: infra-observability
+spec:
+  steps:
+  - name: Bootstrap FluxCD
+    use:
+      template: ../chainsaw/steps/bootstrap-flux.yaml
+
+  - name: Apply infra-observability modules
+    try:
+    - description: Apply minio
+      apply:
+        file: ./minio.yaml
+    - description: Apply infra-observability-core
+      apply:
+        file: ./infra-observability-core.yaml
+    - description: Apply infra-observability-extra
+      apply:
+        file: ./infra-observability-extra.yaml
+    catch:
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: minio
+        namespace: flux-system
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: infra-observability-core
+        namespace: flux-system
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: infra-observability-extra
+        namespace: flux-system
+
+  - name: Validate infra-observability-core module
+    use:
+      template: ./validate-infra-observability-core.yaml
+
+  - name: Validate infra-observability-extra module
+    use:
+      template: ./validate-infra-observability-extra.yaml
