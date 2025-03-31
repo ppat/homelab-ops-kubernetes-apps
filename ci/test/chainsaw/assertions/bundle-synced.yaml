@@ -5,6 +5,5 @@ metadata:
   name: ($name)
   namespace: ($namespace)
 status:
-  # Verify that the Bundle is synced
   (conditions[?type == 'Synced']):
   - status: 'True'

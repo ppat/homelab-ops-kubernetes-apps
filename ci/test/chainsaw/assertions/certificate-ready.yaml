@@ -5,6 +5,5 @@ metadata:
   name: ($name)
   namespace: ($namespace)
 status:
-  # Verify that the Certificate is ready
   (conditions[?type == 'Ready']):
   - status: 'True'

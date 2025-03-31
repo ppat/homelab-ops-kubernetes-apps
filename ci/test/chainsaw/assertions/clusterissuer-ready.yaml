@@ -4,6 +4,5 @@ kind: ClusterIssuer
 metadata:
   name: ($name)
 status:
-  # Verify that the ClusterIssuer is ready
   (conditions[?type == 'Ready']):
   - status: 'True'

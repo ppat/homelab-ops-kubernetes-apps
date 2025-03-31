@@ -5,6 +5,5 @@ metadata:
   name: ($name)
   namespace: ($namespace)
 status:
-  # Verify that the CNPG Cluster is ready
   (conditions[?type == 'Ready']):
   - status: 'True'

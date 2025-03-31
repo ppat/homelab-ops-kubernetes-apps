@@ -77,8 +77,6 @@ spec:
         value: authentik-server
       - name: namespace
         value: authentik
-      - name: expected_healthy
-        value: 3
       file: ../chainsaw/assertions/poddisruptionbudget-ready.yaml
   - description: Assert helmrelease/authentik-release
     assert:
