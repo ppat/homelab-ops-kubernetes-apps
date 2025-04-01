@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.0.14](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.0.13...infra-storage-core-v0.0.14) (2025-04-01)
+
+
+### ✨ Features
+
+* **infra-storage-core:** update csi-driver-nfs (v4.9.0 -&gt; 4.11.0) ([#987](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/987)) ([73ed68c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/73ed68c468a5eed7640f6fed02f8d05aa3b97787))
+* **infra-storage-core:** update minio/mc (RELEASE.2025-02-21T16-00-46Z -&gt; RELEASE.2025-03-12T17-29-24Z) ([#998](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/998)) ([c6ea680](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c6ea6804bb155f934300eb8058411b3a8336321c))
+* **infra-storage-core:** update minio/minio (RELEASE.2025-02-28T09-55-16Z -&gt; RELEASE.2025-03-12T18-04-18Z) ([#999](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/999)) ([a27ce15](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a27ce15af32d22b4f31666c8948aa8cc17f5b8a9))
+
 ## [0.0.13](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.0.12...infra-storage-core-v0.0.13) (2025-03-15)
 
 
