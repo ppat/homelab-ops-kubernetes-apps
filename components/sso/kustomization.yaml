@@ -53,3 +53,8 @@ patches:
     kind: HelmRelease
     name: traefik-release
     namespace: traefik
+- path: patch-openwebui.yaml
+  target:
+    kind: HelmRelease
+    name: openwebui-release
+    namespace: ai
