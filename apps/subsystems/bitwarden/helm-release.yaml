@@ -19,10 +19,10 @@ spec:
     createNamespace: false
     remediation:
       retries: 3
-  interval: 15m0s
+  interval: 30m0s
   releaseName: bitwarden
   targetNamespace: bitwarden
-  timeout: 5m0s
+  timeout: 15m0s
   upgrade:
     cleanupOnFail: true
     remediation:
