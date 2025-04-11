@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-harbor-v0.0.2...apps-harbor-v0.0.3) (2025-04-11)
+
+
+### 🛠 Improvements
+
+* create initial documentation ([#833](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/833)) ([e5b84c0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e5b84c03920d34e3055bea987b465e04092af030))
+* document module&lt;-&gt;app mapping and use app logos for each app ([#889](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/889)) ([6cb97bb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6cb97bb71826434291de7b067983830376f0d12b))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-harbor:** increase harbor helm release timeout ([#1082](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1082)) ([4762332](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/47623326640aeec306202749844bf3dd466a011d))
+
 ## [0.0.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-harbor-v0.0.1...apps-harbor-v0.0.2) (2025-01-21)
 
 
