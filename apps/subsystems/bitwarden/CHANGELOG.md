@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-bitwarden-v0.0.4...apps-bitwarden-v0.0.5) (2025-04-11)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-bitwarden:** increase bitwarden helm release timeout ([#1081](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1081)) ([d5aeca9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d5aeca92e770bab823b59233b8fd1ce010938515))
+
 ## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-bitwarden-v0.0.3...apps-bitwarden-v0.0.4) (2025-04-11)
 
 
