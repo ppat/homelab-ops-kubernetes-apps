@@ -18,3 +18,14 @@ spec:
     namespace: flux-system
   timeout: 2m0s
   wait: false
+  patches:
+  # drop ExternalSecret as a secret store is not configured for tests
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      $patch: delete
+      kind: ExternalSecret
+      metadata:
+        name: openwebui-secrets
+    target:
+      kind: ExternalSecret
+      name: openwebui-secrets
