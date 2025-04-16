@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.16](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.15...apps-media-v0.0.16) (2025-04-16)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** update ghcr.io/tautulli/tautulli (v2.15.1 -&gt; v2.15.2) ([#1094](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1094)) ([353de60](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/353de60d39bf568d94969b4027f833940e25eb9d))
+* **apps-media:** update plexinc/pms-docker (1.41.5.9522-a96edc606 -&gt; 1.41.6.9685-d301f511a) ([#1085](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1085)) ([5214ebb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5214ebba1d208fbd58558122b7c29165bdccb64e))
+
 ## [0.0.15](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.14...apps-media-v0.0.15) (2025-04-10)
 
 
