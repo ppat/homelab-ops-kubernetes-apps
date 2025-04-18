@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: external-dns-repository
         namespace: flux-system
-      version: 1.15.2
+      version: 1.16.1
   install:
     crds: CreateReplace
     createNamespace: false
