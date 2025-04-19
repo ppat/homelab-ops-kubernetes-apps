@@ -60,7 +60,7 @@ spec:
     ignoreChartChecksums: true
     image:
       # renovate: datasource=docker depName=minio/minio
-      tag: "RELEASE.2025-04-03T14-56-28Z"
+      tag: "RELEASE.2025-04-08T15-41-24Z"
     mcImage:
       # renovate: datasource=docker depName=minio/mc
       tag: "RELEASE.2025-03-12T17-29-24Z"
