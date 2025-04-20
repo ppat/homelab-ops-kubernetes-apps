@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.15](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.0.14...infra-storage-core-v0.0.15) (2025-04-20)
+
+
+### ✨ Features
+
+* **infra-storage-core:** update minio/mc (RELEASE.2025-03-12T17-29-24Z -&gt; RELEASE.2025-04-08T15-39-49Z) ([#1112](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1112)) ([4598a87](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4598a872b39ac91e07c41539a17dc4ea743aaaed))
+* **infra-storage-core:** update minio/minio (RELEASE.2025-03-12T18-04-18Z -&gt; RELEASE.2025-04-03T14-56-28Z) ([#1106](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1106)) ([78cbe7b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/78cbe7b53af5bbc731306af8693c62a6a4096bb7))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** update minio/minio (RELEASE.2025-04-03T14-56-28Z -&gt; RELEASE.2025-04-08T15-41-24Z) ([#1111](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1111)) ([aea6a23](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/aea6a238a95016fc7c2fcc2a6e99783b96c1073f))
+
 ## [0.0.14](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.0.13...infra-storage-core-v0.0.14) (2025-04-01)
 
 
