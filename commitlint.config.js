@@ -48,6 +48,7 @@ module.exports = {
         'apps-harbor',
         'apps-home-automation',
         'apps-media',
+        'apps-misc',
         'component-db-backups',
         'component-oidc-credentials',
         'component-sso',

@@ -12,6 +12,7 @@ This directory contains application modules that provide end-user functionality 
 | Container Registry | Image Management<br/>Security Scanning<br/>Access Control | [harbor](./subsystems/harbor):<br/>• Stores and manages <a href="https://github.com/goharbor/harbor/blob/main/README.md" target="_blank">container images and Helm charts</a> with role-based access<br/>• Performs vulnerability scanning on container images with policy enforcement<br/>• Enables image signing and content trust through Notary<br/>• Provides automated garbage collection and image cleanup |
 | Home Automation | Device Control<br/>Automation<br/>Monitoring | [home-automation](./subsystems/home-automation):<br/>• Integrates with smart home devices through <a href="https://www.home-assistant.io/" target="_blank">Home Assistant</a><br/>• Provides automation engine for device control based on triggers and conditions<br/>• Enables custom dashboards for monitoring and control<br/>• Supports local processing without cloud dependencies |
 | Media Management | Media Servers<br/>Content Organization<br/>Download Management | [media](./subsystems/media):<br/>• Streams media through <a href="https://www.plex.tv/" target="_blank">Plex</a> (transcoding, user management) and Jellyfin<br/>• Enables privacy-focused YouTube viewing through <a href="https://freetubeapp.io/" target="_blank">FreeTube</a><br/>• Monitors Plex statistics and usage through <a href="https://tautulli.com/" target="_blank">Tautulli</a><br/><br/>[downloaders](./subsystems/downloaders):<br/>• Manages TV shows through <a href="https://github.com/Sonarr/Sonarr/blob/v5-develop/README.md" target="_blank">Sonarr</a> with quality profiles and metadata<br/>• Handles movies through <a href="https://github.com/Radarr/Radarr/blob/develop/README.md" target="_blank">Radarr</a> with automated organization<br/>• Manages music through <a href="https://github.com/Lidarr/Lidarr/blob/develop/README.md" target="_blank">Lidarr</a> with artist monitoring<br/>• Provides unified indexer management through <a href="https://github.com/Prowlarr/Prowlarr/blob/develop/README.md" target="_blank">Prowlarr</a><br/>• Processes downloads via <a href="https://sabnzbd.org/wiki/" target="_blank">SABnzbd</a> with repair and extraction |
+| Misc Services | Email Relay<br/>Specialized Tools | [misc](./subsystems/misc):<br/>• Houses miscellaneous applications that don't require dedicated modules<br/>• Provides SMTP relay services through <a href="https://github.com/foxcpp/maddy" target="_blank">Maddy</a><br/>• Supports both implicit and explicit TLS for secure email transmission |
 
 ## Module Relationships
 
@@ -49,6 +50,7 @@ flowchart BT
         bitwarden[bitwarden]:::apps
         harbor[harbor]:::apps
         media[media]:::apps
+        misc[misc]:::apps
     end
     class Apps appbox
 

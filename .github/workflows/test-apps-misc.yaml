@@ -1,0 +1,28 @@
+---
+# yamllint disable rule:line-length
+name: test-apps-misc
+
+on:
+  pull_request:
+    paths:
+    - '.github/workflows/test-apps-misc.yaml'
+    - '.github/workflows/test-kubernetes-resources-workflow.yaml'
+    - '.github/kind-cluster-single-node.yaml'
+    - 'ci/test/apps-misc/**'
+    - 'apps/subsystems/misc/**'
+    - '!apps/subsystems/misc/**.md'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test-apps-misc:
+    uses: ./.github/workflows/test-kubernetes-resources-workflow.yaml
+    with:
+      test_path: ./ci/test/apps-misc
+      kind_cluster_config: kind-cluster-single-node.yaml

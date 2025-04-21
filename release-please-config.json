@@ -64,6 +64,12 @@
       "component": "apps-media",
       "extra-label": "pr-type:release,subsystem:apps-media"
     },
+    "apps/subsystems/misc": {
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "component": "apps-misc",
+      "extra-label": "pr-type:release,subsystem:apps-misc"
+    },
     "infrastructure/bootstrap/crds": {
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
