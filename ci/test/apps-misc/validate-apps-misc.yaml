@@ -1,0 +1,66 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-apps-misc
+spec:
+  try:
+  - description: Reconcile kustomization/apps-misc
+    script:
+      # yamllint disable-line rule:line-length
+      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-misc --timeout=2m
+      timeout: 2m
+
+  # Certificate resources
+  - description: Assert helmrelease/cert-manager-release
+    assert:
+      bindings:
+      - name: name
+        value: cert-manager-release
+      - name: namespace
+        value: cert-manager
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+  - description: Assert certificate/smtp-tls
+    assert:
+      bindings:
+      - name: name
+        value: smtp-tls
+      - name: namespace
+        value: maddy
+      file: ../chainsaw/assertions/certificate-ready.yaml
+
+  # Maddy SMTP server
+  - description: Assert deployment/smtp
+    assert:
+      bindings:
+      - name: name
+        value: smtp
+      - name: namespace
+        value: maddy
+      file: ../chainsaw/assertions/deployment-ready.yaml
+
+  catch:
+  # Maddy SMTP server
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: smtp
+      namespace: maddy
+
+  # Certificate
+  - describe:
+      apiVersion: cert-manager.io/v1
+      kind: Certificate
+      name: smtp-tls
+      namespace: maddy
+
+  # Events
+  - describe:
+      apiVersion: v1
+      kind: Event
+      namespace: maddy
+
+  # Pod logs
+  - podLogs:
+      name: smtp
+      namespace: maddy

@@ -1,0 +1,33 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps-misc
+  namespace: flux-system
+spec:
+  interval: 15m0s
+  path: ./apps/subsystems/misc
+  prune: false
+  postBuild:
+    substitute:
+      cert_issuer: selfsigned-issuer
+    substituteFrom:
+    - kind: ConfigMap
+      name: cluster-common-conf
+  sourceRef:
+    kind: GitRepository
+    name: test-source
+    namespace: flux-system
+  timeout: 2m0s
+  wait: false
+  patches:
+  # drop ExternalSecret as a secret store is not configured for tests
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      $patch: delete
+      kind: ExternalSecret
+      metadata:
+        name: maddy-credentials
+    target:
+      kind: ExternalSecret
+      name: maddy-credentials

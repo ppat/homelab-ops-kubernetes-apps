@@ -1,0 +1,91 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smtp
+  namespace: maddy
+  labels:
+    app.kubernetes.io/name: smtp
+  annotations:
+    secret.reloader.stakater.com/reload: maddy-credentials
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: smtp
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: smtp
+    spec:
+      containers:
+      - name: maddy
+        env:
+        - name: DEBUG
+          value: "false"
+        - name: SMTP_REMOTE_USER
+          valueFrom:
+            secretKeyRef:
+              name: maddy-credentials
+              key: smtp_remote_user
+        - name: SMTP_REMOTE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: maddy-credentials
+              key: smtp_remote_password
+        - name: SMTP_REMOTE_HOST
+          valueFrom:
+            secretKeyRef:
+              name: maddy-credentials
+              key: smtp_remote_host
+        image: foxcpp/maddy:0.8.1@sha256:55636d8a29588eea62d81d51acdafe38e0f694fb91801ab12dc1ed8c47b6439d
+        livenessProbe:
+          tcpSocket:
+            port: smtp-explicit
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        ports:
+        - containerPort: 465
+          name: smtp-implicit
+        - containerPort: 587
+          name: smtp-explicit
+        - containerPort: 9749
+          name: metrics
+        volumeMounts:
+        - name: config
+          mountPath: /data/maddy.conf
+          subPath: maddy.conf
+        - name: tls
+          mountPath: /tls
+          readOnly: true
+        - name: auth
+          mountPath: /auth
+          readOnly: true
+        - name: state
+          mountPath: /var/lib/maddy
+        readinessProbe:
+          tcpSocket:
+            port: smtp-explicit
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+      volumes:
+      - name: config
+        configMap:
+          name: maddy-config
+      - name: tls
+        secret:
+          secretName: smtp-tls-cert
+      - name: auth
+        secret:
+          secretName: maddy-credentials
+          items:
+          - key: smtp_local_auth
+            path: relay-auth
+      - name: state
+        emptyDir: {}
