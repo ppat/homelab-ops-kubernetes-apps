@@ -47,6 +47,11 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: maddy
+---
+apiVersion: v1
+kind: Namespace
+metadata:
   name: media
 ---
 apiVersion: v1
