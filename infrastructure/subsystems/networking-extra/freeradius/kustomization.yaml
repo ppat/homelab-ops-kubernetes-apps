@@ -1,0 +1,20 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- secret-client-credentials.yaml
+- secret-health-check.yaml
+- secret-mac2vlan-map.yaml
+- deployment.yaml
+- service.yaml
+- ipaddresspool.yaml
+
+configMapGenerator:
+- name: freeradius-scripts
+  namespace: freeradius
+  files:
+  - conf.d/health-check.sh
+
+sortOptions:
+  order: fifo

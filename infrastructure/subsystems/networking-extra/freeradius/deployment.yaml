@@ -1,0 +1,80 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: freeradius
+  namespace: freeradius
+  labels:
+    app.kubernetes.io/name: freeradius
+  annotations:
+    secret.reloader.stakater.com/reload: freeradius-client-credentials,freeradius-health-check,freeradius-mac2vlan-map
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: freeradius
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: freeradius
+    spec:
+      containers:
+      - name: freeradius
+        image: freeradius/freeradius-server:3.2.7@sha256:42b05de4405b1e745686b9ed0f70307fd43e998b850b3e6bd936733a8c260595
+        args:
+        - -X
+        env:
+        - name: HEALTHCHECK_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: freeradius-health-check
+              key: healthcheck_password
+        - name: HEALTHCHECK_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: freeradius-health-check
+              key: healthcheck_secret
+        livenessProbe:
+          exec:
+            command:
+            - /scripts/health-check.sh
+          periodSeconds: 30
+          timeoutSeconds: 5
+        ports:
+        - containerPort: 1812
+          name: auth
+          protocol: UDP
+        - containerPort: 1813
+          name: acct
+          protocol: UDP
+        readinessProbe:
+          exec:
+            command:
+            - /scripts/health-check.sh
+          periodSeconds: 30
+          timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+        volumeMounts:
+        - name: client-credentials
+          mountPath: /etc/freeradius/clients.conf
+          subPath: clients.conf
+        - name: mac2vlan-map
+          mountPath: /etc/freeradius/users
+          subPath: users
+        - name: scripts
+          mountPath: /scripts
+      volumes:
+      - name: client-credentials
+        secret:
+          secretName: freeradius-client-credentials
+      - name: mac2vlan-map
+        secret:
+          secretName: freeradius-mac2vlan-map
+      - name: scripts
+        configMap:
+          name: freeradius-scripts
+          defaultMode: 0755

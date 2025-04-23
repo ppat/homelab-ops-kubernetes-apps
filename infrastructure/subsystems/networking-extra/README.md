@@ -4,11 +4,11 @@ This module provides advanced networking capabilities through DNS filtering, VPN
 
 ## Quick Links
 
-<a href="https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/tunnel-guide/" target="_blank"><img src="../../../.static/images/logos/cloudflared.png" width="32" height="32" alt="Cloudflared"></a> <a href="https://pi-hole.net/" target="_blank"><img src="../../../.static/images/logos/pi-hole.svg" width="32" height="32" alt="Pi-hole"></a> <a href="https://tailscale.com/" target="_blank"><img src="../../../.static/images/logos/tailscale.png" width="32" height="32" alt="Tailscale"></a> <a href="https://nlnetlabs.nl/documentation/unbound/" target="_blank"><img src="../../../.static/images/logos/unbound.png" width="32" height="32" alt="Unbound"></a> <a href="https://ui.com/" target="_blank"><img src="../../../.static/images/logos/unifi.svg" width="32" height="32" alt="UniFi"></a>
+<a href="https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/tunnel-guide/" target="_blank"><img src="../../../.static/images/logos/cloudflared.png" width="32" height="32" alt="Cloudflared"></a> <a href="https://freeradius.org/" target="_blank"><img src="../../../.static/images/logos/freeradius.svg" width="32" height="32" alt="FreeRADIUS"></a> <a href="https://pi-hole.net/" target="_blank"><img src="../../../.static/images/logos/pi-hole.svg" width="32" height="32" alt="Pi-hole"></a> <a href="https://tailscale.com/" target="_blank"><img src="../../../.static/images/logos/tailscale.png" width="32" height="32" alt="Tailscale"></a> <a href="https://nlnetlabs.nl/documentation/unbound/" target="_blank"><img src="../../../.static/images/logos/unbound.png" width="32" height="32" alt="Unbound"></a> <a href="https://ui.com/" target="_blank"><img src="../../../.static/images/logos/unifi.svg" width="32" height="32" alt="UniFi"></a>
 
 ## Overview
 
-The networking-extra module provides three main capabilities:
+The networking-extra module provides four main capabilities:
 
 1. DNS Management
    - Secure DNS resolution chain:
@@ -52,6 +52,16 @@ The networking-extra module provides three main capabilities:
      - Speed test (TCP 6789)
      - Management UI (TCP 8443)
 
+4. RADIUS Authentication
+    - FreeRADIUS server:
+      - MAC-based authentication for wireless clients connecting to UniFi networks
+      - VLAN assignment based on client MAC address
+      - Integration with UniFi Network Application
+      - Configurable default VLAN for unknown clients
+    - Service ports:
+      - Authentication (UDP 1812)
+      - Accounting (UDP 1813)
+
 ### Component Architecture
 
 ```mermaid
@@ -93,6 +103,7 @@ flowchart TB
     subgraph network["Network Services"]
         direction TB
         unifi-router["UniFi Router<br/>Local DNS Resolution"]:::mgmt
+        freeradius["FreeRADIUS<br/>VLAN Assignment"]:::mgmt
     end
 
     %% VPN Components
@@ -137,6 +148,7 @@ flowchart TB
     unifi --> mongodb
     unifi --> unifi-data
     unifi --> unifi-backup
+    unifi --> freeradius
 
     %% MongoDB Storage
     mongodb --> mongodb-data
@@ -169,6 +181,7 @@ flowchart TB
 | Unbound | DNS resolution | • Performs DNSSEC validation<br>• Implements privacy features<br>• Optimizes caching<br>• Supports prefetching |
 | Tailscale | VPN access | • Manages network access<br>• Supports custom hostnames<br>• Enables API server proxy<br>• Zero-trust architecture |
 | UniFi | Network management | • Controls network devices<br>• Manages configurations<br>• Handles firmware updates<br>• Collects device statistics |
+| FreeRADIUS | RADIUS authentication | • Authenticates wireless clients by MAC address (on behalf of Unifi)<br>• Assigns VLANs based on client identity<br>• Integrates with UniFi for wireless networks<br>• Provides configurable default VLAN |
 
 ## Prerequisites
 
@@ -185,9 +198,10 @@ flowchart TB
    | Variable | Purpose | Example |
    |----------|---------|---------|
    | domain_name | DNS zone | example.com |
-   | dns_zone | Internal zone | homelab.local |
+   | dns_zone | Internal zone | homelab.example.com |
    | dns_fallback | Backup DNS | 1.1.1.1 |
    | pihole_external_ip_address | Pi-hole IP | 192.168.1.53 |
+   | freeradius_external_ip_address | FreeRADIUS IP | 192.168.1.54 |
 
 3. Required Secrets
 
@@ -196,6 +210,8 @@ flowchart TB
    | pihole-secrets | Pi-hole admin | pihole_password |
    | unifi-secrets | UniFi database | unifi_db_user, unifi_db_password |
    | tailscale-auth | VPN access | authkey |
+   | freeradius-client-credentials | RADIUS clients | unifi_secret |
+   | freeradius-mac2vlan-map | MAC to VLAN mapping | mac2vlan_map, default_vlan |
 
 ## Dependencies
 

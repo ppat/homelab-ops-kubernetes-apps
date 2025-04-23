@@ -1,0 +1,16 @@
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: freeradius-pool
+  namespace: metallb-system
+spec:
+  addresses:
+  - ${freeradius_external_ip_address}/32
+  avoidBuggyIPs: true
+  serviceAllocation:
+    namespaces:
+    - freeradius
+    serviceSelectors:
+    - matchLabels:
+        app.kubernetes.io/name: freeradius
