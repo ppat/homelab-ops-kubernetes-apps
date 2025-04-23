@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.10...infra-networking-extra-v0.1.11) (2025-04-23)
+
+
+### ✨ Features
+
+* **infra-networking-extra:** add freeradius to networking-extra module ([#1130](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1130)) ([579a935](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/579a93568f9ffece7f2174bf6c8db07ded0178de))
+* **infra-networking-extra:** update visibilityspots/cloudflared (v2025.2.1 -&gt; v2025.4.0) ([#1116](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1116)) ([17b356f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/17b356fb22ce10751414584a98ed085c749501ca))
+
 ## [0.1.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.9...infra-networking-extra-v0.1.10) (2025-04-10)
 
 
