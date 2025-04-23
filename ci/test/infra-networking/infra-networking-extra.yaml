@@ -34,3 +34,13 @@ spec:
       kind: HelmRelease
       name: tailscale-operator
       namespace: tailscale
+  # drop ExternalSecret as a secret store is not configured for tests
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      $patch: delete
+      kind: ExternalSecret
+      metadata:
+        name: irrelevant
+    target:
+      kind: ExternalSecret
+      name: "^freeradius-.*$"

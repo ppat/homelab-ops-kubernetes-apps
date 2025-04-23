@@ -12,3 +12,4 @@ data:
   syslog_external_ip_address: 10.112.1.4
   externaldns_ip_address: 10.112.1.1
   jellyfin_external_ip_address: 10.112.1.5
+  freeradius_external_ip_address: 10.112.1.6
