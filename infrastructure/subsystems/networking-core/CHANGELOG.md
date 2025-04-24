@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.5.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.5.8...infra-networking-core-v0.5.9) (2025-04-24)
+
+
+### 🛠 Improvements
+
+* misc corrections to docs ([#1136](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1136)) ([b8e5ad5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b8e5ad5356f5468db09444edaa86e27a44379688))
+
+
+### ✨ Features
+
+* **infra-networking-core:** update external-dns (1.15.2 -&gt; 1.16.1) ([#1003](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1003)) ([d6b2d48](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d6b2d489f482c38f1149dabf5da82af717eb01db))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** move cloudflared, pihole and unbound from pihole -&gt; dns namespace ([#1141](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1141)) ([e09e11b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e09e11b6ce8702662a3ee154d0ebaebb7c392f71))
+
 ## [0.5.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.5.7...infra-networking-core-v0.5.8) (2025-04-13)
 
 
