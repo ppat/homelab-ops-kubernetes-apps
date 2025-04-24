@@ -60,6 +60,7 @@ spec:
       - name: namespace
         value: dns
       file: ../chainsaw/assertions/service-loadbalancer-ready.yaml
+      timeout: 2m
   - description: Assert service/pihole-dns-udp
     assert:
       bindings:
@@ -68,6 +69,7 @@ spec:
       - name: namespace
         value: dns
       file: ../chainsaw/assertions/service-loadbalancer-ready.yaml
+      timeout: 2m
   - description: Assert ingress/pihole-admin-https
     assert:
       bindings:

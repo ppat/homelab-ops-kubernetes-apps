@@ -55,7 +55,7 @@ The networking-core module provides three main capabilities:
 
 3. DNS Provider Requirements
    - PiHole:
-     - PiHole web interface accessible at pihole-web.pihole.svc.cluster.local
+     - PiHole web interface accessible at pihole-web.dns.svc.cluster.local
      - Admin password for PiHole API access
    - UniFi:
      - UniFi controller accessible at unifi.homelab.${dns_zone}
