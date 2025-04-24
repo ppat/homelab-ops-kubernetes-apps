@@ -4,8 +4,10 @@ kind: Kustomization
 
 resources:
 - namespace.yaml
-- freeradius/
+- cloudflared-doh/
+- unbound/
 - pihole/
+- freeradius/
 - unifi/
 - tailscale-operator/
 
