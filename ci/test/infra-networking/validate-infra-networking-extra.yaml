@@ -152,6 +152,7 @@ spec:
       - name: namespace
         value: external-dns
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 2m
 
   # Freeradius resources
   - description: Assert IPAddressPool/freeradius-pool
