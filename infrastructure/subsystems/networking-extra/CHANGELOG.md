@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.11...infra-networking-extra-v0.1.12) (2025-04-24)
+
+
+### 🛠 Improvements
+
+* misc corrections to docs ([#1136](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1136)) ([b8e5ad5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b8e5ad5356f5468db09444edaa86e27a44379688))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** do not group cloudflared, pihole and unbound within pihole directory ([#1140](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1140)) ([28ed08b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/28ed08b9cb662d20c0257114075aebc3e315289c))
+* **infra-networking-extra:** move cloudflared, pihole and unbound from pihole -&gt; dns namespace ([#1141](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1141)) ([e09e11b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e09e11b6ce8702662a3ee154d0ebaebb7c392f71))
+
 ## [0.1.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.10...infra-networking-extra-v0.1.11) (2025-04-23)
 
 
