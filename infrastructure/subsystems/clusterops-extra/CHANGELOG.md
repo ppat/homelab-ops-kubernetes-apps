@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-extra-v0.1.6...infra-clusterops-extra-v0.2.0) (2025-04-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-clusterops-extra:** update reloader (1.3.0 -> 2.0.0) ([#1049](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1049))
+
+### ✨ Features
+
+* **infra-clusterops-extra:** update reloader (1.3.0 -&gt; 2.0.0) ([#1049](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1049)) ([1251cde](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1251cdeb4d85c3f8744fe5900290e616610adc47))
+* **infra-clusterops-extra:** update reloader (2.0.0 -&gt; 2.1.2) ([#1133](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1133)) ([4d341e0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4d341e0e995819baed167f255aa3621bb5f8d39b))
+
 ## [0.1.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-extra-v0.1.5...infra-clusterops-extra-v0.1.6) (2025-03-07)
 
 
