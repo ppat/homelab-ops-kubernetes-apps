@@ -18,7 +18,7 @@ spec:
       - name: name
         value: pihole-data
       - name: namespace
-        value: pihole
+        value: dns
       file: ../chainsaw/assertions/pvc-bound.yaml
   - description: Assert deployment/cloudflared-doh
     assert:
@@ -26,7 +26,7 @@ spec:
       - name: name
         value: cloudflared-doh
       - name: namespace
-        value: pihole
+        value: dns
       file: ../chainsaw/assertions/deployment-ready.yaml
   - description: Assert deployment/unbound
     assert:
@@ -34,7 +34,7 @@ spec:
       - name: name
         value: unbound
       - name: namespace
-        value: pihole
+        value: dns
       file: ../chainsaw/assertions/deployment-ready.yaml
   - description: Assert deployment/pihole
     assert:
@@ -42,7 +42,7 @@ spec:
       - name: name
         value: pihole
       - name: namespace
-        value: pihole
+        value: dns
       file: ../chainsaw/assertions/deployment-ready.yaml
   - description: Assert IPAddressPool/pihole-pool
     assert:
@@ -58,7 +58,7 @@ spec:
       - name: name
         value: pihole-dns-tcp
       - name: namespace
-        value: pihole
+        value: dns
       file: ../chainsaw/assertions/service-loadbalancer-ready.yaml
   - description: Assert service/pihole-dns-udp
     assert:
@@ -66,7 +66,7 @@ spec:
       - name: name
         value: pihole-dns-udp
       - name: namespace
-        value: pihole
+        value: dns
       file: ../chainsaw/assertions/service-loadbalancer-ready.yaml
   - description: Assert ingress/pihole-admin-https
     assert:
@@ -74,7 +74,7 @@ spec:
       - name: name
         value: pihole-admin-https
       - name: namespace
-        value: pihole
+        value: dns
       file: ../chainsaw/assertions/ingress-ready.yaml
   - description: Assert ingress/pihole-adblock-http
     assert:
@@ -82,7 +82,7 @@ spec:
       - name: name
         value: pihole-adblock-http
       - name: namespace
-        value: pihole
+        value: dns
       file: ../chainsaw/assertions/ingress-ready.yaml
   - description: Assert ingress/pihole-adblock-https
     assert:
@@ -90,7 +90,7 @@ spec:
       - name: name
         value: pihole-adblock-https
       - name: namespace
-        value: pihole
+        value: dns
       file: ../chainsaw/assertions/ingress-ready.yaml
 
   # UniFi resources
@@ -184,10 +184,10 @@ spec:
       apiVersion: apps/v1
       kind: Deployment
       name: pihole
-      namespace: pihole
+      namespace: dns
   - podLogs:
       name: pihole
-      namespace: pihole
+      namespace: dns
 
   - describe:
       apiVersion: apps/v1

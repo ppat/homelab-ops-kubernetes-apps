@@ -8,7 +8,7 @@ resources:
 
 configMapGenerator:
 - name: unbound-config
-  namespace: pihole
+  namespace: dns
   files:
   - conf.d/unbound.conf
   options:

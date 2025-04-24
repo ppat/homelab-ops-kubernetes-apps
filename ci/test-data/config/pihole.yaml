@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: pihole-optional-config
-  namespace: pihole
+  namespace: dns
 data:
   DNSMASQ_LISTENING: all
   DNSSEC: "false"
@@ -18,7 +18,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: unbound-optional-config
-  namespace: pihole
+  namespace: dns
 data:
   # unbound requires running under root when deployed within kind,
   # but does not require it when deployed within k3s
