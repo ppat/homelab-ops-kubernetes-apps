@@ -238,8 +238,7 @@ Purpose: Provide entry point and high-level understanding of the entire project
 1. High-level architecture
 2. Capability groupings
 3. Feature sets
-4. Future improvements
-5. Known limitations
+4. Known limitations
 
 ### 3. Must Not Include
 
