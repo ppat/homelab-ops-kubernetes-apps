@@ -3,7 +3,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: pihole-admin-https
-  namespace: pihole
+  namespace: dns
   annotations:
     external-dns.alpha.kubernetes.io/hostname: pihole.${domain_name}
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
@@ -27,7 +27,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: pihole-adblock-https
-  namespace: pihole
+  namespace: dns
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
@@ -49,7 +49,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: pihole-adblock-http
-  namespace: pihole
+  namespace: dns
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
     traefik.ingress.kubernetes.io/router.tls: "false"

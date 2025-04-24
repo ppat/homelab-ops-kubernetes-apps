@@ -10,7 +10,7 @@ resources:
 
 configMapGenerator:
 - name: pihole-scripts
-  namespace: pihole
+  namespace: dns
   files:
   - scripts/entrypoint.sh
   - scripts/liveness-probe.sh

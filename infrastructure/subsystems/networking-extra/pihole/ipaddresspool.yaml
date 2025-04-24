@@ -10,7 +10,7 @@ spec:
   avoidBuggyIPs: true
   serviceAllocation:
     namespaces:
-    - pihole
+    - dns
     serviceSelectors:
     - matchLabels:
         app.kubernetes.io/name: pihole

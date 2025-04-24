@@ -77,7 +77,7 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: pihole
+  name: dns
 ---
 apiVersion: v1
 kind: Namespace
