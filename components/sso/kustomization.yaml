@@ -13,11 +13,6 @@ patches:
     kind: Ingress
     name: "(lidarr|prowlarr|radarr|sabnzbd|sonarr)"
     namespace: downloaders
-- path: patch-home-assistant.yaml
-  target:
-    kind: Deployment
-    name: home-assistant
-    namespace: home-automation
 - path: patch-ingress-middlewares.yaml
   target:
     kind: Ingress
