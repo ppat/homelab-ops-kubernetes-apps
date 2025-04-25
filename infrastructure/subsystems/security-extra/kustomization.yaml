@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
 - namespace.yaml
 - authentik/
+- kyverno/
 
 sortOptions:
   order: fifo
