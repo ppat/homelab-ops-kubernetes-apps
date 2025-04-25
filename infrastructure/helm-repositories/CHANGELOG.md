@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-helm-repositories-v0.0.6...infra-helm-repositories-v0.0.7) (2025-04-25)
+
+
+### ✨ Features
+
+* **infra-security-extra:** add kyverno + kyverno-policy-reporter to infra-security-extra module ([#1151](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1151)) ([4e7be04](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4e7be047441e488deacb25d7548bc6a7c43ba569))
+
 ## [0.0.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-helm-repositories-v0.0.5...infra-helm-repositories-v0.0.6) (2025-02-09)
 
 
