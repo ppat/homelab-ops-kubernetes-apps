@@ -62,9 +62,9 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-extra --timeout=2m
         timeout: 2m
-  - name: Validate authentik
-    use:
-      template: ./validate-authentik.yaml
   - name: Validate kyverno
     use:
       template: ./validate-kyverno.yaml
+  - name: Validate authentik
+    use:
+      template: ./validate-authentik.yaml
