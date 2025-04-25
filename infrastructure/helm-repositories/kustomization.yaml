@@ -16,6 +16,8 @@ resources:
 - fairwinds.yaml
 - grafana.yaml
 - intel.yaml
+- kyverno.yaml
+- kyverno-policy-reporter.yaml
 - longhorn.yaml
 - metallb.yaml
 - minio.yaml

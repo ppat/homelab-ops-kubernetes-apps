@@ -1,0 +1,72 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: kyverno-policy-reporter-release
+  namespace: kyverno
+spec:
+  chart:
+    spec:
+      chart: policy-reporter
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: kyverno-policy-reporter-repository
+        namespace: flux-system
+      version: 3.1.3
+  dependsOn:
+  - name: kyverno-release
+    namespace: kyverno
+  install:
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 15m0s
+  releaseName: kyverno-policy-reporter
+  targetNamespace: kyverno
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+  values:
+    ui:
+      enabled: true
+      ingress:
+        enabled: true
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: kyverno.${domain_name}
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+        hosts:
+        - host: kyverno.${domain_name}
+          paths:
+          - path: /
+            pathType: Prefix
+        tls: []
+
+    plugin:
+      kyverno:
+        enabled: true
+        blockReports:
+          enabled: true
+          eventNamespace: ""  # Watch events in all namespaces
+          source: Kyverno Event
+          results:
+            maxPerReport: 200
+            keepOnlyLatest: true
+
+    metrics:
+      enabled: true
+    monitoring:
+      enabled: true
+      grafana:
+        dashboards:
+          enabled: true
+          label: grafana_dashboard
+          value: "1"
+        folder:
+          annotation: grafana_folder
+          name: Kyverno Policy Reporter

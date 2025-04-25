@@ -41,10 +41,30 @@ spec:
         name: infra-security-extra
         namespace: flux-system
 
-  - name: Validate infra-security-core module
+  - name: Reconcile infra-security-core
+    try:
+    - description: Reconcile kustomization/infra-security-core
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-core --timeout=2m
+        timeout: 2m
+  - name: Validate cert-manager
     use:
-      template: ./validate-infra-security-core.yaml
+      template: ./validate-cert-manager.yaml
+  - name: Validate external-secrets
+    use:
+      template: ./validate-external-secrets.yaml
 
-  - name: Validate infra-security-extra module
+  - name: Reconcile infra-security-extra
+    try:
+    - description: Reconcile kustomization/infra-security-extra
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-extra --timeout=2m
+        timeout: 2m
+  - name: Validate authentik
     use:
-      template: ./validate-infra-security-extra.yaml
+      template: ./validate-authentik.yaml
+  - name: Validate kyverno
+    use:
+      template: ./validate-kyverno.yaml

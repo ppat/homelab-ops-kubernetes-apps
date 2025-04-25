@@ -2,15 +2,9 @@
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: StepTemplate
 metadata:
-  name: validate-infra-security-extra
+  name: validate-authentik
 spec:
   try:
-  - description: Reconcile kustomization/infra-security-extra
-    script:
-      # yamllint disable-line rule:line-length
-      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-extra --timeout=2m
-      timeout: 2m
-
   # CloudNative PG resources
   - description: Assert deployment/cloudnative-pg
     assert:
