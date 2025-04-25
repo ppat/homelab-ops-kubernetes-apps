@@ -1,0 +1,78 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: kyverno-release
+  namespace: kyverno
+spec:
+  chart:
+    spec:
+      chart: kyverno
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: kyverno-repository
+        namespace: flux-system
+      version: 3.4.0
+  install:
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 15m0s
+  releaseName: kyverno
+  targetNamespace: kyverno
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+  values:
+    # High Availability configuration for admission controller
+    admissionController:
+      replicas: 3
+      podDisruptionBudget:
+        enabled: true
+        minAvailable: 2
+      serviceMonitor:
+        enabled: true
+
+    # Background controller configuration
+    backgroundController:
+      replicas: 2
+      podDisruptionBudget:
+        enabled: true
+        minAvailable: 1
+      serviceMonitor:
+        enabled: true
+
+    # Cleanup controller configuration
+    cleanupController:
+      replicas: 2
+      podDisruptionBudget:
+        enabled: true
+        minAvailable: 1
+      serviceMonitor:
+        enabled: true
+
+    # Reports controller configuration
+    reportsController:
+      replicas: 2
+      podDisruptionBudget:
+        enabled: true
+        minAvailable: 1
+      serviceMonitor:
+        enabled: true
+
+    # Webhook cleanup configuration
+    webhooksCleanup:
+      enabled: true
+      autoDeleteWebhooks:
+        enabled: true
+
+    # Enable Grafana dashboard
+    grafana:
+      enabled: true
+      labels:
+        grafana_dashboard: "1"

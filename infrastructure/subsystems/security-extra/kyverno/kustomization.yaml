@@ -3,9 +3,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- namespace.yaml
-- authentik/
-- kyverno/
-
-sortOptions:
-  order: fifo
+- helm-release-kyverno.yaml
+- helm-release-policy-reporter.yaml
