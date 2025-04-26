@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-helm-repositories-v0.0.7...infra-helm-repositories-v0.1.0) (2025-04-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* **kubernetes-api:** update HelmRepository (source.toolkit.fluxcd.io/v1beta2 -> source.toolkit.fluxcd.io/v1) ([#1158](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1158))
+
+### ✨ Features
+
+* **kubernetes-api:** update HelmRepository (source.toolkit.fluxcd.io/v1beta2 -&gt; source.toolkit.fluxcd.io/v1) ([#1158](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1158)) ([14568b4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/14568b42a607fd4c2fdd66cb35cfced57245be02))
+
 ## [0.0.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-helm-repositories-v0.0.6...infra-helm-repositories-v0.0.7) (2025-04-25)
 
 
