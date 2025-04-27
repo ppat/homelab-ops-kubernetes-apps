@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.0.6...infra-security-extra-v0.1.0) (2025-04-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* **kubernetes-api:** update HelmRelease (helm.toolkit.fluxcd.io/v2beta1 -> helm.toolkit.fluxcd.io/v2) ([#1157](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1157))
+
+### 🛠 Improvements
+
+* **infra-security-extra:** add kyverno info to docs ([#1164](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1164)) ([37f1ba9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/37f1ba949183a8281c671aa424fe6c9cfe04769a))
+
+
+### ✨ Features
+
+* **kubernetes-api:** update HelmRelease (helm.toolkit.fluxcd.io/v2beta1 -&gt; helm.toolkit.fluxcd.io/v2) ([#1157](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1157)) ([31ec5df](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/31ec5dfb58eff2f777c5a9f1f91b173d1a865fdd))
+
 ## [0.0.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.0.5...infra-security-extra-v0.0.6) (2025-04-25)
 
 
