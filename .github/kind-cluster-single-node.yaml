@@ -6,3 +6,5 @@ nodes:
   extraMounts:
   - hostPath: /var/log
     containerPath: /var/log
+  - hostPath: /mnt/k8s-storage/1
+    containerPath: /var/lib
