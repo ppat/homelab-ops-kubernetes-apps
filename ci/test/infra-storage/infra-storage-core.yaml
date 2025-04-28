@@ -48,6 +48,7 @@ spec:
           persistence:
             defaultClass: false
           defaultSettings:
+            storageReservedPercentageForDefaultDisk: 2
             storageMinimalAvailablePercentage: 2
             storageOverProvisioningPercentage: 200
     target:
