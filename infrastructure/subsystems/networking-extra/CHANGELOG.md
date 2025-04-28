@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.13](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.12...infra-networking-extra-v0.1.13) (2025-04-28)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update docker.io/mongo (7.0.18 -&gt; 7.0.19) ([#1147](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1147)) ([98340f7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/98340f795897b4673a1db816f2f32da2a9d3a03c))
+
 ## [0.1.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.11...infra-networking-extra-v0.1.12) (2025-04-24)
 
 
