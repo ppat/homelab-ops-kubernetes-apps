@@ -36,3 +36,23 @@ spec:
       kind: HelmRelease
       name: minio-release
       namespace: minio
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: longhorn-release
+        namespace: longhorn-system
+      spec:
+        values:
+          persistence:
+            defaultClass: false
+          defaultSettings:
+            storageReservedPercentageForDefaultDisk: 2
+            storageMinimalAvailablePercentage: 2
+            storageOverProvisioningPercentage: 200
+    target:
+      group: helm.toolkit.fluxcd.io
+      kind: HelmRelease
+      name: longhorn-release
+      namespace: longhorn-system
