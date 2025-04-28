@@ -29,8 +29,8 @@ jobs:
       run: |
         set -x
         sudo mkdir -p /mnt/k8s-storage
-        sudo chmod 777 /mnt/k8s-storage
-        mkdir -p /mnt/k8s-storage/1 /mnt/k8s-storage/2 /mnt/k8s-storage/3
+        sudo mkdir -p /mnt/k8s-storage/1 /mnt/k8s-storage/2 /mnt/k8s-storage/3
+        sudo chmod -R 777 /mnt/k8s-storage
 
     - name: Setup kind cluster
       uses: helm/kind-action@a1b0e391336a6ee6713a0583f8c6240d70863de3 # v1.12.0
