@@ -14,9 +14,6 @@ spec:
     - description: Apply infra-storage-core
       apply:
         file: ./infra-storage-core.yaml
-    - description: Apply test-pvc
-      apply:
-        file: ./test-pvc.yaml
     catch:
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -24,6 +21,20 @@ spec:
         name: infra-storage-core
         namespace: flux-system
 
-  - name: Validate infra-storage-core module
+  - name: Reconcile infra-storage-core
+    try:
+    - description: Reconcile kustomization/infra-storage-core
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-storage-core --timeout=3m
+        timeout: 3m
+
+  - name: Validate csi-driver-nfs
     use:
-      template: ./validate-infra-storage-core.yaml
+      template: ./validate-csi-driver-nfs.yaml
+  - name: Validate minio
+    use:
+      template: ./validate-minio.yaml
+  - name: Validate longhorn
+    use:
+      template: ./validate-longhorn.yaml
