@@ -29,9 +29,9 @@ jobs:
       # yamllint disable-line rule:indentation
       run: |
         set -x
-        mkdir -p /mnt/longhorn/1
-        mkdir -p /mnt/longhorn/2
-        mkdir -p /mnt/longhorn/3
+        mkdir -p /home/runner/longhorn/1
+        mkdir -p /home/runner/longhorn/2
+        mkdir -p /home/runner/longhorn/3
 
     - name: Setup kind cluster
       uses: helm/kind-action@a1b0e391336a6ee6713a0583f8c6240d70863de3 # v1.12.0

@@ -4,13 +4,13 @@ apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
   extraMounts:
-  - hostPath: /mnt/longhorn/1
+  - hostPath: /home/runner/longhorn/1
     containerPath: /var/lib/longhorn
 - role: worker
   extraMounts:
-  - hostPath: /mnt/longhorn/2
+  - hostPath: /home/runner/longhorn/2
     containerPath: /var/lib/longhorn
 - role: worker
   extraMounts:
-  - hostPath: /mnt/longhorn/3
+  - hostPath: /home/runner/longhorn/3
     containerPath: /var/lib/longhorn
