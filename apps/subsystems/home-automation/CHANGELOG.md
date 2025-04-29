@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.13](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.0.12...apps-home-automation-v0.0.13) (2025-04-29)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-home-automation:** home-automation-db's postgres uri secret should contain fully qualified domain name ([#1175](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1175)) ([aa387f9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/aa387f9faed6e1ca33b4f9de736a9f32cad85b57))
+
 ## [0.0.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.0.11...apps-home-automation-v0.0.12) (2025-04-25)
 
 
