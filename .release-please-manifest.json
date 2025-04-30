@@ -3,7 +3,7 @@
   "apps/subsystems/ai": "0.2.3",
   "apps/subsystems/bitwarden": "0.0.5",
   "apps/subsystems/coder": "0.0.15",
-  "apps/subsystems/downloaders": "0.1.20",
+  "apps/subsystems/downloaders": "0.1.21",
   "apps/subsystems/harbor": "0.0.4",
   "apps/subsystems/home-automation": "0.0.13",
   "apps/subsystems/media": "0.0.16",
