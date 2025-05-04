@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.14](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.13...infra-networking-extra-v0.1.14) (2025-05-04)
+
+
+### ✨ Features
+
+* **infra-networking-extra:** update madnuttah/unbound (1.22.0-2 -&gt; 1.23.0-0) ([#1189](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1189)) ([6a93bb5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6a93bb5a7538a259a7c098615f64153a2920aef7))
+
 ## [0.1.13](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.12...infra-networking-extra-v0.1.13) (2025-04-28)
 
 
