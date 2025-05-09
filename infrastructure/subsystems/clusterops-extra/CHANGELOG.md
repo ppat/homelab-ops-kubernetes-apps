@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-extra-v0.2.1...infra-clusterops-extra-v0.2.2) (2025-05-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-clusterops-extra:** update goldilocks (9.0.1 -&gt; 9.0.2) ([#1224](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1224)) ([f99c7e6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f99c7e6b6d3f2301c0f022e1a0bd68c2fe237342))
+
 ## [0.2.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-extra-v0.2.0...infra-clusterops-extra-v0.2.1) (2025-05-04)
 
 
