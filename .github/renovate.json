@@ -79,6 +79,9 @@
       "infrastructure/subsystems/clusterops-core/flux/gotk-components.yaml"
     ]
   },
+  "labels": [
+    "pr-type:renovate"
+  ],
   "prConcurrentLimit": 0,
   "prHourlyLimit": 0,
   "rebaseWhen": "behind-base-branch",
