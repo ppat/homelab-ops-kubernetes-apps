@@ -3,18 +3,18 @@
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": [
-        "(^|/).+\\.ya?ml$"
+      "managerFilePatterns": [
+        "/(^|/).+\\.ya?ml$/"
       ],
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>[a-z-.]+?)\\s+depName=(?<depName>[a-zA-Z0-9-\/]+?)(\\s+repository=(?<registryUrl>[^\\s]+?))?(\\s+versioning=(?<versioning>[^\\s]+?))?(\\s+extractVersion=(?<extractVersion>[^\\s]+?))?\\s*\\n.+[\\:\\=]\\s?\"v?(?<currentValue>[^\\s]+)\""
+        "# renovate: datasource=(?<datasource>[a-z-.]+?)\\s+depName=(?<depName>[a-zA-Z0-9-/]+?)(\\s+repository=(?<registryUrl>[^\\s]+?))?(\\s+versioning=(?<versioning>[^\\s]+?))?(\\s+extractVersion=(?<extractVersion>[^\\s]+?))?\\s*\\n.+[\\:\\=]\\s?\"v?(?<currentValue>[^\\s]+)\""
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     },
     {
       "customType": "regex",
-      "fileMatch": [
-        "^.github/workflows/.+\\.yaml$"
+      "managerFilePatterns": [
+        "/^.github/workflows/.+\\.yaml$/"
       ],
       "matchStrings": [
         "# renovate-kind-image: datasource=(?<datasource>[a-z-.]+?)(\\s+repository=(?<registryUrl>[^\\s]+?))?(\\s+versioning=(?<versioning>[^\\s]+?))?\\s*\\n.+[\\:\\=]\\s?\"(?<depName>[^:]+)\\:(?<currentValue>[^\\s@]+)(@(?<currentDigest>sha256:[0-9a-f]*))?\""
@@ -23,21 +23,21 @@
     },
     {
       "customType": "regex",
-      "fileMatch": [
-        "(^|/).+\\.ya?ml$"
+      "managerFilePatterns": [
+        "/(^|/).+\\.ya?ml$/"
       ],
       "matchStrings": [
-        "# renovate-gh-release-asset: datasource=(?<datasource>[a-z-.]+?)\\s+depName=(?<depName>[a-zA-Z0-9-\/]+?)(\\s+repository=(?<registryUrl>[^\\s]+?))?(\\s+versioning=(?<versioning>[^\\s]+?))?(\\s+extractVersion=(?<extractVersion>[^\\s]+?))?\\s*\\n.+github\\.com(\\.)?\\/(.+)\\/releases\\/download\\/v(?<currentValue>[^\\/]+)\\/"
+        "# renovate-gh-release-asset: datasource=(?<datasource>[a-z-.]+?)\\s+depName=(?<depName>[a-zA-Z0-9-/]+?)(\\s+repository=(?<registryUrl>[^\\s]+?))?(\\s+versioning=(?<versioning>[^\\s]+?))?(\\s+extractVersion=(?<extractVersion>[^\\s]+?))?\\s*\\n.+github\\.com(\\.)?\\/(.+)\\/releases\\/download\\/v(?<currentValue>[^\\/]+)\\/"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     },
     {
       "customType": "regex",
-      "fileMatch": [
-        "(^|/).+\\.ya?ml$"
+      "managerFilePatterns": [
+        "/(^|/).+\\.ya?ml$/"
       ],
       "matchStrings": [
-        "# renovate-gh-raw-url: datasource=(?<datasource>[a-z-.]+?)\\s+depName=(?<depName>[a-zA-Z0-9-\/]+?)(\\s+repository=(?<registryUrl>[^\\s]+?))?(\\s+versioning=(?<versioning>[^\\s]+?))?(\\s+extractVersion=(?<extractVersion>[^\\s]+?))?\\s*\n.+raw\\.githubusercontent\\.com(\\.)?\\/(.+)\\/v(?<currentValue>[^\\/]+)\\/"
+        "# renovate-gh-raw-url: datasource=(?<datasource>[a-z-.]+?)\\s+depName=(?<depName>[a-zA-Z0-9-/]+?)(\\s+repository=(?<registryUrl>[^\\s]+?))?(\\s+versioning=(?<versioning>[^\\s]+?))?(\\s+extractVersion=(?<extractVersion>[^\\s]+?))?\\s*\n.+raw\\.githubusercontent\\.com(\\.)?\\/(.+)\\/v(?<currentValue>[^\\/]+)\\/"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     }
@@ -62,18 +62,18 @@
     "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/disable-updates.json"
   ],
   "flux": {
-    "fileMatch": [
-      "apps/.+\\.yaml$",
-      "ci/.+\\.yaml$",
-      "infrastructure/.+\\.yaml$"
+    "managerFilePatterns": [
+      "/apps/.+\\.yaml$/",
+      "/ci/.+\\.yaml$/",
+      "/infrastructure/.+\\.yaml$/"
     ]
   },
   "internalChecksFilter": "strict",
   "kubernetes": {
-    "fileMatch": [
-      "apps/.+\\.yaml$",
-      "ci/.+\\.yaml$",
-      "infrastructure/.+\\.yaml$"
+    "managerFilePatterns": [
+      "/apps/.+\\.yaml$/",
+      "/ci/.+\\.yaml$/",
+      "/infrastructure/.+\\.yaml$/"
     ],
     "ignorePaths": [
       "infrastructure/subsystems/clusterops-core/flux/gotk-components.yaml"
