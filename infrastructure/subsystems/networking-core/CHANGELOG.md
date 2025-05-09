@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.6.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.5.9...infra-networking-core-v0.6.0) (2025-05-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-networking-core:** update traefik (34.5.0 -> 35.0.0) ([#1218](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1218))
+
+### ✨ Features
+
+* **infra-networking-core:** update traefik (34.5.0 -&gt; 35.0.0) ([#1218](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1218)) ([764193e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/764193e1e936e840e10af1d50025adc1fba5ae22))
+
 ## [0.5.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.5.8...infra-networking-core-v0.5.9) (2025-04-24)
 
 
