@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.23](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.22...apps-downloaders-v0.1.23) (2025-05-10)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-downloaders:** update digest ghcr.io/linuxserver/lidarr (273641e -&gt; eca135d) ([#1231](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1231)) ([772c452](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/772c45278c75aed911fbebacad5fd54d548b27e4))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sonarr (5581b21 -&gt; bae1b72) ([#1243](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1243)) ([69e76d1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/69e76d14d2a799e84f532abea8cc9735bb62ecb3))
+
 ## [0.1.22](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.21...apps-downloaders-v0.1.22) (2025-05-09)
 
 
