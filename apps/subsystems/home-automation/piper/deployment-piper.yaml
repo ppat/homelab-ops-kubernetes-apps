@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: wyoming-piper
-        image: rhasspy/wyoming-piper:1.5.0@sha256:b6bf208855f26168790ed336ad16576b2fb290f31b51fb98aca496a45561516f
+        image: rhasspy/wyoming-piper:1.5.4@sha256:dbf926f5bc8895a7d0021dbb87df7622b00f91ff8299eeb62d027c7c353b0482
         args: ["--voice", "en_US-lessac-medium"]
         livenessProbe:
           tcpSocket:
