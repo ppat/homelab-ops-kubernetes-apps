@@ -31,12 +31,12 @@ repos:
   - id: fix-spaces
     exclude: ^\.static/images/.*$
 - repo: https://github.com/adrienverge/yamllint.git
-  rev: v1.37.0
+  rev: v1.37.1
   hooks:
   - id: yamllint
     args: [--strict]
 - repo: https://github.com/DavidAnson/markdownlint-cli2
-  rev: v0.17.2
+  rev: v0.18.0
   hooks:
   - id: markdownlint-cli2
     args: ["--fix", "--config", ".markdownlint-cli2.yaml"]
