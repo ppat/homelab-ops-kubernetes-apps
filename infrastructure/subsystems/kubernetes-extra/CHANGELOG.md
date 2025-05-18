@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.16](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.15...infra-kubernetes-extra-v0.0.16) (2025-05-18)
+
+
+### ✨ Features
+
+* **infra-kubernetes-extra:** update descheduler (0.32.2 -&gt; 0.33.0) ([#1252](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1252)) ([2d98232](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2d98232aa21d0daeb3bb6408cf0d49ec25925479))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-kubernetes-extra:** update intel-device-plugins-gpu (0.32.0 -&gt; 0.32.1) ([#1275](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1275)) ([8a90338](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8a90338c657b96e5f3c4a3346d8e6dcb8fc59e4a))
+* **infra-kubernetes-extra:** update intel-device-plugins-operator (0.32.0 -&gt; 0.32.1) ([#1276](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1276)) ([d739f5e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d739f5ea10fee21b2f7c70602bc8c0fa31040b2e))
+
 ## [0.0.15](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.14...infra-kubernetes-extra-v0.0.15) (2025-04-30)
 
 
