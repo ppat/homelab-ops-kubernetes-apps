@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: cert-manager-repository
         namespace: flux-system
-      version: v0.16.0
+      version: v0.17.1
   dependsOn:
   - name: cert-manager-release
     namespace: cert-manager
