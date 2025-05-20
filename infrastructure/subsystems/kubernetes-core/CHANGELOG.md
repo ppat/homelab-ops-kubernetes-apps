@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-core-v0.0.4...infra-kubernetes-core-v0.0.5) (2025-05-20)
+
+
+### 🛠 Improvements
+
+* create initial documentation ([#833](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/833)) ([e5b84c0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e5b84c03920d34e3055bea987b465e04092af030))
+* document module&lt;-&gt;app mapping and use app logos for each app ([#889](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/889)) ([6cb97bb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6cb97bb71826434291de7b067983830376f0d12b))
+
 ## [0.0.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-core-v0.0.3...infra-kubernetes-core-v0.0.4) (2025-01-19)
 
 
