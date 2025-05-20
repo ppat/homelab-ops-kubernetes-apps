@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.2.7...apps-ai-v0.2.8) (2025-05-20)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* upgrade external-secrets resources to v1 api ([#1298](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1298)) ([fb990f8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fb990f8259e828635e1fe5254a9fae4311276ac8))
+
 ## [0.2.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.2.6...apps-ai-v0.2.7) (2025-05-19)
 
 
