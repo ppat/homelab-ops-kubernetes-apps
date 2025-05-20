@@ -19,7 +19,7 @@
   "infrastructure/subsystems/networking-extra": "0.1.15",
   "infrastructure/subsystems/observability-core": "0.8.0",
   "infrastructure/subsystems/observability-extra": "0.1.5",
-  "infrastructure/subsystems/security-core": "0.0.19",
+  "infrastructure/subsystems/security-core": "0.0.20",
   "infrastructure/subsystems/security-extra": "0.1.3",
   "infrastructure/subsystems/storage-core": "0.0.17"
 }
