@@ -48,6 +48,7 @@ spec:
       - name: namespace
         value: authentik
       file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
+      timeout: 2m
   - description: Assert deployment/authentik-server
     assert:
       bindings:
@@ -56,6 +57,7 @@ spec:
       - name: namespace
         value: authentik
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 2m
   - description: Assert deployment/authentik-worker
     assert:
       bindings:
