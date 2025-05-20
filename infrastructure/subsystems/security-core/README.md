@@ -57,7 +57,7 @@ This depicts how this module can be used to fetch secret from Bitwarden Secret M
 To use Bitwarden Secrets Manager as a secret store, create a ClusterSecretStore:
 
 ```yaml
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ClusterSecretStore
 metadata:
   name: bitwarden-secrets
@@ -87,7 +87,7 @@ spec:
 Then create an ExternalSecret to fetch secrets:
 
 ```yaml
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: example-secret
