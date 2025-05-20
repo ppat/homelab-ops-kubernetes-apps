@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.2...infra-security-extra-v0.1.3) (2025-05-20)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-extra:** update policy-reporter (3.1.3 -&gt; 3.1.4) ([#1297](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1297)) ([7d6f700](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7d6f7002d6686b1e7eb781f1396fb5888b0041c8))
+* upgrade external-secrets resources to v1 api ([#1298](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1298)) ([fb990f8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fb990f8259e828635e1fe5254a9fae4311276ac8))
+
 ## [0.1.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.1...infra-security-extra-v0.1.2) (2025-05-19)
 
 
