@@ -34,7 +34,7 @@ jobs:
         # renovate: datasource=github-releases depName=kubernetes/kubernetes
         kubectl_version: "v1.32.5"
         # renovate-kind-image: datasource=docker versioning=docker
-        node_image: "kindest/node:v1.32.5@sha256:36187f6c542fa9b78d2d499de4c857249c5a0ac8cc2241bef2ccd92729a7a259"
+        node_image: "kindest/node:v1.32.5@sha256:e3b2327e3a5ab8c76f5ece68936e4cafaa82edf58486b769727ab0b3b97a5b0d"
 
     - name: Setup kubectl
       uses: fluxcd/pkg/actions/kubectl@69fd2d1e91bfb9a2f2b81c8ca36e08634ccea069
