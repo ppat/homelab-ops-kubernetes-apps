@@ -52,7 +52,7 @@ spec:
         - secretRef:
             name: plex-secrets
             optional: true
-        image: plexinc/pms-docker:1.41.7.9799-5bce000f7@sha256:75c32bf1619e2bf25678c405ac6e64d1ac21f587f036972abd35e14c19fcfb52
+        image: plexinc/pms-docker:1.41.7.9823-59f304c16@sha256:623d566f871c4b82d0b4392de2ab57886af09ef305ffb93d8de781c323ede6b9
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
