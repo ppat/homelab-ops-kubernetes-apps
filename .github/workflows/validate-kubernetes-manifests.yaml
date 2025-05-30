@@ -34,7 +34,7 @@ jobs:
       uses: fluxcd/pkg/actions/kubeconform@69fd2d1e91bfb9a2f2b81c8ca36e08634ccea069
       with:
         # renovate: datasource=github-releases depName=yannh/kubeconform
-        version: "v0.6.7"
+        version: "v0.7.0"
 
     - name: Setup kustomize
       uses: fluxcd/pkg/actions/kustomize@69fd2d1e91bfb9a2f2b81c8ca36e08634ccea069
