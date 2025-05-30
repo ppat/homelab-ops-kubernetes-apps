@@ -30,7 +30,7 @@ jobs:
         cluster_name: dev
         config: ".github/${{ inputs.kind_cluster_config }}"
         # renovate: datasource=github-releases depName=kubernetes-sigs/kind
-        version: "v0.27.0"
+        version: "v0.29.0"
         # renovate: datasource=github-releases depName=kubernetes/kubernetes
         kubectl_version: "v1.32.5"
         # renovate-kind-image: datasource=docker versioning=docker
