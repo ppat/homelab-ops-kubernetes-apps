@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.18](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.17...infra-networking-extra-v0.1.18) (2025-06-03)
+
+
+### ✨ Features
+
+* **infra-networking-extra:** update ghcr.io/fluxcd/flux-cli (v2.5.1 -&gt; v2.6.0) ([#1348](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1348)) ([129b155](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/129b15506b6c909f6f8343e053e18df08a5a5840))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update digest docker.io/mongo (e30e473 -&gt; b85a0d9) ([#1374](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1374)) ([5db540c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5db540cc1276741fa4e4d7d896814d607b93f0d9))
+* **infra-networking-extra:** update ghcr.io/fluxcd/flux-cli (v2.6.0 -&gt; v2.6.1) ([#1372](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1372)) ([06c9995](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/06c9995511b04377eda567e65c15942506f8a26c))
+
 ## [0.1.17](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.1.16...infra-networking-extra-v0.1.17) (2025-05-31)
 
 
