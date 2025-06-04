@@ -37,12 +37,12 @@ spec:
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-home-automation --timeout=2m
         timeout: 2m
 
-  - name: Validate database
-    use:
-      template: ./validate-database.yaml
   - name: Validate nanomq
     use:
       template: ./validate-nanomq.yaml
+  - name: Validate database
+    use:
+      template: ./validate-database.yaml
   - name: Validate home-assistant
     use:
       template: ./validate-home-assistant.yaml
