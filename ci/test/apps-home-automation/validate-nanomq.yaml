@@ -1,0 +1,24 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-nanomq
+spec:
+  try:
+  - description: Assert deployment/nanomq
+    assert:
+      bindings:
+      - name: name
+        value: nanomq
+      - name: namespace
+        value: home-automation
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: nanomq
+      namespace: home-automation
+  - podLogs:
+      name: nanomq
+      namespace: home-automation

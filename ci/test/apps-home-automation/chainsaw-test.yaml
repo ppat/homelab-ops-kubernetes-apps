@@ -29,6 +29,23 @@ spec:
         name: apps-home-automation
         namespace: flux-system
 
-  - name: Validate apps-home-automation module
+  - name: Reconcile apps-home-automation
+    try:
+    - description: Reconcile kustomization/apps-home-automation
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-home-automation --timeout=2m
+        timeout: 2m
+
+  - name: Validate database
     use:
-      template: ./validate-apps-home-automation.yaml
+      template: ./validate-database.yaml
+  - name: Validate nanomq
+    use:
+      template: ./validate-nanomq.yaml
+  - name: Validate home-assistant
+    use:
+      template: ./validate-home-assistant.yaml
+  - name: Validate piper + whisper
+    use:
+      template: ./validate-piper-whisper.yaml
