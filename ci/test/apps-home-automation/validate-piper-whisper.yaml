@@ -1,0 +1,40 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-piper-whisper
+spec:
+  try:
+  - description: Assert deployment/wyoming-piper
+    assert:
+      bindings:
+      - name: name
+        value: wyoming-piper
+      - name: namespace
+        value: home-automation
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/wyoming-whisper
+    assert:
+      bindings:
+      - name: name
+        value: wyoming-whisper
+      - name: namespace
+        value: home-automation
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: wyoming-piper
+      namespace: home-automation
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: wyoming-whisper
+      namespace: home-automation
+  - podLogs:
+      name: wyoming-piper
+      namespace: home-automation
+  - podLogs:
+      name: wyoming-whisper
+      namespace: home-automation
