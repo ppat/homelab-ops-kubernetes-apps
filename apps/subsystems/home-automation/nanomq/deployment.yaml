@@ -24,8 +24,6 @@ spec:
       containers:
       - name: nanomq
         env:
-        - name: NANOMQ_CONF_PATH
-          value: /etc/nanomq.conf
         - name: NANOMQ_HTTP_SERVER_ENABLE
           value: "true"
         - name: NANOMQ_HTTP_SERVER_PORT
