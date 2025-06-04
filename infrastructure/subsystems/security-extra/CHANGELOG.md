@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.3...infra-security-extra-v0.1.4) (2025-06-04)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-extra:** update kyverno (3.4.1 -&gt; 3.4.2) ([#1378](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1378)) ([5f4dd58](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5f4dd5853332fe4e578d0646d716c0a5ff1b3a55))
+
 ## [0.1.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.2...infra-security-extra-v0.1.3) (2025-05-20)
 
 
