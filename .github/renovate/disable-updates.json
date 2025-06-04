@@ -34,7 +34,7 @@
       ]
     },
     {
-      "description": "renovate bug that attempts to update image digests unnecessarily",
+      "description": "disable minio updates due to OSS unfriendly practices",
       "enabled": false,
       "matchDatasources": [
         "docker"
@@ -45,6 +45,9 @@
       ],
       "matchUpdateTypes": [
         "digest",
+        "major",
+        "minor",
+        "patch",
         "pin",
         "pinDigest"
       ]
