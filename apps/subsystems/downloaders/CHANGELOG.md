@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.26](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.25...apps-downloaders-v0.1.26) (2025-06-07)
+
+
+### ✨ Features
+
+* **apps-downloaders:** update ghcr.io/linuxserver/prowlarr (1.36.3 -&gt; 1.37.0) ([#1380](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1380)) ([4b5dec6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4b5dec6b9699797fa1b620c4bd36a956691e9315))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sabnzbd (15d7fb0 -&gt; 5a46efd) ([#1339](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1339)) ([77f1140](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/77f1140b136948a8a62e81252ae69a7679b261e4))
+
 ## [0.1.25](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.24...apps-downloaders-v0.1.25) (2025-05-28)
 
 
