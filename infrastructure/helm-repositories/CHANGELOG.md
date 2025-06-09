@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-helm-repositories-v0.1.0...infra-helm-repositories-v0.1.1) (2025-06-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-clusterops-extra:** archive tf-controller ([#1398](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1398)) ([b9215b4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b9215b49a4afd6e7e9c76485439862c1bea30a94))
+
 ## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-helm-repositories-v0.0.7...infra-helm-repositories-v0.1.0) (2025-04-26)
 
 
