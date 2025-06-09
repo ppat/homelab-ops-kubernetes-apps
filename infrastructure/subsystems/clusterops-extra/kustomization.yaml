@@ -6,7 +6,6 @@ resources:
 - namespace.yaml
 - goldilocks/
 - stakater-reloader/
-- tf-controller/
 
 sortOptions:
   order: fifo
