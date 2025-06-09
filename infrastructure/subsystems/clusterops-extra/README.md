@@ -4,7 +4,7 @@ This module extends cluster operational capabilities with resource optimization 
 
 ## Quick Links
 
-<a href="https://github.com/FairwindsOps/goldilocks" target="_blank"><img src="../../../.static/images/logos/goldilocks.svg" width="32" height="32" alt="Goldilocks"></a> <a href="https://github.com/stakater/Reloader" target="_blank"><img src="../../../.static/images/logos/reloader.png" width="32" height="32" alt="Reloader"></a> <a href="https://github.com/weaveworks/tf-controller" target="_blank"><img src="../../../.static/images/logos/terraform.svg" width="32" height="32" alt="Terraform controller"></a>
+<a href="https://github.com/FairwindsOps/goldilocks" target="_blank"><img src="../../../.static/images/logos/goldilocks.svg" width="32" height="32" alt="Goldilocks"></a> <a href="https://github.com/stakater/Reloader" target="_blank"><img src="../../../.static/images/logos/reloader.png" width="32" height="32" alt="Reloader"></a>
 
 ## Overview
 
@@ -44,7 +44,6 @@ The clusterops-extra module provides three main capabilities:
 |-----------|-------------|-------------------|
 | Goldilocks | Resource optimization visualization | • Integrates with external VPA installation<br>• Exposes dashboard at goldilocks.${domain_name}<br>• Uses websecure entrypoint with TLS<br>• Provides resource usage insights<br>• Runs with specific resource limits |
 | Stakater Reloader | Configuration reload management | • Watches ConfigMaps and Secrets<br>• Triggers pod restarts on config changes<br>• Exposes metrics via PodMonitor<br>• Runs with enhanced security<br>• Uses annotation-based triggers |
-| TF-controller | Terraform management | • Manages Terraform resources via GitOps<br>• Integrates with Flux system<br>• Exposes metrics via ServiceMonitor<br>• Supports multiple backends<br>• Handles Terraform state |
 
 ## Prerequisites
 
@@ -54,7 +53,6 @@ The clusterops-extra module provides three main capabilities:
    |-----------|---------|---------------|
    | VPA | Resource analysis | Installed separately |
    | Metrics Server | Metrics collection | K3s built-in |
-   | Flux | GitOps engine | Required for TF-controller |
 
 2. Required Variables
 
@@ -108,25 +106,4 @@ spec:
         envFrom:
         - configMapRef:
             name: app-config
-```
-
-### Terraform Management
-
-Create a Terraform resource:
-
-```yaml
-apiVersion: infra.contrib.fluxcd.io/v1alpha2
-kind: Terraform
-metadata:
-  name: example
-  namespace: flux-system
-spec:
-  path: ./terraform
-  sourceRef:
-    kind: GitRepository
-    name: example-repo
-  interval: 1h
-  approvePlan: auto
-  writeOutputsToSecret:
-    name: tf-outputs
 ```

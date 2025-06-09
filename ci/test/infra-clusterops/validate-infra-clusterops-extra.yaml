@@ -55,24 +55,6 @@ spec:
         value: stakater-reloader
       file: ../chainsaw/assertions/helmrelease-ready.yaml
 
-  # Terraform Controller
-  - description: Assert deployment/tf-controller
-    assert:
-      bindings:
-      - name: name
-        value: tf-controller
-      - name: namespace
-        value: flux-system
-      file: ../chainsaw/assertions/deployment-ready.yaml
-  - description: Assert helmrelease/tf-controller-release
-    assert:
-      bindings:
-      - name: name
-        value: tf-controller-release
-      - name: namespace
-        value: flux-system
-      file: ../chainsaw/assertions/helmrelease-ready.yaml
-
   catch:
   # HelmRelease resources
   - describe:
@@ -85,11 +67,6 @@ spec:
       kind: HelmRelease
       name: reloader-release
       namespace: stakater-reloader
-  - describe:
-      apiVersion: helm.toolkit.fluxcd.io/v2
-      kind: HelmRelease
-      name: tf-controller-release
-      namespace: flux-system
 
   # Goldilocks resources
   - describe:
@@ -110,13 +87,6 @@ spec:
       name: stakater-reloader-reloader
       namespace: stakater-reloader
 
-  # Terraform Controller
-  - describe:
-      apiVersion: apps/v1
-      kind: Deployment
-      name: tf-controller
-      namespace: flux-system
-
   # Pod logs
   - podLogs:
       selector: app.kubernetes.io/name=goldilocks
@@ -124,6 +94,3 @@ spec:
   - podLogs:
       selector: app.kubernetes.io/name=reloader
       namespace: stakater-reloader
-  - podLogs:
-      name: tf-controller
-      namespace: flux-system

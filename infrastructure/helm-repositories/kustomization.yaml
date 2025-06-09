@@ -24,5 +24,4 @@ resources:
 - prometheus-community.yaml
 - stakater.yaml
 - tailscale.yaml
-- tf-controller.yaml
 - traefik.yaml
