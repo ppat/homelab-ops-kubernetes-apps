@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-extra-v0.2.2...infra-clusterops-extra-v0.2.3) (2025-06-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-clusterops-extra:** archive tf-controller ([#1398](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1398)) ([b9215b4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b9215b49a4afd6e7e9c76485439862c1bea30a94))
+
 ## [0.2.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-extra-v0.2.1...infra-clusterops-extra-v0.2.2) (2025-05-09)
 
 
