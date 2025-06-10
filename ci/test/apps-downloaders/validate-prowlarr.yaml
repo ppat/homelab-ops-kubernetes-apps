@@ -1,0 +1,21 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-prowlarr
+spec:
+  try:
+  - description: Assert deployment/prowlarr
+    assert:
+      bindings:
+      - name: name
+        value: prowlarr
+      - name: namespace
+        value: downloaders
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: prowlarr
+      namespace: downloaders

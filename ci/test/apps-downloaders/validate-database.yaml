@@ -1,0 +1,30 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-database
+spec:
+  try:
+  - description: Assert helmrelease/cloudnative-pg-release
+    assert:
+      bindings:
+      - name: name
+        value: cloudnative-pg-release
+      - name: namespace
+        value: cnpg-system
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+  - description: Assert cluster.postgresql.cnpg.io/downloaders-db
+    assert:
+      bindings:
+      - name: name
+        value: downloaders-db
+      - name: namespace
+        value: downloaders
+      file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
+      timeout: 3m
+  catch:
+  - describe:
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      name: downloaders-db
+      namespace: downloaders

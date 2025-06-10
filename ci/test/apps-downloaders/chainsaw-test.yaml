@@ -32,6 +32,35 @@ spec:
         name: apps-downloaders
         namespace: flux-system
 
-  - name: Validate apps-downloaders module
+  - name: Reconcile apps-downloaders
+    try:
+    - description: Reconcile kustomization/apps-downloaders
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-downloaders --timeout=2m
+        timeout: 2m
+
+  - name: Validate database
     use:
-      template: ./validate-apps-downloaders.yaml
+      template: ./validate-database.yaml
+  - name: Validate radarr
+    use:
+      template: ./validate-radarr.yaml
+  - name: Validate sabnzbd
+    use:
+      template: ./validate-sabnzbd.yaml
+  - name: Validate sonarr
+    use:
+      template: ./validate-sonarr.yaml
+  - name: Validate lidarr
+    use:
+      template: ./validate-lidarr.yaml
+  - name: Validate overseerr
+    use:
+      template: ./validate-overseerr.yaml
+  - name: Validate prowlarr
+    use:
+      template: ./validate-prowlarr.yaml
+  - name: Validate bazarr
+    use:
+      template: ./validate-bazarr.yaml

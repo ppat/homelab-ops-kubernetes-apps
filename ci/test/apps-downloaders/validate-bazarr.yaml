@@ -1,0 +1,21 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-bazarr
+spec:
+  try:
+  - description: Assert deployment/bazarr
+    assert:
+      bindings:
+      - name: name
+        value: bazarr
+      - name: namespace
+        value: downloaders
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: bazarr
+      namespace: downloaders
