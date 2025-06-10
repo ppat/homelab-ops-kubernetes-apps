@@ -1,0 +1,34 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-open-webui
+spec:
+  try:
+  - description: Assert statefulset/open-webui
+    assert:
+      bindings:
+      - name: name
+        value: open-webui
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/statefulset-ready.yaml
+  - description: Assert openwebui-release
+    assert:
+      bindings:
+      - name: name
+        value: openwebui-release
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+  catch:
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: openwebui-release
+      namespace: ai
+  - describe:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      name: open-webui
+      namespace: ai
