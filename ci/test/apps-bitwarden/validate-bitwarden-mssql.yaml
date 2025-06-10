@@ -1,0 +1,22 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-bitwarden-mssql
+spec:
+  try:
+  - description: Assert statefulset/bitwarden-self-host-mssql
+    assert:
+      bindings:
+      - name: name
+        value: bitwarden-self-host-mssql
+      - name: namespace
+        value: bitwarden
+      file: ../chainsaw/assertions/statefulset-ready.yaml
+      timeout: 2m
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      name: bitwarden-self-host-mssql
+      namespace: bitwarden

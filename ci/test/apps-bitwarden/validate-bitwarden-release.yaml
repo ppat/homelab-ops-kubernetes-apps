@@ -1,0 +1,21 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-bitwarden-release
+spec:
+  try:
+  - description: Assert helmrelease/bitwarden-release
+    assert:
+      bindings:
+      - name: name
+        value: bitwarden-release
+      - name: namespace
+        value: bitwarden
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+  catch:
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: bitwarden-release
+      namespace: bitwarden
