@@ -2,16 +2,9 @@
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: StepTemplate
 metadata:
-  name: validate-infra-clusterops-core
+  name: validate-flux
 spec:
   try:
-  - description: Reconcile kustomization/infra-clusterops-core
-    script:
-      # yamllint disable-line rule:line-length
-      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-clusterops-core --timeout=2m
-      timeout: 2m
-
-  # Flux controllers
   - description: Assert deployment/helm-controller
     assert:
       bindings:
@@ -44,19 +37,7 @@ spec:
       - name: namespace
         value: flux-system
       file: ../chainsaw/assertions/deployment-ready.yaml
-
-  # System Upgrade Controller
-  - description: Assert deployment/system-upgrade-controller
-    assert:
-      bindings:
-      - name: name
-        value: system-upgrade-controller
-      - name: namespace
-        value: system-upgrade
-      file: ../chainsaw/assertions/deployment-ready.yaml
-
   catch:
-  # Flux controllers
   - describe:
       apiVersion: apps/v1
       kind: Deployment
@@ -77,15 +58,6 @@ spec:
       kind: Deployment
       name: source-controller
       namespace: flux-system
-
-  # System Upgrade Controller
-  - describe:
-      apiVersion: apps/v1
-      kind: Deployment
-      name: system-upgrade-controller
-      namespace: system-upgrade
-
-  # Pod logs
   - podLogs:
       selector: app=kustomize-controller
       namespace: flux-system
