@@ -1,0 +1,21 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-overseerr
+spec:
+  try:
+  - description: Assert deployment/overseerr
+    assert:
+      bindings:
+      - name: name
+        value: overseerr
+      - name: namespace
+        value: downloaders
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: overseerr
+      namespace: downloaders
