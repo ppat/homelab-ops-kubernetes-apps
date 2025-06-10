@@ -21,6 +21,17 @@ spec:
         name: apps-ai
         namespace: flux-system
 
-  - name: Validate apps-ai module
+  - name: Reconcile apps-ai
+    try:
+    - description: Reconcile kustomization/apps-ai
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-ai --timeout=3m
+        timeout: 3m
+
+  - name: Validate ollama
     use:
-      template: ./validate-apps-ai.yaml
+      template: ./validate-ollama.yaml
+  - name: Validate open-webui
+    use:
+      template: ./validate-open-webui.yaml

@@ -1,0 +1,35 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-ollama
+spec:
+  try:
+  - description: Assert deployment/ollama
+    assert:
+      bindings:
+      - name: name
+        value: ollama
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 3m
+  - description: Assert ollama-release
+    assert:
+      bindings:
+      - name: name
+        value: ollama-release
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+  catch:
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: ollama-release
+      namespace: ai
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: ollama
+      namespace: ai
