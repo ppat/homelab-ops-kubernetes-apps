@@ -29,6 +29,17 @@ spec:
         name: apps-coder
         namespace: flux-system
 
-  - name: Validate apps-coder module
+  - name: Reconcile apps-coder
+    try:
+    - description: Reconcile kustomization/apps-coder
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-coder --timeout=2m
+        timeout: 2m
+
+  - name: Validate coder database
     use:
-      template: ./validate-apps-coder.yaml
+      template: ./validate-coder-database.yaml
+  - name: Validate coder application
+    use:
+      template: ./validate-coder-application.yaml
