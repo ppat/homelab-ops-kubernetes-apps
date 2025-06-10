@@ -1,0 +1,21 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-tautulli
+spec:
+  try:
+  - description: Assert deployment/tautulli
+    assert:
+      bindings:
+      - name: name
+        value: tautulli
+      - name: namespace
+        value: media
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: tautulli
+      namespace: media
