@@ -11,7 +11,7 @@ spec:
 
   - name: Apply pre-requisites
     try:
-    - description: Apply infra-database-core
+    - description: Apply infra-security-core
       apply:
         file: ../infra-security/infra-security-core.yaml
 
@@ -27,6 +27,17 @@ spec:
         name: apps-misc
         namespace: flux-system
 
-  - name: Validate apps-misc module
+  - name: Reconcile apps-misc
+    try:
+    - description: Reconcile kustomization/apps-misc
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-misc --timeout=2m
+        timeout: 2m
+
+  - name: Validate cert-manager
     use:
-      template: ./validate-apps-misc.yaml
+      template: ./validate-cert-manager.yaml
+  - name: Validate maddy
+    use:
+      template: ./validate-maddy.yaml
