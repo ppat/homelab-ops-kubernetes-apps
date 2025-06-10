@@ -83,14 +83,6 @@
   - Limited to CI environment
   - Lack of local testing capability
 
-### Planned Testing Framework
-
-- **Migration to kyverno/chainsaw**:
-  - Will enable local testing during development
-  - Provides clear kubernetes context awareness
-  - Structured approach to kubernetes operations
-  - Can run both locally and in CI
-
 ### Resource Validation
 
 - **Strengths**:
