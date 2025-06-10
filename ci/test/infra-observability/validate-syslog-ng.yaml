@@ -1,0 +1,25 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-syslog-ng
+spec:
+  try:
+  - description: Assert deployment/syslog
+    assert:
+      bindings:
+      - name: name
+        value: syslog
+      - name: namespace
+        value: logging
+      file: ../chainsaw/assertions/deployment-ready.yaml
+
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: syslog
+      namespace: logging
+  - podLogs:
+      selector: app=syslog
+      namespace: logging
