@@ -1,0 +1,24 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-freetube
+spec:
+  try:
+  - description: Assert deployment/freetube
+    assert:
+      bindings:
+      - name: name
+        value: freetube
+      - name: namespace
+        value: media
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: freetube
+      namespace: media
+  - podLogs:
+      name: freetube
+      namespace: media

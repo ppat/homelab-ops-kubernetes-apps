@@ -21,6 +21,23 @@ spec:
         name: apps-media
         namespace: flux-system
 
-  - name: Validate apps-media module
+  - name: Reconcile apps-media
+    try:
+    - description: Reconcile kustomization/apps-media
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-media --timeout=2m
+        timeout: 2m
+
+  - name: Validate freetube
     use:
-      template: ./validate-apps-media.yaml
+      template: ./validate-freetube.yaml
+  - name: Validate plex
+    use:
+      template: ./validate-plex.yaml
+  - name: Validate tautulli
+    use:
+      template: ./validate-tautulli.yaml
+  - name: Validate jellyfin
+    use:
+      template: ./validate-jellyfin.yaml

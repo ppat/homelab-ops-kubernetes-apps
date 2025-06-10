@@ -1,0 +1,24 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-plex
+spec:
+  try:
+  - description: Assert deployment/plex
+    assert:
+      bindings:
+      - name: name
+        value: plex
+      - name: namespace
+        value: media
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: plex
+      namespace: media
+  - podLogs:
+      name: plex
+      namespace: media
