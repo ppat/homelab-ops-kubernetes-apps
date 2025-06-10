@@ -1,0 +1,97 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-pihole
+spec:
+  try:
+  - description: Assert persistentvolumeclaim/pihole-data
+    assert:
+      bindings:
+      - name: name
+        value: pihole-data
+      - name: namespace
+        value: dns
+      file: ../chainsaw/assertions/pvc-bound.yaml
+  - description: Assert deployment/cloudflared-doh
+    assert:
+      bindings:
+      - name: name
+        value: cloudflared-doh
+      - name: namespace
+        value: dns
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/unbound
+    assert:
+      bindings:
+      - name: name
+        value: unbound
+      - name: namespace
+        value: dns
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/pihole
+    assert:
+      bindings:
+      - name: name
+        value: pihole
+      - name: namespace
+        value: dns
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert IPAddressPool/pihole-pool
+    assert:
+      resource:
+        apiVersion: metallb.io/v1beta1
+        kind: IPAddressPool
+        metadata:
+          name: pihole-pool
+          namespace: metallb-system
+  - description: Assert service/pihole-dns-tcp
+    assert:
+      bindings:
+      - name: name
+        value: pihole-dns-tcp
+      - name: namespace
+        value: dns
+      file: ../chainsaw/assertions/service-loadbalancer-ready.yaml
+  - description: Assert service/pihole-dns-udp
+    assert:
+      bindings:
+      - name: name
+        value: pihole-dns-udp
+      - name: namespace
+        value: dns
+      file: ../chainsaw/assertions/service-loadbalancer-ready.yaml
+  - description: Assert ingress/pihole-admin-https
+    assert:
+      bindings:
+      - name: name
+        value: pihole-admin-https
+      - name: namespace
+        value: dns
+      file: ../chainsaw/assertions/ingress-ready.yaml
+  - description: Assert ingress/pihole-adblock-http
+    assert:
+      bindings:
+      - name: name
+        value: pihole-adblock-http
+      - name: namespace
+        value: dns
+      file: ../chainsaw/assertions/ingress-ready.yaml
+  - description: Assert ingress/pihole-adblock-https
+    assert:
+      bindings:
+      - name: name
+        value: pihole-adblock-https
+      - name: namespace
+        value: dns
+      file: ../chainsaw/assertions/ingress-ready.yaml
+
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: pihole
+      namespace: dns
+  - podLogs:
+      name: pihole
+      namespace: dns

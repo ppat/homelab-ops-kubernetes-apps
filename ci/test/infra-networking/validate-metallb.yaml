@@ -1,0 +1,59 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-metallb
+spec:
+  try:
+  - description: Assert deployment/metallb-controller
+    assert:
+      bindings:
+      - name: name
+        value: metallb-controller
+      - name: namespace
+        value: metallb-system
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert daemonset/metallb-speaker
+    assert:
+      bindings:
+      - name: name
+        value: metallb-speaker
+      - name: namespace
+        value: metallb-system
+      file: ../chainsaw/assertions/daemonset-ready.yaml
+  - description: Assert L2Advertisement/l2-advertisement
+    assert:
+      resource:
+        apiVersion: metallb.io/v1beta1
+        kind: L2Advertisement
+        metadata:
+          name: l2-advertisement
+          namespace: metallb-system
+  - description: Assert IPAddressPool/standard-pool
+    assert:
+      resource:
+        apiVersion: metallb.io/v1beta1
+        kind: IPAddressPool
+        metadata:
+          name: standard-pool
+          namespace: metallb-system
+
+  catch:
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: metallb-release
+      namespace: metallb-system
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: metallb-controller
+      namespace: metallb-system
+  - describe:
+      apiVersion: apps/v1
+      kind: DaemonSet
+      name: metallb-speaker
+      namespace: metallb-system
+  - podLogs:
+      name: metallb-controller
+      namespace: metallb-system

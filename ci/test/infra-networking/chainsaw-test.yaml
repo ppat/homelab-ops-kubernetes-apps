@@ -29,10 +29,42 @@ spec:
         name: infra-networking-extra
         namespace: flux-system
 
-  - name: Validate infra-networking-core module
-    use:
-      template: ./validate-infra-networking-core.yaml
+  - name: Reconcile infra-networking-core
+    try:
+    - description: Reconcile kustomization/infra-networking-core
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-networking-core --timeout=5m
+        timeout: 5m
 
-  - name: Validate infra-networking-extra module
+  - name: Validate MetalLB
     use:
-      template: ./validate-infra-networking-extra.yaml
+      template: ./validate-metallb.yaml
+
+  - name: Validate Traefik
+    use:
+      template: ./validate-traefik.yaml
+
+  - name: Reconcile infra-networking-extra
+    try:
+    - description: Reconcile infra-networking-extra
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-networking-extra --timeout=3m
+        timeout: 3m
+
+  - name: Validate Pi-hole
+    use:
+      template: ./validate-pihole.yaml
+
+  - name: Validate UniFi
+    use:
+      template: ./validate-unifi.yaml
+
+  - name: Validate External-DNS
+    use:
+      template: ./validate-external-dns.yaml
+
+  - name: Validate Freeradius
+    use:
+      template: ./validate-freeradius.yaml

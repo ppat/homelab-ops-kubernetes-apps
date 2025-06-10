@@ -1,0 +1,41 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-freeradius
+spec:
+  try:
+  - description: Assert IPAddressPool/freeradius-pool
+    assert:
+      resource:
+        apiVersion: metallb.io/v1beta1
+        kind: IPAddressPool
+        metadata:
+          name: freeradius-pool
+          namespace: metallb-system
+  - description: Assert deployment/freeradius
+    assert:
+      bindings:
+      - name: name
+        value: freeradius
+      - name: namespace
+        value: freeradius
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert service/freeradius
+    assert:
+      bindings:
+      - name: name
+        value: freeradius
+      - name: namespace
+        value: freeradius
+      file: ../chainsaw/assertions/service-loadbalancer-ready.yaml
+
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: freeradius
+      namespace: freeradius
+  - podLogs:
+      name: freeradius
+      namespace: freeradius

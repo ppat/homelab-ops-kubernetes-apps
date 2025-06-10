@@ -1,0 +1,31 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-external-dns
+spec:
+  try:
+  - description: Assert deployment/external-dns-pihole
+    assert:
+      bindings:
+      - name: name
+        value: external-dns-pihole
+      - name: namespace
+        value: external-dns
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 2m
+
+  catch:
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: external-dns-release
+      namespace: external-dns
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: external-dns-pihole
+      namespace: external-dns
+  - podLogs:
+      name: external-dns-pihole
+      namespace: external-dns
