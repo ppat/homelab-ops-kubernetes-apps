@@ -24,6 +24,17 @@ spec:
         name: infra-database-core
         namespace: flux-system
 
-  - name: Validate infra-database-core module
+  - name: Reconcile infra-database-core
+    try:
+    - description: Reconcile kustomization/infra-database-core
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-database-core --timeout=2m
+        timeout: 2m
+
+  - name: Validate cloudnative-pg
     use:
-      template: ./validate-infra-database-core.yaml
+      template: ./validate-cloudnative-pg.yaml
+  - name: Validate test-db
+    use:
+      template: ./validate-test-db.yaml

@@ -1,0 +1,43 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-test-db
+spec:
+  try:
+  - description: Assert cluster.postgresql.cnpg.io/test-db
+    assert:
+      bindings:
+      - name: name
+        value: test-db
+      - name: namespace
+        value: default
+      file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
+  - description: Assert secret/test-db-app
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: test-db-app
+          namespace: default
+        data:
+          (length(dbname) > `0`): true
+          (length(host) > `0`): true
+          (length(uri) > `0`): true
+          (length(username) > `0`): true
+          (length(password) > `0`): true
+  catch:
+  - describe:
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      name: test-db
+      namespace: default
+  - describe:
+      apiVersion: v1
+      kind: Secret
+      name: test-db-app
+      namespace: default
+  - podLogs:
+      selector: application=test-db
+      namespace: default
