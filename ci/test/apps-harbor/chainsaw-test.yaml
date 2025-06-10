@@ -21,6 +21,23 @@ spec:
         name: apps-harbor
         namespace: flux-system
 
-  - name: Validate apps-harbor module
+  - name: Reconcile apps-harbor
+    try:
+    - description: Reconcile kustomization/apps-harbor
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-harbor --timeout=2m
+        timeout: 2m
+
+  - name: Validate harbor db
     use:
-      template: ./validate-apps-harbor.yaml
+      template: ./validate-harbor-db.yaml
+  - name: Validate harbor redis
+    use:
+      template: ./validate-harbor-redis.yaml
+  - name: Validate harbor services
+    use:
+      template: ./validate-harbor-services.yaml
+  - name: Validate harbor release
+    use:
+      template: ./validate-harbor-release.yaml

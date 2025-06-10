@@ -1,0 +1,21 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-harbor-redis
+spec:
+  try:
+  - description: Assert statefulset/harbor-redis
+    assert:
+      bindings:
+      - name: name
+        value: harbor-redis
+      - name: namespace
+        value: harbor
+      file: ../chainsaw/assertions/statefulset-ready.yaml
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      name: harbor-redis
+      namespace: harbor
