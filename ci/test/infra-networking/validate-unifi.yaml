@@ -1,0 +1,67 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-unifi
+spec:
+  try:
+  - description: Assert IPAddressPool/unifi-pool
+    assert:
+      resource:
+        apiVersion: metallb.io/v1beta1
+        kind: IPAddressPool
+        metadata:
+          name: unifi-pool
+          namespace: metallb-system
+  - description: Assert deployment/unifi-db
+    assert:
+      bindings:
+      - name: name
+        value: unifi-db
+      - name: namespace
+        value: unifi
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/unifi-network-application
+    assert:
+      bindings:
+      - name: name
+        value: unifi-network-application
+      - name: namespace
+        value: unifi
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert service/unifi-tcp
+    assert:
+      bindings:
+      - name: name
+        value: unifi-tcp
+      - name: namespace
+        value: unifi
+      file: ../chainsaw/assertions/service-loadbalancer-ready.yaml
+  - description: Assert service/unifi-udp
+    assert:
+      bindings:
+      - name: name
+        value: unifi-udp
+      - name: namespace
+        value: unifi
+      file: ../chainsaw/assertions/service-loadbalancer-ready.yaml
+  - description: Assert ingress/unifi-web
+    assert:
+      bindings:
+      - name: name
+        value: unifi-web
+      - name: namespace
+        value: unifi
+      file: ../chainsaw/assertions/ingress-ready.yaml
+
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: unifi-db
+      namespace: unifi
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: unifi-network-application
+      namespace: unifi
