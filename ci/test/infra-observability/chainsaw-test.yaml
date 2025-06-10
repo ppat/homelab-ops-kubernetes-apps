@@ -37,10 +37,62 @@ spec:
         name: infra-observability-extra
         namespace: flux-system
 
-  - name: Validate infra-observability-core module
-    use:
-      template: ./validate-infra-observability-core.yaml
+  - name: Reconcile minio
+    try:
+    - description: Reconcile kustomization/minio
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=minio --timeout=2m
+        timeout: 2m
 
-  - name: Validate infra-observability-extra module
+  - name: Reconcile infra-observability-core
+    try:
+    - description: Reconcile kustomization/infra-observability-core
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-observability-core --timeout=3m
+        timeout: 3m
+
+  - name: Validate Prometheus
     use:
-      template: ./validate-infra-observability-extra.yaml
+      template: ./validate-prometheus.yaml
+
+  - name: Validate Grafana
+    use:
+      template: ./validate-grafana.yaml
+
+  - name: Validate Loki
+    use:
+      template: ./validate-loki.yaml
+
+  - name: Validate Promtail
+    use:
+      template: ./validate-promtail.yaml
+
+  - name: Reconcile infra-observability-extra
+    try:
+    - description: Reconcile kustomization/infra-observability-extra
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-observability-extra --timeout=1m
+        timeout: 1m
+
+  - name: Validate SNMP Exporter
+    use:
+      template: ./validate-snmp-exporter.yaml
+
+  - name: Validate UniFi Poller
+    use:
+      template: ./validate-unifi-poller.yaml
+
+  - name: Validate Node Problem Detector
+    use:
+      template: ./validate-node-problem-detector.yaml
+
+  - name: Validate Event Exporter
+    use:
+      template: ./validate-event-exporter.yaml
+
+  - name: Validate Syslog-NG
+    use:
+      template: ./validate-syslog-ng.yaml
