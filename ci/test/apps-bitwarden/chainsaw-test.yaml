@@ -21,6 +21,44 @@ spec:
         name: apps-bitwarden
         namespace: flux-system
 
-  - name: Validate apps-bitwarden module
+  - name: Reconcile apps-bitwarden
+    try:
+    - description: Reconcile kustomization/apps-bitwarden
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-bitwarden --timeout=2m
+        timeout: 2m
+
+  - name: Validate bitwarden mssql
     use:
-      template: ./validate-apps-bitwarden.yaml
+      template: ./validate-bitwarden-mssql.yaml
+  - name: Validate bitwarden admin
+    use:
+      template: ./validate-bitwarden-admin.yaml
+  - name: Validate bitwarden api
+    use:
+      template: ./validate-bitwarden-api.yaml
+  - name: Validate bitwarden attachments
+    use:
+      template: ./validate-bitwarden-attachments.yaml
+  - name: Validate bitwarden events
+    use:
+      template: ./validate-bitwarden-events.yaml
+  - name: Validate bitwarden icons
+    use:
+      template: ./validate-bitwarden-icons.yaml
+  - name: Validate bitwarden identity
+    use:
+      template: ./validate-bitwarden-identity.yaml
+  - name: Validate bitwarden notifications
+    use:
+      template: ./validate-bitwarden-notifications.yaml
+  - name: Validate bitwarden sso
+    use:
+      template: ./validate-bitwarden-sso.yaml
+  - name: Validate bitwarden web
+    use:
+      template: ./validate-bitwarden-web.yaml
+  - name: Validate bitwarden release
+    use:
+      template: ./validate-bitwarden-release.yaml

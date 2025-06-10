@@ -1,0 +1,21 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-bitwarden-icons
+spec:
+  try:
+  - description: Assert deployment/bitwarden-self-host-icons
+    assert:
+      bindings:
+      - name: name
+        value: bitwarden-self-host-icons
+      - name: namespace
+        value: bitwarden
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: bitwarden-self-host-icons
+      namespace: bitwarden

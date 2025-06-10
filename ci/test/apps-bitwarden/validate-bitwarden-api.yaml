@@ -1,0 +1,21 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-bitwarden-api
+spec:
+  try:
+  - description: Assert deployment/bitwarden-self-host-api
+    assert:
+      bindings:
+      - name: name
+        value: bitwarden-self-host-api
+      - name: namespace
+        value: bitwarden
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: bitwarden-self-host-api
+      namespace: bitwarden
