@@ -1,0 +1,21 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-generic-device-plugin
+spec:
+  try:
+  - description: Assert daemonset/generic-device-plugin
+    assert:
+      bindings:
+      - name: name
+        value: generic-device-plugin
+      - name: namespace
+        value: kube-system
+      file: ../chainsaw/assertions/daemonset-ready.yaml
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: DaemonSet
+      name: generic-device-plugin
+      namespace: kube-system

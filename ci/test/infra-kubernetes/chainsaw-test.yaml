@@ -29,10 +29,38 @@ spec:
         name: infra-kubernetes-extra
         namespace: flux-system
 
-  - name: Validate infra-kubernetes-core module
-    use:
-      template: ./validate-infra-kubernetes-core.yaml
+  - name: Reconcile infra-kubernetes-core
+    try:
+    - description: Reconcile kustomization/infra-kubernetes-core
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-kubernetes-core --timeout=3m
+        timeout: 3m
 
-  - name: Validate infra-kubernetes-extra module
+  - name: Validate coredns
     use:
-      template: ./validate-infra-kubernetes-extra.yaml
+      template: ./validate-coredns.yaml
+  - name: Validate kubernetes-api
+    use:
+      template: ./validate-kubernetes-api.yaml
+
+  - name: Reconcile infra-kubernetes-extra
+    try:
+    - description: Reconcile infra-kubernetes-extra
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-kubernetes-extra --timeout=3m
+        timeout: 3m
+
+  - name: Validate node-feature-discovery
+    use:
+      template: ./validate-node-feature-discovery.yaml
+  - name: Validate vpa
+    use:
+      template: ./validate-vpa.yaml
+  - name: Validate generic-device-plugin
+    use:
+      template: ./validate-generic-device-plugin.yaml
+  - name: Validate descheduler
+    use:
+      template: ./validate-descheduler.yaml

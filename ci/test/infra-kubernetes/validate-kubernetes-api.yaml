@@ -1,0 +1,20 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-kubernetes-api
+spec:
+  try:
+  - description: Assert ingress/kubernetes-api
+    assert:
+      resource:
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: kubernetes-api
+          namespace: default
+  catch:
+  - describe:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      namespace: default
