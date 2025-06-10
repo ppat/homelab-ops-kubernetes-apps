@@ -29,10 +29,32 @@ spec:
         name: infra-clusterops-extra
         namespace: flux-system
 
-  - name: Validate infra-clusterops-core module
-    use:
-      template: ./validate-infra-clusterops-core.yaml
+  - name: Reconcile infra-clusterops-core
+    try:
+    - description: Reconcile kustomization/infra-clusterops-core
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-clusterops-core --timeout=2m
+        timeout: 2m
 
-  - name: Validate infra-clusterops-extra module
+  - name: Validate flux
     use:
-      template: ./validate-infra-clusterops-extra.yaml
+      template: ./validate-flux.yaml
+  - name: Validate system-upgrade-controller
+    use:
+      template: ./validate-system-upgrade-controller.yaml
+
+  - name: Reconcile infra-clusterops-extra
+    try:
+    - description: Reconcile kustomization/infra-clusterops-extra
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-clusterops-extra --timeout=2m
+        timeout: 2m
+
+  - name: Validate goldilocks
+    use:
+      template: ./validate-goldilocks.yaml
+  - name: Validate reloader
+    use:
+      template: ./validate-reloader.yaml
