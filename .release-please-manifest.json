@@ -6,7 +6,7 @@
   "apps/subsystems/downloaders": "0.1.25",
   "apps/subsystems/harbor": "0.0.5",
   "apps/subsystems/home-automation": "0.0.20",
-  "apps/subsystems/media": "0.0.18",
+  "apps/subsystems/media": "0.0.19",
   "apps/subsystems/misc": "0.0.2",
   "infrastructure/bootstrap/crds": "0.4.0",
   "infrastructure/helm-repositories": "0.1.1",
