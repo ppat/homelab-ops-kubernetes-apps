@@ -33,9 +33,18 @@ spec:
   valuesFrom:
   - kind: ConfigMap
     name: external-dns-provider-config
-    valuesKey: provider-${externaldns_provider}.yaml
+    valuesKey: provider.yaml
     optional: false
   values:
+    domainFilters:
+    - ${domain_name}
+    extraArgs:
+    - --ignore-ingress-tls-spec
+    logLevel: ${externaldns_loglevel:=debug}
+    sources:
+    - ingress
+    - service
+
     resources: {}
     tolerations:
     - key: node-role.kubernetes.io/control-plane

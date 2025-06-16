@@ -1,11 +1,6 @@
 ---
 fullnameOverride: external-dns-unifi
-domainFilters:
-- ${domain_name}
 env: []
-extraArgs:
-- --ignore-ingress-tls-spec
-logLevel: ${externaldns_loglevel:=debug}
 policy: sync
 provider:
   name: webhook
@@ -44,8 +39,5 @@ provider:
       initialDelaySeconds: 10
       timeoutSeconds: 5
 registry: txt
-sources:
-- ingress
-- service
 txtOwnerId: ${externaldns_txtowner_id:=k8s}
 txtPrefix: ${externaldns_txtowner_prefix:=k8s}

@@ -1,7 +1,5 @@
 ---
 fullnameOverride: external-dns-pihole
-domainFilters:
-- ${domain_name}
 env:
 - name: EXTERNAL_DNS_PIHOLE_SERVER
   value: http://pihole-web.dns.svc.cluster.local
@@ -11,12 +9,6 @@ env:
       name: external-dns-secrets
       key: pihole_password
       optional: false
-extraArgs:
-- --ignore-ingress-tls-spec
-logLevel: ${externaldns_loglevel:=debug}
 policy: upsert-only
 provider: pihole
 registry: noop
-sources:
-- ingress
-- service
