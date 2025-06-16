@@ -9,6 +9,7 @@ spec:
   path: ./infrastructure/subsystems/security-extra
   postBuild:
     substitute:
+      secret_store: fake
       cert_issuer: selfsigned-issuer
       POSTGRES_DB_STORAGE_CLASS: standard
       POSTGRES_DB_SIZE: 1Gi
@@ -24,14 +25,3 @@ spec:
     namespace: flux-system
   timeout: 2m0s
   wait: false
-  patches:
-  # drop ExternalSecret as a secret store is not configured for tests
-  # yamllint disable-line rule:indentation
-  - patch: |-
-      $patch: delete
-      kind: ExternalSecret
-      metadata:
-        name: authentik-credentials
-    target:
-      kind: ExternalSecret
-      name: authentik-credentials
