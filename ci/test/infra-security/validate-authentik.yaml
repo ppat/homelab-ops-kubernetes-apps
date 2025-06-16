@@ -48,6 +48,7 @@ spec:
       - name: namespace
         value: authentik
       file: ../chainsaw/assertions/statefulset-ready.yaml
+      timeout: 2m
   - description: Assert cluster.postgresql.cnpg.io/authentik-db
     assert:
       bindings:
