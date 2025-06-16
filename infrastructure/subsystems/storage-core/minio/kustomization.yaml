@@ -6,6 +6,7 @@ resources:
 - helm-release.yaml
 - probe-minio-bucket.yaml
 - probe-minio-resource.yaml
+- secrets.yaml
 
 sortOptions:
   order: fifo
