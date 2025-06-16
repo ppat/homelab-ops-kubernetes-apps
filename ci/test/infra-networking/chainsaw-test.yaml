@@ -17,6 +17,11 @@ spec:
     - description: Apply infra-networking-extra
       apply:
         file: ./infra-networking-extra.yaml
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: infra-networking-core
+        namespace: flux-system
     catch:
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
