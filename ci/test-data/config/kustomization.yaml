@@ -8,7 +8,6 @@ resources:
 - pihole.yaml
 - cluster-observability-conf.yaml
 - loki/
-- minio/
 - promtail/
 
 sortOptions:

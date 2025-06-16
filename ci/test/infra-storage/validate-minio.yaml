@@ -5,6 +5,14 @@ metadata:
   name: validate-minio
 spec:
   try:
+  - description: Assert externalsecret/minio-admin-credentials
+    assert:
+      bindings:
+      - name: name
+        value: minio-admin-credentials
+      - name: namespace
+        value: minio
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
   - description: Assert deployment/minio
     assert:
       bindings:
