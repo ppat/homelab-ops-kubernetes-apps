@@ -5,6 +5,14 @@ metadata:
   name: validate-pihole
 spec:
   try:
+  - description: Assert externalsecret/pihole-secrets
+    assert:
+      bindings:
+      - name: name
+        value: pihole-secrets
+      - name: namespace
+        value: dns
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
   - description: Assert persistentvolumeclaim/pihole-data
     assert:
       bindings:

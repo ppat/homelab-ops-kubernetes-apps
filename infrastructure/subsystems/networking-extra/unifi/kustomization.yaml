@@ -9,6 +9,7 @@ resources:
 - unifi-deployment.yaml
 - unifi-service.yaml
 - unifi-ingress.yaml
+- secrets.yaml
 
 configMapGenerator:
 - name: unifi-db-script-template

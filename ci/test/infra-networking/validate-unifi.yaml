@@ -5,6 +5,14 @@ metadata:
   name: validate-unifi
 spec:
   try:
+  - description: Assert externalsecret/unifi-secrets
+    assert:
+      bindings:
+      - name: name
+        value: unifi-secrets
+      - name: namespace
+        value: unifi
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
   - description: Assert IPAddressPool/unifi-pool
     assert:
       resource:

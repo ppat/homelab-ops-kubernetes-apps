@@ -2,6 +2,9 @@
 apiVersion: kustomize.config.k8s.io/v1alpha1
 kind: Component
 
+resources:
+- secret.yaml
+
 # Generate configMap with configuration for unifi external-dns provider
 configMapGenerator:
 - name: external-dns-provider-config
