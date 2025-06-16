@@ -14,16 +14,15 @@ spec:
         value: external-dns
       file: ../chainsaw/assertions/deployment-ready.yaml
       timeout: 2m
-  - describe:
-      apiVersion: helm.toolkit.fluxcd.io/v2
-      kind: HelmRelease
-      name: external-dns-release
-      namespace: external-dns
-  - describe:
-      apiVersion: apps/v1
-      kind: Deployment
-      name: external-dns-pihole
-      namespace: external-dns
+  - description: Assert helmrelease/external-dns-release
+    assert:
+      bindings:
+      - name: name
+        value: external-dns-release
+      - name: namespace
+        value: external-dns
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+
   catch:
   - describe:
       apiVersion: helm.toolkit.fluxcd.io/v2

@@ -69,6 +69,14 @@ spec:
         metadata:
           name: insecure-skip-verify
           namespace: traefik
+  - description: Assert helmrelease/traefik-release
+    assert:
+      bindings:
+      - name: name
+        value: traefik-release
+      - name: namespace
+        value: traefik
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
 
   catch:
   - describe:

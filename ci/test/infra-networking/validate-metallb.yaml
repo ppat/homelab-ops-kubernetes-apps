@@ -37,6 +37,14 @@ spec:
         metadata:
           name: standard-pool
           namespace: metallb-system
+  - description: Assert helmrelease/metallb-release
+    assert:
+      bindings:
+      - name: name
+        value: metallb-release
+      - name: namespace
+        value: metallb-system
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
 
   catch:
   - describe:
