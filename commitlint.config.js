@@ -50,6 +50,7 @@ module.exports = {
         'apps-media',
         'apps-misc',
         'component-db-backups',
+        'component-external-dns-provider',
         'component-oidc-credentials',
         'component-sso',
         'infra-bootstrap-crds',

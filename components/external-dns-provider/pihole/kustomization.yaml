@@ -1,0 +1,10 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# Generate configMap with configuration for pihole external-dns provider
+configMapGenerator:
+- name: external-dns-provider-config
+  namespace: external-dns
+  files:
+  - conf.d/provider.yaml

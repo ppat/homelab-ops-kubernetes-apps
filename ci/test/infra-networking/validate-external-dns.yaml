@@ -14,6 +14,14 @@ spec:
         value: external-dns
       file: ../chainsaw/assertions/deployment-ready.yaml
       timeout: 2m
+  - description: Assert helmrelease/external-dns-release
+    assert:
+      bindings:
+      - name: name
+        value: external-dns-release
+      - name: namespace
+        value: external-dns
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
 
   catch:
   - describe:
