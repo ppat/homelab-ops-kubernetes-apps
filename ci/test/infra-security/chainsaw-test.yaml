@@ -14,6 +14,9 @@ spec:
     - description: Create test namespace
       apply:
         file: ./test.yaml
+    - description: Apply fake ClusterSecretStore
+      apply:
+        file: ./fake-secret-store.yaml
     - description: Apply infra-database-core
       apply:
         file: ../infra-database/infra-database-core.yaml

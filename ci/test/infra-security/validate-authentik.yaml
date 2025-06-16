@@ -24,6 +24,14 @@ spec:
       file: ../chainsaw/assertions/helmrelease-ready.yaml
 
   # Authentik resources
+  - description: Assert externalsecret/authentik-credentials
+    assert:
+      bindings:
+      - name: name
+        value: authentik-credentials
+      - name: namespace
+        value: authentik
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
   - description: Assert certificate/authentik-signing-cert
     assert:
       bindings:
