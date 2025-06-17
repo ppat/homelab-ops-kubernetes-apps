@@ -22,9 +22,6 @@ spec:
     - description: Apply fake ClusterSecretStore
       apply:
         file: ./fake-secret-store.yaml
-
-  - name: Apply infra-observability modules
-    try:
     - description: Apply minio-extra-config
       apply:
         resource:
@@ -41,17 +38,14 @@ spec:
               kind: GitRepository
               name: test-source
               namespace: flux-system
-    - description: Assert kustomization/minio-pre-requisites
-      assert:
-        bindings:
-        - name: name
-          value: minio-pre-requisites
-        - name: namespace
-          value: minio
-        file: ../chainsaw/assertions/kustomization-ready.yaml
-    - description: Apply minio
-      apply:
-        file: ./minio.yaml
+    - description: Reconcile kustomization/minio
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=minio --timeout=2m
+        timeout: 2m
+
+  - name: Apply infra-observability modules
+    try:
     - description: Apply infra-observability-core
       apply:
         file: ./infra-observability-core.yaml
@@ -74,14 +68,6 @@ spec:
         kind: Kustomization
         name: infra-observability-extra
         namespace: flux-system
-
-  - name: Reconcile minio
-    try:
-    - description: Reconcile kustomization/minio
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=minio --timeout=2m
-        timeout: 2m
 
   - name: Reconcile infra-observability-core
     try:

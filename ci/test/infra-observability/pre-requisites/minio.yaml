@@ -8,6 +8,10 @@ spec:
   interval: 15m0s
   path: ./infrastructure/subsystems/storage-core/minio
   postBuild:
+    substitute:
+      secret_store: fake
+      minio_admin_username_key: minio_admin_username
+      minio_admin_password_key: minio_admin_password
     substituteFrom:
     - kind: ConfigMap
       name: cluster-common-conf
