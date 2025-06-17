@@ -26,19 +26,20 @@ spec:
   - name: Apply infra-observability modules
     try:
     - description: Apply minio-extra-config
-      resource:
-        apiVersion: kustomize.toolkit.fluxcd.io/v1
-        kind: Kustomization
-        metadata:
-          name: minio-pre-requisites
-          namespace: minio
-        spec:
-          interval: 1m0s
-          path: ./ci/test/infra-observability/pre-requisites
-          prune: false
-          sourceRef:
-            kind: GitRepository
-            name: test-source
+      apply:
+        resource:
+          apiVersion: kustomize.toolkit.fluxcd.io/v1
+          kind: Kustomization
+          metadata:
+            name: minio-pre-requisites
+            namespace: minio
+          spec:
+            interval: 1m0s
+            path: ./ci/test/infra-observability/pre-requisites
+            prune: false
+            sourceRef:
+              kind: GitRepository
+              name: test-source
     - description: Assert kustomization/minio-pre-requisites
       assert:
         bindings:
