@@ -5,6 +5,14 @@ metadata:
   name: validate-open-webui
 spec:
   try:
+  - description: Assert externalsecret/openwebui-secrets
+    assert:
+      bindings:
+      - name: name
+        value: openwebui-secrets
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
   - description: Assert statefulset/open-webui
     assert:
       bindings:
