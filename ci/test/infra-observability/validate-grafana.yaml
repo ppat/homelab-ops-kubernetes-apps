@@ -5,6 +5,14 @@ metadata:
   name: validate-grafana
 spec:
   try:
+  - description: Assert externalsecret/grafana-admin-credentials
+    assert:
+      bindings:
+      - name: name
+        value: grafana-admin-credentials
+      - name: namespace
+        value: monitoring
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
   - description: Assert deployment/grafana
     assert:
       bindings:

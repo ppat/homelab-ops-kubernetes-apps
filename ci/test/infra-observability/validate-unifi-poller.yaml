@@ -5,6 +5,14 @@ metadata:
   name: validate-unifi-poller
 spec:
   try:
+  - description: Assert externalsecret/unpoller-credentials
+    assert:
+      bindings:
+      - name: name
+        value: unpoller-credentials
+      - name: namespace
+        value: monitoring
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
   - description: Assert deployment/unpoller
     assert:
       bindings:

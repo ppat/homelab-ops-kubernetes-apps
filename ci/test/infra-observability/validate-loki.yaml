@@ -5,6 +5,14 @@ metadata:
   name: validate-loki
 spec:
   try:
+  - description: Assert externalsecret/loki-s3-credentials
+    assert:
+      bindings:
+      - name: name
+        value: loki-s3-credentials
+      - name: namespace
+        value: logging
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
   - description: Assert deployment/loki-read
     assert:
       bindings:
