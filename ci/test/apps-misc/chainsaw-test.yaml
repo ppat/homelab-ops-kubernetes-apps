@@ -14,6 +14,24 @@ spec:
     - description: Apply infra-security-core
       apply:
         file: ../infra-security/infra-security-core.yaml
+    - description: Reconcile kustomization/infra-security-core
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-core --timeout=2m
+        timeout: 2m
+    - description: Reconcile helmrelease/external-secrets-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
+        timeout: 2m
+    - description: Reconcile helmrelease/cert-manager-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cert-manager-release --namespace=cert-manager --timeout=2m
+        timeout: 2m
+    - description: Apply fake ClusterSecretStore
+      apply:
+        file: ./fake-secret-store.yaml
 
   - name: Apply apps-misc module
     try:
@@ -35,9 +53,6 @@ spec:
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-misc --timeout=2m
         timeout: 2m
 
-  - name: Validate cert-manager
-    use:
-      template: ./validate-cert-manager.yaml
   - name: Validate maddy
     use:
       template: ./validate-maddy.yaml

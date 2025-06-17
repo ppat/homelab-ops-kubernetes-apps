@@ -5,6 +5,14 @@ metadata:
   name: validate-maddy
 spec:
   try:
+  - description: Assert externalsecret/maddy-credentials
+    assert:
+      bindings:
+      - name: name
+        value: maddy-credentials
+      - name: namespace
+        value: maddy
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
   - description: Assert certificate/smtp-tls
     assert:
       bindings:
