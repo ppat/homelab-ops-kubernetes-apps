@@ -9,6 +9,8 @@ spec:
   path: ./apps/subsystems/bitwarden
   prune: false
   postBuild:
+    substitute:
+      secret_store: fake
     substituteFrom:
     - kind: ConfigMap
       name: cluster-common-conf
