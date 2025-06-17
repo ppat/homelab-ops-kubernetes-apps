@@ -6,6 +6,7 @@ resources:
 - namespace.yaml
 - postgres.yaml
 - postgres-credentials.yaml
+- secrets.yaml
 - bazarr/
 - lidarr/
 - overseerr/

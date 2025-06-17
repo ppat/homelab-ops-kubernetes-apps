@@ -11,9 +11,28 @@ spec:
 
   - name: Apply pre-requisites
     try:
+    - description: Apply infra-security-core (dependency)
+      apply:
+        file: ../infra-security/infra-security-core.yaml
+    - description: Reconcile kustomization/infra-security-core
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-core --timeout=2m
+        timeout: 2m
     - description: Apply infra-database-core
       apply:
         file: ../infra-database/infra-database-core.yaml
+    - description: Apply fake ClusterSecretStore
+      apply:
+        file: ./fake-secret-store.yaml
+    - description: Assert externalsecret/downloader-api-keys
+      assert:
+        bindings:
+        - name: name
+          value: downloader-api-keys
+        - name: namespace
+          value: downloaders
+        file: ../chainsaw/assertions/externalsecret-ready.yaml
 
   - name: Apply apps-downloaders modules
     try:
