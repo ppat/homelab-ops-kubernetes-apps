@@ -10,6 +10,7 @@ spec:
   prune: false
   postBuild:
     substitute:
+      secret_store: fake
       POSTGRES_DB_STORAGE_CLASS: standard
       POSTGRES_DB_SIZE: 1Gi
     substituteFrom:
