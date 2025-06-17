@@ -6,10 +6,22 @@ resources:
 - namespace.yaml
 - postgres.yaml
 - postgres-credentials.yaml
+- secrets.yaml
 - home-assistant/
 - nanomq/
 - piper/
 - whisper/
+
+configMapGenerator:
+- name: home-automation-secrets-template
+  namespace: home-automation
+  files:
+  - home-automation.conf.d/homeassistant_secrets.yaml
+  - home-automation.conf.d/nanomq_pwd.conf
+  - home-automation.conf.d/nanomq.env
+
+configurations:
+- name-reference.yaml
 
 sortOptions:
   order: fifo

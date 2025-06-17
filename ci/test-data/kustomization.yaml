@@ -5,7 +5,6 @@ kind: Kustomization
 resources:
 - namespaces.yaml
 - config/
-- secrets/
 - pvc/
 
 sortOptions:
