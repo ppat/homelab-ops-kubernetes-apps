@@ -33,15 +33,16 @@ spec:
               kind: GitRepository
               name: test-source
               namespace: flux-system
+            wait: true
     - description: Reconcile kustomization/infra-security-core
       script:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-core --timeout=2m
         timeout: 2m
-    - description: Reconcile kustomization/minio
+    - description: Reconcile kustomization/minio-pre-requisites
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=minio --timeout=3m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=minio-pre-requisites --timeout=3m
         timeout: 3m
 
   - name: Apply infra-observability modules
