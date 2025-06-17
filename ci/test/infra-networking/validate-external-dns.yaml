@@ -5,6 +5,14 @@ metadata:
   name: validate-external-dns
 spec:
   try:
+  - description: Assert externalsecret/external-dns-secrets
+    assert:
+      bindings:
+      - name: name
+        value: external-dns-secrets
+      - name: namespace
+        value: external-dns
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
   - description: Assert deployment/external-dns-pihole
     assert:
       bindings:
