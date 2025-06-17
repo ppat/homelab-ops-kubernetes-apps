@@ -40,6 +40,7 @@ spec:
             sourceRef:
               kind: GitRepository
               name: test-source
+              namespace: flux-system
     - description: Assert kustomization/minio-pre-requisites
       assert:
         bindings:
