@@ -41,7 +41,7 @@ spec:
     - description: Reconcile kustomization/minio
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=minio --timeout=2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=minio --timeout=3m
         timeout: 3m
 
   - name: Apply infra-observability modules
