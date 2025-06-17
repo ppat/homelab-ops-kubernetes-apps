@@ -10,6 +10,7 @@ spec:
   prune: false
   postBuild:
     substitute:
+      secret_store: fake
       MEDIA_WRITER_UID: "22222"
       MEDIA_WRITER_GID: "22222"
       POSTGRES_DB_STORAGE_CLASS: standard
