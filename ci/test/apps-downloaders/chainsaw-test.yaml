@@ -25,14 +25,6 @@ spec:
     - description: Apply fake ClusterSecretStore
       apply:
         file: ./fake-secret-store.yaml
-    - description: Assert externalsecret/downloader-api-keys
-      assert:
-        bindings:
-        - name: name
-          value: downloader-api-keys
-        - name: namespace
-          value: downloaders
-        file: ../chainsaw/assertions/externalsecret-ready.yaml
 
   - name: Apply apps-downloaders modules
     try:
@@ -58,6 +50,14 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-downloaders --timeout=2m
         timeout: 2m
+    - description: Assert externalsecret/downloader-api-keys
+      assert:
+        bindings:
+        - name: name
+          value: downloader-api-keys
+        - name: namespace
+          value: downloaders
+        file: ../chainsaw/assertions/externalsecret-ready.yaml
 
   - name: Validate database
     use:
