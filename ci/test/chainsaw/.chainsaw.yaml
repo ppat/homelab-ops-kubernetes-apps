@@ -27,3 +27,6 @@ spec:
           echo -----------------------------------------------------------------------
     - events:
         namespace: '*'
+
+  cleanup:
+    skipDelete: true
