@@ -48,7 +48,7 @@ spec:
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-harbor --timeout=2m
         timeout: 2m
 
-  - name: Validate secretd
+  - name: Validate secrets
     try:
     - description: Assert externalsecret/harbor
       assert:
