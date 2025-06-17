@@ -19,6 +19,11 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-core --timeout=2m
         timeout: 2m
+    - description: Reconcile helmrelease/external-secrets-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
+        timeout: 2m
     - description: Apply infra-database-core
       apply:
         file: ../infra-database/infra-database-core.yaml
@@ -50,6 +55,9 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-downloaders --timeout=2m
         timeout: 2m
+
+  - name: Validate Secrets
+    try:
     - description: Assert externalsecret/downloader-api-keys
       assert:
         bindings:
