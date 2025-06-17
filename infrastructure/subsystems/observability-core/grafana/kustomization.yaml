@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
 - helm-release.yaml
+- secrets.yaml
 
 configMapGenerator:
 - name: grafana-default-config

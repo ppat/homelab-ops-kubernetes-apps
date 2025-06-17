@@ -1,0 +1,6 @@
+---
+buckets:
+- name: homelab-loki-chunks
+  policy: none
+- name: homelab-loki-ruler
+  policy: none

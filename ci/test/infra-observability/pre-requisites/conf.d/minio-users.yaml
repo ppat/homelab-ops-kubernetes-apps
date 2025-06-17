@@ -1,0 +1,6 @@
+---
+users:
+- accessKey: loki
+  existingSecret: minio-user-credentials
+  existingSecretKey: loki-secret-key
+  policy: loki
