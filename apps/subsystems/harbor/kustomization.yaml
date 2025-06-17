@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
 - namespace.yaml
 - helm-release.yaml
+- secrets.yaml
 
 sortOptions:
   order: fifo
