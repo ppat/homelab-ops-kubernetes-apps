@@ -5,6 +5,30 @@ metadata:
   name: validate-freeradius
 spec:
   try:
+  - description: Assert externalsecret/freeradius-client-credentials
+    assert:
+      bindings:
+      - name: name
+        value: freeradius-client-credentials
+      - name: namespace
+        value: freeradius
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
+  - description: Assert externalsecret/freeradius-health-check
+    assert:
+      bindings:
+      - name: name
+        value: freeradius-health-check
+      - name: namespace
+        value: freeradius
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
+  - description: Assert externalsecret/freeradius-mac2vlan-map
+    assert:
+      bindings:
+      - name: name
+        value: freeradius-mac2vlan-map
+      - name: namespace
+        value: freeradius
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
   - description: Assert IPAddressPool/freeradius-pool
     assert:
       resource:

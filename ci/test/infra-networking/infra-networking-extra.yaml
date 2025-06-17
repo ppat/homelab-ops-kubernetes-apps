@@ -8,6 +8,8 @@ spec:
   interval: 15m0s
   path: ./infrastructure/subsystems/networking-extra
   postBuild:
+    substitute:
+      secret_store: fake
     substituteFrom:
     - kind: ConfigMap
       name: cluster-common-conf
@@ -34,13 +36,3 @@ spec:
       kind: HelmRelease
       name: tailscale-operator
       namespace: tailscale
-  # drop ExternalSecret as a secret store is not configured for tests
-  # yamllint disable-line rule:indentation
-  - patch: |-
-      $patch: delete
-      kind: ExternalSecret
-      metadata:
-        name: irrelevant
-    target:
-      kind: ExternalSecret
-      name: "^freeradius-.*$"
