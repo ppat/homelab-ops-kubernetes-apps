@@ -1,0 +1,13 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../../../../infrastructure/bootstrap/crds/
+- ../../../../infrastructure/helm-repositories/
+- ../../../test-data/
+- ../../infra-security/infra-security-core.yaml
+- fake-secret-store.yaml
+
+sortOptions:
+  order: fifo
