@@ -26,9 +26,6 @@ spec:
     - description: Apply infra-security-extra
       apply:
         file: ./infra-security-extra.yaml
-    - description: Apply test namespace
-      apply:
-        file: ./test.yaml
     catch:
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
