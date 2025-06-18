@@ -9,41 +9,13 @@ spec:
     use:
       template: ../chainsaw/steps/bootstrap-flux.yaml
 
-  - name: Apply pre-requisites
-    try:
-    - description: Apply infra-security-core (dependency)
-      apply:
-        file: ../infra-security/infra-security-core.yaml
-    - description: Apply fake ClusterSecretStore
-      apply:
-        file: ./fake-secret-store.yaml
-    - description: Apply minio-pre-requisites
-      apply:
-        resource:
-          apiVersion: kustomize.toolkit.fluxcd.io/v1
-          kind: Kustomization
-          metadata:
-            name: minio-pre-requisites
-            namespace: flux-system
-          spec:
-            interval: 1m0s
-            path: ./ci/test/infra-observability/pre-requisites
-            prune: false
-            sourceRef:
-              kind: GitRepository
-              name: test-source
-              namespace: flux-system
-            wait: true
-    - description: Reconcile kustomization/infra-security-core
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-core --timeout=2m
-        timeout: 2m
-    - description: Reconcile kustomization/minio-pre-requisites
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=minio-pre-requisites --timeout=3m
-        timeout: 3m
+  - name: Bootstrap pre-requisites
+    use:
+      template: ../chainsaw/steps/bootstrap-prerequisites.yaml
+      with:
+        bindings:
+        - name: prerequisites_path
+          value: ./ci/test/infra-observability/pre-requisites
 
   - name: Apply infra-observability modules
     try:

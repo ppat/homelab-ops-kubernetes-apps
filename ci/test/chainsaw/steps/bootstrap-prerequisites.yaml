@@ -32,8 +32,8 @@ spec:
   - description: Reconcile kustomization/pre-requisites
     script:
       # yamllint disable-line rule:line-length
-      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=pre-requisites --timeout=2m
-      timeout: 2m
+      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=pre-requisites --timeout=3m
+      timeout: 3m
   catch:
   - describe:
       apiVersion: kustomize.toolkit.fluxcd.io/v1
