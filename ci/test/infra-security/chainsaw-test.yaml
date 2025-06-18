@@ -17,6 +17,7 @@ spec:
         - name: prerequisites_path
           value: ./ci/test/infra-security/pre-requisites
 
+  - name: Apply pre-requisites
     try:
     - description: Apply fake ClusterSecretStore
       apply:
