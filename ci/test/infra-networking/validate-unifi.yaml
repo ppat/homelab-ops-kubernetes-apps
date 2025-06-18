@@ -73,3 +73,7 @@ spec:
       kind: Deployment
       name: unifi-network-application
       namespace: unifi
+  - events:
+      namespace: unifi
+  - events:
+      namespace: metallb-system

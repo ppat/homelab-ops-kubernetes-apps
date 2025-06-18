@@ -48,3 +48,5 @@ spec:
   - podLogs:
       selector: app.kubernetes.io/name=goldilocks
       namespace: goldilocks
+  - events:
+      namespace: goldilocks

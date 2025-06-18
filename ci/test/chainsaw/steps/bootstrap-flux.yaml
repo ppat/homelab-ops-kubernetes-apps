@@ -59,3 +59,5 @@ spec:
       kind: Kustomization
       name: pre-requisites
       namespace: flux-system
+  - events:
+      namespace: flux-system

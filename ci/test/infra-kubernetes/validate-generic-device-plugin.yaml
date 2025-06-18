@@ -19,3 +19,5 @@ spec:
       kind: DaemonSet
       name: generic-device-plugin
       namespace: kube-system
+  - events:
+      namespace: kube-system

@@ -20,3 +20,5 @@ spec:
       kind: StatefulSet
       name: bitwarden-self-host-mssql
       namespace: bitwarden
+  - events:
+      namespace: bitwarden

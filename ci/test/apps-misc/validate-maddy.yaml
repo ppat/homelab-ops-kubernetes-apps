@@ -40,10 +40,8 @@ spec:
       kind: Certificate
       name: smtp-tls
       namespace: maddy
-  - describe:
-      apiVersion: v1
-      kind: Event
-      namespace: maddy
   - podLogs:
       name: smtp
+      namespace: maddy
+  - events:
       namespace: maddy

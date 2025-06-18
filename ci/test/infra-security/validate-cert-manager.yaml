@@ -61,3 +61,5 @@ spec:
   - podLogs:
       name: cert-manager
       namespace: cert-manager
+  - events:
+      namespace: cert-manager

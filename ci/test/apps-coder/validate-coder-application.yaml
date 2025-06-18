@@ -35,3 +35,5 @@ spec:
   - podLogs:
       name: coder
       namespace: coder
+  - events:
+      namespace: coder

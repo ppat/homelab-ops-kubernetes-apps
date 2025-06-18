@@ -27,3 +27,5 @@ spec:
       kind: HelmRelease
       name: vertical-pod-autoscaler-release
       namespace: kube-system
+  - events:
+      namespace: kube-system

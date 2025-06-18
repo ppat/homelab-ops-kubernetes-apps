@@ -148,3 +148,7 @@ spec:
   - podLogs:
       name: authentik-server
       namespace: authentik
+  - events:
+      namespace: cnpg-system
+  - events:
+      namespace: authentik

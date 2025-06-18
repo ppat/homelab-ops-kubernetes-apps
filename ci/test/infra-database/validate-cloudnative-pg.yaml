@@ -35,3 +35,5 @@ spec:
   - podLogs:
       name: cloudnative-pg
       namespace: cnpg-system
+  - events:
+      namespace: cnpg-system

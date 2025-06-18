@@ -63,3 +63,7 @@ spec:
   - podLogs:
       name: freeradius
       namespace: freeradius
+  - events:
+      namespace: freeradius
+  - events:
+      namespace: metallb-system

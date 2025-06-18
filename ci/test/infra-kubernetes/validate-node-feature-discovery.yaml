@@ -43,3 +43,5 @@ spec:
       kind: HelmRelease
       name: node-feature-discovery-release
       namespace: kube-system
+  - events:
+      namespace: kube-system

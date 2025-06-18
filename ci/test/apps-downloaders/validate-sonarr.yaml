@@ -19,3 +19,5 @@ spec:
       kind: Deployment
       name: sonarr
       namespace: downloaders
+  - events:
+      namespace: downloaders

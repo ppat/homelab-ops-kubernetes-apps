@@ -22,3 +22,5 @@ spec:
   - podLogs:
       name: freetube
       namespace: media
+  - events:
+      namespace: media

@@ -38,3 +38,5 @@ spec:
   - podLogs:
       name: wyoming-whisper
       namespace: home-automation
+  - events:
+      namespace: home-automation

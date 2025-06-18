@@ -19,3 +19,5 @@ spec:
       kind: Deployment
       name: lidarr
       namespace: downloaders
+  - events:
+      namespace: downloaders

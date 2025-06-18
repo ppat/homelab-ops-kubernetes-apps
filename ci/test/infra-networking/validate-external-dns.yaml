@@ -45,3 +45,5 @@ spec:
   - podLogs:
       name: external-dns-pihole
       namespace: external-dns
+  - events:
+      namespace: external-dns

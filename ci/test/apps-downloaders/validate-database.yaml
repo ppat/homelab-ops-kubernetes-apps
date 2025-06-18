@@ -28,3 +28,5 @@ spec:
       kind: Cluster
       name: downloaders-db
       namespace: downloaders
+  - events:
+      namespace: downloaders

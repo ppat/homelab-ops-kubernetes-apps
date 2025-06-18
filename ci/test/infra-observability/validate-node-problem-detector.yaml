@@ -36,3 +36,5 @@ spec:
   - podLogs:
       selector: app=node-problem-detector
       namespace: monitoring
+  - events:
+      namespace: monitoring

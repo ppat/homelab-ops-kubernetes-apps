@@ -103,3 +103,7 @@ spec:
   - podLogs:
       name: pihole
       namespace: dns
+  - events:
+      namespace: dns
+  - events:
+      namespace: metallb-system

@@ -87,3 +87,5 @@ spec:
   - podLogs:
       selector: app.kubernetes.io/name=harbor
       namespace: harbor
+  - events:
+      namespace: harbor

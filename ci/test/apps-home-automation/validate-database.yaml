@@ -33,3 +33,7 @@ spec:
       kind: Cluster
       name: home-automation-db
       namespace: home-automation
+  - events:
+      namespace: cnpg-system
+  - events:
+      namespace: home-automation

@@ -35,3 +35,5 @@ spec:
   - podLogs:
       selector: app.kubernetes.io/name=reloader
       namespace: stakater-reloader
+  - events:
+      namespace: stakater-reloader

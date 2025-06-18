@@ -92,3 +92,5 @@ spec:
   - podLogs:
       name: traefik
       namespace: traefik
+  - events:
+      namespace: traefik

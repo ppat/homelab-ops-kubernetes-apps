@@ -22,3 +22,5 @@ spec:
   - podLogs:
       name: sabnzbd
       namespace: downloaders
+  - events:
+      namespace: downloaders
