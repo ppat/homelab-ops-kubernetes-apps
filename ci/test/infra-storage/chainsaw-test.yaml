@@ -31,21 +31,6 @@ spec:
     - events:
         namespace: flux-system
 
-  - name: Reconcile infra-storage-core
-    try:
-    - description: Reconcile kustomization/infra-storage-core
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-storage-core --timeout=3m
-        timeout: 3m
-    catch:
-    - events:
-        namespace: csi-driver-nfs
-    - events:
-        namespace: minio
-    - events:
-        namespace: longhorn-system
-
   - name: Validate csi-driver-nfs
     use:
       template: ./validate-csi-driver-nfs.yaml

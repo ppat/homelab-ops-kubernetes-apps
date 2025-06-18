@@ -39,38 +39,12 @@ spec:
     - events:
         namespace: flux-system
 
-  - name: Reconcile infra-security-core
-    try:
-    - description: Reconcile kustomization/infra-security-core
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-core --timeout=2m
-        timeout: 2m
-    catch:
-    - events:
-        namespace: cert-manager
-    - events:
-        namespace: external-secrets
-
   - name: Validate cert-manager
     use:
       template: ./validate-cert-manager.yaml
   - name: Validate external-secrets
     use:
       template: ./validate-external-secrets.yaml
-
-  - name: Reconcile infra-security-extra
-    try:
-    - description: Reconcile kustomization/infra-security-extra
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-extra --timeout=2m
-        timeout: 2m
-    catch:
-    - events:
-        namespace: kyverno
-    - events:
-        namespace: authentik
 
   - name: Validate kyverno
     use:

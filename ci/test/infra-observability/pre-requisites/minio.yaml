@@ -40,3 +40,15 @@ spec:
       kind: HelmRelease
       name: minio-release
       namespace: minio
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      $patch: delete
+      apiVersion: monitoring.coreos.com/v1
+      kind: Probe
+      metadata:
+        name: irrelevant
+        namespace: minio
+    target:
+      group: monitoring.coreos.com
+      kind: Probe
+      namespace: minio

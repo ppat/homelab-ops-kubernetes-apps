@@ -31,20 +31,10 @@ spec:
     - events:
         namespace: flux-system
 
-  - name: Reconcile infra-database-core
-    try:
-    - description: Reconcile kustomization/infra-database-core
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-database-core --timeout=2m
-        timeout: 2m
-    catch:
-    - events:
-        namespace: cnpg-system
-
   - name: Validate cloudnative-pg
     use:
       template: ./validate-cloudnative-pg.yaml
+
   - name: Validate test-db
     use:
       template: ./validate-test-db.yaml
