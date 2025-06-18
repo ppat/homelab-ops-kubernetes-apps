@@ -41,4 +41,4 @@ spec:
       name: pre-requisites
       namespace: flux-system
   - events:
-      namespace: flux-system
+      namespace: '*'

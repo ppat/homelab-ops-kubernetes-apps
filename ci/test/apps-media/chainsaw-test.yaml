@@ -9,6 +9,14 @@ spec:
     use:
       template: ../chainsaw/steps/bootstrap-flux.yaml
 
+  - name: Bootstrap pre-requisites
+    use:
+      template: ../chainsaw/steps/bootstrap-prerequisites.yaml
+      with:
+        bindings:
+        - name: prerequisites_path
+          value: ./ci/test/apps-media/pre-requisites
+
   - name: Apply apps-media module
     try:
     - description: Apply apps-media
@@ -23,26 +31,18 @@ spec:
     - events:
         namespace: flux-system
 
-  - name: Reconcile apps-media
-    try:
-    - description: Reconcile kustomization/apps-media
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-media --timeout=2m
-        timeout: 2m
-    catch:
-    - events:
-        namespace: media
-
   - name: Validate freetube
     use:
       template: ./validate-freetube.yaml
+
   - name: Validate plex
     use:
       template: ./validate-plex.yaml
+
   - name: Validate tautulli
     use:
       template: ./validate-tautulli.yaml
+
   - name: Validate jellyfin
     use:
       template: ./validate-jellyfin.yaml

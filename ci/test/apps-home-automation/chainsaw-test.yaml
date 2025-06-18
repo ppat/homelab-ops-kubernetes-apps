@@ -9,27 +9,13 @@ spec:
     use:
       template: ../chainsaw/steps/bootstrap-flux.yaml
 
-  - name: Apply pre-requisites
-    try:
-    - description: Apply infra-security-core (dependency)
-      apply:
-        file: ../infra-security/infra-security-core.yaml
-    - description: Reconcile kustomization/infra-security-core
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-core --timeout=2m
-        timeout: 2m
-    - description: Reconcile helmrelease/external-secrets-release
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
-        timeout: 2m
-    - description: Apply infra-database-core
-      apply:
-        file: ../infra-database/infra-database-core.yaml
-    - description: Apply fake ClusterSecretStore
-      apply:
-        file: ./fake-secret-store.yaml
+  - name: Bootstrap pre-requisites
+    use:
+      template: ../chainsaw/steps/bootstrap-prerequisites.yaml
+      with:
+        bindings:
+        - name: prerequisites_path
+          value: ./ci/test/apps-home-automation/pre-requisites
 
   - name: Apply apps-home-automation modules
     try:
@@ -50,19 +36,6 @@ spec:
     - events:
         namespace: flux-system
 
-  - name: Reconcile apps-home-automation
-    try:
-    - description: Reconcile kustomization/apps-home-automation
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-home-automation --timeout=2m
-        timeout: 2m
-    catch:
-    - events:
-        namespace: cnpg-system
-    - events:
-        namespace: home-automation
-
   - name: Validate secrets
     try:
     - description: Assert externalsecret/home-automation-secrets
@@ -73,15 +46,19 @@ spec:
         - name: namespace
           value: home-automation
         file: ../chainsaw/assertions/externalsecret-ready.yaml
+
   - name: Validate nanomq
     use:
       template: ./validate-nanomq.yaml
+
   - name: Validate database
     use:
       template: ./validate-database.yaml
+
   - name: Validate home-assistant
     use:
       template: ./validate-home-assistant.yaml
+
   - name: Validate piper + whisper
     use:
       template: ./validate-piper-whisper.yaml
