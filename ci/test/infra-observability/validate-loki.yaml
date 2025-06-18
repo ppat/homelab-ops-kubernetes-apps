@@ -21,6 +21,7 @@ spec:
       - name: namespace
         value: logging
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 2m
   - description: Assert statefulset/loki-backend
     assert:
       bindings:
