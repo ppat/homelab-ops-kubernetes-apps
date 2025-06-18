@@ -8,7 +8,7 @@ spec:
   - name: namespace
     value: flux-system
   try:
-  - description: Create pre-requisites kustomization
+  - description: Create kustomization/pre-requisites
     apply:
       resource:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -23,12 +23,17 @@ spec:
           sourceRef:
             kind: GitRepository
             name: test-source
-  - description: Assert pre-requisites kustomization
+  - description: Assert kustomization/pre-requisites
     assert:
       bindings:
       - name: name
         value: pre-requisites
       file: ../chainsaw/assertions/kustomization-ready.yaml
+  - description: Reconcile kustomization/pre-requisites
+    script:
+      # yamllint disable-line rule:line-length
+      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=pre-requisites --timeout=2m
+      timeout: 2m
   catch:
   - describe:
       apiVersion: kustomize.toolkit.fluxcd.io/v1
