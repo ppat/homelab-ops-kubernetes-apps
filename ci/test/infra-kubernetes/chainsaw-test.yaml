@@ -9,6 +9,14 @@ spec:
     use:
       template: ../chainsaw/steps/bootstrap-flux.yaml
 
+  - name: Bootstrap pre-requisites
+    use:
+      template: ../chainsaw/steps/bootstrap-prerequisites.yaml
+      with:
+        bindings:
+        - name: prerequisites_path
+          value: ./ci/test/infra-kubernetes/pre-requisites
+
   - name: Apply infra-kubernetes modules
     try:
     - description: Apply infra-kubernetes-core

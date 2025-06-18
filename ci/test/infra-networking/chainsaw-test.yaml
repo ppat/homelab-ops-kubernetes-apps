@@ -39,21 +39,6 @@ spec:
     - events:
         namespace: flux-system
 
-  - name: Reconcile infra-networking-core
-    try:
-    - description: Reconcile kustomization/infra-networking-core
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-networking-core --timeout=5m
-        timeout: 5m
-    catch:
-    - events:
-        namespace: metallb-system
-    - events:
-        namespace: traefik
-    - events:
-        namespace: external-dns
-
   - name: Validate MetalLB
     use:
       template: ./validate-metallb.yaml
@@ -61,23 +46,6 @@ spec:
   - name: Validate Traefik
     use:
       template: ./validate-traefik.yaml
-
-  - name: Reconcile infra-networking-extra
-    try:
-    - description: Reconcile infra-networking-extra
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-networking-extra --timeout=3m
-        timeout: 3m
-    catch:
-    - events:
-        namespace: dns
-    - events:
-        namespace: unifi
-    - events:
-        namespace: freeradius
-    - events:
-        namespace: tailscale
 
   - name: Validate Pi-hole
     use:
