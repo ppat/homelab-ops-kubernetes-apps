@@ -27,3 +27,5 @@ spec:
       kind: HelmRelease
       name: descheduler-release
       namespace: kube-system
+  - events:
+      namespace: kube-system

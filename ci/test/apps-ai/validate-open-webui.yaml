@@ -40,3 +40,5 @@ spec:
       kind: StatefulSet
       name: open-webui
       namespace: ai
+  - events:
+      namespace: ai

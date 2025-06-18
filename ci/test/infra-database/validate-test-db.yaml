@@ -5,6 +5,9 @@ metadata:
   name: validate-test-db
 spec:
   try:
+  - description: Apply test-db
+    apply:
+      file: ./test-db.yaml
   - description: Assert cluster.postgresql.cnpg.io/test-db
     assert:
       bindings:
@@ -40,4 +43,6 @@ spec:
       namespace: default
   - podLogs:
       selector: application=test-db
+      namespace: default
+  - events:
       namespace: default

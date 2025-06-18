@@ -19,3 +19,5 @@ spec:
       kind: HelmRelease
       name: harbor-release
       namespace: harbor
+  - events:
+      namespace: harbor

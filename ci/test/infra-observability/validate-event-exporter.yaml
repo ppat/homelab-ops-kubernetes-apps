@@ -33,3 +33,5 @@ spec:
       kind: Deployment
       name: kubernetes-event-exporter
       namespace: logging
+  - events:
+      namespace: logging

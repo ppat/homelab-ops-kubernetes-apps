@@ -69,6 +69,8 @@ spec:
         kind: Kustomization
         name: infra-observability-extra
         namespace: flux-system
+    - events:
+        namespace: flux-system
 
   - name: Reconcile infra-observability-core
     try:
@@ -77,6 +79,11 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-observability-core --timeout=3m
         timeout: 3m
+    catch:
+    - events:
+        namespace: monitoring
+    - events:
+        namespace: logging
 
   - name: Validate Prometheus
     use:
@@ -101,6 +108,11 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-observability-extra --timeout=1m
         timeout: 1m
+    catch:
+    - events:
+        namespace: monitoring
+    - events:
+        namespace: logging
 
   - name: Validate SNMP Exporter
     use:

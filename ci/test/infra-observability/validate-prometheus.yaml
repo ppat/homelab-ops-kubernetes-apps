@@ -88,3 +88,5 @@ spec:
   - podLogs:
       name: prometheus-kube-prometheus-stack-0
       namespace: monitoring
+  - events:
+      namespace: monitoring

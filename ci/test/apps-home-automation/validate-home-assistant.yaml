@@ -19,6 +19,8 @@ spec:
       kind: Deployment
       name: home-assistant
       namespace: home-automation
+  - events:
+      namespace: home-automation
   - podLogs:
       name: home-assistant
       namespace: home-automation

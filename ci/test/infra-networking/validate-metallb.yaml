@@ -65,3 +65,5 @@ spec:
   - podLogs:
       name: metallb-controller
       namespace: metallb-system
+  - events:
+      namespace: metallb-system

@@ -64,3 +64,5 @@ spec:
   - podLogs:
       selector: app=helm-controller
       namespace: flux-system
+  - events:
+      namespace: flux-system

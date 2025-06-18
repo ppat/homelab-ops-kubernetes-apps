@@ -19,3 +19,5 @@ spec:
       kind: Deployment
       name: bitwarden-self-host-icons
       namespace: bitwarden
+  - events:
+      namespace: bitwarden

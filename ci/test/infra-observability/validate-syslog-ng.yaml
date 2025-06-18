@@ -23,3 +23,5 @@ spec:
   - podLogs:
       selector: app=syslog
       namespace: logging
+  - events:
+      namespace: logging

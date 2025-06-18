@@ -11,9 +11,6 @@ spec:
 
   - name: Apply pre-requisites
     try:
-    - description: Create test namespace
-      apply:
-        file: ./test.yaml
     - description: Apply fake ClusterSecretStore
       apply:
         file: ./fake-secret-store.yaml
@@ -29,9 +26,6 @@ spec:
     - description: Apply infra-security-extra
       apply:
         file: ./infra-security-extra.yaml
-    - description: Apply test namespace
-      apply:
-        file: ./test.yaml
     catch:
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -43,6 +37,8 @@ spec:
         kind: Kustomization
         name: infra-security-extra
         namespace: flux-system
+    - events:
+        namespace: flux-system
 
   - name: Reconcile infra-security-core
     try:
@@ -51,6 +47,11 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-core --timeout=2m
         timeout: 2m
+    catch:
+    - events:
+        namespace: cert-manager
+    - events:
+        namespace: external-secrets
   - name: Validate cert-manager
     use:
       template: ./validate-cert-manager.yaml
@@ -65,6 +66,11 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-extra --timeout=2m
         timeout: 2m
+    catch:
+    - events:
+        namespace: kyverno
+    - events:
+        namespace: authentik
   - name: Validate kyverno
     use:
       template: ./validate-kyverno.yaml

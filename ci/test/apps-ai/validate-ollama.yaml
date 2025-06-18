@@ -33,3 +33,5 @@ spec:
       kind: Deployment
       name: ollama
       namespace: ai
+  - events:
+      namespace: ai

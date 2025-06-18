@@ -128,3 +128,5 @@ spec:
       kind: Deployment
       name: policy-reporter-ui
       namespace: kyverno
+  - events:
+      namespace: kyverno

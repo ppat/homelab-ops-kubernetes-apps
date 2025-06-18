@@ -14,14 +14,13 @@ spec:
     - description: Apply infra-database-core
       apply:
         file: ./infra-database-core.yaml
-    - description: Apply test-db
-      apply:
-        file: ./test-db.yaml
     catch:
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
         name: infra-database-core
+        namespace: flux-system
+    - events:
         namespace: flux-system
 
   - name: Reconcile infra-database-core
@@ -31,6 +30,9 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-database-core --timeout=2m
         timeout: 2m
+    catch:
+    - events:
+        namespace: cnpg-system
 
   - name: Validate cloudnative-pg
     use:

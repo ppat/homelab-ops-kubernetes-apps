@@ -19,6 +19,8 @@ spec:
       kind: Deployment
       name: nanomq
       namespace: home-automation
+  - events:
+      namespace: home-automation
   - podLogs:
       name: nanomq
       namespace: home-automation

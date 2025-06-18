@@ -34,6 +34,8 @@ spec:
         kind: Kustomization
         name: apps-ai
         namespace: flux-system
+    - events:
+        namespace: flux-system
 
   - name: Reconcile apps-ai
     try:
@@ -42,6 +44,9 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-ai --timeout=3m
         timeout: 3m
+    catch:
+    - events:
+        namespace: ai
 
   - name: Validate ollama
     use:

@@ -33,3 +33,7 @@ spec:
       kind: Cluster
       name: coder-db
       namespace: coder
+  - events:
+      namespace: cnpg-system
+  - events:
+      namespace: coder

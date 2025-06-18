@@ -33,3 +33,5 @@ spec:
       kind: DaemonSet
       name: promtail
       namespace: logging
+  - events:
+      namespace: logging

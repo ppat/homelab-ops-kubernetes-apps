@@ -165,3 +165,7 @@ spec:
   - podLogs:
       selector: app=longhorn-ui
       namespace: longhorn-system
+  - events:
+      namespace: longhorn-system
+  - events:
+      namespace: default

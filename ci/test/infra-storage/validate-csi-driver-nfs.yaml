@@ -49,3 +49,5 @@ spec:
   - podLogs:
       selector: app=csi-nfs-controller
       namespace: csi-driver-nfs
+  - events:
+      namespace: csi-driver-nfs

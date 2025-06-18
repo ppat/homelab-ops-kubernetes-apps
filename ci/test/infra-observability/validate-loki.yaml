@@ -106,3 +106,5 @@ spec:
       kind: Ingress
       name: loki
       namespace: logging
+  - events:
+      namespace: logging

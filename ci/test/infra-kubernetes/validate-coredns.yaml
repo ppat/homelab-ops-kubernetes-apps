@@ -30,3 +30,5 @@ spec:
   - podLogs:
       name: coredns
       namespace: kube-system
+  - events:
+      namespace: kube-system
