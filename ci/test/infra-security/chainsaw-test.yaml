@@ -17,15 +17,6 @@ spec:
         - name: prerequisites_path
           value: ./ci/test/infra-security/pre-requisites
 
-  - name: Apply pre-requisites
-    try:
-    - description: Apply fake ClusterSecretStore
-      apply:
-        file: ./fake-secret-store.yaml
-    - description: Apply infra-database-core
-      apply:
-        file: ../infra-database/infra-database-core.yaml
-
   - name: Apply infra-security modules
     try:
     - description: Apply infra-security-core
@@ -60,6 +51,7 @@ spec:
         namespace: cert-manager
     - events:
         namespace: external-secrets
+
   - name: Validate cert-manager
     use:
       template: ./validate-cert-manager.yaml
@@ -79,6 +71,7 @@ spec:
         namespace: kyverno
     - events:
         namespace: authentik
+
   - name: Validate kyverno
     use:
       template: ./validate-kyverno.yaml

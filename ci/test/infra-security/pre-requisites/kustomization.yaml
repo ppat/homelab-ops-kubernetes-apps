@@ -5,8 +5,9 @@ kind: Kustomization
 resources:
 - ../../../../infrastructure/bootstrap/crds/
 - ../../../../infrastructure/helm-repositories/
-- ../../../../apps/helm-repositories
 - ../../../test-data/
+- ../../infra-database/infra-database-core.yaml
+- fake-secret-store.yaml
 
 sortOptions:
   order: fifo
