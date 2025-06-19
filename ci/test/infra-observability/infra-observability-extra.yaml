@@ -15,8 +15,6 @@ spec:
       name: cluster-common-conf
     - kind: ConfigMap
       name: cluster-networking-conf
-    - kind: ConfigMap
-      name: cluster-observability-conf
   prune: false
   sourceRef:
     kind: GitRepository

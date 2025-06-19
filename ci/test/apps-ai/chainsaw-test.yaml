@@ -15,7 +15,7 @@ spec:
       with:
         bindings:
         - name: prerequisites_path
-          value: ./ci/test/ apps-ai/pre-requisites
+          value: ./ci/test/apps-ai/pre-requisites
 
   - name: Apply apps-ai module
     try:

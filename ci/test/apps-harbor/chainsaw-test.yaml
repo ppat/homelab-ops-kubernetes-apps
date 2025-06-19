@@ -31,17 +31,6 @@ spec:
     - events:
         namespace: flux-system
 
-  - name: Reconcile apps-harbor
-    try:
-    - description: Reconcile kustomization/apps-harbor
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-harbor --timeout=2m
-        timeout: 2m
-    catch:
-    - events:
-        namespace: harbor
-
   - name: Validate secrets
     try:
     - description: Assert externalsecret/harbor
@@ -56,12 +45,15 @@ spec:
   - name: Validate harbor db
     use:
       template: ./validate-harbor-db.yaml
+
   - name: Validate harbor redis
     use:
       template: ./validate-harbor-redis.yaml
+
   - name: Validate harbor services
     use:
       template: ./validate-harbor-services.yaml
+
   - name: Validate harbor release
     use:
       template: ./validate-harbor-release.yaml

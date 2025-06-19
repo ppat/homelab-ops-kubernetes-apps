@@ -6,6 +6,9 @@ resources:
 - ../../../../infrastructure/bootstrap/crds/
 - ../../../../infrastructure/helm-repositories/
 - ../../../test-data/
+- namespaces.yaml
+- configmap/
+- pvc/
 - ../../infra-security/infra-security-core.yaml
 - fake-secret-store.yaml
 

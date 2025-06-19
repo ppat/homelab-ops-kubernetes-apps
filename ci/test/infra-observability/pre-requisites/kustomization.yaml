@@ -7,24 +7,13 @@ resources:
 - ../../../../infrastructure/helm-repositories/
 - ../../../../apps/helm-repositories
 - ../../../test-data/
-- secrets.yaml
+- namespaces.yaml
+- minio/
+- loki/
+- promtail/
 - ../../infra-security/infra-security-core.yaml
 - fake-secret-store.yaml
 - minio.yaml
-
-configMapGenerator:
-- name: minio-extra-config
-  namespace: minio
-  files:
-  - conf.d/minio-buckets.yaml
-  - conf.d/minio-policies.yaml
-  - conf.d/minio-users.yaml
-  options:
-    annotations:
-      kustomize.toolkit.fluxcd.io/substitute: disabled
-
-generatorOptions:
-  disableNameSuffixHash: true
 
 sortOptions:
   order: fifo

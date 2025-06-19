@@ -6,6 +6,8 @@ resources:
 - ../../../../infrastructure/bootstrap/crds/
 - ../../../../infrastructure/helm-repositories/
 - ../../../test-data/
+- namespaces.yaml
+- pvc/
 
 sortOptions:
   order: fifo
