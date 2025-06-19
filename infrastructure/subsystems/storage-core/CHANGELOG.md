@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.0.18](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.0.17...infra-storage-core-v0.0.18) (2025-06-19)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** migrate externally maintained external-secret(s) into module ([#1449](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1449)) ([819aa9e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/819aa9eeed880d1a6e6b440e4673ed633b9c88c0))
+* **infra-storage-core:** update longhorn (1.8.1 -&gt; 1.8.2) ([#1443](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1443)) ([270b8c9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/270b8c9f5f73756e0acd09313596d9793a9e9b90))
+* **infra-storage-core:** update longhorn default settings ([#1479](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1479)) ([91ca88c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/91ca88c3ddad6a5d21811e0b2e79e8630054db4b))
+
 ## [0.0.17](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.0.16...infra-storage-core-v0.0.17) (2025-05-09)
 
 
