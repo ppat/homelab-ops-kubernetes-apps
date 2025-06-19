@@ -46,8 +46,11 @@ spec:
       removeSnapshotsDuringFilesystemTrim: true
       replicaAutoBalance: least-effort
       snapshotDataIntegrity: fast-check
-      snapshotDataIntegrityCronjob: "0 4 * * *"
+      snapshotDataIntegrityCronjob: "0 6 * * *"
       snapshotDataIntegrityImmediateCheckAfterSnapshotCreation: false
+      storageMinimalAvailablePercentage: 15
+      storageOverProvisioningPercentage: 100
+      storageReservedPercentageForDefaultDisk: 10
       taintToleration: node-role.kubernetes.io/control-plane=true:NoSchedule
 
     metrics:
