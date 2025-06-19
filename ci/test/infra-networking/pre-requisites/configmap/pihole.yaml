@@ -13,13 +13,3 @@ data:
   IPv6: "true"
   TZ: US/Eastern
   WEBTHEME: default-darker
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: unbound-optional-config
-  namespace: dns
-data:
-  # unbound requires running under root when deployed within kind,
-  # but does not require it when deployed within k3s
-  DISABLE_SET_PERMS: "true"

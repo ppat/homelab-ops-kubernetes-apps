@@ -9,14 +9,13 @@ spec:
     use:
       template: ../chainsaw/steps/bootstrap-flux.yaml
 
-  - name: Apply pre-requisites
-    try:
-    - description: Apply fake ClusterSecretStore
-      apply:
-        file: ./fake-secret-store.yaml
-    - description: Apply infra-database-core
-      apply:
-        file: ../infra-database/infra-database-core.yaml
+  - name: Bootstrap pre-requisites
+    use:
+      template: ../chainsaw/steps/bootstrap-prerequisites.yaml
+      with:
+        bindings:
+        - name: prerequisites_path
+          value: ./ci/test/infra-security/pre-requisites
 
   - name: Apply infra-security modules
     try:
@@ -40,18 +39,6 @@ spec:
     - events:
         namespace: flux-system
 
-  - name: Reconcile infra-security-core
-    try:
-    - description: Reconcile kustomization/infra-security-core
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-core --timeout=2m
-        timeout: 2m
-    catch:
-    - events:
-        namespace: cert-manager
-    - events:
-        namespace: external-secrets
   - name: Validate cert-manager
     use:
       template: ./validate-cert-manager.yaml
@@ -59,18 +46,6 @@ spec:
     use:
       template: ./validate-external-secrets.yaml
 
-  - name: Reconcile infra-security-extra
-    try:
-    - description: Reconcile kustomization/infra-security-extra
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-extra --timeout=2m
-        timeout: 2m
-    catch:
-    - events:
-        namespace: kyverno
-    - events:
-        namespace: authentik
   - name: Validate kyverno
     use:
       template: ./validate-kyverno.yaml

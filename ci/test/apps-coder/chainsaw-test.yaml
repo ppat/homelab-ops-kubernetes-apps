@@ -9,6 +9,14 @@ spec:
     use:
       template: ../chainsaw/steps/bootstrap-flux.yaml
 
+  - name: Bootstrap pre-requisites
+    use:
+      template: ../chainsaw/steps/bootstrap-prerequisites.yaml
+      with:
+        bindings:
+        - name: prerequisites_path
+          value: ./ci/test/apps-coder/pre-requisites
+
   - name: Apply apps-coder modules
     try:
     - description: Apply infra-database-core
@@ -31,22 +39,10 @@ spec:
     - events:
         namespace: flux-system
 
-  - name: Reconcile apps-coder
-    try:
-    - description: Reconcile kustomization/apps-coder
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-coder --timeout=2m
-        timeout: 2m
-    catch:
-    - events:
-        namespace: cnpg-system
-    - events:
-        namespace: coder
-
   - name: Validate coder database
     use:
       template: ./validate-coder-database.yaml
+
   - name: Validate coder application
     use:
       template: ./validate-coder-application.yaml

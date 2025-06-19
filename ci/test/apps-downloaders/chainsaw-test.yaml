@@ -9,27 +9,13 @@ spec:
     use:
       template: ../chainsaw/steps/bootstrap-flux.yaml
 
-  - name: Apply pre-requisites
-    try:
-    - description: Apply infra-security-core (dependency)
-      apply:
-        file: ../infra-security/infra-security-core.yaml
-    - description: Reconcile kustomization/infra-security-core
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-core --timeout=2m
-        timeout: 2m
-    - description: Reconcile helmrelease/external-secrets-release
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
-        timeout: 2m
-    - description: Apply infra-database-core
-      apply:
-        file: ../infra-database/infra-database-core.yaml
-    - description: Apply fake ClusterSecretStore
-      apply:
-        file: ./fake-secret-store.yaml
+  - name: Bootstrap pre-requisites
+    use:
+      template: ../chainsaw/steps/bootstrap-prerequisites.yaml
+      with:
+        bindings:
+        - name: prerequisites_path
+          value: ./ci/test/apps-downloaders/pre-requisites
 
   - name: Apply apps-downloaders modules
     try:
@@ -50,17 +36,6 @@ spec:
     - events:
         namespace: flux-system
 
-  - name: Reconcile apps-downloaders
-    try:
-    - description: Reconcile kustomization/apps-downloaders
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-downloaders --timeout=2m
-        timeout: 2m
-    catch:
-    - events:
-        namespace: downloaders
-
   - name: Validate Secrets
     try:
     - description: Assert externalsecret/downloader-api-keys
@@ -75,24 +50,31 @@ spec:
   - name: Validate database
     use:
       template: ./validate-database.yaml
+
   - name: Validate radarr
     use:
       template: ./validate-radarr.yaml
+
   - name: Validate sabnzbd
     use:
       template: ./validate-sabnzbd.yaml
+
   - name: Validate sonarr
     use:
       template: ./validate-sonarr.yaml
+
   - name: Validate lidarr
     use:
       template: ./validate-lidarr.yaml
+
   - name: Validate overseerr
     use:
       template: ./validate-overseerr.yaml
+
   - name: Validate prowlarr
     use:
       template: ./validate-prowlarr.yaml
+
   - name: Validate bazarr
     use:
       template: ./validate-bazarr.yaml

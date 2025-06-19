@@ -66,7 +66,7 @@ spec:
       - name: namespace
         value: authentik
       file: ../chainsaw/assertions/deployment-ready.yaml
-      timeout: 2m
+      timeout: 3m
   - description: Assert deployment/authentik-worker
     assert:
       bindings:

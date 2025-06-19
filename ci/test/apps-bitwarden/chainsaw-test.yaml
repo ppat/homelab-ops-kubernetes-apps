@@ -9,24 +9,13 @@ spec:
     use:
       template: ../chainsaw/steps/bootstrap-flux.yaml
 
-  - name: Apply pre-requisites
-    try:
-    - description: Apply infra-security-core (dependency)
-      apply:
-        file: ../infra-security/infra-security-core.yaml
-    - description: Reconcile kustomization/infra-security-core
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-security-core --timeout=2m
-        timeout: 2m
-    - description: Reconcile helmrelease/external-secrets-release
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
-        timeout: 2m
-    - description: Apply fake ClusterSecretStore
-      apply:
-        file: ./fake-secret-store.yaml
+  - name: Bootstrap pre-requisites
+    use:
+      template: ../chainsaw/steps/bootstrap-prerequisites.yaml
+      with:
+        bindings:
+        - name: prerequisites_path
+          value: ./ci/test/apps-bitwarden/pre-requisites
 
   - name: Apply apps-bitwarden module
     try:
@@ -42,17 +31,6 @@ spec:
     - events:
         namespace: flux-system
 
-  - name: Reconcile apps-bitwarden
-    try:
-    - description: Reconcile kustomization/apps-bitwarden
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=apps-bitwarden --timeout=2m
-        timeout: 2m
-    catch:
-    - events:
-        namespace: bitwarden
-
   - name: Validate secrets
     try:
     - description: Assert externalsecret/bitwarden
@@ -63,36 +41,47 @@ spec:
         - name: namespace
           value: bitwarden
         file: ../chainsaw/assertions/externalsecret-ready.yaml
+
   - name: Validate bitwarden mssql
     use:
       template: ./validate-bitwarden-mssql.yaml
+
   - name: Validate bitwarden admin
     use:
       template: ./validate-bitwarden-admin.yaml
+
   - name: Validate bitwarden api
     use:
       template: ./validate-bitwarden-api.yaml
+
   - name: Validate bitwarden attachments
     use:
       template: ./validate-bitwarden-attachments.yaml
+
   - name: Validate bitwarden events
     use:
       template: ./validate-bitwarden-events.yaml
+
   - name: Validate bitwarden icons
     use:
       template: ./validate-bitwarden-icons.yaml
+
   - name: Validate bitwarden identity
     use:
       template: ./validate-bitwarden-identity.yaml
+
   - name: Validate bitwarden notifications
     use:
       template: ./validate-bitwarden-notifications.yaml
+
   - name: Validate bitwarden sso
     use:
       template: ./validate-bitwarden-sso.yaml
+
   - name: Validate bitwarden web
     use:
       template: ./validate-bitwarden-web.yaml
+
   - name: Validate bitwarden release
     use:
       template: ./validate-bitwarden-release.yaml

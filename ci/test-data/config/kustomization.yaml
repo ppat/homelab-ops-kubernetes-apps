@@ -5,10 +5,6 @@ kind: Kustomization
 resources:
 - cluster-common-conf.yaml
 - cluster-networking-conf.yaml
-- pihole.yaml
-- cluster-observability-conf.yaml
-- loki/
-- promtail/
 
 sortOptions:
   order: fifo

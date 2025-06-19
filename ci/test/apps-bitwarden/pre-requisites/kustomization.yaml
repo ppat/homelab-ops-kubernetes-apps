@@ -8,12 +8,9 @@ resources:
 - ../../../../apps/helm-repositories
 - ../../../test-data/
 - namespaces.yaml
-- minio/
-- loki/
-- promtail/
+- pvc/
 - ../../infra-security/infra-security-core.yaml
 - fake-secret-store.yaml
-- minio.yaml
 
 sortOptions:
   order: fifo
