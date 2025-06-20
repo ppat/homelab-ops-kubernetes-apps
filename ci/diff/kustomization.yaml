@@ -3,8 +3,47 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
+- source.yaml
 - ../../infrastructure/helm-repositories/
 - ../../apps/helm-repositories/
-- source.yaml
-- infra.yaml
-- apps.yaml
+- ../test/apps-ai/apps-ai.yaml
+- ../test/apps-bitwarden/apps-bitwarden.yaml
+- ../test/apps-coder/apps-coder.yaml
+- ../test/apps-harbor/apps-harbor.yaml
+- ../test/apps-home-automation/apps-home-automation.yaml
+- ../test/apps-media/apps-media.yaml
+- ../test/apps-misc/apps-misc.yaml
+- ../test/infra-clusterops/infra-clusterops-core.yaml
+- ../test/infra-clusterops/infra-clusterops-extra.yaml
+- ../test/infra-database/infra-database-core.yaml
+- ../test/infra-kubernetes/infra-kubernetes-core.yaml
+- ../test/infra-kubernetes/infra-kubernetes-extra.yaml
+- ../test/infra-observability/infra-observability-core.yaml
+- ../test/infra-observability/infra-observability-extra.yaml
+- ../test/infra-networking/infra-networking-core.yaml
+- ../test/infra-networking/infra-networking-extra.yaml
+- ../test/infra-security/infra-security-core.yaml
+- ../test/infra-security/infra-security-extra.yaml
+- ../test/infra-storage/infra-storage-core.yaml
+
+patches:
+# yamllint disable-line rule:indentation
+- patch: |
+    - op: replace
+      path: /spec/patches
+      value:
+        # yamllint disable-line rule:indentation
+        - patch: |-
+            apiVersion: helm.toolkit.fluxcd.io/v2
+            kind: HelmRelease
+            metadata:
+              name: irrelevant
+            spec:
+              test:
+                enable: false
+          target:
+            group: helm.toolkit.fluxcd.io
+            kind: HelmRelease
+  target:
+    group: kustomize.toolkit.fluxcd.io
+    kind: Kustomization
