@@ -11,10 +11,10 @@ spec:
     substitute:
       secret_store: fake
       cert_issuer: selfsigned-issuer
-      POSTGRES_DB_STORAGE_CLASS: standard
-      POSTGRES_DB_SIZE: 1Gi
-      REDIS_STORAGE_CLASS: standard
-      REDIS_SIZE: 1Gi
+      db_storage_class: standard
+      db_storage_size: 1Gi
+      redis_storage_class: standard
+      redis_storage_size: 1Gi
     substituteFrom:
     - kind: ConfigMap
       name: cluster-common-conf

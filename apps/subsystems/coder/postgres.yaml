@@ -18,5 +18,5 @@ spec:
   startDelay: 300
   stopDelay: 300
   storage:
-    size: ${coder_db_size}
-    storageClass: ${coder_db_storage_class}
+    size: ${db_storage_size}
+    storageClass: ${db_storage_class}

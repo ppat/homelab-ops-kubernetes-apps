@@ -28,5 +28,5 @@ spec:
   startDelay: 300
   stopDelay: 300
   storage:
-    size: ${POSTGRES_DB_SIZE}
-    storageClass: ${POSTGRES_DB_STORAGE_CLASS}
+    size: ${db_storage_size}
+    storageClass: ${db_storage_class}

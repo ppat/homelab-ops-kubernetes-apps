@@ -116,7 +116,7 @@ flowchart TB
     class infrastructure legend
 ```
 
-<sup>*Line styles: Solid (→) = Application communication (API calls, downloads), Dotted with arrow (-.→) = Database connections*</sup>
+<sup><em>Line styles: Solid (→) = Application communication (API calls, downloads), Dotted with arrow (-.→) = Database connections</em></sup>
 
 ### Component Details
 
@@ -157,7 +157,7 @@ flowchart TB
 
    | Variable | Purpose | Used By |
    |----------|---------|---------|
-   | MEDIA_WRITER_UID | File ownership | All services |
-   | MEDIA_WRITER_GID | File ownership | All services |
-   | POSTGRES_DB_SIZE | Database storage | PostgreSQL |
-   | POSTGRES_DB_STORAGE_CLASS | Database storage | PostgreSQL |
+   | media_writer_uid | File ownership | All services |
+   | media_writer_gid | File ownership | All services |
+   | db_storage_size | Database storage | PostgreSQL |
+   | db_storage_class | Database storage | PostgreSQL |

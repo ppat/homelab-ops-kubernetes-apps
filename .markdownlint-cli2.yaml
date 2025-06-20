@@ -21,6 +21,7 @@ config:
     - a
     - br
     - details
+    - em
     - hr
     - img
     - summary

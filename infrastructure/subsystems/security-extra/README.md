@@ -171,8 +171,8 @@ flowchart TB
    | domain_name | Base domain | example.com |
    | dns_zone | Cookie domain | homelab.local |
    | cert_issuer | Certificate issuer | letsencrypt-prod |
-   | POSTGRES_DB_SIZE | Database size | 10Gi |
-   | REDIS_SIZE | Cache size | 1Gi |
+   | db_storage_size | Database size | 10Gi |
+   | redis_storage_size | Cache size | 1Gi |
 
 3. Required Secrets
 

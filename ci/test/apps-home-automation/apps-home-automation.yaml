@@ -11,8 +11,8 @@ spec:
   postBuild:
     substitute:
       secret_store: fake
-      POSTGRES_DB_STORAGE_CLASS: standard
-      POSTGRES_DB_SIZE: 1Gi
+      db_storage_class: standard
+      db_storage_size: 1Gi
     substituteFrom:
     - kind: ConfigMap
       name: cluster-common-conf

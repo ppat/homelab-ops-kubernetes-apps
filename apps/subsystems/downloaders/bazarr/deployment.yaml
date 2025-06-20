@@ -61,9 +61,9 @@ spec:
           name: bazarr-temp
       securityContext:
         runAsNonRoot: true
-        runAsUser: ${MEDIA_WRITER_UID}
-        runAsGroup: ${MEDIA_WRITER_GID}
-        fsGroup: ${MEDIA_WRITER_GID}
+        runAsUser: ${media_writer_uid}
+        runAsGroup: ${media_writer_gid}
+        fsGroup: ${media_writer_gid}
         fsGroupChangePolicy: OnRootMismatch
       volumes:
       - name: bazarr-data
