@@ -49,6 +49,7 @@ module.exports = {
         'apps-home-automation',
         'apps-media',
         'apps-misc',
+        'component-cert-issuer',
         'component-db-backups',
         'component-external-dns-provider',
         'component-oidc-credentials',
