@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.18](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.17...apps-coder-v0.0.18) (2025-06-20)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-coder:** migrate externally maintained certificate for coder into module ([#1489](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1489)) ([a6065cd](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a6065cd1e56d74c3442ab7377637851d8be9a265))
+* consistent casing and naming convention use for flux post build variables ([#1486](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1486)) ([1de8be8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1de8be816783efdd3884819178e0bac897cc8dbe))
+
 ## [0.0.17](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.16...apps-coder-v0.0.17) (2025-06-15)
 
 
