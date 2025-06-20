@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.6.4...infra-networking-core-v0.6.5) (2025-06-20)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* create kustomize component for configuring different external-dns provider(s) ([#1450](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1450)) ([93bcd28](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/93bcd28846d5ccfc8dff32731c150489d42a2219))
+* **infra-networking-core:** fix the default-tls-cert to be used by traefik ingress ([#1488](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1488)) ([6b13e32](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6b13e32cf45e0866bae2c537d536554e4f7a51d3))
+
 ## [0.6.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.6.3...infra-networking-core-v0.6.4) (2025-06-15)
 
 
