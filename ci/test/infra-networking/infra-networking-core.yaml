@@ -13,11 +13,9 @@ spec:
     substitute:
       secret_store: fake
       cert_issuer: selfsigned-issuer
-    substituteFrom:
-    - kind: ConfigMap
-      name: cluster-common-conf
-    - kind: ConfigMap
-      name: cluster-networking-conf
+      dns_zone: example.com
+      domain_name: cluster.example.com
+      metallb_standard_ip_pool: 10.112.0.0/24
   prune: false
   sourceRef:
     kind: GitRepository

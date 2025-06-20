@@ -6,7 +6,6 @@ resources:
 - ../../../../infrastructure/bootstrap/crds/
 - ../../../../infrastructure/helm-repositories/
 - ../../../../apps/helm-repositories
-- ../../../test-data/
 - namespaces.yaml
 - minio/
 - loki/

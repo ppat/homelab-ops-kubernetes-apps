@@ -8,11 +8,10 @@ spec:
   interval: 15m0s
   path: ./infrastructure/subsystems/kubernetes-core
   postBuild:
-    substituteFrom:
-    - kind: ConfigMap
-      name: cluster-common-conf
-    - kind: ConfigMap
-      name: cluster-networking-conf
+    substitute:
+      dns_zone: example.com
+      domain_name: cluster.example.com
+      externaldns_ip_address: 10.112.1.1
   prune: false
   sourceRef:
     kind: GitRepository

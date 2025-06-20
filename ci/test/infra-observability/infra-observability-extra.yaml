@@ -10,11 +10,9 @@ spec:
   postBuild:
     substitute:
       secret_store: fake
-    substituteFrom:
-    - kind: ConfigMap
-      name: cluster-common-conf
-    - kind: ConfigMap
-      name: cluster-networking-conf
+      dns_zone: example.com
+      domain_name: cluster.example.com
+      syslog_external_ip_address: 10.112.1.4
   prune: false
   sourceRef:
     kind: GitRepository

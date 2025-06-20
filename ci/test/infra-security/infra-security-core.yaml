@@ -8,9 +8,9 @@ spec:
   interval: 15m0s
   path: ./infrastructure/subsystems/security-core
   postBuild:
-    substituteFrom:
-    - kind: ConfigMap
-      name: cluster-common-conf
+    substitute:
+      dns_zone: example.com
+      domain_name: cluster.example.com
   prune: false
   sourceRef:
     kind: GitRepository

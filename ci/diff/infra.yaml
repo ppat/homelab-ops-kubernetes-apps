@@ -8,13 +8,9 @@ spec:
   interval: 1m0s
   path: ./infrastructure/subsystems
   postBuild:
-    substituteFrom:
-    - kind: ConfigMap
-      name: cluster-common-conf
-    - kind: ConfigMap
-      name: cluster-networking-conf
-    - kind: ConfigMap
-      name: cluster-observability-conf
+    substitute:
+      dns_zone: example.com
+      domain_name: cluster.example.com
   prune: true
   sourceRef:
     kind: GitRepository
