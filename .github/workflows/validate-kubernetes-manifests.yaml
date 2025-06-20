@@ -99,7 +99,7 @@ jobs:
         done
         echo -----------------------------------------------------------------------
         echo "--> Validating kustomiztions (post-build)"
-        find . -mindepth 3 -maxdepth 4 -type f -name kustomization.yaml -not -path './.components/*' -not -path './.archive/*' -print | sort | grep -E -v 'infrastructure/bootstrap' > /tmp/kustomizations
+        find . -mindepth 3 -maxdepth 4 -type f -name kustomization.yaml -not -path './components/*' -not -path './.archive/*' -print | sort | grep -E -v 'infrastructure/bootstrap' > /tmp/kustomizations
         while read -r file; do
           kustomization="${file/%kustomization.yaml}"
           echo "      kustomization: $kustomization"
