@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.4...infra-security-extra-v0.1.5) (2025-06-20)
+
+
+### ✨ Features
+
+* **infra-security-extra:** update authentik (2025.4.1 -&gt; 2025.6.0) ([#1473](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1473)) ([33a2ebb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/33a2ebb8910b05dff45ee5a73f268dbb1a2858a1))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* consistent casing and naming convention use for flux post build variables ([#1486](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1486)) ([1de8be8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1de8be816783efdd3884819178e0bac897cc8dbe))
+* **infra-security-extra:** update authentik (2025.6.0 -&gt; 2025.6.1) ([#1492](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1492)) ([bcd0ae2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/bcd0ae269cbfaf13f13c77e047c01aea34ca0645))
+* **infra-security-extra:** update kyverno (3.4.2 -&gt; 3.4.3) ([#1485](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1485)) ([876ccad](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/876ccadb00b1f5e690dc0baccfbbed9ade24287e))
+
 ## [0.1.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.3...infra-security-extra-v0.1.4) (2025-06-04)
 
 
