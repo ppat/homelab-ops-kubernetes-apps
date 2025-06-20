@@ -7,5 +7,14 @@ resources:
 - issuer-letsencrypt-production.yaml
 - issuer-letsencrypt-staging.yaml
 
+patches:
+# patch cert-manager helm values to include dns01RecursiveNameservers config
+- path: patch-cert-manager.yaml
+  target:
+    group: helm.toolkit.fluxcd.io
+    kind: HelmRelease
+    name: cert-manager-release
+    namespace: cert-manager
+
 sortOptions:
   order: fifo
