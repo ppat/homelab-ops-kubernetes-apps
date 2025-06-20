@@ -1,4 +1,5 @@
 ---
+# yamllint disable rule:line-length
 apiVersion: chainsaw.kyverno.io/v1alpha2
 kind: Configuration
 metadata:
@@ -23,7 +24,7 @@ spec:
           echo -----------------------------------------------------------------------
           flux get all --all-namespaces
           echo -----------------------------------------------------------------------
-          kubectl get -A crd,cm,secret,po,svc,ing,deploy,ds,sts,cj,job,pv,pvc,es,cert
+          kubectl get -A crd,cm,secret,po,svc,ing,ingressroutes,deploy,ds,sts,cj,job,sc,pv,pvc,volumes,es,cert,cluster,ipaddresspools
           echo -----------------------------------------------------------------------
 
   cleanup:

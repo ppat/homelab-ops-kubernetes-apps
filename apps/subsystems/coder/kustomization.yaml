@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
 - namespace.yaml
 - postgres.yaml
+- certificate-coder.yaml
 - helm-release.yaml
 - ingress.yaml
 - rbac.yaml
