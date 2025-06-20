@@ -4,6 +4,8 @@ kind: Service
 metadata:
   name: ($name)
   namespace: ($namespace)
+spec:
+  type: LoadBalancer
 status:
   # Verify that loadBalancer.ingress exists and has at least one element
   # This ensures the service has been assigned an external IP/hostname

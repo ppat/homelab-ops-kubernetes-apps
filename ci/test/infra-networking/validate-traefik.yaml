@@ -5,6 +5,14 @@ metadata:
   name: validate-traefik
 spec:
   try:
+  - description: Assert certificate/default-tls-cert
+    assert:
+      bindings:
+      - name: name
+        value: default-tls-cert
+      - name: namespace
+        value: traefik
+      file: ../chainsaw/assertions/certificate-ready.yaml
   - description: Assert daemonset/traefik
     assert:
       bindings:
@@ -13,14 +21,6 @@ spec:
       - name: namespace
         value: traefik
       file: ../chainsaw/assertions/daemonset-ready.yaml
-  - description: Assert deployment/whoami
-    assert:
-      bindings:
-      - name: name
-        value: whoami
-      - name: namespace
-        value: traefik
-      file: ../chainsaw/assertions/deployment-ready.yaml
   - description: Assert service/traefik
     assert:
       bindings:
@@ -53,6 +53,9 @@ spec:
         metadata:
           name: default
           namespace: traefik
+        spec:
+          defaultCertificate:
+            secretName: default-tls-cert
   - description: Assert tlsoption/default
     assert:
       resource:
@@ -89,6 +92,22 @@ spec:
       kind: DaemonSet
       name: traefik
       namespace: traefik
+  - describe:
+      apiVersion: cert-manager.io/v1
+      kind: Certificate
+      name: default-tls-cert
+      namespace: traefik
+  - describe:
+      apiVersion: v1
+      kind: Service
+      namespace: traefik
+      name: traefik
+  - describe:
+      apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      namespace: traefik
+      name: traefik-dashboard
+
   - podLogs:
       name: traefik
       namespace: traefik

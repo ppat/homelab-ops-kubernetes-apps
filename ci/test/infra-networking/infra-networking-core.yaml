@@ -12,6 +12,7 @@ spec:
   postBuild:
     substitute:
       secret_store: fake
+      cert_issuer: selfsigned-issuer
     substituteFrom:
     - kind: ConfigMap
       name: cluster-common-conf
