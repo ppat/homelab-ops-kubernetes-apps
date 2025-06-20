@@ -142,7 +142,7 @@ spec:
     tlsStore:
       default:
         defaultCertificate:
-          secretName: ${default_certificate:=selfsigned-tls-cert}
+          secretName: default-tls-cert
 
     extraObjects:
     # yamllint disable-line rule:indentation
@@ -176,19 +176,3 @@ spec:
         namespace: traefik
       spec:
         insecureSkipVerify: true
-    # yamllint disable-line rule:indentation
-    - |
-      apiVersion: cert-manager.io/v1
-      kind: Certificate
-      metadata:
-        name: selfsigned-tls-cert
-        namespace: traefik
-      spec:
-        issuerRef:
-          name: selfsigned-issuer
-          kind: ClusterIssuer
-        dnsNames:
-        - '*.${domain_name}'
-        duration: 2160h # 90d
-        renewBefore: 1440h # 60d
-        secretName: selfsigned-tls-cert

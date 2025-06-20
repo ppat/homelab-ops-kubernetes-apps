@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: whoami-https
+  name: whoami
   namespace: traefik
   annotations:
     external-dns.alpha.kubernetes.io/hostname: whoami.${domain_name}
