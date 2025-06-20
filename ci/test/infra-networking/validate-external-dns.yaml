@@ -42,6 +42,11 @@ spec:
       kind: Deployment
       name: external-dns-pihole
       namespace: external-dns
+  - describe:
+      apiVersion: v1
+      kind: Pod
+      name: external-dns-pihole
+      namespace: external-dns
   - podLogs:
       name: external-dns-pihole
       namespace: external-dns
