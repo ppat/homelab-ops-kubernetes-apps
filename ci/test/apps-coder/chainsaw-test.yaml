@@ -43,6 +43,10 @@ spec:
     use:
       template: ./validate-coder-database.yaml
 
+  - name: Validate coder cert
+    use:
+      template: ./validate-coder-cert.yaml
+
   - name: Validate coder application
     use:
       template: ./validate-coder-application.yaml

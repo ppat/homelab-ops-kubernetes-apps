@@ -1,0 +1,23 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-coder-cert
+spec:
+  try:
+  - description: Assert certificate/coder-tls-cert
+    assert:
+      bindings:
+      - name: name
+        value: coder-tls-cert
+      - name: namespace
+        value: coder
+      file: ../chainsaw/assertions/certificate-ready.yaml
+  catch:
+  - describe:
+      apiVersion: cert-manager.io/v1
+      kind: Certificate
+      name: coder-tls-cert
+      namespace: coder
+  - events:
+      namespace: coder

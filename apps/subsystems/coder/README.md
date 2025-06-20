@@ -51,7 +51,7 @@ The coder subsystem consists of three main capability groups:
    | Secret Name | Purpose | Required Keys |
    |-------------|---------|---------------|
    | coder-db-app | Database connection | uri |
-   | coder-oidc-auth-settings | OIDC configuration | clientId, clientSecret |
+   | coder-sso-credentials | OIDC configuration | clientId, clientSecret |
 
 3. Required Variables
 

@@ -33,7 +33,7 @@ spec:
   values:
     coder:
       annotations:
-        secret.reloader.stakater.com/reload: "coder-db-app,coder-oidc-auth-settings"
+        secret.reloader.stakater.com/reload: "coder-db-app,coder-sso-credentials"
       env:
       - name: CODER_ACCESS_URL
         value: "https://coder.${domain_name}"
