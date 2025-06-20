@@ -21,14 +21,6 @@ spec:
       - name: namespace
         value: traefik
       file: ../chainsaw/assertions/daemonset-ready.yaml
-  - description: Assert deployment/whoami
-    assert:
-      bindings:
-      - name: name
-        value: whoami
-      - name: namespace
-        value: traefik
-      file: ../chainsaw/assertions/deployment-ready.yaml
   - description: Assert service/traefik
     assert:
       bindings:
@@ -37,14 +29,6 @@ spec:
       - name: namespace
         value: traefik
       file: ../chainsaw/assertions/service-loadbalancer-ready.yaml
-  - description: Assert ingress/whoami
-    assert:
-      bindings:
-      - name: name
-        value: whoami
-      - name: namespace
-        value: traefik
-      file: ../chainsaw/assertions/ingress-ready.yaml
   - description: Assert middleware/header-forwarded
     assert:
       resource:
@@ -123,11 +107,6 @@ spec:
       kind: IngressRoute
       namespace: traefik
       name: traefik-dashboard
-  - describe:
-      apiVersion: networking.k8s.io/v1
-      kind: Ingress
-      namespace: traefik
-      name: whoami
 
   - podLogs:
       name: traefik

@@ -1,0 +1,51 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-whoami
+spec:
+  try:
+  - description: Assert deployment/whoami
+    assert:
+      bindings:
+      - name: name
+        value: whoami
+      - name: namespace
+        value: traefik
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert service/whoami
+    assert:
+      bindings:
+      - name: name
+        value: whoami
+      - name: namespace
+        value: traefik
+      file: ../chainsaw/assertions/service-clusterip-ready.yaml
+  - description: Assert ingress/whoami
+    assert:
+      bindings:
+      - name: name
+        value: whoami
+      - name: namespace
+        value: traefik
+      file: ../chainsaw/assertions/ingress-ready.yaml
+
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: deployment
+      name: whoami
+      namespace: traefik
+  - describe:
+      apiVersion: v1
+      kind: Service
+      namespace: traefik
+      name: whoami
+  - describe:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      namespace: traefik
+      name: whoami
+
+  - events:
+      namespace: traefik

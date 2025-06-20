@@ -47,6 +47,10 @@ spec:
     use:
       template: ./validate-traefik.yaml
 
+  - name: Validate Whoami
+    use:
+      template: ./validate-whoami.yaml
+
   - name: Validate Pi-hole
     use:
       template: ./validate-pihole.yaml
