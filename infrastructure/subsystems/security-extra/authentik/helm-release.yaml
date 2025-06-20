@@ -171,8 +171,8 @@ spec:
       master:
         persistence:
           enabled: true
-          storageClass: ${REDIS_STORAGE_CLASS}
-          size: ${REDIS_SIZE}
+          storageClass: ${redis_storage_class}
+          size: ${redis_storage_size}
           annotations: {}
           labels: {}
           selector: {}

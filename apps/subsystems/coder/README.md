@@ -58,8 +58,8 @@ The coder subsystem consists of three main capability groups:
    | Variable | Purpose | Used By |
    |----------|---------|---------|
    | domain_name | External access URL | Coder server |
-   | coder_db_size | Database storage | PostgreSQL |
-   | coder_db_storage_class | Storage class | PostgreSQL |
+   | db_storage_size | Database storage | PostgreSQL |
+   | db_storage_class | Storage class | PostgreSQL |
 
 4. RBAC Requirements
 

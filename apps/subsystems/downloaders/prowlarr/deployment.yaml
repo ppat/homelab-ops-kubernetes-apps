@@ -25,9 +25,9 @@ spec:
       - name: prowlarr
         env:
         - name: PUID
-          value: ${quote}${MEDIA_WRITER_UID}${quote}
+          value: ${quote}${media_writer_uid}${quote}
         - name: PGID
-          value: ${quote}${MEDIA_WRITER_GID}${quote}
+          value: ${quote}${media_writer_gid}${quote}
         - name: TZ
           value: Etc/UTC
         - name: PROWLARR__APP__INSTANCENAME

@@ -10,9 +10,9 @@ spec:
   prune: false
   postBuild:
     substitute:
-      coder_db_storage_class: standard
-      coder_db_size: 1Gi
       cert_issuer: selfsigned-issuer
+      db_storage_class: standard
+      db_storage_size: 1Gi
     substituteFrom:
     - kind: ConfigMap
       name: cluster-common-conf
