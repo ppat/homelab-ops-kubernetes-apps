@@ -10,6 +10,8 @@ spec:
   postBuild:
     substitute:
       secret_store: fake
+      dns_zone: example.com
+      domain_name: cluster.example.com
       alertmanager_retention_period: 2h
       alertmanager_storage_class: standard
       alertmanager_storage_size: 1Gi
@@ -28,11 +30,6 @@ spec:
       loki_chunks_cache_memory: "512"
       # see: https://fluxcd.io/flux/components/kustomize/kustomizations/#post-build-substitution-of-numbers-and-booleans
       quote: '"'
-    substituteFrom:
-    - kind: ConfigMap
-      name: cluster-common-conf
-    - kind: ConfigMap
-      name: cluster-networking-conf
   prune: false
   sourceRef:
     kind: GitRepository

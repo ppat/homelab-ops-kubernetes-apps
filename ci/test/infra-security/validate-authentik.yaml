@@ -75,6 +75,7 @@ spec:
       - name: namespace
         value: authentik
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 2m
   - description: Assert poddisruptionbudget/authentik-server
     assert:
       bindings:

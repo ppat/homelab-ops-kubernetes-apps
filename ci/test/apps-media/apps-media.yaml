@@ -9,11 +9,11 @@ spec:
   path: ./apps/subsystems/media
   prune: false
   postBuild:
-    substituteFrom:
-    - kind: ConfigMap
-      name: cluster-common-conf
-    - kind: ConfigMap
-      name: cluster-networking-conf
+    substitute:
+      dns_zone: example.com
+      domain_name: cluster.example.com
+      jellyfin_external_ip_address: 10.112.1.5
+      plex_external_ip_address: 10.112.1.3
   sourceRef:
     kind: GitRepository
     name: test-source

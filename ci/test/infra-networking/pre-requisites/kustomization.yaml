@@ -5,7 +5,6 @@ kind: Kustomization
 resources:
 - ../../../../infrastructure/bootstrap/crds/
 - ../../../../infrastructure/helm-repositories/
-- ../../../test-data/
 - namespaces.yaml
 - configmap/
 - pvc/

@@ -11,9 +11,8 @@ spec:
   postBuild:
     substitute:
       secret_store: fake
-    substituteFrom:
-    - kind: ConfigMap
-      name: cluster-common-conf
+      dns_zone: example.com
+      domain_name: cluster.example.com
   sourceRef:
     kind: GitRepository
     name: test-source

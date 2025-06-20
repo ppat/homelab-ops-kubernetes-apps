@@ -10,14 +10,13 @@ spec:
   postBuild:
     substitute:
       secret_store: fake
+      dns_zone: example.com
+      domain_name: cluster.example.com
       cert_issuer: selfsigned-issuer
       db_storage_class: standard
       db_storage_size: 1Gi
       redis_storage_class: standard
       redis_storage_size: 1Gi
-    substituteFrom:
-    - kind: ConfigMap
-      name: cluster-common-conf
   prune: false
   sourceRef:
     kind: GitRepository
