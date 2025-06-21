@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.0.21](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.0.20...apps-home-automation-v0.0.21) (2025-06-21)
+
+
+### ✨ Features
+
+* **apps-home-automation:** update ghcr.io/coder/code-server (4.100.3 -&gt; 4.101.0) ([#1496](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1496)) ([d936f76](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d936f76a9a92cb76a860a4dd0a60fcfb05f28ca1))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-home-automation:** migrate externally maintained external-secret(s) into apps-home-automation module ([#1464](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1464)) ([dabf627](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/dabf627fda0af2ce76ecc8761707ec04ef4810bb))
+* **apps-home-automation:** update digest ghcr.io/home-operations/home-assistant (da48b02 -&gt; 3d6ba3d) ([#1441](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1441)) ([cbc0746](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/cbc0746ccf98e3b29660bb56f95f3eab6531e427))
+* **apps-home-automation:** update emqx/nanomq (0.23.8 -&gt; 0.23.9) ([#1465](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1465)) ([6f244fd](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6f244fd995743f5245bb8a4dd32e33ce6f9950ce))
+* consistent casing and naming convention use for flux post build variables ([#1486](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1486)) ([1de8be8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1de8be816783efdd3884819178e0bac897cc8dbe))
+
 ## [0.0.20](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.0.19...apps-home-automation-v0.0.20) (2025-06-15)
 
 
