@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-harbor-v0.0.5...apps-harbor-v0.0.6) (2025-06-20)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-harbor:** migrate externally maintained external-secret(s) into apps-harbor module ([#1459](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1459)) ([babcc1f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/babcc1fd4de2b713888b42eeda32ca9438c3b904))
+
 ## [0.0.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-harbor-v0.0.4...apps-harbor-v0.0.5) (2025-05-31)
 
 
