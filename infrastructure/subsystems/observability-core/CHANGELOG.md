@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.8.4...infra-observability-core-v0.8.5) (2025-06-21)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* migrate externally maintained external-secret(s) into infra-observability modules ([#1454](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1454)) ([c2f9b9f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c2f9b9f230eb09de6101acfb3bdeee60460c89f0))
+
 ## [0.8.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.8.3...infra-observability-core-v0.8.4) (2025-06-08)
 
 
