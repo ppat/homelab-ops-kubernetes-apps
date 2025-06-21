@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-bitwarden-v0.0.8...apps-bitwarden-v0.0.9) (2025-06-21)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-bitwarden:** migrate externally maintained external-secret(s) into apps-bitwarden module ([#1462](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1462)) ([c01fddb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c01fddbb4d65bd08f09602e345ee916f6544ad75))
+
 ## [0.0.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-bitwarden-v0.0.7...apps-bitwarden-v0.0.8) (2025-06-01)
 
 
