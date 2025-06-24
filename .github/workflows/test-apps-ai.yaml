@@ -6,7 +6,6 @@ on:
   pull_request:
     paths:
     - '.github/workflows/test-apps-ai.yaml'
-    - '.github/workflows/test-kubernetes-resources-workflow.yaml'
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/apps-ai/**'
     - 'apps/subsystems/ai/**'

@@ -6,7 +6,6 @@ on:
   pull_request:
     paths:
     - '.github/workflows/test-apps-home-automation.yaml'
-    - '.github/workflows/test-kubernetes-resources-workflow.yaml'
     - '.github/kind-cluster-multi-node.yaml'
     - 'ci/test/apps-home-automation/**'
     - 'apps/subsystems/home-automation/**'
