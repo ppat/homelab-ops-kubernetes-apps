@@ -26,6 +26,10 @@ jobs:
       yaml_all_changed_files: ${{ steps.changed-files-yaml.outputs.yaml_all_changed_files}}
       markdown_any_changed: ${{ steps.changed-files-yaml.outputs.markdown_any_changed }}
       markdown_all_changed_files: ${{ steps.changed-files-yaml.outputs.markdown_all_changed_files}}
+      kubernetes_any_changed: ${{ steps.changed-files-yaml.outputs.kubernetes_any_changed }}
+      kubernetes_all_changed_files: ${{ steps.changed-files-yaml.outputs.kubernetes_all_changed_files}}
+      kustomization_files: ${{ toJSON(steps.prepare-file-lists.outputs.prebuild_files) }}
+      kustomization_dirs: ${{ toJSON(steps.prepare-file-lists.outputs.postbuild_dirs) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -51,6 +55,26 @@ jobs:
           markdown:
           - '**.md'
           - '!**/CHANGELOG.md'
+          kubernetes:
+          - 'apps/**/*.yaml'
+          - 'ci/**/*.yaml'
+          - 'components/**/*.yaml'
+          - 'infrastructure/**/*.yaml'
+
+    - name: Prepare Kubernetes kustomization lists
+      id: prepare-file-lists
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        mapfile -t prebuild_files < <(find . -type f -name kustomization.yaml -not -path './.archive/*')
+        mapfile -t postbuild_dirs < <(find . -mindepth 3 -maxdepth 4 -type f -name kustomization.yaml -not -path './components/*' -not -path './.archive/*' -exec dirname {} \; | sort -u)
+
+        # Convert arrays to JSON using printf and jq
+        printf '%s\n' "${prebuild_files[@]}" | jq -R . | jq -s -c . > /tmp/prebuild.json
+        printf '%s\n' "${postbuild_dirs[@]}" | jq -R . | jq -s -c . > /tmp/postbuild.json
+
+        echo "prebuild_files=$(cat /tmp/prebuild.json)" >> $GITHUB_OUTPUT
+        echo "postbuild_dirs=$(cat /tmp/postbuild.json)" >> $GITHUB_OUTPUT
 
   commit-messages:
     if: ${{ github.event_name == 'pull_request' }}
@@ -68,6 +92,23 @@ jobs:
     with:
       git_ref: ${{ github.head_ref || github.ref }}
       files: ${{ github.event_name == 'workflow_dispatch' && 'ALL' || needs.detect-changes.outputs.actions_all_changed_files }}
+
+  kubernetes:
+    needs: [detect-changes]
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.kubernetes_any_changed == 'true' }}
+    uses: ppat/github-workflows/.github/workflows/validate-kubernetes-manifests.yaml@validate-k8s-manifests
+    with:
+      git_ref: ${{ github.head_ref || github.ref }}
+      kustomization_files: ${{ needs.detect-changes.outputs.kustomization_files }}
+      kustomization_dirs: ${{ needs.detect-changes.outputs.kustomization_dirs }}
+
+  markdown:
+    needs: [detect-changes]
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.markdown_any_changed == 'true' }}
+    uses: ppat/github-workflows/.github/workflows/lint-markdown.yaml@main
+    with:
+      git_ref: ${{ github.head_ref || github.ref }}
+      files: ${{ github.event_name == 'workflow_dispatch' && 'ALL' || needs.detect-changes.outputs.markdown_all_changed_files }}
 
   pre-commit:
     uses: ppat/github-workflows/.github/workflows/lint-pre-commit.yaml@main
@@ -97,11 +138,3 @@ jobs:
     with:
       git_ref: ${{ github.head_ref || github.ref }}
       files: ${{ github.event_name == 'workflow_dispatch' && 'ALL' || needs.detect-changes.outputs.yaml_all_changed_files }}
-
-  markdown:
-    needs: [detect-changes]
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.markdown_any_changed == 'true' }}
-    uses: ppat/github-workflows/.github/workflows/lint-markdown.yaml@main
-    with:
-      git_ref: ${{ github.head_ref || github.ref }}
-      files: ${{ github.event_name == 'workflow_dispatch' && 'ALL' || needs.detect-changes.outputs.markdown_all_changed_files }}
