@@ -5,8 +5,8 @@ kind: Kustomization
 resources:
 - namespace.yaml
 - freetube/
-- jellyfin/
-- plex/
+# - jellyfin/
+# - plex/
 - tautulli/
 
 sortOptions:
