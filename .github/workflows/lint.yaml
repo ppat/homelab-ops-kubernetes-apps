@@ -101,6 +101,7 @@ jobs:
       git_ref: ${{ github.head_ref || github.ref }}
       kustomization_files: ${{ needs.detect-changes.outputs.kustomization_files }}
       kustomization_dirs: ${{ needs.detect-changes.outputs.kustomization_dirs }}
+      env_file: ./ci/validation/.env
 
   markdown:
     needs: [detect-changes]
