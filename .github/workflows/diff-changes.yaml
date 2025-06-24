@@ -45,7 +45,7 @@ jobs:
         live-branch: main
         path: ci/diff
         resource: ${{ matrix.resource }}
-        sources: flux-diff
+        sources: test-source
         skip-secrets: true
         skip-crds: true
         debug: false
