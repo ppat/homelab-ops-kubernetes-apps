@@ -28,8 +28,8 @@ jobs:
       markdown_all_changed_files: ${{ steps.changed-files-yaml.outputs.markdown_all_changed_files}}
       kubernetes_any_changed: ${{ steps.changed-files-yaml.outputs.kubernetes_any_changed }}
       kubernetes_all_changed_files: ${{ steps.changed-files-yaml.outputs.kubernetes_all_changed_files}}
-      kustomization_files: ${{ toJSON(steps.prepare-file-lists.outputs.prebuild_files) }}
-      kustomization_dirs: ${{ toJSON(steps.prepare-file-lists.outputs.postbuild_dirs) }}
+      kustomization_files: ${{ toJSON(steps.prepare-file-lists.outputs.kustomization_files) }}
+      kustomization_pkg_dirs: ${{ toJSON(steps.prepare-file-lists.outputs.kustomization_pkg_dirs) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -73,8 +73,8 @@ jobs:
         printf '%s\n' "${prebuild_files[@]}" | jq -R . | jq -s -c . > /tmp/prebuild.json
         printf '%s\n' "${postbuild_dirs[@]}" | jq -R . | jq -s -c . > /tmp/postbuild.json
 
-        echo "prebuild_files=$(cat /tmp/prebuild.json)" >> $GITHUB_OUTPUT
-        echo "postbuild_dirs=$(cat /tmp/postbuild.json)" >> $GITHUB_OUTPUT
+        echo "kustomization_files=$(cat /tmp/prebuild.json)" >> $GITHUB_OUTPUT
+        echo "kustomization_pkg_dirs=$(cat /tmp/postbuild.json)" >> $GITHUB_OUTPUT
 
   commit-messages:
     if: ${{ github.event_name == 'pull_request' }}
@@ -100,8 +100,9 @@ jobs:
     with:
       git_ref: ${{ github.head_ref || github.ref }}
       kustomization_files: ${{ needs.detect-changes.outputs.kustomization_files }}
-      kustomization_dirs: ${{ needs.detect-changes.outputs.kustomization_dirs }}
+      kustomization_pkg_dirs: ${{ needs.detect-changes.outputs.kustomization_pkg_dirs }}
       kubeconform_flags: -skip=Secret,IPAddressPool
+      base_kustomization_file: ./ci/validation/kustomization.yaml
       env_file: ./ci/validation/.env
       debug: true
 
