@@ -102,6 +102,7 @@ jobs:
       kustomization_files: ${{ needs.detect-changes.outputs.kustomization_files }}
       kustomization_dirs: ${{ needs.detect-changes.outputs.kustomization_dirs }}
       env_file: ./ci/validation/.env
+      debug: true
 
   markdown:
     needs: [detect-changes]
