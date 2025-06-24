@@ -67,7 +67,7 @@ jobs:
       # yamllint disable-line rule:indentation
       run: |
         mapfile -t prebuild_files < <(find . -type f -name kustomization.yaml -not -path './.archive/*')
-        mapfile -t postbuild_dirs < <(find . -mindepth 3 -maxdepth 4 -type f -name kustomization.yaml -not -path './components/*' -not -path './.archive/*' -exec dirname {} \; | sort -u)
+        mapfile -t postbuild_dirs < <(find . -mindepth 3 -maxdepth 4 -type f -name kustomization.yaml -not -path './components/*' -not -path './.archive/*' -not -path './apps/subsystems/media/*' -exec dirname {} \; | sort -u)
 
         # Convert arrays to JSON using printf and jq
         printf '%s\n' "${prebuild_files[@]}" | jq -R . | jq -s -c . > /tmp/prebuild.json
