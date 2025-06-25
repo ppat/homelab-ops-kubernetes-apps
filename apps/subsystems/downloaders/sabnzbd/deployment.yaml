@@ -40,6 +40,10 @@ spec:
           httpGet:
             path: /api?mode=version
             port: 8080
+        resources:
+          requests:
+            cpu: 256m
+            memory: 127Mi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

@@ -42,10 +42,8 @@ spec:
             port: 3000
         resources:
           requests:
-            cpu: 500m
-            memory: 1024Mi
-          limits:
-            memory: 4096Mi
+            cpu: 15m
+            memory: 512Mi
         volumeMounts:
         - mountPath: /config
           name: freetube-data

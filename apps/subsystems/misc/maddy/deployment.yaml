@@ -68,6 +68,10 @@ spec:
             port: smtp-explicit
           initialDelaySeconds: 5
           periodSeconds: 10
+        resources:
+          requests:
+            cpu: 15m
+            memory: 105Mi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

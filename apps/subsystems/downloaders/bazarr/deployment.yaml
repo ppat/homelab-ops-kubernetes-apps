@@ -38,6 +38,10 @@ spec:
         readinessProbe:
           tcpSocket:
             port: 6767
+        resources:
+          requests:
+            cpu: 15m
+            memory: 273Mi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
