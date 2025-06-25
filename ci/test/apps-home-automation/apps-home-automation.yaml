@@ -11,6 +11,7 @@ spec:
   postBuild:
     substitute:
       secret_store: fake
+      db_replicas: 1
       db_storage_class: standard
       db_storage_size: 1Gi
       dns_zone: example.com
