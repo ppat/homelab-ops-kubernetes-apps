@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.24](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.0.23...infra-security-core-v0.0.24) (2025-06-25)
+
+
+### ✨ Features
+
+* **infra-security-core:** update external-secrets (0.17.0 -&gt; 0.18.0) ([#1524](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1524)) ([5146aee](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5146aeeefa58bb0607be16e94d17d4d5e72747f4))
+
 ## [0.0.23](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.0.22...infra-security-core-v0.0.23) (2025-06-20)
 
 
