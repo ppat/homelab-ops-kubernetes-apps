@@ -12,7 +12,7 @@ spec:
       database: home-assistant
       owner: home-assistant
   imageName: ghcr.io/cloudnative-pg/postgresql:16.4
-  instances: ${quote}${db_replicas:=2}${quote}
+  instances: ${db_replicas:=2}
   monitoring:
     enablePodMonitor: true
   primaryUpdateStrategy: unsupervised

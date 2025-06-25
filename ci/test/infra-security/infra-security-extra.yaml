@@ -18,8 +18,6 @@ spec:
       domain_name: cluster.example.com
       redis_storage_class: standard
       redis_storage_size: 1Gi
-      # see: https://fluxcd.io/flux/components/kustomize/kustomizations/#post-build-substitution-of-numbers-and-booleans
-      quote: '"'
   prune: false
   sourceRef:
     kind: GitRepository
