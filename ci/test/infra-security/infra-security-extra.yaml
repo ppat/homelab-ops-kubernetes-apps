@@ -11,13 +11,15 @@ spec:
     substitute:
       secret_store: fake
       cert_issuer: selfsigned-issuer
-      db_replicas: 1
+      db_replicas: "1"
       db_storage_class: standard
       db_storage_size: 1Gi
       dns_zone: example.com
       domain_name: cluster.example.com
       redis_storage_class: standard
       redis_storage_size: 1Gi
+      # see: https://fluxcd.io/flux/components/kustomize/kustomizations/#post-build-substitution-of-numbers-and-booleans
+      quote: '"'
   prune: false
   sourceRef:
     kind: GitRepository

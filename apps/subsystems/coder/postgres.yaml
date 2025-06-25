@@ -10,7 +10,7 @@ spec:
       database: coder
       owner: coder
   imageName: ghcr.io/cloudnative-pg/postgresql:16.4
-  instances: ${db_replicas:=2}
+  instances: ${quote}${db_replicas:=2}${quote}
   monitoring:
     enablePodMonitor: true
   primaryUpdateStrategy: unsupervised
