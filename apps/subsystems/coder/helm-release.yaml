@@ -57,7 +57,10 @@ spec:
       ingress:
         enable: false
       replicaCount: 1
-      resources: {}
+      resources:
+        requests:
+          cpu: 32m
+          memory: 256Mi
       service:
         type: ClusterIP
         externalTrafficPolicy: Local

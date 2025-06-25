@@ -40,6 +40,10 @@ spec:
         readinessProbe:
           tcpSocket:
             port: 5055
+        resources:
+          requests:
+            cpu: 15m
+            memory: 100Mi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

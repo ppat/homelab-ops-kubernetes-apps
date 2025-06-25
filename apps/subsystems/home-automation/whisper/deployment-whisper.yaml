@@ -34,6 +34,10 @@ spec:
             port: 10300
           initialDelaySeconds: 5
           periodSeconds: 10
+        resources:
+          requests:
+            cpu: 15m
+            memory: 128Mi
         volumeMounts:
         - name: data
           mountPath: /data
