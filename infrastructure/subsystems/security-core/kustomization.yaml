@@ -6,6 +6,7 @@ resources:
 - namespace.yaml
 - cert-manager/
 - external-secrets/
+- kyverno/
 
 sortOptions:
   order: fifo

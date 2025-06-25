@@ -45,10 +45,10 @@ spec:
   - name: Validate external-secrets
     use:
       template: ./validate-external-secrets.yaml
-
   - name: Validate kyverno
     use:
       template: ./validate-kyverno.yaml
+
   - name: Validate authentik
     use:
       template: ./validate-authentik.yaml
