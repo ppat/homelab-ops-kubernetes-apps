@@ -12,19 +12,19 @@ patches:
 # yamllint disable-line rule:indentation
 - patch: |-
     - op: add
-      path: /spec/patches/-
+      path: /spec/patches
       value:
-        patch: |-
-          $patch: delete
-          apiVersion: helm.toolkit.fluxcd.io/v2
-          kind: HelmRelease
-          metadata:
+        - patch: |-
+            $patch: delete
+            apiVersion: helm.toolkit.fluxcd.io/v2
+            kind: HelmRelease
+            metadata:
+              name: kyverno-policy-reporter-release
+              namespace: kyverno
+          target:
+            kind: HelmRelease
             name: kyverno-policy-reporter-release
             namespace: kyverno
-        target:
-          kind: HelmRelease
-          name: kyverno-policy-reporter-release
-          namespace: kyverno
   target:
     kind: Kustomization
     name: infra-security-core
