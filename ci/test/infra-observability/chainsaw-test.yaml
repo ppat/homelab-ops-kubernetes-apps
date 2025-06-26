@@ -17,6 +17,19 @@ spec:
         - name: prerequisites_path
           value: ./ci/test/infra-observability/pre-requisites
 
+  - name: Reconcile pre-requisites
+    try:
+    - description: Reconcile helmrelease/external-secrets-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=3m
+        timeout: 3m
+    - description: Reconcile helmrelease/minio-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=minio-release --namespace=minio --timeout=2m
+        timeout: 2m
+
   - name: Apply infra-observability modules
     try:
     - description: Apply infra-observability-core

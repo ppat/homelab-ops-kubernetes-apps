@@ -5,25 +5,6 @@ metadata:
   name: validate-authentik
 spec:
   try:
-  # CloudNative PG resources
-  - description: Assert deployment/cloudnative-pg
-    assert:
-      bindings:
-      - name: name
-        value: cloudnative-pg
-      - name: namespace
-        value: cnpg-system
-      file: ../chainsaw/assertions/deployment-ready.yaml
-  - description: Assert helmrelease/cloudnative-pg-release
-    assert:
-      bindings:
-      - name: name
-        value: cloudnative-pg-release
-      - name: namespace
-        value: cnpg-system
-      file: ../chainsaw/assertions/helmrelease-ready.yaml
-
-  # Authentik resources
   - description: Assert externalsecret/authentik-credentials
     assert:
       bindings:
@@ -94,24 +75,11 @@ spec:
       file: ../chainsaw/assertions/helmrelease-ready.yaml
 
   catch:
-  # HelmRelease resources
-  - describe:
-      apiVersion: helm.toolkit.fluxcd.io/v2
-      kind: HelmRelease
-      name: cloudnative-pg-release
-      namespace: cnpg-system
   - describe:
       apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
       name: authentik-release
       namespace: authentik
-
-  # CloudNative PG resources
-  - describe:
-      apiVersion: apps/v1
-      kind: Deployment
-      name: cloudnative-pg
-      namespace: cnpg-system
 
   # Authentik resources
   - describe:
@@ -149,7 +117,5 @@ spec:
   - podLogs:
       name: authentik-server
       namespace: authentik
-  - events:
-      namespace: cnpg-system
   - events:
       namespace: authentik

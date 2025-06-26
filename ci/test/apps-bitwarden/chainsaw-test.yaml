@@ -17,6 +17,14 @@ spec:
         - name: prerequisites_path
           value: ./ci/test/apps-bitwarden/pre-requisites
 
+  - name: Reconcile pre-requisites
+    try:
+    - description: Reconcile helmrelease/infra-security-core
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
+        timeout: 2m
+
   - name: Apply apps-bitwarden module
     try:
     - description: Apply apps-bitwarden

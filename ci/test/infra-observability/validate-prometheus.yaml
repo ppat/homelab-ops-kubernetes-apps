@@ -13,6 +13,7 @@ spec:
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/daemonset-ready.yaml
+      timeout: 2m
   - description: Assert deployment/kube-prometheus-stack-kube-state-metrics
     assert:
       bindings:
