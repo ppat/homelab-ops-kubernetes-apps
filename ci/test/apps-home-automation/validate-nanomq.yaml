@@ -13,7 +13,6 @@ spec:
       - name: namespace
         value: home-automation
       file: ../chainsaw/assertions/deployment-ready.yaml
-      timeout: 2m
   catch:
   - describe:
       apiVersion: apps/v1
