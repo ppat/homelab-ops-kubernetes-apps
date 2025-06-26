@@ -19,7 +19,7 @@ spec:
 
   - name: Reconcile pre-requisites
     try:
-    - description: Reconcile helmrelease/infra-security-core
+    - description: Reconcile helmrelease/external-secrets-release
       script:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
