@@ -55,3 +55,19 @@ repos:
     - '@commitlint/ensure@19.5.0'
     - 'commitlint-plugin-function-rules@4.0.1'
     args: ['--verbose']
+- repo: https://github.com/ppat/validate-kubernetes-manifests
+  rev: v0.0.1
+  hooks:
+  - id: validate-k8s
+    args:
+    - --pkg-include
+    - '["apps/*","infrastructure/*"]'
+    - --pkg-exclude
+    - '["components/*",".archive/*"]'
+    - --kubeconform-flags
+    - '-skip=Secret,IPAddressPool'
+    - --env-file
+    - ci/validation/.env
+    - --base-kustomization-file
+    - ci/validation/kustomization.yaml
+    - --debug

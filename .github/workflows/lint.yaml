@@ -5,6 +5,8 @@ name: lint
 on:
   pull_request:
   workflow_dispatch:
+  schedule:
+  - cron: '0 5 * * 1'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -29,7 +31,6 @@ jobs:
       kubernetes_any_changed: ${{ steps.changed-files-yaml.outputs.kubernetes_any_changed }}
       kubernetes_all_changed_files: ${{ steps.changed-files-yaml.outputs.kubernetes_all_changed_files}}
       kustomization_files: ${{ toJSON(steps.prepare-file-lists.outputs.kustomization_files) }}
-      kustomization_pkg_dirs: ${{ toJSON(steps.prepare-file-lists.outputs.kustomization_pkg_dirs) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -66,15 +67,12 @@ jobs:
       shell: bash
       # yamllint disable-line rule:indentation
       run: |
-        mapfile -t prebuild_files < <(find . -type f -name kustomization.yaml -not -path './.archive/*')
-        mapfile -t postbuild_dirs < <(find . -mindepth 3 -maxdepth 4 -type f -name kustomization.yaml -not -path './components/*' -not -path './.archive/*' -exec dirname {} \; | sort -u)
+        mapfile -t ks_files < <(find . -type f -name kustomization.yaml -not -path './.archive/*')
 
         # Convert arrays to JSON using printf and jq
-        printf '%s\n' "${prebuild_files[@]}" | jq -R . | jq -s -c . > /tmp/prebuild.json
-        printf '%s\n' "${postbuild_dirs[@]}" | jq -R . | jq -s -c . > /tmp/postbuild.json
+        printf '%s\n' "${ks_files[@]}" | jq -R . | jq -s -c . > /tmp/ks.json
 
-        echo "kustomization_files=$(cat /tmp/prebuild.json)" >> $GITHUB_OUTPUT
-        echo "kustomization_pkg_dirs=$(cat /tmp/postbuild.json)" >> $GITHUB_OUTPUT
+        echo "kustomization_files=$(cat /tmp/ks.json)" >> $GITHUB_OUTPUT
 
   commit-messages:
     if: ${{ github.event_name == 'pull_request' }}
@@ -96,15 +94,24 @@ jobs:
   kubernetes-manifests:
     needs: [detect-changes]
     if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.kubernetes_any_changed == 'true' }}
-    uses: ppat/github-workflows/.github/workflows/validate-kubernetes-manifests.yaml@main
-    with:
-      git_ref: ${{ github.head_ref || github.ref }}
-      kustomization_files: ${{ needs.detect-changes.outputs.kustomization_files }}
-      kustomization_pkg_dirs: ${{ needs.detect-changes.outputs.kustomization_pkg_dirs }}
-      kubeconform_flags: -skip=Secret,IPAddressPool
-      base_kustomization_file: ./ci/validation/kustomization.yaml
-      env_file: ./ci/validation/.env
-      debug: true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+    - name: Checkout
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      with:
+        fetch-depth: 0
+
+    - name: Validate Kubernetes Manifests
+      uses: ppat/validate-kubernetes-manifests@v0.0.1
+      with:
+        files: ${{ fromJSON(needs.detect-changes.outputs.kustomization_files) }}
+        pkg-include: '["apps/*","infrastructure/*"]'
+        pkg-exclude: '["components/*",".archive/*"]'
+        kubeconform-flags: '-skip=Secret,IPAddressPool'
+        env-file: 'ci/validation/.env'
+        base-kustomization-file: 'ci/validation/kustomization.yaml'
+        debug: true
 
   markdown:
     needs: [detect-changes]
