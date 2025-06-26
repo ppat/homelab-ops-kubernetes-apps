@@ -31,7 +31,6 @@ jobs:
       kubernetes_any_changed: ${{ steps.changed-files-yaml.outputs.kubernetes_any_changed }}
       kubernetes_all_changed_files: ${{ steps.changed-files-yaml.outputs.kubernetes_all_changed_files}}
       kustomization_files: ${{ toJSON(steps.prepare-file-lists.outputs.kustomization_files) }}
-      kustomization_pkg_dirs: ${{ toJSON(steps.prepare-file-lists.outputs.kustomization_pkg_dirs) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -68,15 +67,12 @@ jobs:
       shell: bash
       # yamllint disable-line rule:indentation
       run: |
-        mapfile -t prebuild_files < <(find . -type f -name kustomization.yaml -not -path './.archive/*')
-        mapfile -t postbuild_dirs < <(find . -mindepth 3 -maxdepth 4 -type f -name kustomization.yaml -not -path './components/*' -not -path './.archive/*' -exec dirname {} \; | sort -u)
+        mapfile -t ks_files < <(find . -type f -name kustomization.yaml -not -path './.archive/*')
 
         # Convert arrays to JSON using printf and jq
-        printf '%s\n' "${prebuild_files[@]}" | jq -R . | jq -s -c . > /tmp/prebuild.json
-        printf '%s\n' "${postbuild_dirs[@]}" | jq -R . | jq -s -c . > /tmp/postbuild.json
+        printf '%s\n' "${ks_files[@]}" | jq -R . | jq -s -c . > /tmp/ks.json
 
-        echo "kustomization_files=$(cat /tmp/prebuild.json)" >> $GITHUB_OUTPUT
-        echo "kustomization_pkg_dirs=$(cat /tmp/postbuild.json)" >> $GITHUB_OUTPUT
+        echo "kustomization_files=$(cat /tmp/ks.json)" >> $GITHUB_OUTPUT
 
   commit-messages:
     if: ${{ github.event_name == 'pull_request' }}
@@ -109,7 +105,7 @@ jobs:
     - name: Validate Kubernetes Manifests
       uses: ppat/validate-kubernetes-manifests@cache-schemas
       with:
-        files: ${{ needs.detect-changes.outputs.kustomization_files }}
+        files: ${{ fromJSON(needs.detect-changes.outputs.kustomization_files) }}
         pkg-include: '["apps/*","infrastructure/*"]'
         pkg-exclude: '["components/*",".archive/*"]'
         kubeconform-flags: '-skip=Secret,IPAddressPool'
