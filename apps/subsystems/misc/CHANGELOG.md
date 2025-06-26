@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-misc-v0.0.2...apps-misc-v0.0.3) (2025-06-26)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* set default requests on apps modules workloads based on goldilocks ([#1532](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1532)) ([260524a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/260524a93c1a6b4375b7cef39b098fa288b5fbb4))
+
 ## [0.0.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-misc-v0.0.1...apps-misc-v0.0.2) (2025-05-20)
 
 
