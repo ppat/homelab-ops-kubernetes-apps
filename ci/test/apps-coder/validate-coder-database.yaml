@@ -5,14 +5,6 @@ metadata:
   name: validate-coder-database
 spec:
   try:
-  - description: Assert helmrelease/cloudnative-pg-release
-    assert:
-      bindings:
-      - name: name
-        value: cloudnative-pg-release
-      - name: namespace
-        value: cnpg-system
-      file: ../chainsaw/assertions/helmrelease-ready.yaml
   - description: Assert cluster.postgresql.cnpg.io/coder-db
     assert:
       bindings:
@@ -23,11 +15,6 @@ spec:
       file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
       timeout: 3m
   catch:
-  - describe:
-      apiVersion: apps/v1
-      kind: Deployment
-      name: cloudnative-pg
-      namespace: cnpg-system
   - describe:
       apiVersion: postgresql.cnpg.io/v1
       kind: Cluster

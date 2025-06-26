@@ -16,11 +16,6 @@ spec:
       timeout: 3m
   catch:
   - describe:
-      apiVersion: apps/v1
-      kind: Deployment
-      name: cloudnative-pg
-      namespace: cnpg-system
-  - describe:
       apiVersion: postgresql.cnpg.io/v1
       kind: Cluster
       name: home-automation-db
