@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.20](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.19...apps-media-v0.0.20) (2025-06-26)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* set default requests on apps modules workloads based on goldilocks ([#1532](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1532)) ([260524a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/260524a93c1a6b4375b7cef39b098fa288b5fbb4))
+
 ## [0.0.19](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.18...apps-media-v0.0.19) (2025-06-15)
 
 
