@@ -46,6 +46,7 @@ spec:
         - name: namespace
           value: home-automation
         file: ../chainsaw/assertions/externalsecret-ready.yaml
+      timeout: 2m
 
   - name: Validate nanomq
     use:
