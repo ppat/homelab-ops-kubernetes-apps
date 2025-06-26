@@ -27,7 +27,7 @@ patches:
           target:
             kind: HelmRelease
             name: kyverno-policy-reporter-release
-            namespace: kyverno  target:
+            namespace: kyverno
   target:
     kind: Kustomization
     name: infra-security-core
