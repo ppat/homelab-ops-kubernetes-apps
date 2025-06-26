@@ -95,7 +95,7 @@ jobs:
 
   kubernetes-manifests:
     needs: [detect-changes]
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.kubernetes_any_changed == 'true' }}
+    # if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.kubernetes_any_changed == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
