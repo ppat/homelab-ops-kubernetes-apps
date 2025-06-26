@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.20](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.19...apps-coder-v0.0.20) (2025-06-26)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* parameterize each cloudnativepg db instance's replica count ([#1537](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1537)) ([ea7a557](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ea7a55720735d7ca40df350f5c3483c16b37f312))
+
 ## [0.0.19](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.18...apps-coder-v0.0.19) (2025-06-26)
 
 
