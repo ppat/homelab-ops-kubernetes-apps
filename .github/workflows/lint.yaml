@@ -96,15 +96,24 @@ jobs:
   kubernetes-manifests:
     needs: [detect-changes]
     if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.kubernetes_any_changed == 'true' }}
-    uses: ppat/github-workflows/.github/workflows/validate-kubernetes-manifests.yaml@main
-    with:
-      git_ref: ${{ github.head_ref || github.ref }}
-      kustomization_files: ${{ needs.detect-changes.outputs.kustomization_files }}
-      kustomization_pkg_dirs: ${{ needs.detect-changes.outputs.kustomization_pkg_dirs }}
-      kubeconform_flags: -skip=Secret,IPAddressPool
-      base_kustomization_file: ./ci/validation/kustomization.yaml
-      env_file: ./ci/validation/.env
-      debug: true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+    - name: Checkout
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      with:
+        fetch-depth: 0
+
+    - name: Validate Kubernetes Manifests
+      uses: ppat/validate-kubernetes-manifests@cache-schemas
+      with:
+        files: ${{ needs.detect-changes.outputs.kustomization_files }}
+        pkg-include: '["apps/*","infrastructure/*"]'
+        pkg-exclude: '["components/*",".archive/*"]'
+        kubeconform-flags: '-skip=Secret,IPAddressPool'
+        env-file: 'ci/validation/.env'
+        base-kustomization-file: 'ci/validation/kustomization.yaml'
+        debug: true
 
   markdown:
     needs: [detect-changes]
