@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.27](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.26...apps-downloaders-v0.1.27) (2025-06-26)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-downloaders:** update digest ghcr.io/linuxserver/bazarr (a92ba81 -&gt; b515d79) ([#1521](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1521)) ([a007df4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a007df450bbbb4ef1cd6a51498b004bc1adcfd48))
+* set default requests on apps modules workloads based on goldilocks ([#1532](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1532)) ([260524a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/260524a93c1a6b4375b7cef39b098fa288b5fbb4))
+
 ## [0.1.26](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.25...apps-downloaders-v0.1.26) (2025-06-21)
 
 
