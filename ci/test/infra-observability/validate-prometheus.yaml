@@ -5,6 +5,15 @@ metadata:
   name: validate-prometheus
 spec:
   try:
+  - description: Assert daemonset/kube-prometheus-stack-prometheus-node-exporter
+    assert:
+      bindings:
+      - name: name
+        value: kube-prometheus-stack-prometheus-node-exporter
+      - name: namespace
+        value: monitoring
+      file: ../chainsaw/assertions/daemonset-ready.yaml
+      timeout: 2m
   - description: Assert deployment/kube-prometheus-stack-kube-state-metrics
     assert:
       bindings:
@@ -37,14 +46,6 @@ spec:
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/statefulset-ready.yaml
-  - description: Assert daemonset/kube-prometheus-stack-prometheus-node-exporter
-    assert:
-      bindings:
-      - name: name
-        value: kube-prometheus-stack-prometheus-node-exporter
-      - name: namespace
-        value: monitoring
-      file: ../chainsaw/assertions/daemonset-ready.yaml
   - description: Assert helmrelease/kube-prometheus-stack-release
     assert:
       bindings:
