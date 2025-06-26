@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.19](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.18...apps-coder-v0.0.19) (2025-06-26)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* set default requests on apps modules workloads based on goldilocks ([#1532](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1532)) ([260524a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/260524a93c1a6b4375b7cef39b098fa288b5fbb4))
+
 ## [0.0.18](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.17...apps-coder-v0.0.18) (2025-06-20)
 
 
