@@ -17,6 +17,19 @@ spec:
         - name: prerequisites_path
           value: ./ci/test/apps-home-automation/pre-requisites
 
+  - name: Reconcile pre-requisites
+    try:
+    - description: Reconcile helmrelease/infra-security-core
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
+        timeout: 2m
+    - description: Reconcile helmrelease/cloudnative-pg-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=2m
+        timeout: 2m
+
   - name: Apply apps-home-automation modules
     try:
     - description: Apply apps-home-automation
