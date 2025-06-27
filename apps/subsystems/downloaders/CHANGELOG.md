@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.28](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.27...apps-downloaders-v0.1.28) (2025-06-27)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* parameterize each cloudnativepg db instance's replica count ([#1537](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1537)) ([ea7a557](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ea7a55720735d7ca40df350f5c3483c16b37f312))
+
 ## [0.1.27](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.26...apps-downloaders-v0.1.27) (2025-06-26)
 
 
