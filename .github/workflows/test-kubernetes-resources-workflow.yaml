@@ -46,7 +46,7 @@ jobs:
       uses: fluxcd/flux2/action@a48f81a66c4ca9fbd993233ab99dd03a7cfbe09a # v2.6.2
       with:
         # renovate: datasource=github-releases depName=fluxcd/flux2
-        version: "v2.6.2"
+        version: "v2.6.3"
 
     - name: Setup Chainsaw
       uses: kyverno/action-install-chainsaw@f2b47b97dc889c12702113753d713f01ec268de5 # v0.2.12
@@ -57,7 +57,7 @@ jobs:
     - name: Install flux in kind cluster
       env:
         # renovate: datasource=github-releases depName=fluxcd/flux2
-        FLUX_VERSION: "v2.6.2"
+        FLUX_VERSION: "v2.6.3"
       run: |
         flux install --version ${FLUX_VERSION} --log-level debug
 
