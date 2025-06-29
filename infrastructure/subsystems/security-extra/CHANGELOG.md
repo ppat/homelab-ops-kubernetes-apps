@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.5...infra-security-extra-v0.1.6) (2025-06-29)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-core:** move kyverno from infra-security-extra to infra-security-core module ([#1538](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1538)) ([4438287](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/44382871482f1ba4044f8b6c962cb463cd521af6))
+* **infra-security-extra:** update authentik (2025.6.1 -&gt; 2025.6.2) ([#1554](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1554)) ([63ac31e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/63ac31e6e1463ed6288b3bd7dea0788188efdab2))
+* **infra-security-extra:** update authentik (2025.6.2 -&gt; 2025.6.3) ([#1574](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1574)) ([31b6904](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/31b6904d8d1c336f7f5a2c8bc19bd3169198e2e1))
+* parameterize each cloudnativepg db instance's replica count ([#1537](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1537)) ([ea7a557](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ea7a55720735d7ca40df350f5c3483c16b37f312))
+
 ## [0.1.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.4...infra-security-extra-v0.1.5) (2025-06-20)
 
 
