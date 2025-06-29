@@ -103,7 +103,7 @@ jobs:
         fetch-depth: 1
 
     - name: Validate Kubernetes Manifests
-      uses: ppat/validate-kubernetes-manifests@v0.0.2
+      uses: ppat/validate-kubernetes-manifests@94be4aae001773d995b604b978b13241ffe0760a # v0.0.2
       with:
         files: ${{ fromJSON(needs.detect-changes.outputs.kustomization_files) }}
         pkg-include: '["apps/*","infrastructure/*"]'
