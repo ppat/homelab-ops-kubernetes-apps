@@ -1,10 +1,10 @@
 {
   "apps/helm-repositories": "0.1.0",
-  "apps/subsystems/ai": "0.2.13",
+  "apps/subsystems/ai": "0.2.14",
   "apps/subsystems/bitwarden": "0.0.9",
   "apps/subsystems/coder": "0.0.20",
   "apps/subsystems/downloaders": "0.1.28",
-  "apps/subsystems/harbor": "0.0.6",
+  "apps/subsystems/harbor": "0.0.7",
   "apps/subsystems/home-automation": "0.0.26",
   "apps/subsystems/media": "0.0.20",
   "apps/subsystems/misc": "0.0.3",
