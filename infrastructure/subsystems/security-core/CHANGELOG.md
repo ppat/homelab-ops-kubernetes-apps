@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.0.25](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.0.24...infra-security-core-v0.0.25) (2025-06-29)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-core:** move kyverno from infra-security-extra to infra-security-core module ([#1538](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1538)) ([4438287](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/44382871482f1ba4044f8b6c962cb463cd521af6))
+* **infra-security-core:** update external-secrets (0.18.0 -&gt; 0.18.1) ([#1553](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1553)) ([5259614](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/525961490d1a7f71c98b8eedc234fd701fa92016))
+* **infra-security-core:** update kyverno (3.4.3 -&gt; 3.4.4) ([#1559](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1559)) ([7fcb731](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7fcb73188dbe14b12de30fa0bc8a044c7ccb5d1d))
+
 ## [0.0.24](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.0.23...infra-security-core-v0.0.24) (2025-06-25)
 
 
