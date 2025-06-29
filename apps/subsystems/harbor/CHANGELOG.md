@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-harbor-v0.0.6...apps-harbor-v0.0.7) (2025-06-29)
+
+
+### 🛠 Improvements
+
+* address markdown linting errors ([#1567](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1567)) ([38ffe5c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/38ffe5c23a66c2181b75a57b8eac409adf80d521))
+
 ## [0.0.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-harbor-v0.0.5...apps-harbor-v0.0.6) (2025-06-20)
 
 
