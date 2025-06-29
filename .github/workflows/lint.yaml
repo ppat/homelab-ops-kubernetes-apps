@@ -20,17 +20,17 @@ jobs:
     outputs:
       actions_any_changed: ${{ steps.changed-files-yaml.outputs.actions_any_changed }}
       actions_all_changed_files: ${{ steps.changed-files-yaml.outputs.actions_all_changed_files}}
+      kubernetes_any_changed: ${{ steps.changed-files-yaml.outputs.kubernetes_any_changed }}
+      kubernetes_all_changed_files: ${{ steps.changed-files-yaml.outputs.kubernetes_all_changed_files}}
+      kustomization_files: ${{ toJSON(steps.prepare-file-lists.outputs.kustomization_files) }}
+      markdown_any_changed: ${{ steps.changed-files-yaml.outputs.markdown_any_changed }}
+      markdown_all_changed_files: ${{ steps.changed-files-yaml.outputs.markdown_all_changed_files}}
       renovate_any_changed: ${{ steps.changed-files-yaml.outputs.renovate_any_changed }}
       renovate_all_changed_files: ${{ steps.changed-files-yaml.outputs.renovate_all_changed_files}}
       shellscripts_any_changed: ${{ steps.changed-files-yaml.outputs.shellscripts_any_changed }}
       shellscripts_all_changed_files: ${{ steps.changed-files-yaml.outputs.shellscripts_all_changed_files}}
       yaml_any_changed: ${{ steps.changed-files-yaml.outputs.yaml_any_changed }}
       yaml_all_changed_files: ${{ steps.changed-files-yaml.outputs.yaml_all_changed_files}}
-      markdown_any_changed: ${{ steps.changed-files-yaml.outputs.markdown_any_changed }}
-      markdown_all_changed_files: ${{ steps.changed-files-yaml.outputs.markdown_all_changed_files}}
-      kubernetes_any_changed: ${{ steps.changed-files-yaml.outputs.kubernetes_any_changed }}
-      kubernetes_all_changed_files: ${{ steps.changed-files-yaml.outputs.kubernetes_all_changed_files}}
-      kustomization_files: ${{ toJSON(steps.prepare-file-lists.outputs.kustomization_files) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -46,6 +46,14 @@ jobs:
         files_yaml: |
           actions:
           - .github/workflows/**
+          kubernetes:
+          - 'apps/**/*.yaml'
+          - 'ci/**/*.yaml'
+          - 'components/**/*.yaml'
+          - 'infrastructure/**/*.yaml'
+          markdown:
+          - '**.md'
+          - '!**/CHANGELOG.md'
           renovate:
           - .github/renovate.json
           - .github/renovate/**
@@ -53,14 +61,6 @@ jobs:
           - '**.sh'
           yaml:
           - '**.yaml'
-          markdown:
-          - '**.md'
-          - '!**/CHANGELOG.md'
-          kubernetes:
-          - 'apps/**/*.yaml'
-          - 'ci/**/*.yaml'
-          - 'components/**/*.yaml'
-          - 'infrastructure/**/*.yaml'
 
     - name: Prepare Kubernetes kustomization lists
       id: prepare-file-lists
@@ -79,9 +79,9 @@ jobs:
     uses: ppat/github-workflows/.github/workflows/lint-commit-messages.yaml@main
     with:
       git_ref: ${{ github.head_ref }}
-      fetch_depth: ${{ github.event.pull_request.commits }}
-      from: ${{ github.event.pull_request.head.sha }}~${{ github.event.pull_request.commits }}
-      to: ${{ github.event.pull_request.head.sha }}
+      fetch_depth: ${{ github.event.pull_request.commits || 0 }}
+      from: ${{ github.event.pull_request.head.sha || 'HEAD' }}~${{ github.event.pull_request.commits || '1' }}
+      to: ${{ github.event.pull_request.head.sha || 'HEAD' }}
 
   github-actions:
     needs: [detect-changes]
@@ -100,10 +100,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       with:
-        fetch-depth: 0
+        fetch-depth: 1
 
     - name: Validate Kubernetes Manifests
-      uses: ppat/validate-kubernetes-manifests@0bf01f8e34928848701d001af9af30fba31fcffc # v0.0.1
+      uses: ppat/validate-kubernetes-manifests@v0.0.2
       with:
         files: ${{ fromJSON(needs.detect-changes.outputs.kustomization_files) }}
         pkg-include: '["apps/*","infrastructure/*"]'
