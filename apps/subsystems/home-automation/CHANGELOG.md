@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.26](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.0.25...apps-home-automation-v0.0.26) (2025-06-29)
+
+
+### 🛠 Improvements
+
+* address markdown linting errors ([#1567](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1567)) ([38ffe5c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/38ffe5c23a66c2181b75a57b8eac409adf80d521))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-home-automation:** update emqx/nanomq (0.23.9 -&gt; 0.23.10) ([#1561](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1561)) ([2516e0b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2516e0bd7440cecdb3af58ae1f04f2c3bde1ac9b))
+
 ## [0.0.25](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.0.24...apps-home-automation-v0.0.25) (2025-06-26)
 
 
