@@ -62,6 +62,7 @@ flowchart TB
     openwebui --> openwebui_pvc
 ```
 
+<!-- markdownlint-disable-next-line MD036 -->
 <sup>*Line styles: Solid (→) = Direct interaction, Dotted (-.→) = Optional connection*</sup>
 
 ### Component Details

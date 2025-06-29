@@ -126,6 +126,7 @@ flowchart TB
     class monitoring legend
 ```
 
+<!-- markdownlint-disable-next-line MD036 -->
 <sup>*Line styles: Solid (→) = Direct interaction/data flow, Dotted with arrow (-.→) = Metrics collection*</sup>
 
 ### Component Details

@@ -105,6 +105,7 @@ flowchart TB
     class external legend
 ```
 
+<!-- markdownlint-disable-next-line MD036 -->
 <sup>*Line styles: Solid (→) = MQTT messaging, Dotted with dots (-.-) = Storage access, Dotted with arrow (-.→) = Database connections*</sup>
 
 ### Component Details

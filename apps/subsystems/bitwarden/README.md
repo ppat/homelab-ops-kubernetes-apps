@@ -162,6 +162,7 @@ q
     class legend legend
 ```
 
+<!-- markdownlint-disable-next-line MD036 -->
 <sup>*Note: While component relationships are based on official documentation, some communication flows between services are inferred and may need verification*</sup>
 
 ### Component Details
