@@ -32,6 +32,11 @@ spec:
       retries: 3
       strategy: rollback
   values:
+    resources:
+      requests:
+        cpu: 16m
+        memory: 32Mi
+
     ui:
       enabled: true
       ingress:
@@ -46,6 +51,10 @@ spec:
           - path: /
             pathType: Prefix
         tls: []
+      resources:
+        requests:
+          cpu: 16m
+          memory: 16Mi
 
     plugin:
       kyverno:
@@ -57,6 +66,10 @@ spec:
           results:
             maxPerReport: 200
             keepOnlyLatest: true
+        resources:
+          requests:
+            cpu: 16m
+            memory: 16Mi
 
     metrics:
       enabled: true
