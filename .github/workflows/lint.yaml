@@ -22,7 +22,6 @@ jobs:
       actions_all_changed_files: ${{ steps.changed-files-yaml.outputs.actions_all_changed_files}}
       kubernetes_any_changed: ${{ steps.changed-files-yaml.outputs.kubernetes_any_changed }}
       kubernetes_all_changed_files: ${{ steps.changed-files-yaml.outputs.kubernetes_all_changed_files}}
-      kustomization_files: ${{ toJSON(steps.prepare-file-lists.outputs.kustomization_files) }}
       markdown_any_changed: ${{ steps.changed-files-yaml.outputs.markdown_any_changed }}
       markdown_all_changed_files: ${{ steps.changed-files-yaml.outputs.markdown_all_changed_files}}
       renovate_any_changed: ${{ steps.changed-files-yaml.outputs.renovate_any_changed }}
@@ -62,18 +61,6 @@ jobs:
           yaml:
           - '**.yaml'
 
-    - name: Prepare Kubernetes kustomization lists
-      id: prepare-file-lists
-      shell: bash
-      # yamllint disable-line rule:indentation
-      run: |
-        mapfile -t ks_files < <(find . -type f -name kustomization.yaml -not -path './.archive/*')
-
-        # Convert arrays to JSON using printf and jq
-        printf '%s\n' "${ks_files[@]}" | jq -R . | jq -s -c . > /tmp/ks.json
-
-        echo "kustomization_files=$(cat /tmp/ks.json)" >> $GITHUB_OUTPUT
-
   commit-messages:
     if: ${{ github.event_name == 'pull_request' }}
     uses: ppat/github-workflows/.github/workflows/lint-commit-messages.yaml@main
@@ -85,15 +72,15 @@ jobs:
 
   github-actions:
     needs: [detect-changes]
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.actions_any_changed == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || needs.detect-changes.outputs.actions_any_changed == 'true' }}
     uses: ppat/github-workflows/.github/workflows/lint-github-actions.yaml@main
     with:
       git_ref: ${{ github.head_ref || github.ref }}
-      files: ${{ github.event_name == 'workflow_dispatch' && 'ALL' || needs.detect-changes.outputs.actions_all_changed_files }}
+      files: ${{ github.event_name != 'pull_request' && 'ALL' || needs.detect-changes.outputs.actions_all_changed_files }}
 
   kubernetes-manifests:
     needs: [detect-changes]
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.kubernetes_any_changed == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || needs.detect-changes.outputs.kubernetes_any_changed == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -102,10 +89,24 @@ jobs:
       with:
         fetch-depth: 1
 
+    - name: Format file list for validation
+      id: format-files
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        changed_files="${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.kubernetes_all_changed_files || '' }}"
+        if [[ -n "$changed_files" ]]; then
+          # Convert space-delimited string to a JSON array string
+          echo "$changed_files" | jq -R . | jq -s -c . > /tmp/files.json
+          echo "files_json=$(cat /tmp/files.json)" >> $GITHUB_OUTPUT
+        else
+          echo "files_json=[]" >> $GITHUB_OUTPUT
+        fi
+
     - name: Validate Kubernetes Manifests
-      uses: ppat/validate-kubernetes-manifests@94be4aae001773d995b604b978b13241ffe0760a # v0.0.2
+      uses: ppat/validate-kubernetes-manifests@v0.1.0
       with:
-        files: ${{ fromJSON(needs.detect-changes.outputs.kustomization_files) }}
+        files: ${{ steps.format-files.outputs.files_json }}
         pkg-include: '["apps/*","infrastructure/*"]'
         pkg-exclude: '["components/*",".archive/*"]'
         kubeconform-flags: '-skip=Secret,IPAddressPool'
@@ -115,11 +116,11 @@ jobs:
 
   markdown:
     needs: [detect-changes]
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.markdown_any_changed == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || needs.detect-changes.outputs.markdown_any_changed == 'true' }}
     uses: ppat/github-workflows/.github/workflows/lint-markdown.yaml@main
     with:
       git_ref: ${{ github.head_ref || github.ref }}
-      files: ${{ github.event_name == 'workflow_dispatch' && 'ALL' || needs.detect-changes.outputs.markdown_all_changed_files }}
+      files: ${{ github.event_name != 'pull_request' && 'ALL' || needs.detect-changes.outputs.markdown_all_changed_files }}
 
   pre-commit:
     uses: ppat/github-workflows/.github/workflows/lint-pre-commit.yaml@main
@@ -128,24 +129,24 @@ jobs:
 
   renovate-config-check:
     needs: [detect-changes]
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.renovate_any_changed == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || needs.detect-changes.outputs.renovate_any_changed == 'true' }}
     uses: ppat/github-workflows/.github/workflows/lint-renovate-config-check.yaml@main
     with:
       git_ref: ${{ github.head_ref || github.ref }}
-      files: ${{ github.event_name == 'workflow_dispatch' && 'ALL' || needs.detect-changes.outputs.renovate_all_changed_files }}
+      files: ${{ github.event_name != 'pull_request' && 'ALL' || needs.detect-changes.outputs.renovate_all_changed_files }}
 
   shellcheck:
     needs: [detect-changes]
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.shellscripts_any_changed == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || needs.detect-changes.outputs.shellscripts_any_changed == 'true' }}
     uses: ppat/github-workflows/.github/workflows/lint-shellcheck.yaml@main
     with:
       git_ref: ${{ github.head_ref || github.ref }}
-      files: ${{ github.event_name == 'workflow_dispatch' && 'ALL' || needs.detect-changes.outputs.shellscripts_all_changed_files }}
+      files: ${{ github.event_name != 'pull_request' && 'ALL' || needs.detect-changes.outputs.shellscripts_all_changed_files }}
 
   yaml:
     needs: [detect-changes]
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.yaml_any_changed == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || needs.detect-changes.outputs.yaml_any_changed == 'true' }}
     uses: ppat/github-workflows/.github/workflows/lint-yaml.yaml@main
     with:
       git_ref: ${{ github.head_ref || github.ref }}
-      files: ${{ github.event_name == 'workflow_dispatch' && 'ALL' || needs.detect-changes.outputs.yaml_all_changed_files }}
+      files: ${{ github.event_name != 'pull_request' && 'ALL' || needs.detect-changes.outputs.yaml_all_changed_files }}
