@@ -70,6 +70,8 @@ spec:
             gpu.intel.com/i915: 1
             cpu: 64m
             memory: 512Mi
+          limits:
+            gpu.intel.com/i915: 1
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

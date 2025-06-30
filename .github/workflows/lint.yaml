@@ -97,7 +97,7 @@ jobs:
         changed_files="${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.kubernetes_all_changed_files || '' }}"
         if [[ -n "$changed_files" ]]; then
           # Convert space-delimited string to a JSON array string
-          echo "$changed_files" | jq -R . | jq -s -c . > /tmp/files.json
+          echo "$changed_files" | tr ' ' '\n' | jq -R . | jq -s -c . > /tmp/files.json
           echo "files_json=$(cat /tmp/files.json)" >> $GITHUB_OUTPUT
         else
           echo "files_json=[]" >> $GITHUB_OUTPUT
