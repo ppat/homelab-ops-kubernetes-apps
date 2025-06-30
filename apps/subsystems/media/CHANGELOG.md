@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.21](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.20...apps-media-v0.0.21) (2025-06-30)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** gpu is non-overcommittable resource, so media apps needing one must set limits in addition to requests ([#1576](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1576)) ([091694b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/091694b45f60ea97e443051350a1b91633aef926))
+
 ## [0.0.20](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.19...apps-media-v0.0.20) (2025-06-26)
 
 
