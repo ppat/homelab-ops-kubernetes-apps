@@ -4,7 +4,7 @@
   "apps/subsystems/bitwarden": "0.0.10",
   "apps/subsystems/coder": "0.0.20",
   "apps/subsystems/downloaders": "0.1.28",
-  "apps/subsystems/harbor": "0.0.7",
+  "apps/subsystems/harbor": "0.0.8",
   "apps/subsystems/home-automation": "0.0.26",
   "apps/subsystems/media": "0.0.21",
   "apps/subsystems/misc": "0.0.3",
