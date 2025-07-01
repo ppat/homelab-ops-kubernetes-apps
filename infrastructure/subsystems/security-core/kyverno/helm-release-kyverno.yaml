@@ -32,6 +32,11 @@ spec:
     # High Availability configuration for admission controller
     admissionController:
       replicas: 3
+      container:
+        resources:
+          requests:
+            cpu: 32m
+            memory: 64Mi
       podDisruptionBudget:
         enabled: true
         minAvailable: 2
@@ -44,24 +49,35 @@ spec:
       podDisruptionBudget:
         enabled: true
         minAvailable: 1
+      resources:
+        requests:
+          cpu: 16m
+          memory: 32Mi
       serviceMonitor:
         enabled: true
 
     # Cleanup controller configuration
     cleanupController:
-      replicas: 2
+      replicas: 1
       podDisruptionBudget:
         enabled: true
         minAvailable: 1
+      resources:
+        requests:
+          cpu: 16m
+          memory: 32Mi
       serviceMonitor:
         enabled: true
 
     # Reports controller configuration
     reportsController:
-      replicas: 2
+      replicas: 1
       podDisruptionBudget:
         enabled: true
         minAvailable: 1
+      requests:
+        cpu: 16m
+        memory: 32Mi
       serviceMonitor:
         enabled: true
 
@@ -70,6 +86,19 @@ spec:
       enabled: true
       autoDeleteWebhooks:
         enabled: true
+      requests:
+        cpu: 10m
+        memory: 32Mi
+
+    config:
+      # config.resourceFilters contains resource types to be skipped by the Kyverno policy engine.
+      # resourceFiltersExclude is used to drop items from that list
+      resourceFiltersExclude:
+      - '[ReplicaSet,*,*]'
+      - '[ReplicaSet/*,*,*]'
+      - '[ReplicaSet/?*,*,*]'
+      # resourceFiltersInclude is used to add items to that list
+      resourceFiltersInclude: []
 
     # Enable Grafana dashboard
     grafana:
