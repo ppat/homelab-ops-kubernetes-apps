@@ -1,0 +1,27 @@
+---
+# for enabling cleanup-controller to clean up pods + replicasets
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    rbac.kyverno.io/aggregate-to-cleanup-controller: "true"
+  name: kyverno:cleanup-controller:additional
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - watch
+  - list
+  - delete
+- apiGroups:
+  - apps
+  resources:
+  - replicasets
+  verbs:
+  - get
+  - watch
+  - list
+  - delete

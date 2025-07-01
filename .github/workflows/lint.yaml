@@ -104,7 +104,7 @@ jobs:
         fi
 
     - name: Validate Kubernetes Manifests
-      uses: ppat/validate-kubernetes-manifests@v0.1.0
+      uses: ppat/validate-kubernetes-manifests@v0.1.1
       with:
         files: ${{ steps.format-files.outputs.files_json }}
         pkg-include: '["apps/*","infrastructure/*"]'
