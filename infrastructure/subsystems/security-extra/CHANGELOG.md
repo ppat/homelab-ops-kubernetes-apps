@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.6...infra-security-extra-v0.1.7) (2025-06-30)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* default all external secrets to refresh every 24h (instead of 1h) ([#1578](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1578)) ([4ec69db](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4ec69dbd9f0825da6b7b7d05e39d0f46ffb90bd0))
+
 ## [0.1.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.5...infra-security-extra-v0.1.6) (2025-06-29)
 
 

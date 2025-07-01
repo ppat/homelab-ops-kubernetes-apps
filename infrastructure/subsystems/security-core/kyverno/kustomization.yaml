@@ -5,3 +5,4 @@ kind: Kustomization
 resources:
 - helm-release-kyverno.yaml
 - helm-release-policy-reporter.yaml
+- rbac.yaml
