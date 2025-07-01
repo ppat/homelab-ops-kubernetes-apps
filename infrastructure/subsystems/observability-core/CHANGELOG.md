@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.9.0...infra-observability-core-v0.9.1) (2025-06-30)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* default all external secrets to refresh every 24h (instead of 1h) ([#1578](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1578)) ([4ec69db](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4ec69dbd9f0825da6b7b7d05e39d0f46ffb90bd0))
+
 ## [0.9.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.8.5...infra-observability-core-v0.9.0) (2025-06-24)
 
 
