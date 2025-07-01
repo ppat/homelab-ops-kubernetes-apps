@@ -47,8 +47,7 @@ spec:
     backgroundController:
       replicas: 2
       podDisruptionBudget:
-        enabled: true
-        minAvailable: 1
+        enabled: false
       resources:
         requests:
           cpu: 16m
@@ -60,8 +59,7 @@ spec:
     cleanupController:
       replicas: 1
       podDisruptionBudget:
-        enabled: true
-        minAvailable: 1
+        enabled: false
       resources:
         requests:
           cpu: 16m
@@ -73,11 +71,11 @@ spec:
     reportsController:
       replicas: 1
       podDisruptionBudget:
-        enabled: true
-        minAvailable: 1
-      requests:
-        cpu: 16m
-        memory: 32Mi
+        enabled: false
+      resources:
+        requests:
+          cpu: 16m
+          memory: 32Mi
       serviceMonitor:
         enabled: true
 
@@ -86,9 +84,10 @@ spec:
       enabled: true
       autoDeleteWebhooks:
         enabled: true
-      requests:
-        cpu: 10m
-        memory: 32Mi
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
 
     config:
       # config.resourceFilters contains resource types to be skipped by the Kyverno policy engine.
