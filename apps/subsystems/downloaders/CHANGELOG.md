@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.29](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.28...apps-downloaders-v0.1.29) (2025-06-30)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* default all external secrets to refresh every 24h (instead of 1h) ([#1578](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1578)) ([4ec69db](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4ec69dbd9f0825da6b7b7d05e39d0f46ffb90bd0))
+
 ## [0.1.28](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.27...apps-downloaders-v0.1.28) (2025-06-27)
 
 
