@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-bitwarden-v0.0.10...apps-bitwarden-v0.0.11) (2025-06-30)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* default all external secrets to refresh every 24h (instead of 1h) ([#1578](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1578)) ([4ec69db](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4ec69dbd9f0825da6b7b7d05e39d0f46ffb90bd0))
+
 ## [0.0.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-bitwarden-v0.0.9...apps-bitwarden-v0.0.10) (2025-06-29)
 
 
