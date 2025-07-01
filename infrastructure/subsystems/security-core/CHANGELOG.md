@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.27](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.0.26...infra-security-core-v0.0.27) (2025-07-01)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-core:** fix typos in kyverno helm values ([#1592](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1592)) ([c2d66cd](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c2d66cd3648c160ed579ccba3e043b47de01507f))
+
 ## [0.0.26](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.0.25...infra-security-core-v0.0.26) (2025-06-30)
 
 
