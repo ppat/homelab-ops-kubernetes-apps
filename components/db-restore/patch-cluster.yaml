@@ -1,16 +1,22 @@
 ---
-apiVersion: postgresql.cnpg.io/v1
-kind: Cluster
-metadata:
-  name: irrelevant
-spec:
-  backup:
+- op: add
+  path: /spec/bootstrap/recovery
+  value:
+    database: ${db_restore_database}
+    owner: ${db_restore_owner}
+    source: origin
+- op: remove
+  path: /spec/bootstrap/initdb
+- op: add
+  path: /spec/externalClusters
+  value:
+  - name: origin
     barmanObjectStore:
       data:
         compression: snappy
       destinationPath: s3://nas-cloudnativepg-backups/${db_name}/
       endpointURL: https://s3.nas.${dns_zone}
-      serverName: ${db_server_name_backup}
+      serverName: ${db_server_name_restore}
       s3Credentials:
         accessKeyId:
           name: ${db_name}-backup-credentials
@@ -21,4 +27,3 @@ spec:
       wal:
         compression: snappy
         maxParallel: 8
-    retentionPolicy: "30d"
