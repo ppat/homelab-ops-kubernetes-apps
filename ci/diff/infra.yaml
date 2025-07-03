@@ -14,7 +14,7 @@ spec:
   prune: true
   sourceRef:
     kind: GitRepository
-    name: flux-diff
+    name: test-source
     namespace: flux-system
   wait: true
   patches:
