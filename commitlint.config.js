@@ -50,6 +50,7 @@ module.exports = {
         'apps-misc',
         'component-cert-issuer',
         'component-db-backups',
+        'component-db-restore',
         'component-external-dns-provider',
         'component-oidc-credentials',
         'component-sso',
