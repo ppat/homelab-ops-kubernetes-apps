@@ -9,6 +9,10 @@ resources:
 - service.yaml
 - service-monitor.yaml
 
+commonAnnotations:
+  # as this is a critical infrastructure component, prevent pruning unintentionally
+  kustomize.toolkit.fluxcd.io/prune: disabled
+
 configMapGenerator:
 - name: maddy-config
   namespace: maddy

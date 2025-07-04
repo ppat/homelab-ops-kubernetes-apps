@@ -6,5 +6,9 @@ resources:
 - namespace.yaml
 - helm-release.yaml
 
+commonAnnotations:
+  # as this is a critical infrastructure component, prevent pruning unintentionally
+  kustomize.toolkit.fluxcd.io/prune: disabled
+
 sortOptions:
   order: fifo

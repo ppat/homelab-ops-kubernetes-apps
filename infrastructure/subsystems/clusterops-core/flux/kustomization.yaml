@@ -6,6 +6,10 @@ resources:
 - gotk-components.yaml
 - podmonitor-flux.yaml
 
+commonAnnotations:
+  # as this is a critical infrastructure component, prevent pruning unintentionally
+  kustomize.toolkit.fluxcd.io/prune: disabled
+
 patches:
 - path: patches/deployment-tolerations.yaml
   target:

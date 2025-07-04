@@ -10,6 +10,10 @@ resources:
 - service.yaml
 - ipaddresspool.yaml
 
+commonAnnotations:
+  # as this is a critical infrastructure component, prevent pruning unintentionally
+  kustomize.toolkit.fluxcd.io/prune: disabled
+
 configMapGenerator:
 - name: freeradius-scripts
   namespace: freeradius
