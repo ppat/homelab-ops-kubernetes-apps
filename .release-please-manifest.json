@@ -12,7 +12,7 @@
   "infrastructure/helm-repositories": "0.1.1",
   "infrastructure/subsystems/clusterops-core": "0.0.11",
   "infrastructure/subsystems/clusterops-extra": "0.2.4",
-  "infrastructure/subsystems/database-core": "0.0.6",
+  "infrastructure/subsystems/database-core": "0.0.7",
   "infrastructure/subsystems/kubernetes-core": "0.0.6",
   "infrastructure/subsystems/kubernetes-extra": "0.0.16",
   "infrastructure/subsystems/networking-core": "0.6.7",
