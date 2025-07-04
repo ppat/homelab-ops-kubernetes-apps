@@ -6,6 +6,10 @@ resources:
 - deployment.yaml
 - service.yaml
 
+commonAnnotations:
+  # as this is a critical infrastructure component, prevent pruning unintentionally
+  kustomize.toolkit.fluxcd.io/prune: disabled
+
 configMapGenerator:
 - name: unbound-config
   namespace: dns
@@ -14,6 +18,3 @@ configMapGenerator:
   options:
     annotations:
       kustomize.toolkit.fluxcd.io/substitute: disabled
-
-sortOptions:
-  order: fifo

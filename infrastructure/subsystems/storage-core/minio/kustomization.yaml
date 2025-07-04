@@ -8,5 +8,6 @@ resources:
 - probe-minio-resource.yaml
 - secrets.yaml
 
-sortOptions:
-  order: fifo
+commonAnnotations:
+  # as this is a critical infrastructure component, prevent pruning unintentionally
+  kustomize.toolkit.fluxcd.io/prune: disabled
