@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.6.6...infra-networking-core-v0.6.7) (2025-07-04)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* add defensive measure to prevent unintentional pruning of critical infrastructure components ([#1624](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1624)) ([f0f4901](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f0f4901cbab8f0f98876f5c881a823b96736d4b4))
+
 ## [0.6.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.6.5...infra-networking-core-v0.6.6) (2025-06-25)
 
 
