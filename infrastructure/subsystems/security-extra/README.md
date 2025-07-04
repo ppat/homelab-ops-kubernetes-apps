@@ -1,12 +1,10 @@
 # Security Extra
 
-This module provides advanced identity and access management through Authentik and policy enforcement through Kyverno, enabling centralized authentication, authorization, user management, and Kubernetes security policies.
+This module provides advanced identity and access management through Authentik enabling centralized authentication, authorization and user management.
 
 ## Quick Links
 
 <a href="https://goauthentik.io/" target="_blank"><img src="../../../.static/images/logos/authentik.svg" width="32" height="32" alt="Authentik"></a>
-<a href="https://kyverno.io/" target="_blank"><img src="../../../.static/images/logos/kyverno.png" width="32" height="32" alt="Kyverno"></a>
-<a href="https://kyverno.github.io/policy-reporter/" target="_blank"><img src="../../../.static/images/logos/kyverno.png" width="32" height="32" alt="Policy Reporter"></a>
 
 ## Overview
 
@@ -33,13 +31,6 @@ The security-extra module provides four main capabilities:
    - Redis metrics collection
    - Prometheus rules
    - Health checks
-
-4. Policy Management
-   - Kubernetes policy enforcement
-   - Policy validation and mutation
-   - Policy reporting and visualization
-   - Grafana dashboards for policy metrics
-   - Web UI for policy reports
 
 ### Component Architecture
 
@@ -151,8 +142,6 @@ flowchart TB
 | Redis | Session management | • Caches authentication data<br>• Manages user sessions<br>• Persistent storage<br>• Metrics collection |
 | Embedded Outpost | Forward authentication | • Handles Traefik auth<br>• Provides identity headers<br>• Supports wildcard domains<br>• Real-time config updates |
 | External Outpost | Remote authentication | • Optional deployment<br>• Supports airgapped setups<br>• Uses service account<br>• Websocket health checks |
-| Kyverno | Policy enforcement | • Validates resources against policies<br>• Mutates resources to enforce standards<br>• Generates policy reports<br>• Integrates with Prometheus for metrics<br>• Supports high availability (3 replicas) |
-| Policy Reporter | Policy visualization | • Collects policy reports<br>• Provides web UI for policy violations<br>• Integrates with Grafana<br>• Processes Kyverno events<br>• Exposes metrics for monitoring |
 
 ## Prerequisites
 
