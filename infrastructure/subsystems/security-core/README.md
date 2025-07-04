@@ -1,10 +1,12 @@
 # Security Core
 
-Provides foundational security services that enable cluster services to obtain certificates and access secrets from external secret stores.
+Provides foundational security services that enable cluster services to obtain certificates and sync secrets from external secret stores. Additionally enables policy auditing and/or enforcement through Kyverno.
 
 ## Quick Links
 
 <a href="https://cert-manager.io/" target="_blank"><img src="../../../.static/images/logos/cert-manager.svg" width="32" height="32" alt="cert-manager"></a> <a href="https://external-secrets.io/" target="_blank"><img src="../../../.static/images/logos/external-secrets.svg" width="32" height="32" alt="external-secrets"></a> <a href="https://cert-manager.io/docs/trust/trust-manager/" target="_blank"><img src="../../../.static/images/logos/cert-manager.svg" width="32" height="32" alt="trust-manager"></a> <a href="https://bitwarden.com/" target="_blank"><img src="../../../.static/images/logos/bitwarden.svg" width="32" height="32" alt="Bitwarden SDK Server"></a>
+<a href="https://kyverno.io/" target="_blank"><img src="../../../.static/images/logos/kyverno.png" width="32" height="32" alt="Kyverno"></a>
+<a href="https://kyverno.github.io/policy-reporter/" target="_blank"><img src="../../../.static/images/logos/kyverno.png" width="32" height="32" alt="Policy Reporter"></a>
 
 ## Overview
 
@@ -22,6 +24,13 @@ The security-core module provides three main capabilities:
    - Uses certificate bundles to define distribution rules
    - Automates certificate copying based on bundle definitions
 
+4. Policy Management
+   - Kubernetes policy enforcement
+   - Policy validation and mutation
+   - Policy reporting and visualization
+   - Grafana dashboards for policy metrics
+   - Web UI for policy reports
+
 ### Component Details
 
 | Component | Primary Role | Integration Points |
@@ -30,6 +39,8 @@ The security-core module provides three main capabilities:
 | external-secrets | Secret management and synchronization | • Integrates with external secret management services<br>• Synchronizes external secrets into Kubernetes secrets<br>• Supports multiple secret store configurations |
 | trust-manager | Certificate trust distribution | • Enables defining certificate distribution rules via bundles<br>• Copies certificates between namespaces based on bundle rules<br> |
 | Bitwarden SDK Server | Bitwarden integration service | • Enables using Bitwarden Secrets Manager as a secret provider<br>• Provides secure access to Bitwarden secrets via external-secrets<br>• Utilized only when using Bitwarden as a secret store |
+| Kyverno | Policy enforcement | • Validates resources against policies<br>• Mutates resources to enforce standards<br>• Generates policy reports<br>• Integrates with Prometheus for metrics<br>• Supports high availability (3 replicas) |
+| Policy Reporter | Policy visualization | • Collects policy reports<br>• Provides web UI for policy violations<br>• Integrates with Grafana<br>• Processes Kyverno events<br>• Exposes metrics for monitoring |
 
 ## Prerequisites
 
