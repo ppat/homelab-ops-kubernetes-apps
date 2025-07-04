@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.8...infra-security-extra-v0.1.9) (2025-07-04)
+
+
+### 🛠 Improvements
+
+* **infra-security-core:** move kyverno references from security-extra to security-core ([#1637](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1637)) ([4d94c4d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4d94c4ded3bdc2846311f2dcd144d80096e029e3))
+
 ## [0.1.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.7...infra-security-extra-v0.1.8) (2025-07-04)
 
 
