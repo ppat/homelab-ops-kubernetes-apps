@@ -38,19 +38,38 @@ spec:
         operator: Exists
 
     defaultSettings:
+      # General (see: https://longhorn.io/docs/latest/references/settings/#general)
       allowCollectingLonghornUsageMetrics: false
-      allowRecurringJobWhileVolumeDetached: true
+      concurrentAutomaticEngineUpgradePerNodeLimit: 1
+      concurrentVolumeBackupRestorePerNodeLimit: 2
+      defaultDataLocality: best-effort
+      defaultReplicaCount: 2
       fastReplicaRebuildEnabled: true
-      recurringSuccessfulJobsHistoryLimit: 10
-      recurringFailedJobsHistoryLimit: 10
-      removeSnapshotsDuringFilesystemTrim: true
-      replicaAutoBalance: least-effort
+      nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
+      offlineRelicaRebuilding: true
+      upgradeChecker: false
+      # Snapshot (see: https://longhorn.io/docs/latest/references/settings/#snapshot)
       snapshotDataIntegrity: fast-check
       snapshotDataIntegrityCronjob: "0 6 * * *"
       snapshotDataIntegrityImmediateCheckAfterSnapshotCreation: false
+      snapshotMaxCount: 24
+      # Orphan (see: https://longhorn.io/docs/latest/references/settings/#orphan)
+      orphanResourceAutoDeletion: replica-data;instance
+      orphanResourceAutoDeletionGracePeriod: 259200 # 72 hours in seconds
+      # Backups (see: https://longhorn.io/docs/latest/references/settings/#backups)
+      allowRecurringJobWhileVolumeDetached: true
+      recurringFailedJobsHistoryLimit: 7
+      recurringSuccessfulJobsHistoryLimit: 7
+      restoreVolumeRecurringJobs: true
+      restoreConcurrentLimit: 4
+      # Scheduling (see: https://longhorn.io/docs/latest/references/settings/#scheduling)
+      replicaAutoBalance: least-effort
       storageMinimalAvailablePercentage: 15
       storageOverProvisioningPercentage: 100
       storageReservedPercentageForDefaultDisk: 10
+      # Danger Zone (see: https://longhorn.io/docs/latest/references/settings/#danger-zone)
+      autoCleanupSnapshotAfterOnDemandBackupCompleted: true
+      removeSnapshotsDuringFilesystemTrim: true
       taintToleration: node-role.kubernetes.io/control-plane=true:NoSchedule
 
     metrics:
