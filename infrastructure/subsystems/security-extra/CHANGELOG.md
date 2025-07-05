@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.9...infra-security-extra-v0.1.10) (2025-07-05)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **component-db-restore:** fix typo in db-restore kustomize component ([#1641](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1641)) ([ba83bac](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ba83bac5890cb76aee28a9c2554997c0eb529f90))
+
 ## [0.1.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.8...infra-security-extra-v0.1.9) (2025-07-04)
 
 
