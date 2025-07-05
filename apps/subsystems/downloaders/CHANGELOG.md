@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.30](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.29...apps-downloaders-v0.1.30) (2025-07-05)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-downloaders:** update digest ghcr.io/linuxserver/bazarr (b515d79 -&gt; 7fa7791) ([#1596](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1596)) ([c825d56](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c825d5696ebcadcb944edd24876565c5663a1875))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sabnzbd (f9c06e2 -&gt; 8d45757) ([#1606](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1606)) ([53f3102](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/53f31027ddf63891841a706ba8d1274a0cbc51bb))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sonarr (1156329 -&gt; e3916c8) ([#1639](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1639)) ([ee8a9bd](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ee8a9bd1f4e92c02639558e76fefdb5837a2e9c9))
+* **component-db-restore:** fix typo in db-restore kustomize component ([#1641](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1641)) ([ba83bac](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ba83bac5890cb76aee28a9c2554997c0eb529f90))
+
 ## [0.1.29](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.28...apps-downloaders-v0.1.29) (2025-06-30)
 
 

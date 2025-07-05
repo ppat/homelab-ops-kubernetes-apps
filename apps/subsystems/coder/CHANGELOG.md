@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.22](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.21...apps-coder-v0.0.22) (2025-07-05)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **component-db-restore:** fix typo in db-restore kustomize component ([#1641](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1641)) ([ba83bac](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ba83bac5890cb76aee28a9c2554997c0eb529f90))
+
 ## [0.0.21](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.20...apps-coder-v0.0.21) (2025-07-04)
 
 
