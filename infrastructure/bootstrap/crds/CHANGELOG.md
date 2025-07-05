@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.4.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.4.0...infra-bootstrap-crds-v0.4.1) (2025-07-05)
+
+
+### ✨ Features
+
+* **infra-bootstrap-crds:** update cert-manager/cert-manager (v1.17.2 -&gt; v1.18.0) ([#1469](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1469)) ([de348ac](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/de348ac1aefcac642e0fab0aecc73cb6f7066b32))
+* **infra-bootstrap-crds:** update cloudnative-pg/cloudnative-pg (v1.25.0 -&gt; v1.26.0) ([#880](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/880)) ([05c212d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/05c212d4061c12a967af5dfb784953ffc2bdb846))
+* **infra-bootstrap-crds:** update external-secrets/external-secrets (v0.16.2 -&gt; v0.17.0) ([#1311](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1311)) ([fa9d0f7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fa9d0f7554d0b705cdf8d0b4b8f6404516e414b1))
+* **infra-bootstrap-crds:** update external-secrets/external-secrets (v0.17.0 -&gt; v0.18.0) ([#1522](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1522)) ([5748fb5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5748fb59492c3ddeb1fe1b35cb1d9e8b221c842b))
+* **infra-bootstrap-crds:** update longhorn/longhorn (v1.8.1 -&gt; v1.9.0) ([#1375](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1375)) ([e529580](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e52958090938c5121225289ce915005d8d713a14))
+* **infra-bootstrap-crds:** update metallb/metallb (v0.14.9 -&gt; v0.15.2) ([#1417](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1417)) ([eda0e24](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/eda0e246631f75e1d05689ed40951d8732324d91))
+* **infra-bootstrap-crds:** update prometheus-operator/prometheus-operator (v0.82.2 -&gt; v0.83.0) ([#1387](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1387)) ([582e77a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/582e77a7cdc8a7f62112a45b8fad7aeabc4ced19))
+* **infra-bootstrap-crds:** update traefik/traefik-helm-chart (v35.2.0 -&gt; v35.3.0) ([#1327](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1327)) ([b8f051e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b8f051eb9e6a1844a51f35e51d2a0284ab268ee0))
+* **infra-bootstrap-crds:** update traefik/traefik-helm-chart (v35.3.0 -&gt; v35.4.0) ([#1352](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1352)) ([818e457](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/818e4579152d9c64fe2a11fcdb810a9012bdf0ef))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-bootstrap-crds:** update cert-manager/cert-manager (v1.18.0 -&gt; v1.18.1) ([#1480](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1480)) ([872cf8c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/872cf8c44e195d0b6ee3d71b67a71fc61c9301bd))
+* **infra-bootstrap-crds:** update cert-manager/cert-manager (v1.18.1 -&gt; v1.18.2) ([#1615](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1615)) ([667115f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/667115f1a81d962969cb0be923f22842cd8a4199))
+* **infra-bootstrap-crds:** update external-secrets/external-secrets (v0.18.0 -&gt; v0.18.1) ([#1551](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1551)) ([62d4271](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/62d42715067d8941fca08d7e432eeeb32a5f0491))
+* **infra-bootstrap-crds:** update external-secrets/external-secrets (v0.18.1 -&gt; v0.18.2) ([#1616](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1616)) ([436a94d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/436a94d21eb80176836b3ffd6a86dd44b83986c4))
+
 ## [0.4.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.3.1...infra-bootstrap-crds-v0.4.0) (2025-05-20)
 
 
