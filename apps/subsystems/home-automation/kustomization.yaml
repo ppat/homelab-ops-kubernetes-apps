@@ -12,6 +12,7 @@ resources:
 - piper/
 - whisper/
 
+
 configMapGenerator:
 - name: home-automation-secrets-template
   namespace: home-automation

@@ -9,6 +9,7 @@ resources:
 - helm-release.yaml
 - middleware-forward-auth.yaml
 
+
 commonAnnotations:
   # as this is a critical infrastructure component, prevent pruning unintentionally
   kustomize.toolkit.fluxcd.io/prune: disabled

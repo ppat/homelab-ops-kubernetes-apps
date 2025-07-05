@@ -2,10 +2,6 @@
 apiVersion: kustomize.config.k8s.io/v1alpha1
 kind: Component
 
-resources:
-- externalsecret-backup-credentials.yaml
-- scheduledbackup.yaml
-
 patches:
 - path: patch-cluster.yaml
   target:
