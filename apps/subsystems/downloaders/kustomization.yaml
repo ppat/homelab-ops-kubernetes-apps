@@ -16,5 +16,6 @@ resources:
 - sabnzbd/
 - sonarr/
 
+
 sortOptions:
   order: fifo
