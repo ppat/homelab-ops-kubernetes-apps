@@ -43,8 +43,6 @@ spec:
     deschedulingInterval: 60m
     deschedulerPolicy:
       maxNoOfPodsToEvictPerNamespace: 1
-      metricsCollector:
-        enabled: true
       profiles:
       - name: Default
         pluginConfig:
@@ -77,7 +75,7 @@ spec:
               cpu: 60
               memory: 60
             metricsUtilization:
-              metricsServer: true
+              source: KubernetesMetrics
             evictableNamespaces:
               exclude:
               - kube-system
