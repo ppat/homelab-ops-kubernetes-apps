@@ -40,7 +40,7 @@ spec:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
 
-    deschedulingInterval: 15m
+    deschedulingInterval: 60m
     deschedulerPolicy:
       maxNoOfPodsToEvictPerNamespace: 1
       metricsCollector:
@@ -50,7 +50,7 @@ spec:
         pluginConfig:
         - name: DefaultEvictor
           args:
-            evictFailedBarePods: true
+            evictFailedBarePods: false
             evictLocalStoragePods: true
             nodeFit: true
         - name: RemovePodsViolatingInterPodAntiAffinity
@@ -83,6 +83,8 @@ spec:
               - kube-system
               - longhorn-system
               - logging
+              - dns
+              - coder
         plugins:
           balance:
             enabled:
