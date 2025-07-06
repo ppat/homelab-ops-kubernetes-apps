@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.0.18](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.17...infra-kubernetes-extra-v0.0.18) (2025-07-06)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-kubernetes-extra:** revert not yet ready for prime time descheduler policy changes ([#1664](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1664)) ([eb1fc68](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/eb1fc6865bee76694a6067108d47390b37f2f9e0))
+* **infra-kubernetes-extra:** update descheduler policy to reflect deprecation of metricsUtilization.metricsServer ([#1663](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1663)) ([c7910ad](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c7910adc2d276fcf502395734d69e965fe092cfa))
+* **infra-kubernetes-extra:** update descheduler policy w/ excludes for dns and coder namespaces ([#1661](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1661)) ([74802fa](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/74802fa4db985ff009d219b9fa3900494e2e12e0))
+
 ## [0.0.17](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.16...infra-kubernetes-extra-v0.0.17) (2025-07-04)
 
 
