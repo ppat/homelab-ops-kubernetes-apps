@@ -29,10 +29,10 @@ spec:
         - |
           # This script runs in a loop and clean up logs older than 1 day as log
           # ingestor is expected to have scraped them by then.
-          mkdir -p /var/log/plex;
+          mkdir -p /config/log;
           while true; do
-            echo "Running Plex log cleanup...";
-            find /var/log/plex -mtime +1 -type f -print -delete;
+            echo "Running Jellyfin log cleanup...";
+            find /config/log -mtime +1 -type f -print -delete;
             echo;
             echo "Sleeping for 4 hrs...";
             sleep 14400;
