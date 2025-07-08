@@ -14,7 +14,7 @@ spec:
         value: media
       file: ../chainsaw/assertions/deployment-ready.yaml
   - podLogs:
-      name: plex
+      selector: app.kubernetes.io/name=plex
       namespace: media
   catch:
   - describe:
@@ -23,7 +23,7 @@ spec:
       name: plex
       namespace: media
   - podLogs:
-      name: plex
+      selector: app.kubernetes.io/name=plex
       namespace: media
   - events:
       namespace: media
