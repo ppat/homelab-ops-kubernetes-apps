@@ -133,7 +133,7 @@ spec:
           claimName: plex-data
       - name: plex-transcode
         emptyDir:
-          sizeLimit: ${plex-transcode-storage-size:=10Gi}
+          sizeLimit: ${plex_transcode_size:=10Gi}
       - name: plex-media
         persistentVolumeClaim:
           claimName: media-read-only
