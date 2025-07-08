@@ -20,27 +20,34 @@ spec:
     spec:
       automountServiceAccountToken: false
       initContainers:
-      - name: volume-permissions
+      - name: log-janitor
         image: busybox@sha256:f85340bf132ae937d2c2a763b8335c9bab35d6e8293f70f606b9c6178d84f42b
         command:
         - "/bin/sh"
         - "-c"
-        - "chown 1000:1000 /config && chown 1000:1000 /cache && chown 1000:1000 /config/log"
+        # yamllint disable-line rule:indentation
+        - |
+          # This script runs in a loop and clean up logs older than 1 day as log
+          # ingestor is expected to have scraped them by then.
+          mkdir -p /config/log;
+          while true; do
+            echo "Running Jellyfin log cleanup...";
+            find /config/log -mtime +1 -type f -print -delete;
+            echo;
+            echo "Sleeping for 4 hrs...";
+            sleep 14400;
+            echo;
+          done
+        restartPolicy: Always
         securityContext:
-          allowPrivilegeEscalation: true
+          allowPrivilegeEscalation: false
           capabilities:
-            add:
-            - CHOWN
             drop:
             - ALL
-          runAsNonRoot: false
-          runAsUser: 0
-          runAsGroup: 0
+          readOnlyRootFilesystem: true
         volumeMounts:
         - mountPath: /config
           name: jellyfin-data
-        - mountPath: /cache
-          name: jellyfin-cache
         - mountPath: "/config/log"
           name: jellyfin-logs
       containers:
@@ -115,8 +122,8 @@ spec:
         persistentVolumeClaim:
           claimName: media-read-only
       - name: jellyfin-logs
-        hostPath:
-          path: /var/log/jellyfin
-          type: DirectoryOrCreate
+        persistentVolumeClaim:
+          claimName: jellyfin-logs
       - name: jellyfin-temp
-        emptyDir: {}
+        emptyDir:
+          sizeLimit: 256Mi

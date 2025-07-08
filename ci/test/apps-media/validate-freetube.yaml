@@ -20,7 +20,7 @@ spec:
       name: freetube
       namespace: media
   - podLogs:
-      name: freetube
+      selector: app.kubernetes.io/name=freetube
       namespace: media
   - events:
       namespace: media
