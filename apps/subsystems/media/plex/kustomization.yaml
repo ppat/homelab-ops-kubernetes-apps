@@ -8,6 +8,14 @@ resources:
 - service.yaml
 - ingress.yaml
 
+configMapGenerator:
+- name: plex-scripts
+  namespace: media
+  files:
+  - scripts/entrypoint.sh
+  options:
+    annotations:
+      kustomize.toolkit.fluxcd.io/substitute: disabled
 
 sortOptions:
   order: fifo
