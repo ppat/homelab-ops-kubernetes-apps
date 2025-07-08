@@ -13,6 +13,9 @@ spec:
       - name: namespace
         value: media
       file: ../chainsaw/assertions/deployment-ready.yaml
+  - podLogs:
+      name: plex
+      namespace: media
   catch:
   - describe:
       apiVersion: apps/v1

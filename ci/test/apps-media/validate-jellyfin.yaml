@@ -13,10 +13,16 @@ spec:
       - name: namespace
         value: media
       file: ../chainsaw/assertions/deployment-ready.yaml
+  - podLogs:
+      name: jellyfin
+      namespace: media
   catch:
   - describe:
       apiVersion: apps/v1
       kind: Deployment
+      name: jellyfin
+      namespace: media
+  - podLogs:
       name: jellyfin
       namespace: media
   - events:

@@ -22,22 +22,29 @@ spec:
     spec:
       automountServiceAccountToken: false
       initContainers:
-      - name: volume-permissions
+      - name: log-janitor
         image: busybox@sha256:f85340bf132ae937d2c2a763b8335c9bab35d6e8293f70f606b9c6178d84f42b
         command:
         - "/bin/sh"
         - "-c"
-        - "chown 1000:1000 /var/log/plex"
+        # yamllint disable-line rule:indentation
+        - |
+          # This script runs in a loop and clean up logs older than 1 day as log
+          # ingestor is expected to have scraped them by then.
+          mkdir -p /var/log/plex
+          while true; do
+            echo "Running Plex log cleanup...";
+            find /var/log/plex -mtime +1 -type f -print -delete;
+            echo
+            sleep 21600; # 6 hours
+          done
+        restartPolicy: Always
         securityContext:
-          allowPrivilegeEscalation: true
+          allowPrivilegeEscalation: false
           capabilities:
-            add:
-            - CHOWN
             drop:
             - ALL
-          runAsNonRoot: false
-          runAsUser: 0
-          runAsGroup: 0
+          readOnlyRootFilesystem: true
         volumeMounts:
         - mountPath: "/var/log/plex"
           name: plex-logs
@@ -125,7 +132,8 @@ spec:
         persistentVolumeClaim:
           claimName: plex-data
       - name: plex-transcode
-        emptyDir: {}
+        emptyDir:
+          sizeLimit: ${plex-transcode-storage-size:=10Gi}
       - name: plex-media
         persistentVolumeClaim:
           claimName: media-read-only
@@ -135,14 +143,14 @@ spec:
         #     'Plex Crash Uploader.log'
         #     'Plex Media Server.log'
         #     'Plex Tuner Service.log'
-        # these are not written to stdout, so we are placing them on the host,
-        # so that we can configure promtail to collect them.
-        hostPath:
-          path: /var/log/plex
-          type: DirectoryOrCreate
+        # these are not written to stdout, so we are placing them on a separate pvc that
+        # can be scraped by the log ingestor
+        persistentVolumeClaim:
+          claimName: plex-logs
       - name: plex-scripts
         configMap:
           name: plex-scripts
           defaultMode: 0755
       - name: plex-temp
-        emptyDir: {}
+        emptyDir:
+          sizeLimit: 256Mi

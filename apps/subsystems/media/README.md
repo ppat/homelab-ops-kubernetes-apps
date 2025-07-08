@@ -52,7 +52,9 @@ The media subsystem consists of three main capability groups:
    |----------|---------|-------------|--------|
    | media-read-only | Media library | RWX | Shared between all services |
    | plex-data | Plex configuration | RWX | Plex server state |
+   | plex-logs | Plex logs | RWX | Plex logs |
    | jellyfin-data | Jellyfin configuration | RWX | Jellyfin server state |
+   | jellyfin-logs | Jellyfin logs | RWX | Jellyfin logs |
 
 3. Required Variables
 
