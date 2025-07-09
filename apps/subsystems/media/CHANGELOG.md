@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.22](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.21...apps-media-v0.0.22) (2025-07-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** eliminate use of host paths media apps by switching log storage to pvcs ([#1686](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1686)) ([4ae649b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4ae649b65155c973838202f20d3a0e03e564a3e7))
+
 ## [0.0.21](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.20...apps-media-v0.0.21) (2025-06-30)
 
 
