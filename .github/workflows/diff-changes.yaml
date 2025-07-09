@@ -8,7 +8,7 @@ on:
     paths:
     - '.github/workflows/diff-changes.yaml'
     - 'apps/**/*.yaml'
-    - 'ci/diff/**/*.yaml'
+    - 'ci/**/*.yaml'
     - 'infrastructure/**/*.yaml'
 
 concurrency:
@@ -31,24 +31,44 @@ jobs:
         - kustomization
 
     steps:
-    - name: Setup flux
-      uses: fluxcd/flux2/action@6bf37f6a560fd84982d67f853162e4b3c2235edb # v2.6.4
+    - name: Checkout after branch
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       with:
-        # renovate: datasource=github-releases depName=fluxcd/flux2
-        version: "v2.6.4"
+        path: after
+        persist-credentials: false
 
-    - name: Compute diffs
-      uses: allenporter/flux-local/action/diff@05de0c97eba82d7cdc4faa7279752e17e3c565cf # 7.0.0
-      id: diff
-      continue-on-error: true
+    - name: Checkout before branch
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       with:
-        live-branch: main
-        path: ci/diff
-        resource: ${{ matrix.resource }}
-        sources: test-source
-        skip-secrets: true
-        skip-crds: true
-        debug: false
+        path: before
+        persist-credentials: false
+        ref: "${{ github.event.repository.default_branch }}"
+
+    - name: Run flux-local diff
+      uses: docker://ghcr.io/allenporter/flux-local:v7.5.4@sha256:72dbdeabca1eb4d1a053c78dfa0d1d8e2a4c4aee2c8d3938db1a382d22b0a6f9
+      with:
+        args: >-
+          --log-level DEBUG
+          diff ${{ matrix.resource }}
+          --unified 6
+          --path /github/workspace/after/ci/test
+          --path-orig /github/workspace/before/ci/test
+          --skip-crds
+          --skip-secrets
+          --strip-attrs "helm.sh/chart,checksum/config,app.kubernetes.io/version,chart"
+          --limit-bytes 10000
+          --all-namespaces
+          --sources "test-source=./"
+          --output-file diff.patch
+          ${{ matrix.resource == 'helmrelease' && '--api-versions monitoring.coreos.com/v1' || '' }}
+
+    - name: Generate Diff
+      id: diff
+      run: |
+        echo 'diff<<EOF' >> $GITHUB_OUTPUT
+        cat diff.patch >> $GITHUB_OUTPUT
+        echo 'EOF' >> $GITHUB_OUTPUT
+        cat diff.patch
 
     - name: Add PR comment w/ diff
       uses: mshick/add-pr-comment@b8f338c590a895d50bcbfa6c5859251edc8952fc # v2
@@ -57,7 +77,7 @@ jobs:
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         message-id: "${{ github.event.pull_request.number }}/${{ matrix.resource }}"
-        message-failure: Unable to post kustomization diff
+        message-failure: Unable to post ${{ matrix.resource }} diff
         message: |
           `````diff
           ${{ steps.diff.outputs.diff }}
