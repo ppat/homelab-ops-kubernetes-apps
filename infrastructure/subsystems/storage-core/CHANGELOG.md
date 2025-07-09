@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.0.19](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.0.18...infra-storage-core-v0.0.19) (2025-07-09)
+
+
+### ✨ Features
+
+* **infra-storage-core:** update longhorn (1.8.2 -&gt; 1.9.0) ([#1546](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1546)) ([eb074ed](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/eb074ed331fe2884dec1c5082ecfc334f7b4122e))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* add defensive measure to prevent unintentional pruning of critical infrastructure components ([#1624](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1624)) ([f0f4901](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f0f4901cbab8f0f98876f5c881a823b96736d4b4))
+* default all external secrets to refresh every 24h (instead of 1h) ([#1578](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1578)) ([4ec69db](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4ec69dbd9f0825da6b7b7d05e39d0f46ffb90bd0))
+* **infra-storage-core:** tune default settings for longhorn ([#1636](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1636)) ([8a3feb7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8a3feb7f744130a743ded1f03ee016dfa7ccdcdf))
+* move helmrepository resources into respective modules that depend on them ([#1691](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1691)) ([5eb5ab6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5eb5ab6491cdd48eb5a7d5413a04041258c5b8c5))
+
 ## [0.0.18](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.0.17...infra-storage-core-v0.0.18) (2025-06-19)
 
 
