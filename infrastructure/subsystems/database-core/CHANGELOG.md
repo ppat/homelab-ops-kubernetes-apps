@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.0.7...infra-database-core-v0.0.8) (2025-07-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* move helmrepository resources into respective modules that depend on them ([#1691](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1691)) ([5eb5ab6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5eb5ab6491cdd48eb5a7d5413a04041258c5b8c5))
+
 ## [0.0.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.0.6...infra-database-core-v0.0.7) (2025-07-04)
 
 
