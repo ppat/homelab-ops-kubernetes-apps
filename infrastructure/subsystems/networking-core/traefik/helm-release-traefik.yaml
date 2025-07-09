@@ -37,10 +37,6 @@ spec:
     logs:
       general:
         level: ${traefik_log_level:=INFO}
-      access:
-        enabled: true
-        format: json
-        filePath: /var/log/traefik/access.log
 
     deployment:
       kind: DaemonSet
@@ -56,8 +52,12 @@ spec:
       - name: log-rotate
         image: busybox@sha256:f85340bf132ae937d2c2a763b8335c9bab35d6e8293f70f606b9c6178d84f42b
         env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
         - name: LOG_PATH
-          value: "/var/log/traefik"
+          value: "/var/log/traefik/$(POD_NAME)"
         - name: LOG_APP
           value: "traefik"
         - name: LOG_FILE_NAME
@@ -136,6 +136,13 @@ spec:
             annotations:
               summary: "Traefik Down"
               description: "{{ $labels.pod }} on {{ $labels.nodename }} is down"
+
+    additionalArguments:
+    - --accesslog=true
+    - --accesslog.format=json
+    - --accesslog.filepath=/var/log/traefik/$(POD_NAME)/access.log
+    - --accesslog.fields.defaultmode=keep
+    - --accesslog.fields.headers.defaultmode=drop
 
     global:
       checkNewVersion: false
