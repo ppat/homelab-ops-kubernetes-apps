@@ -36,7 +36,7 @@ spec:
   values:
     logs:
       general:
-        level: DEBUG
+        level: ${traefik_log_level:=INFO}
       access:
         enabled: true
         format: json

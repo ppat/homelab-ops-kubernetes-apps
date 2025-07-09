@@ -21,9 +21,6 @@ spec:
       - name: namespace
         value: traefik
       file: ../chainsaw/assertions/daemonset-ready.yaml
-  - podLogs:
-      selector: app.kubernetes.io/name=traefik
-      namespace: traefik
   - description: Assert service/traefik
     assert:
       bindings:
