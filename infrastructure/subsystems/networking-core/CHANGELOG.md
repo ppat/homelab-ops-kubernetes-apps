@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.7.1...infra-networking-core-v0.7.2) (2025-07-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** since traefik is a daemonset, we need a RWX volume and pod specific path within that ([#1713](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1713)) ([f1a78f7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f1a78f7c62a6c85160e82677b60f9da71dbb1320))
+* **infra-networking-core:** traefik has container security context set on sidecar container but not on main container ([#1711](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1711)) ([72497c6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/72497c663d998050ce6fb6b19d25ca9dd41e4305))
+
 ## [0.7.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.7.0...infra-networking-core-v0.7.1) (2025-07-09)
 
 
