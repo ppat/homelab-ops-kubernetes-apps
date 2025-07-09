@@ -4,7 +4,8 @@ kind: Kustomization
 
 resources:
 - certificate-default.yaml
-- helm-release.yaml
+- helm-repository-traefik.yaml
+- helm-release-traefik.yaml
 - whoami-deployment.yaml
 - whoami-service.yaml
 - whoami-ingress.yaml

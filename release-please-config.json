@@ -16,12 +16,6 @@
   "draft": false,
   "initial-version": "0.0.1",
   "packages": {
-    "apps/helm-repositories": {
-      "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true,
-      "component": "apps-helm-repositories",
-      "extra-label": "pr-type:release,subsystem:apps-helm-repositories"
-    },
     "apps/subsystems/ai": {
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
@@ -75,12 +69,6 @@
       "bump-patch-for-minor-pre-major": true,
       "component": "infra-bootstrap-crds",
       "extra-label": "pr-type:release,subsystem:infra-bootstrap-crds"
-    },
-    "infrastructure/helm-repositories": {
-      "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true,
-      "component": "infra-helm-repositories",
-      "extra-label": "pr-type:release,subsystem:infra-helm-repositories"
     },
     "infrastructure/subsystems/clusterops-core": {
       "bump-minor-pre-major": true,

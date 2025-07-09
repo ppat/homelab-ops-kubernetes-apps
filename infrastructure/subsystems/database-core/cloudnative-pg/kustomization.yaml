@@ -4,7 +4,8 @@ kind: Kustomization
 
 resources:
 - namespace.yaml
-- helm-release.yaml
+- helm-repository-cloudnative-pg.yaml
+- helm-release-cloudnative-pg.yaml
 
 commonAnnotations:
   # as this is a critical infrastructure component, prevent pruning unintentionally

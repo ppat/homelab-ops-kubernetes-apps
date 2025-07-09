@@ -4,8 +4,6 @@ kind: Kustomization
 
 resources:
 - ../../../../infrastructure/bootstrap/crds/
-- ../../../../infrastructure/helm-repositories/
-- ../../../../apps/helm-repositories
 - namespaces.yaml
 - minio/
 - loki/

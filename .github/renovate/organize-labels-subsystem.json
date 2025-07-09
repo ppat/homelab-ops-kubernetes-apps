@@ -12,29 +12,11 @@
     },
     {
       "addLabels": [
-        "subsystem:apps-helm-repositories"
-      ],
-      "description": "add subsystem label for apps-helm-repositories",
-      "matchFileNames": [
-        "apps/helm-repositories/**"
-      ]
-    },
-    {
-      "addLabels": [
         "subsystem:infra-{{ lookup (split packageFileDir '/') 2 }}"
       ],
       "description": "add subsystem label for infra-* subsystems",
       "matchFileNames": [
         "infrastructure/subsystems/**"
-      ]
-    },
-    {
-      "addLabels": [
-        "subsystem:infra-helm-repositories"
-      ],
-      "description": "add subsystem label for infra-helm-repositories",
-      "matchFileNames": [
-        "infrastructure/helm-repositories/**"
       ]
     },
     {

@@ -4,7 +4,8 @@ kind: Kustomization
 
 resources:
 - namespace.yaml
-- helm-release.yaml
+- helm-repository-harbor.yaml
+- helm-release-harbor.yaml
 - secrets.yaml
 
 sortOptions:

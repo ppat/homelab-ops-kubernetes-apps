@@ -5,8 +5,9 @@ kind: Kustomization
 resources:
 - bitwarden-ca-cert.yaml
 - bitwarden-sdk-server-cert.yaml
-- external-secrets.yaml
-- trust-manager.yaml
+- helm-repository-external-secrets.yaml
+- helm-release-external-secrets.yaml
+- helm-release-trust-manager.yaml
 - bitwarden-ca-cert-bundle.yaml
 
 commonAnnotations:

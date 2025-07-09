@@ -4,9 +4,7 @@
     {
       "description": "configure version separation for non-infra subsystems",
       "matchFileNames": [
-        "apps/helm-repositories/**",
         "apps/subsystems/**",
-        "infrastructure/helm-repositories/**",
         "infrastructure/bootstrap/crds/**"
       ],
       "separateMajorMinor": true,

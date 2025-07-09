@@ -3,7 +3,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- helm-release.yaml
+- helm-repository-bitnami.yaml
+- helm-release-kubernetes-event-exporter.yaml
 
 configMapGenerator:
 - name: kubernetes-event-exporter-dashboard

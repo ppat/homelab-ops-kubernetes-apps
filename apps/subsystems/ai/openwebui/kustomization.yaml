@@ -3,5 +3,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- helmrelease-openwebui.yaml
+- helm-repository-openwebui.yaml
+- helm-release-openwebui.yaml
 - secrets.yaml

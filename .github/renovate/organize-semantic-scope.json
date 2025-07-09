@@ -9,25 +9,11 @@
       "semanticCommitScope": "apps-{{ lookup (split packageFileDir '/') 2 }}"
     },
     {
-      "description": "add semantic commit scope for apps-helm-repositories",
-      "matchFileNames": [
-        "apps/helm-repositories/**"
-      ],
-      "semanticCommitScope": "apps-helm-repositories"
-    },
-    {
       "description": "add semantic commit scope for infra-* subsystems",
       "matchFileNames": [
         "infrastructure/subsystems/**"
       ],
       "semanticCommitScope": "infra-{{ lookup (split packageFileDir '/') 2 }}"
-    },
-    {
-      "description": "add semantic commit scope for infra-helm-repositories",
-      "matchFileNames": [
-        "infrastructure/helm-repositories/**"
-      ],
-      "semanticCommitScope": "infra-helm-repositories"
     },
     {
       "description": "add semantic commit scope for infra-bootstrap-crds",
