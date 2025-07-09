@@ -37,10 +37,10 @@ spec:
         - |
           # This script runs in a loop and clean up logs older than 1 day as log
           # ingestor is expected to have scraped them by then.
-          mkdir -p "${LOG_PATH}";
+          mkdir -p "$LOG_PATH";
           while true; do
-            echo "Running ${LOG_APP} log cleanup...";
-            find "${LOG_PATH}" -mtime +1 -type f -print -delete;
+            echo "Running $LOG_APP log cleanup...";
+            find "$LOG_PATH" -mtime +1 -type f -print -delete;
             echo;
             echo "Sleeping for 4 hrs...";
             sleep 14400;
