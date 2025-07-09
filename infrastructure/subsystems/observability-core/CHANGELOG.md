@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.10.2...infra-observability-core-v0.10.3) (2025-07-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* move helmrepository resources into respective modules that depend on them ([#1691](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1691)) ([5eb5ab6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5eb5ab6491cdd48eb5a7d5413a04041258c5b8c5))
+
 ## [0.10.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.10.1...infra-observability-core-v0.10.2) (2025-07-07)
 
 

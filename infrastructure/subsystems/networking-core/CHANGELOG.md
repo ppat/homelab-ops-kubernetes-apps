@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.7.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.7.1...infra-networking-core-v0.7.2) (2025-07-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** since traefik is a daemonset, we need a RWX volume and pod specific path within that ([#1713](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1713)) ([f1a78f7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f1a78f7c62a6c85160e82677b60f9da71dbb1320))
+* **infra-networking-core:** traefik has container security context set on sidecar container but not on main container ([#1711](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1711)) ([72497c6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/72497c663d998050ce6fb6b19d25ca9dd41e4305))
+
+## [0.7.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.7.0...infra-networking-core-v0.7.1) (2025-07-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** add liveness/readiness probes to whoami ([#1705](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1705)) ([65a4c84](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/65a4c84932db14456b6fc68c878fe53b1ffb8ee4))
+* **infra-networking-core:** eliminate use of host paths in traefik and configure log rotation ([#1689](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1689)) ([1f43041](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1f430413ce3a405a0b267c9beec06e69c6243238))
+* **infra-networking-core:** ensure that traefik can write to its logs pvc ([#1707](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1707)) ([f68ad07](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f68ad07852ecd845f7109869c2ccea834e5dc29b))
+* move helmrepository resources into respective modules that depend on them ([#1691](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1691)) ([5eb5ab6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5eb5ab6491cdd48eb5a7d5413a04041258c5b8c5))
+
 ## [0.7.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.6.7...infra-networking-core-v0.7.0) (2025-07-08)
 
 

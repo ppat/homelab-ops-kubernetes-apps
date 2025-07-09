@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.0.24](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.23...apps-media-v0.0.24) (2025-07-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** fix typo in plex/jellyfin log clean up scripts ([#1709](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1709)) ([1e14ee9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1e14ee9720d469f933be7e231f198f042b7b232a))
+
+## [0.0.23](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.22...apps-media-v0.0.23) (2025-07-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** ensure plex and jellyfin can write to their respective logs pvc ([#1706](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1706)) ([e75c61d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e75c61d17c374915f5fbecd8a1039c97be790ea6))
+
+## [0.0.22](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.21...apps-media-v0.0.22) (2025-07-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** eliminate use of host paths media apps by switching log storage to pvcs ([#1686](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1686)) ([4ae649b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4ae649b65155c973838202f20d3a0e03e564a3e7))
+
 ## [0.0.21](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.20...apps-media-v0.0.21) (2025-06-30)
 
 
