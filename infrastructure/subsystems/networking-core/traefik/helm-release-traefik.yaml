@@ -82,29 +82,19 @@ spec:
     - mountPath: /var/log/traefik
       name: traefik-logs
 
-    service:
-      spec:
-        externalTrafficPolicy: Local
-
-    global:
-      checkNewVersion: false
-      sendAnonymousUsage: false
-
-    providers:
-      kubernetesCRD:
-        enabled: true
-        allowCrossNamespace: false
-        allowExternalNameServices: false
-      kubernetesIngress:
-        enabled: true
-        allowExternalNameServices: false
-        publishedService:
-          enabled: true
-
+    podSecurityContext:
+      runAsGroup: 65532
+      runAsNonRoot: true
+      runAsUser: 65532
+      fsGroup: 65532
+      fsGroupChangePolicy: OnRootMismatch
     resources:
       requests:
         cpu: 15m
         memory: 105Mi
+    service:
+      spec:
+        externalTrafficPolicy: Local
     tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
@@ -140,6 +130,21 @@ spec:
             annotations:
               summary: "Traefik Down"
               description: "{{ $labels.pod }} on {{ $labels.nodename }} is down"
+
+    global:
+      checkNewVersion: false
+      sendAnonymousUsage: false
+
+    providers:
+      kubernetesCRD:
+        enabled: true
+        allowCrossNamespace: false
+        allowExternalNameServices: false
+      kubernetesIngress:
+        enabled: true
+        allowExternalNameServices: false
+        publishedService:
+          enabled: true
 
     tlsOptions:
       default:
