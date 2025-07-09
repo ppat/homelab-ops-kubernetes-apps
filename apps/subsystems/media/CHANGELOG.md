@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.24](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.23...apps-media-v0.0.24) (2025-07-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** fix typo in plex/jellyfin log clean up scripts ([#1709](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1709)) ([1e14ee9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1e14ee9720d469f933be7e231f198f042b7b232a))
+
 ## [0.0.23](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.22...apps-media-v0.0.23) (2025-07-09)
 
 
