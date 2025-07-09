@@ -2,16 +2,15 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: unifi-data
+  name: unifi-logs
   namespace: unifi
   labels:
     app.kubernetes.io/name: unifi-network-application
     app.kubernetes.io/part-of: unifi
-    app.kubernetes.io/component: application
 spec:
   accessModes:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 1Gi
+      storage: 25Mi
   volumeMode: Filesystem

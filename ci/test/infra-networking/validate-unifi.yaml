@@ -61,6 +61,9 @@ spec:
       - name: namespace
         value: unifi
       file: ../chainsaw/assertions/ingress-ready.yaml
+  - podLogs:
+      selector: app.kubernetes.io/name=unifi-network-application
+      namespace: unifi
 
   catch:
   - describe:
@@ -74,6 +77,9 @@ spec:
       name: unifi-network-application
       namespace: unifi
   - events:
+      namespace: unifi
+  - podLogs:
+      selector: app.kubernetes.io/name=unifi-network-application
       namespace: unifi
   - events:
       namespace: metallb-system

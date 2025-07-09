@@ -25,6 +25,40 @@ spec:
         app.kubernetes.io/component: application
     spec:
       automountServiceAccountToken: false
+      initContainers:
+      - name: log-janitor
+        image: busybox@sha256:f85340bf132ae937d2c2a763b8335c9bab35d6e8293f70f606b9c6178d84f42b
+        env:
+        - name: LOG_PATH
+          value: "/config/logs"
+        - name: LOG_APP
+          value: "unifi"
+        command:
+        - "/bin/sh"
+        - "-c"
+        # yamllint disable-line rule:indentation
+        - |
+          # This script runs in a loop and clean up logs older than 1 day as log
+          # ingestor is expected to have scraped them by then.
+          mkdir -p "${LOG_PATH}";
+          while true; do
+            echo "Running ${LOG_APP} log cleanup...";
+            find "${LOG_PATH}" -mtime +1 -type f -print -delete;
+            echo;
+            echo "Sleeping for 4 hrs...";
+            sleep 14400;
+            echo;
+          done
+        restartPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - name: unifi-logs
+          mountPath: /config/logs
       containers:
       - name: unifi
         env:
@@ -141,21 +175,10 @@ spec:
         # unifi writes logs to multiple different log files:
         #     access.log   inform_request.log  server.log   state.log
         #     hotspot.log  migration.log       startup.log  tasks.lo
-        # these are not written to stdout, so we are placing them on the host,
-        # so that we can configure promtail to collect them.
-        hostPath:
-          path: /var/log/unifi
-          type: DirectoryOrCreate
+        # these are not written to stdout, so we are placing them on a separate pvc that
+        # can be scraped by the log ingestor
+        persistentVolumeClaim:
+          claimName: unifi-logs
       - name: unifi-backups
         persistentVolumeClaim:
           claimName: unifi-backups
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 1
-            preference:
-              matchExpressions:
-              - key: kubernetes.io/arch
-                operator: In
-                values:
-                - "amd64"

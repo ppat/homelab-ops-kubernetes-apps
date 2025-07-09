@@ -93,6 +93,9 @@ spec:
       - name: namespace
         value: dns
       file: ../chainsaw/assertions/ingress-ready.yaml
+  - podLogs:
+      selector: app.kubernetes.io/name=pihole
+      namespace: dns
 
   catch:
   - describe:
@@ -101,7 +104,7 @@ spec:
       name: pihole
       namespace: dns
   - podLogs:
-      name: pihole
+      selector: app.kubernetes.io/name=pihole
       namespace: dns
   - events:
       namespace: dns
