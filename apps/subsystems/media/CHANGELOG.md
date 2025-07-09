@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.23](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.22...apps-media-v0.0.23) (2025-07-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** ensure plex and jellyfin can write to their respective logs pvc ([#1706](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1706)) ([e75c61d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e75c61d17c374915f5fbecd8a1039c97be790ea6))
+
 ## [0.0.22](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.21...apps-media-v0.0.22) (2025-07-09)
 
 
