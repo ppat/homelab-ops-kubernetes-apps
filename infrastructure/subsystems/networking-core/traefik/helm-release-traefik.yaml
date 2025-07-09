@@ -92,6 +92,12 @@ spec:
       requests:
         cpu: 15m
         memory: 105Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: true
     service:
       spec:
         externalTrafficPolicy: Local
