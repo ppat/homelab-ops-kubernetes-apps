@@ -24,6 +24,11 @@ spec:
       initContainers:
       - name: log-janitor
         image: busybox@sha256:f85340bf132ae937d2c2a763b8335c9bab35d6e8293f70f606b9c6178d84f42b
+        env:
+        - name: LOG_PATH
+          value: "/var/log/plex"
+        - name: LOG_APP
+          value: "Plex"
         command:
         - "/bin/sh"
         - "-c"
@@ -31,21 +36,26 @@ spec:
         - |
           # This script runs in a loop and clean up logs older than 1 day as log
           # ingestor is expected to have scraped them by then.
-          mkdir -p /var/log/plex;
           while true; do
-            echo "Running Plex log cleanup...";
-            find /var/log/plex -mtime +1 -type f -print -delete;
+            echo "Running $LOG_APP log cleanup...";
+            find "$LOG_PATH" -mtime +1 -type f -print -delete;
             echo;
             echo "Sleeping for 4 hrs...";
             sleep 14400;
             echo;
-          done
+          done;
+          chown -R 1000:1000 "$LOG_PATH"
         restartPolicy: Always
         securityContext:
-          allowPrivilegeEscalation: false
+          allowPrivilegeEscalation: true
           capabilities:
+            add:
+            - CHOWN
             drop:
             - ALL
+          runAsUser: 0
+          runAsGroup: 0
+          runAsNonRoot: false
           readOnlyRootFilesystem: true
         volumeMounts:
         - mountPath: "/var/log/plex"
@@ -125,6 +135,7 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
         runAsGroup: 1000
+        # fsGroup is intentionally unset to prevent changing permissions on plex-media volume
         # use a kustomize overlay to update w/
         # - MEDIA_READER_GID (i.e. group w/ read access to plex-media volume)
         # - TRANSCODER_DEV_GIDS (i.e. groups w/ access to /dev/dri/*)
