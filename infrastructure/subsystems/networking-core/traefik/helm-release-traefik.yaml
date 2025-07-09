@@ -42,50 +42,42 @@ spec:
         format: json
         filePath: /var/log/traefik/access.log
 
-    # these are the defaults set in helm chart for securityContext + podSecurityContext
-    # (see: https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L899)
-    # with the following adjustments
-    # - moving runAsGroup, runAsUser and runAsNonRoot (retaining their values) from
-    #   podSecurityContext to securityContext (of main traefik container)
-    # - this allows us to run the init-container as root, while ensuring the main
-    #   traefik container continues to run as non-root
-    securityContext:
-      allowPrivilegeEscalation: false
-      capabilities:
-        drop: [ALL]
-      readOnlyRootFilesystem: true
-      runAsGroup: 65532
-      runAsNonRoot: true
-      runAsUser: 65532
-    podSecurityContext: {}
-
     deployment:
       kind: DaemonSet
       additionalVolumes:
       - name: traefik-logs
-        hostPath:
-          path: /var/log/traefik
-          type: DirectoryOrCreate
+        persistentVolumeClaim:
+          claimName: traefik-logs
+      - name: traefik-scripts
+        configMap:
+          name: traefik-scripts
+          defaultMode: 0755
       initContainers:
-      - name: volume-permissions
+      - name: log-rotate
         image: busybox@sha256:f85340bf132ae937d2c2a763b8335c9bab35d6e8293f70f606b9c6178d84f42b
+        env:
+        - name: LOG_PATH
+          value: "/var/log/traefik"
+        - name: LOG_APP
+          value: "traefik"
+        - name: LOG_FILE_NAME
+          value: "access.log"
+        - name: LOG_ROTATION_KEEP_COUNT
+          value: "5"
         command:
-        - "/bin/sh"
-        - "-c"
-        - "chown 65532:65532 /var/log/traefik"
+        - /scripts/log-rotate.sh
+        restartPolicy: Always
         securityContext:
-          allowPrivilegeEscalation: true
+          allowPrivilegeEscalation: false
           capabilities:
-            add:
-            - CHOWN
             drop:
             - ALL
-          runAsNonRoot: false
-          runAsUser: 0
-          runAsGroup: 0
+          readOnlyRootFilesystem: true
         volumeMounts:
-        - mountPath: /var/log/traefik
-          name: traefik-logs
+        - name: traefik-logs
+          mountPath: /var/log/traefik
+        - name: traefik-scripts
+          mountPath: /scripts
     additionalVolumeMounts:
     - mountPath: /var/log/traefik
       name: traefik-logs
@@ -94,9 +86,9 @@ spec:
       spec:
         externalTrafficPolicy: Local
 
-    # disable check new version + sending annonymous usage
-    globalArguments: []
-    additionalArguments: []
+    global:
+      checkNewVersion: false
+      sendAnonymousUsage: false
 
     providers:
       kubernetesCRD:
@@ -109,7 +101,10 @@ spec:
         publishedService:
           enabled: true
 
-    resources: {}
+    resources:
+      requests:
+        cpu: 15m
+        memory: 105Mi
     tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
@@ -123,6 +118,7 @@ spec:
         entryPoints: ["websecure"]
         middlewares: []
         tls: {}
+
     metrics:
       prometheus:
         addEntryPointsLabels: true
@@ -133,7 +129,7 @@ spec:
         serviceMonitor:
           enabled: true
         prometheusRule:
-          enabled: false
+          enabled: true
 
     tlsOptions:
       default:

@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
 - pihole-data.yaml
+- traefik-logs.yaml
 - unifi-backups.yaml
 - unifi-data.yaml
 - unifi-db-data.yaml

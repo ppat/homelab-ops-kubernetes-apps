@@ -109,7 +109,8 @@ spec:
       name: traefik-dashboard
 
   - podLogs:
-      name: traefik
+      selector: app.kubernetes.io/name=traefik
       namespace: traefik
+
   - events:
       namespace: traefik
