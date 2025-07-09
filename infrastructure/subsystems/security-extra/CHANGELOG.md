@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.10...infra-security-extra-v0.1.11) (2025-07-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* move helmrepository resources into respective modules that depend on them ([#1691](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1691)) ([5eb5ab6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5eb5ab6491cdd48eb5a7d5413a04041258c5b8c5))
+
 ## [0.1.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.9...infra-security-extra-v0.1.10) (2025-07-05)
 
 
