@@ -27,30 +27,6 @@
     },
     {
       "commitBody": "BREAKING CHANGE",
-      "description": "configure breaking changes for infra-helm-repositories",
-      "matchFileNames": [
-        "infrastructure/helm-repositories/**"
-      ],
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "semanticCommits": "disabled",
-      "commitMessagePrefix": "feat(infra-helm-repositories)!:"
-    },
-    {
-      "commitBody": "BREAKING CHANGE",
-      "description": "configure breaking changes for apps-helm-repositories",
-      "matchFileNames": [
-        "apps/helm-repositories/**"
-      ],
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "semanticCommits": "disabled",
-      "commitMessagePrefix": "feat(apps-helm-repositories)!:"
-    },
-    {
-      "commitBody": "BREAKING CHANGE",
       "description": "configure breaking changes for infra-bootstrap-crds",
       "matchFileNames": [
         "infrastructure/bootstrap/crds/**"

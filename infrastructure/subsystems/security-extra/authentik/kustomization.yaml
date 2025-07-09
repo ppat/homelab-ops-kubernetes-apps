@@ -6,7 +6,8 @@ resources:
 - certificate-signing.yaml
 - postgres.yaml
 - secrets.yaml
-- helm-release.yaml
+- helm-repository-authentik.yaml
+- helm-release-authentik.yaml
 - middleware-forward-auth.yaml
 
 

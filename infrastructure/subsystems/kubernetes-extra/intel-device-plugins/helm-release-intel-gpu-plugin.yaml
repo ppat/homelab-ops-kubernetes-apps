@@ -39,7 +39,7 @@ spec:
     name: gpu-device
 
     # see crd for docs
-    sharedDevNum: ${gpu_shared_across_max_pods:=1}
+    sharedDevNum: ${gpu_shared_across_max_pods}
     logLevel: 2
     resourceManager: false
     enableMonitoring: true

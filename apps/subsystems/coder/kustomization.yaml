@@ -6,7 +6,8 @@ resources:
 - namespace.yaml
 - postgres.yaml
 - certificate-coder.yaml
-- helm-release.yaml
+- helm-repository-coder.yaml
+- helm-release-coder.yaml
 - ingress.yaml
 - rbac.yaml
 

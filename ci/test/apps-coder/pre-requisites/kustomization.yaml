@@ -4,8 +4,6 @@ kind: Kustomization
 
 resources:
 - ../../../../infrastructure/bootstrap/crds/
-- ../../../../infrastructure/helm-repositories/
-- ../../../../apps/helm-repositories
 - ../../infra-database/infra-database-core.yaml
 - ../../infra-security/infra-security-core.yaml
 

@@ -4,6 +4,8 @@ kind: Kustomization
 
 resources:
 - namespace.yaml
+- helm-repository-prometheus-community.yaml
+- helm-repository-grafana.yaml
 - kube-prometheus-stack/
 - k3s-monitoring/
 - loki/
