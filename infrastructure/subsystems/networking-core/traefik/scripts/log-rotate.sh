@@ -12,7 +12,10 @@ while true; do
     echo "Running rotation for ${FULL_LOG_PATH}..."
 
     # 1. Delete the oldest log file to make space.
-    rm -f "${FULL_LOG_PATH}.${KEEP_COUNT}"
+    if [ -f "${FULL_LOG_PATH}.${KEEP_COUNT}" ]; then
+      echo "  - Deleting oldest: ${FULL_LOG_PATH}.${KEEP_COUNT}"
+      rm -f "${FULL_LOG_PATH}.${KEEP_COUNT}"
+    fi
 
     # 2. Shift all old logs up by one, starting from the second oldest.
     #    This loop runs from N-1 down to 1. E.g., for N=5, it runs for 4, 3, 2, 1.
@@ -20,7 +23,7 @@ while true; do
     i=$((KEEP_COUNT-1))
     while [ ${i} -ge 1 ]; do
       if [ -f "${FULL_LOG_PATH}.${i}" ]; then
-        echo "  - Shifting ${FULL_LOG_PATH}.${i} to ${FULL_LOG_PATH}.$((i+1))"
+        echo "  - Shifting ${FULL_LOG_PATH}.${i} -> ${FULL_LOG_PATH}.$((i+1))"
         mv "${FULL_LOG_PATH}.${i}" "${FULL_LOG_PATH}.$((i+1))"
       fi
       i=$((i-1))
