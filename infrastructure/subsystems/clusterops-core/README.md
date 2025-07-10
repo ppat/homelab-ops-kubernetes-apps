@@ -67,7 +67,6 @@ The clusterops-core module provides three main capabilities:
 
 ### Required By
 
-- [clusterops-extra](../clusterops-extra)
 - System components requiring automated upgrades
 - Dynamic configuration reloading
 

@@ -16,6 +16,3 @@ configMapGenerator:
 
 configurations:
 - name-reference.yaml
-
-sortOptions:
-  order: fifo
