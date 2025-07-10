@@ -244,7 +244,6 @@ flowchart TB
 
         %% Extended Components
         kubernetes-extra[kubernetes-extra]:::extra
-        clusterops-extra[clusterops-extra]:::extra
         security-extra[security-extra]:::extra
         networking-extra[networking-extra]:::extra
         observability-extra[observability-extra]:::core
@@ -253,9 +252,9 @@ flowchart TB
     %% Core Dependencies
     storage-core & networking-core & observability-core --> security-core
     observability-core --> storage-core
+    observability-core --> kubernetes-core
 
     %% Extra Dependencies
-    clusterops-extra --> clusterops-core
     security-extra --> security-core & storage-core & database-core
     networking-extra --> security-core & storage-core & networking-core
     observability-extra --> observability-core

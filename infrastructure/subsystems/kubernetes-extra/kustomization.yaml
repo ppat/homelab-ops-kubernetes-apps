@@ -4,8 +4,6 @@ kind: Kustomization
 
 resources:
 - namespace.yaml
-- node-feature-discovery/
-- vertical-pod-autoscaler/
 - intel-device-plugins/
 - generic-device-plugin/
 - descheduler/

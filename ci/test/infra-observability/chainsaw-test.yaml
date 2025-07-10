@@ -69,6 +69,10 @@ spec:
     use:
       template: ./validate-loki.yaml
 
+  - name: Validate goldilocks
+    use:
+      template: ./validate-goldilocks.yaml
+
   - name: Validate Promtail
     use:
       template: ./validate-promtail.yaml

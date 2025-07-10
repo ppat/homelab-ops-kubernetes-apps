@@ -7,6 +7,3 @@ resources:
 - service-k3smetrics.yaml
 - servicemonitor-k3s.yaml
 - prometheusrule-k3s.yaml
-
-sortOptions:
-  order: fifo

@@ -47,6 +47,3 @@ patches:
   target:
     kind: Deployment
     name: helm-controller
-
-sortOptions:
-  order: fifo
