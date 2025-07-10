@@ -8,6 +8,8 @@ on:
   pull_request:
     paths:
     - '.github/workflows/renovate.yaml'
+    - '.github/renovate.json'
+    - '.github/renovate/*.json'
   workflow_dispatch:
 
 concurrency:
