@@ -47,9 +47,10 @@ spec:
     use:
       template: ./validate-system-upgrade-controller.yaml
 
-  - name: Validate goldilocks
-    use:
-      template: ./validate-goldilocks.yaml
   - name: Validate reloader
     use:
       template: ./validate-reloader.yaml
+
+  - name: Validate goldilocks
+    use:
+      template: ./validate-goldilocks.yaml

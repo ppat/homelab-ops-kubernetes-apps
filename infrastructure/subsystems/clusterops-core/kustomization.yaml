@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
 - flux/
+- stakater-reloader/
 - system-upgrade-controller/
 
 sortOptions:
