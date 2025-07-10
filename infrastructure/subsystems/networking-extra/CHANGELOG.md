@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.2.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.2.1...infra-networking-extra-v0.2.2) (2025-07-10)
+
+
+### ✨ Features
+
+* **infra-networking-extra:** update visibilityspots/cloudflared (v2025.5.0 -&gt; v2025.6.0) ([#1542](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1542)) ([884a1ed](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/884a1edd6e494403f8cf419c68ffa657477438c1))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* add defensive measure to prevent unintentional pruning of critical infrastructure components ([#1624](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1624)) ([f0f4901](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f0f4901cbab8f0f98876f5c881a823b96736d4b4))
+* default all external secrets to refresh every 24h (instead of 1h) ([#1578](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1578)) ([4ec69db](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4ec69dbd9f0825da6b7b7d05e39d0f46ffb90bd0))
+* **infra-networking-extra:** eliminate use of host paths in pihole and unifi ([#1704](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1704)) ([6e4561a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6e4561ae39cc817d58e2dd004426e747745ac2cd))
+* **infra-networking-extra:** update digest docker.io/mongo (2c29f46 -&gt; 1bebd0c) ([#1714](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1714)) ([1814e0c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1814e0cc822cfabb85d346b114b1fcdb18416e1f))
+* **infra-networking-extra:** update digest docker.io/mongo (b59cefe -&gt; 2c29f46) ([#1600](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1600)) ([fe61973](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fe619730eac9763305f6dfb39626c6b4bb1bf8d6))
+* **infra-networking-extra:** update digest ghcr.io/linuxserver/unifi-network-application (685dc8e -&gt; 304bb6b) ([#1416](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1416)) ([5c6825c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5c6825c2a4a567a4b9e690e96fe9075d6f500b8a))
+* **infra-networking-extra:** update docker.io/mongo (7.0.20 -&gt; 7.0.21) ([#1471](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1471)) ([8576b1f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8576b1fa1be70e80e2cd5c81a516fc16583007c3))
+* **infra-networking-extra:** update ghcr.io/fluxcd/flux-cli (v2.6.1 -&gt; v2.6.2) ([#1447](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1447)) ([5ad657b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5ad657b3bc11cb7733a133730a1fe7c06e66aed9))
+* **infra-networking-extra:** update ghcr.io/fluxcd/flux-cli (v2.6.2 -&gt; v2.6.3) ([#1556](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1556)) ([2a22b7d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2a22b7deb324f6cdedbfa2edab21e2d391c14640))
+* **infra-networking-extra:** update ghcr.io/fluxcd/flux-cli (v2.6.3 -&gt; v2.6.4) ([#1677](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1677)) ([fa596d1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fa596d16e96cb920d7f60d39227a2fd84c586f85))
+* **infra-networking-extra:** update madnuttah/unbound (1.23.0-0 -&gt; 1.23.0-1) ([#1602](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1602)) ([ebf3b0d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ebf3b0d5e9179829fb4f6ba6fc0fa2d3a13c0b09))
+* **infra-networking-extra:** update tailscale-operator (1.84.2 -&gt; 1.84.3) ([#1558](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1558)) ([33f9a9b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/33f9a9bb7dd8f5b04e8441a0aed0f3a1e753fa38))
+* **infra-networking-extra:** update visibilityspots/cloudflared (v2025.6.0 -&gt; v2025.6.1) ([#1552](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1552)) ([ba3fedb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ba3fedb872eb8d2c7761465622264562820f0960))
+* migrate externally maintained external-secret(s) into infra-networking modules ([#1452](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1452)) ([25d5d54](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/25d5d54275277cb3249f5ba4a5c0f966173b350c))
+* move helmrepository resources into respective modules that depend on them ([#1691](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1691)) ([5eb5ab6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5eb5ab6491cdd48eb5a7d5413a04041258c5b8c5))
+
 ## [0.2.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.2.0...infra-networking-extra-v0.2.1) (2025-06-15)
 
 
