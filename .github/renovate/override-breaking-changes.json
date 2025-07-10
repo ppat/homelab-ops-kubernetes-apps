@@ -36,6 +36,20 @@
       ],
       "semanticCommits": "disabled",
       "commitMessagePrefix": "feat(infra-bootstrap-crds)!:"
+    },
+    {
+      "commitBody": "BREAKING CHANGE",
+      "description": "configure breaking changes for minor version upgrades of packages that treat minor versions as major versions",
+      "matchPackageNames": [
+        "fluxcd/flux2",
+        "longhorn",
+        "longhorn/longhorn"
+      ],
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "semanticCommits": "disabled",
+      "commitMessagePrefix": "feat({{#if (equals (lookup (split packageFileDir '/') 0) 'apps')}}apps{{else}}infra{{/if}}-{{ lookup (split packageFileDir '/') 2 }})!:"
     }
   ]
 }
