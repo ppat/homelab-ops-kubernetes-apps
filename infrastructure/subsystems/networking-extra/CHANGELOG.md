@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.2.2...infra-networking-extra-v0.2.3) (2025-07-10)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* various fixes to log cleanup/rotate scripts ([#1733](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1733)) ([b305425](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b305425b758aae044326f59f4e541c65ba6567dc))
+
 ## [0.2.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.2.1...infra-networking-extra-v0.2.2) (2025-07-10)
 
 
