@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.32](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.0.31...infra-security-core-v0.0.32) (2025-07-10)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-core:** update policy-reporter (3.3.0 -&gt; 3.3.1) ([#1716](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1716)) ([856ea3f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/856ea3f9cab3dd03200007383cb9e4fe0441d3de))
+
 ## [0.0.31](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.0.30...infra-security-core-v0.0.31) (2025-07-09)
 
 
