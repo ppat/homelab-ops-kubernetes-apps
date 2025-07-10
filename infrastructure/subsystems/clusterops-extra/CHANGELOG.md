@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-extra-v0.2.6...infra-clusterops-extra-v0.2.7) (2025-07-10)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-clusterops-core:** move stakator reloader from clusterops-extra -&gt; clusterops-core module ([#1721](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1721)) ([ba2003e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ba2003eaa3e92969b768031dd9d3378a5e13a380))
+
 ## [0.2.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-extra-v0.2.5...infra-clusterops-extra-v0.2.6) (2025-07-09)
 
 
