@@ -5,6 +5,8 @@ kind: Kustomization
 resources:
 - coredns/
 - kubernetes-api-server/
+- node-feature-discovery/
+- vertical-pod-autoscaler/
 
 sortOptions:
   order: fifo
