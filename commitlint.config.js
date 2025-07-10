@@ -55,7 +55,6 @@ module.exports = {
         'component-sso',
         'infra-bootstrap-crds',
         'infra-clusterops-core',
-        'infra-clusterops-extra',
         'infra-database-core',
         'infra-kubernetes-core',
         'infra-kubernetes-extra',

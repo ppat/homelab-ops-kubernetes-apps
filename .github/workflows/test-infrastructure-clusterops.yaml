@@ -10,9 +10,7 @@ on:
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/infra-clusterops/**'
     - 'infrastructure/subsystems/clusterops-core/**'
-    - 'infrastructure/subsystems/clusterops-extra/**'
     - '!infrastructure/subsystems/clusterops-core/**.md'
-    - '!infrastructure/subsystems/clusterops-extra/**.md'
   workflow_dispatch:
 
 concurrency:

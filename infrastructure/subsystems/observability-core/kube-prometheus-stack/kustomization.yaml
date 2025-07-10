@@ -4,6 +4,3 @@ kind: Kustomization
 
 resources:
 - helm-release-kube-prometheus-stack.yaml
-
-sortOptions:
-  order: fifo
