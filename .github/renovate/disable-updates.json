@@ -34,7 +34,7 @@
       ]
     },
     {
-      "description": "disable minio updates due to OSS unfriendly practices",
+      "description": "disable minio updates due to OSS unfriendly practices until a suitable replacement is found",
       "enabled": false,
       "matchDatasources": [
         "docker"

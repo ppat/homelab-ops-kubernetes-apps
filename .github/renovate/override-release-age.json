@@ -2,12 +2,10 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "packageRules": [
     {
-      "description": "delay patch updates to 7 days (from 1 day) for packages managed by flux",
-      "matchManagers": [
-        "flux"
-      ],
+      "description": "delay patch updates to 7 days (from 1 day)",
       "matchPackageNames": [
-        "longhorn"
+        "longhorn",
+        "longhorn/longhorn"
       ],
       "matchUpdateTypes": [
         "patch"
@@ -15,10 +13,7 @@
       "minimumReleaseAge": "7 days"
     },
     {
-      "description": "delay patch updates to 7 days (from 1 day) for packages managed by kubernetes",
-      "matchManagers": [
-        "kubernetes"
-      ],
+      "description": "delay patch updates to 30 days (from 1 day)",
       "matchPackageNames": [
         "docker.io/mongo",
         "ghcr.io/linuxserver/unifi-network-application"
@@ -27,30 +22,16 @@
         "digest",
         "patch"
       ],
-      "minimumReleaseAge": "7 days"
-    },
-    {
-      "description": "delay minor updates to 30 days (from 7 days) for packages managed by flux",
-      "matchManagers": [
-        "flux"
-      ],
-      "matchPackageNames": [
-        "coder",
-        "longhorn"
-      ],
-      "matchUpdateTypes": [
-        "minor"
-      ],
       "minimumReleaseAge": "30 days"
     },
     {
-      "description": "delay minor updates to 30 days (from 7 days) for packages managed by kubernetes",
-      "matchManagers": [
-        "kubernetes"
-      ],
+      "description": "delay minor updates to 30 days (from 7 days)",
       "matchPackageNames": [
+        "coder",
         "docker.io/mongo",
-        "ghcr.io/linuxserver/unifi-network-application"
+        "ghcr.io/linuxserver/unifi-network-application",
+        "longhorn",
+        "longhorn/longhorn"
       ],
       "matchUpdateTypes": [
         "minor"

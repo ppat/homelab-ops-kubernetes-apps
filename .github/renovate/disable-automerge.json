@@ -10,9 +10,6 @@
       "matchPackageNames": [
         "docker.io/mongo",
         "ghcr.io/linuxserver/unifi-network-application"
-      ],
-      "reviewers": [
-        "ppat"
       ]
     },
     {
@@ -23,9 +20,6 @@
       "description": "disable automerge for specific file paths",
       "matchFileNames": [
         "infrastructure/bootstrap/crds/**"
-      ],
-      "reviewers": [
-        "ppat"
       ]
     }
   ]
