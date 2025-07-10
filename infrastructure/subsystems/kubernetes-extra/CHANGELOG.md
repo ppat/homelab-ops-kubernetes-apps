@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.20](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.19...infra-kubernetes-extra-v0.0.20) (2025-07-10)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-kubernetes-core:** move node-feature-discovery + vpa from kubernetes-extra -&gt; kubernetes-core module ([#1726](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1726)) ([a189341](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a189341b330e7b0dca2ae05e9c6253bf1f19769c))
+
 ## [0.0.19](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.18...infra-kubernetes-extra-v0.0.19) (2025-07-09)
 
 

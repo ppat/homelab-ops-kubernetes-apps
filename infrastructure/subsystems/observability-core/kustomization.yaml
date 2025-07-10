@@ -11,6 +11,7 @@ resources:
 - loki/
 - promtail/
 - grafana/
+- goldilocks/
 
 sortOptions:
   order: fifo

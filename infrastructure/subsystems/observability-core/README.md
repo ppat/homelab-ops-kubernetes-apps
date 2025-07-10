@@ -1,14 +1,14 @@
 # Observability Core
 
-This module provides comprehensive monitoring, logging, and visualization capabilities for the cluster. It enables metrics collection, log aggregation, and observability dashboards with specific support for K3s architecture.
+This module provides comprehensive monitoring, logging, and visualization capabilities for the cluster. It enables metrics collection, log aggregation, and observability dashboards with specific support for K3s architecture. Goldilocks extends cluster operational capabilities with resource optimization recommendations.
 
 ## Quick Links
 
- <a href="https://grafana.com/" target="_blank"><img src="../../../.static/images/logos/grafana.svg" width="32" height="32" alt="Grafana"></a> <a href="https://grafana.com/oss/loki/" target="_blank"><img src="../../../.static/images/logos/loki.svg" width="32" height="32" alt="Loki"></a> <a href="https://prometheus.io/" target="_blank"><img src="../../../.static/images/logos/prometheus.svg" width="32" height="32" alt="Prometheus"></a>
+ <a href="https://grafana.com/" target="_blank"><img src="../../../.static/images/logos/grafana.svg" width="32" height="32" alt="Grafana"></a> <a href="https://grafana.com/oss/loki/" target="_blank"><img src="../../../.static/images/logos/loki.svg" width="32" height="32" alt="Loki"></a> <a href="https://prometheus.io/" target="_blank"><img src="../../../.static/images/logos/prometheus.svg" width="32" height="32" alt="Prometheus"></a> <a href="https://github.com/FairwindsOps/goldilocks" target="_blank"><img src="../../../.static/images/logos/goldilocks.svg" width="32" height="32" alt="Goldilocks"></a>
 
 ## Overview
 
-The observability-core module provides three main capabilities:
+The observability-core module provides these capabilities:
 
 1. Metrics Collection
    - Prometheus-based metrics collection
@@ -27,6 +27,16 @@ The observability-core module provides three main capabilities:
    - Automated dashboard discovery
    - Alert management and notification
    - User authentication and authorization
+
+4. Resource Optimization Visualization
+   - VPA recommendations dashboard
+   - Per-namespace resource analysis
+   - Resource usage visualization
+   - Secure dashboard access via ingress
+   - Control plane node scheduling
+   - Defined resource limits:
+     - Controller: 25m-500m CPU, 50Mi-200Mi memory
+     - Dashboard: 25m-500m CPU, 50Mi-200Mi memory
 
 Note: The default Kubernetes component monitoring from kube-prometheus-stack is intentionally disabled because K3s uses a different architecture:
 
@@ -126,6 +136,7 @@ flowchart TB
 | Loki | Log aggregation and storage | • Receives logs from Promtail agents<br>• Stores logs in S3-compatible storage<br>• Evaluates log-based alerting rules<br>• Provides LogQL query interface |
 | K3s Monitoring | K3s-specific monitoring | • Collects metrics from K3s unified binary<br>• Provides custom alerting rules for K3s components<br>• Includes specialized dashboards for K3s architecture<br>• Replaces standard Kubernetes monitoring |
 | Grafana | Observability platform | • Provides unified visualization of metrics and logs<br>• Auto-discovers and provisions dashboards from ConfigMaps<br>• Manages alert rules and notifications<br>• Supports SSO integration and user management |
+| Goldilocks | Resource optimization visualization | • Integrates with external VPA installation<br>• Exposes dashboard at goldilocks.${domain_name}<br>• Uses websecure entrypoint with TLS<br>• Provides resource usage insights<br>• Runs with specific resource limits |
 
 ## Prerequisites
 
@@ -184,4 +195,6 @@ flowchart TB
 
 - [security-core](../security-core) (for TLS certificates)
 - [storage-core](../storage-core) (for persistent storage)
+- [kubernetes-core](../kubernetes-core) (VPA for resource recommendations)
 - [networking-core](../networking-core) (for ingress)
+- Metrics Server [k3s builtin components] (for resource recommendations)
