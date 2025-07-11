@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.7.3...infra-networking-core-v0.7.4) (2025-07-11)
+
+
+### ✨ Features
+
+* add pdbs for traefik + coredns ([#1740](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1740)) ([cb4e0c0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/cb4e0c03212142eb77d4c29e70257bd01808d6c8))
+
 ## [0.7.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.7.2...infra-networking-core-v0.7.3) (2025-07-10)
 
 
