@@ -21,6 +21,14 @@ spec:
       - name: namespace
         value: kube-system
       file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert pdb/coredns
+    assert:
+      bindings:
+      - name: name
+        value: coredns
+      - name: namespace
+        value: kube-system
+      file: ../chainsaw/assertions/pdb-ready.yaml
   catch:
   - describe:
       apiVersion: apps/v1
