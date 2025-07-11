@@ -82,6 +82,9 @@ spec:
     - mountPath: /var/log/traefik
       name: traefik-logs
 
+    podDisruptionBudget:
+      enabled: true
+      minAvailable: 1
     podSecurityContext:
       runAsGroup: 65532
       runAsNonRoot: true

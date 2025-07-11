@@ -72,6 +72,14 @@ spec:
         metadata:
           name: insecure-skip-verify
           namespace: traefik
+  - description: Assert pdb/traefik
+    assert:
+      bindings:
+      - name: name
+        value: traefik
+      - name: namespace
+        value: traefik
+      file: ../chainsaw/assertions/poddisruptionbudget-ready.yaml
   - description: Assert helmrelease/traefik-release
     assert:
       bindings:
