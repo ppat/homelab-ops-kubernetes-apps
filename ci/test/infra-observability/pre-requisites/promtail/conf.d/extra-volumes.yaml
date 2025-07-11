@@ -1,8 +1,4 @@
 ---
 extraVolumes: []
 
-extraVolumeMounts:
-- mountPath: /var/log/traefik
-  name: var-log
-  readOnly: true
-  subPath: traefik
+extraVolumeMounts: []

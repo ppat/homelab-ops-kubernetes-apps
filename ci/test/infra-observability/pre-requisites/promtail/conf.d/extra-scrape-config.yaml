@@ -3,24 +3,4 @@ config:
   snippets:
     # yamllint disable-line rule:indentation
     extraScrapeConfigs: |-
-      - job_name: traefik-access-logs
-        static_configs:
-        - targets:
-          - localhost
-          labels:
-            app: traefik
-            container: traefik
-            __path__: /var/log/traefik/*.log
-        pipeline_stages:
-        - json:
-            expressions:
-              timestamp: time
-              status: DownstreamStatus
-              method: RequestMethod
-            drop_malformed: true
-        - labels:
-            status:
-            method:
-        - timestamp:
-            source: timestamp
-            format: RFC3339
+      # put your scrape configs here
