@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.10.4...infra-observability-core-v0.10.5) (2025-07-11)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** update promtail config ([#1737](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1737)) ([ccf3a1a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ccf3a1aaded9f4623c4a2b7ffb6a574525aa28b9))
+
 ## [0.10.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.10.3...infra-observability-core-v0.10.4) (2025-07-10)
 
 
