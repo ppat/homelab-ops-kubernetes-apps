@@ -7,6 +7,11 @@ config:
       - job_name: kubernetes-pods
         pipeline_stages:
           {{- toYaml .Values.config.snippets.pipelineStages | nindent 4 }}
+          - regex:
+              source: filename
+              expression: "/var/log/pods/[^/]+/(?P<stripped_filename>.*)"
+          - labels:
+              filename: stripped_filename
         kubernetes_sd_configs:
           - role: pod
         relabel_configs:
@@ -77,11 +82,3 @@ config:
         - source_labels:
           - __journal_priority_keyword
           target_label: severity
-
-      - job_name: system
-        static_configs:
-        - targets:
-          - localhost
-          labels:
-            service_name: system
-            __path__: /var/log/*.log

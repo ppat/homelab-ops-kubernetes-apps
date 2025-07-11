@@ -6,9 +6,9 @@ defaultVolumes:
 - name: containers
   hostPath:
     path: /var/lib/docker/containers
-- name: var-log
+- name: pods
   hostPath:
-    path: /var/log
+    path: /var/log/pods
 # /etc/machine-id needed for reading systemd journal logs
 - name: etc-machineid
   hostPath:
@@ -16,6 +16,9 @@ defaultVolumes:
 - name: run-log-journal
   hostPath:
     path: /run/log/journal
+- name: var-log-journal
+  hostPath:
+    path: /var/log/journal
 
 defaultVolumeMounts:
 - mountPath: /run/promtail
@@ -24,9 +27,8 @@ defaultVolumeMounts:
   name: containers
   readOnly: true
 - mountPath: /var/log/pods
-  name: var-log
+  name: pods
   readOnly: true
-  subPath: pods
 - mountPath: /etc/machine-id
   name: etc-machineid
   readOnly: true
@@ -34,9 +36,5 @@ defaultVolumeMounts:
   name: run-log-journal
   readOnly: true
 - mountPath: /var/log/journal
-  name: var-log
-  readOnly: true
-  subPath: journal
-- mountPath: /var/log
-  name: var-log
+  name: var-log-journal
   readOnly: true
