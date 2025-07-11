@@ -28,7 +28,7 @@ spec:
         value: coredns
       - name: namespace
         value: kube-system
-      file: ../chainsaw/assertions/pdb-ready.yaml
+      file: ../chainsaw/assertions/poddisruptionbudget-ready.yaml
   catch:
   - describe:
       apiVersion: apps/v1

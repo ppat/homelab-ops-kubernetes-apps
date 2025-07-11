@@ -79,7 +79,7 @@ spec:
         value: traefik
       - name: namespace
         value: traefik
-      file: ../chainsaw/assertions/pdb-ready.yaml
+      file: ../chainsaw/assertions/poddisruptionbudget-ready.yaml
   - description: Assert helmrelease/traefik-release
     assert:
       bindings:
