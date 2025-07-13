@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.10.5...infra-observability-core-v0.10.6) (2025-07-13)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** further usage of fqdn's in loki cfg ([#1748](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1748)) ([fd5d6a4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fd5d6a411fc873d374c1ae0c9ee18f09791afe65))
+* **infra-observability-core:** use fqdn's in loki cfg ([#1746](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1746)) ([08f408a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/08f408ab9d5fbbea325b8e0730d3895a4ad8178f))
+
 ## [0.10.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.10.4...infra-observability-core-v0.10.5) (2025-07-11)
 
 
