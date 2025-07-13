@@ -14,6 +14,7 @@ spec:
         value: logging
       file: ../chainsaw/assertions/externalsecret-ready.yaml
   - get:
+      apiVersion: v1
       kind: ConfigMap
       name: loki
       namespace: logging
