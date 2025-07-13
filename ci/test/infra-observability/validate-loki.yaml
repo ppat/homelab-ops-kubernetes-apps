@@ -13,6 +13,11 @@ spec:
       - name: namespace
         value: logging
       file: ../chainsaw/assertions/externalsecret-ready.yaml
+  - get:
+      kind: ConfigMap
+      name: loki
+      namespace: logging
+      format: yaml
   - description: Assert deployment/loki-read
     assert:
       bindings:
