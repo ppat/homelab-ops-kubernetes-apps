@@ -61,6 +61,8 @@ spec:
         reporting_enabled: false
       # Disable multi-tenant support
       auth_enabled: false
+      commonConfig:
+        compactor_address: http://loki-backend.logging.svc.cluster.local:3100
       compactor:
         compaction_interval: 10m
         delete_request_store: s3
