@@ -1,6 +1,11 @@
 ---
 deploymentMode: SimpleScalable
 
+loki:
+  commonConfig:
+    replication_factor: 3
+    compactor_address: http://loki-backend.logging.svc.cluster.local:3100
+
 ######################################################################################################################
 # Simple Scalable Deployment (SSD) Mode
 ######################################################################################################################
