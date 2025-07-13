@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.10.6...infra-observability-core-v0.10.7) (2025-07-13)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** fix loki fqdn templating issue for memcached addresses ([#1749](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1749)) ([2fc0e26](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2fc0e26bddf943fa6fd5f55fb07f311661a38691))
+
 ## [0.10.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.10.5...infra-observability-core-v0.10.6) (2025-07-13)
 
 
