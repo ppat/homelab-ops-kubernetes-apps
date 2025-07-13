@@ -132,7 +132,7 @@ spec:
     resultsCache:
       enabled: true
       # yamllint disable-line rule:line-length
-      addresses: dnssrvnoa+_memcached-client._tcp.{{ template "loki.fullname" $ }}-results-cache.{{ $.Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}
+      addresses: dnssrvnoa+_memcached-client._tcp.loki-results-cache.logging.svc.cluster.local
       # see: https://fluxcd.io/flux/components/kustomize/kustomizations/#post-build-substitution-of-numbers-and-booleans
       allocatedMemory: ${quote}${loki_results_cache_memory}${quote}
       tolerations:
@@ -141,7 +141,7 @@ spec:
     chunksCache:
       enabled: true
       # yamllint disable-line rule:line-length
-      addresses: dnssrvnoa+_memcached-client._tcp.{{ template "loki.fullname" $ }}-chunks-cache.{{ $.Release.Namespace }}.svc.{{ .Values.global.clusterDomain }}
+      addresses: dnssrvnoa+_memcached-client._tcp.loki-chunks-cache.logging.svc.cluster.local
       # see: https://fluxcd.io/flux/components/kustomize/kustomizations/#post-build-substitution-of-numbers-and-booleans
       allocatedMemory: ${quote}${loki_chunks_cache_memory}${quote}
       tolerations:
