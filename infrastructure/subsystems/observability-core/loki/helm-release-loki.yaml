@@ -100,6 +100,18 @@ spec:
             idle_conn_timeout: 90s
             response_header_timeout: 0s
             insecure_skip_verify: true
+      structuredConfig:
+        # providing fqdn addresses from memcached_client under loki.structuredConfig as directly specifying them under
+        # resultsCache/chunksCache don't appear to get templated in properly.
+        chunk_store_config:
+          chunk_cache_config:
+            memcached_client:
+              addresses: dnssrvnoa+_memcached-client._tcp.loki-chunks-cache.logging.svc.cluster.local
+        query_range:
+          results_cache:
+            cache:
+              memcached_client:
+                addresses: dnssrvnoa+_memcached-client._tcp.loki-results-cache.logging.svc.cluster.local
 
     ######################################################################################################################
     # Canary
@@ -131,8 +143,6 @@ spec:
     ######################################################################################################################
     resultsCache:
       enabled: true
-      # yamllint disable-line rule:line-length
-      addresses: dnssrvnoa+_memcached-client._tcp.loki-results-cache.logging.svc.cluster.local
       # see: https://fluxcd.io/flux/components/kustomize/kustomizations/#post-build-substitution-of-numbers-and-booleans
       allocatedMemory: ${quote}${loki_results_cache_memory}${quote}
       tolerations:
@@ -140,8 +150,6 @@ spec:
         operator: Exists
     chunksCache:
       enabled: true
-      # yamllint disable-line rule:line-length
-      addresses: dnssrvnoa+_memcached-client._tcp.loki-chunks-cache.logging.svc.cluster.local
       # see: https://fluxcd.io/flux/components/kustomize/kustomizations/#post-build-substitution-of-numbers-and-booleans
       allocatedMemory: ${quote}${loki_chunks_cache_memory}${quote}
       tolerations:
