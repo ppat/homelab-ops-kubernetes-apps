@@ -13,12 +13,9 @@ spec:
       - name: namespace
         value: logging
       file: ../chainsaw/assertions/externalsecret-ready.yaml
-  - get:
-      apiVersion: v1
-      kind: ConfigMap
-      name: loki
-      namespace: logging
-      format: yaml
+  - script:
+      content: |
+        kubectl get -n logging cm loki -o yaml
   - description: Assert deployment/loki-read
     assert:
       bindings:
