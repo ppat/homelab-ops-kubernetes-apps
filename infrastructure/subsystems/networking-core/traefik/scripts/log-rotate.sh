@@ -3,6 +3,7 @@ set -e
 
 KEEP_COUNT=${LOG_ROTATION_KEEP_COUNT:-5}
 FULL_LOG_PATH="${LOG_PATH}/${LOG_FILE_NAME}"
+LOG_PARENT_DIR=$(dirname ${LOG_PATH})
 
 echo "Log rotator started. Watching ${FULL_LOG_PATH}. Will keep ${KEEP_COUNT} rotated logs."
 
@@ -42,6 +43,14 @@ while true; do
   else
     echo "Log file ${FULL_LOG_PATH} is empty or does not exist. Skipping rotation."
   fi
+  echo
+
+  echo "Cleaning up unrotated logs leftover from pods that no longer exist..."
+  while IFS= read -r -d '' file; do
+    echo "${file}"
+    rm -f "${file}"
+  done < <(find ${LOG_PARENT_DIR} -path "*/lost+found" -prune -o -mtime +2 -type f -print0)
+  echo
 
   echo "Sleeping for 4 hours..."
   sleep 14400
