@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.2.4...infra-networking-extra-v0.2.5) (2025-07-15)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* fix flux envsubst issue ([#1766](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1766)) ([748ab5d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/748ab5d281b2b35c23c01b7356f332fa8c1493b2))
+
 ## [0.2.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.2.3...infra-networking-extra-v0.2.4) (2025-07-15)
 
 
