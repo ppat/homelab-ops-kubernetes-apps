@@ -42,7 +42,10 @@ spec:
           # ingestor is expected to have scraped them by then.
           while true; do
             echo "Running $LOG_APP log cleanup...";
-            find "$LOG_PATH" -mtime +1 -type f -name '*.log*' -print -delete;
+            while IFS= read -r -d '' file; do
+              echo "${file}";
+              rm -f "${file}";
+            done < <(find "$LOG_PATH" -path "*/lost+found" -prune -o -mtime +1 -type f -name '*.log*' -print0);
             echo;
             echo "Sleeping for 4 hrs...";
             sleep 14400;

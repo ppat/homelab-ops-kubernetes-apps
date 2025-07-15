@@ -46,9 +46,10 @@ while true; do
   echo
 
   echo "Cleaning up unrotated logs leftover from pods that no longer exist..."
-  set -x
-  find ${LOG_PARENT_DIR}/traefik-* -mtime +2 -type f -print -delete;
-  set +x
+  while IFS= read -r -d '' file; do
+    echo "${file}"
+    rm -f "${file}"
+  done < <(find ${LOG_PARENT_DIR} -path "*/lost+found" -prune -o -mtime +2 -type f -print0)
   echo
 
   echo "Sleeping for 4 hours..."
