@@ -55,6 +55,9 @@ spec:
             drop:
             - ALL
           readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 5000
+          runAsGroup: 5000
         volumeMounts:
         - name: unifi-logs
           mountPath: /config/logs
