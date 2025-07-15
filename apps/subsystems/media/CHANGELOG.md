@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.26](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.25...apps-media-v0.0.26) (2025-07-15)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* fix log clean up issues ([#1758](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1758)) ([b6c2bd7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b6c2bd7d24cd9da6067b3409ad122e9bc7067abb))
+
 ## [0.0.25](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.24...apps-media-v0.0.25) (2025-07-10)
 
 
