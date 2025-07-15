@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.27](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.26...apps-media-v0.0.27) (2025-07-15)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* fix flux envsubst issue ([#1766](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1766)) ([748ab5d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/748ab5d281b2b35c23c01b7356f332fa8c1493b2))
+
 ## [0.0.26](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.25...apps-media-v0.0.26) (2025-07-15)
 
 
