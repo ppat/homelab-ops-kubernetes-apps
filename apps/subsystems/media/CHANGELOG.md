@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.28](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.27...apps-media-v0.0.28) (2025-07-17)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** update plexinc/pms-docker (1.41.8.9834-071366d65 -&gt; 1.41.9.9961-46083195d) ([#1774](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1774)) ([9d560ec](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9d560ec52ce61a6b94c12f69858a16339e0071cf))
+
 ## [0.0.27](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.26...apps-media-v0.0.27) (2025-07-15)
 
 
