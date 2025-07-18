@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: bitnami-repository
         namespace: flux-system
-      version: 3.5.7
+      version: 3.6.0
   install:
     createNamespace: false
     remediation:
