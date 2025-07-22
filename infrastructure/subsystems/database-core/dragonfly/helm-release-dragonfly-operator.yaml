@@ -28,7 +28,6 @@ spec:
     manager:
       resources:
         limits:
-          cpu: ~
           memory: 128Mi
         requests:
           cpu: 10m
@@ -36,7 +35,6 @@ spec:
     rbacProxy:
       resources:
         limits:
-          cpu: ~
           memory: 128Mi
         requests:
           cpu: 10m
@@ -47,3 +45,15 @@ spec:
     grafanaDashboard:
       enabled: true
       folder: dragonfly
+  postRenderers:
+  - kustomize:
+      patches:
+      - target:
+          kind: Deployment
+          name: dragonfly-operator
+        # yamllint disable-line rule:indentation
+        patch: |-
+          - op: remove
+            path: /spec/template/spec/containers/0/resources/limits/cpu
+          - op: remove
+            path: /spec/template/spec/containers/1/resources/limits/cpu
