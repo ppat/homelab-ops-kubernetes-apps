@@ -50,10 +50,7 @@ spec:
       patches:
       - target:
           kind: Deployment
-          name: dragonfly-operator
         # yamllint disable-line rule:indentation
         patch: |-
           - op: remove
             path: /spec/template/spec/containers/0/resources/limits/cpu
-          - op: remove
-            path: /spec/template/spec/containers/1/resources/limits/cpu
