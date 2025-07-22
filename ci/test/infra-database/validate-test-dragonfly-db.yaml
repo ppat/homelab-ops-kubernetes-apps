@@ -13,20 +13,11 @@ spec:
       - name: namespace
         value: default
       file: ../chainsaw/assertions/dragonfly-ready.yaml
-  - description: describe
-    describe:
-      apiVersion: dragonflydb.io/v1alpha1
-      kind: Dragonfly
-      name: test-dragonfly-db
-      namespace: default
   catch:
   - describe:
       apiVersion: dragonflydb.io/v1alpha1
       kind: Dragonfly
       name: test-dragonfly-db
-      namespace: default
-  - podLogs:
-      selector: app.kubernetes.io/name=test-dragonfly-db
       namespace: default
   - events:
       namespace: default
