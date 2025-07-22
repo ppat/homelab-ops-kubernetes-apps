@@ -1,0 +1,35 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-test-dragonfly-db
+spec:
+  try:
+  - description: Apply test-dragonfly-db
+    apply:
+      file: ./test-dragonfly-db.yaml
+  - description: Assert Dragonfly/test-dragonfly-db
+    assert:
+      bindings:
+      - name: name
+        value: test-dragonfly-db
+      - name: namespace
+        value: default
+      file: ../chainsaw/assertions/dragonfly-ready.yaml
+  - description: describe
+    describe:
+      apiVersion: dragonflydb.io/v1alpha1
+      kind: Dragonfly
+      name: test-dragonfly-db
+      namespace: default
+  catch:
+  - describe:
+      apiVersion: dragonflydb.io/v1alpha1
+      kind: Dragonfly
+      name: test-dragonfly-db
+      namespace: default
+  - podLogs:
+      selector: app.kubernetes.io/name=test-dragonfly-db
+      namespace: default
+  - events:
+      namespace: default

@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
 - cert-manager/
 - cloudnative-pg/
+- dragonfly/
 - external-secrets/
 - longhorn/
 - metallb/

@@ -1,0 +1,24 @@
+---
+apiVersion: dragonflydb.io/v1alpha1
+kind: Dragonfly
+metadata:
+  name: test-dragonfly-db
+  namespace: default
+spec:
+  args:
+  - --maxmemory=$(MAX_MEMORY)Mi
+  - --proactor_threads=2
+  - --cluster_mode=emulated
+  - --lock_on_hashtags
+  env:
+  - name: MAX_MEMORY
+    valueFrom:
+      resourceFieldRef:
+        resource: limits.memory
+        divisor: 1Mi
+  image: ghcr.io/dragonflydb/dragonfly:v1.31.2
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 100Mi

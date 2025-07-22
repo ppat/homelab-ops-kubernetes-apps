@@ -35,6 +35,14 @@ spec:
     use:
       template: ./validate-cloudnative-pg.yaml
 
-  - name: Validate test-db
+  - name: Validate dragonfly-operator
     use:
-      template: ./validate-test-db.yaml
+      template: ./validate-dragonfly-operator.yaml
+
+  - name: Validate test-postgres-db
+    use:
+      template: ./validate-test-postgres-db.yaml
+
+  - name: Validate test-dragonfly-db
+    use:
+      template: ./validate-test-dragonfly-db.yaml

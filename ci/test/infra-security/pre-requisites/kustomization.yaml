@@ -7,5 +7,15 @@ resources:
 - ../../infra-database/infra-database-core.yaml
 - fake-secret-store.yaml
 
+patches:
+# yamllint disable-line rule:indentation
+- patch: |-
+    - op: replace
+      path: /spec/path
+      value: ./infrastructure/subsystems/database-core/cloudnative-pg
+  target:
+    kind: Kustomization
+    name: infra-database-core
+
 sortOptions:
   order: fifo
