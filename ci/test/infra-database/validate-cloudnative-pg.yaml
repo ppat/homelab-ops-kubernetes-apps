@@ -33,7 +33,7 @@ spec:
       name: cloudnative-pg
       namespace: cnpg-system
   - podLogs:
-      name: cloudnative-pg
+      selector: app.kubernetes.io/name=cloudnative-pg
       namespace: cnpg-system
   - events:
       namespace: cnpg-system

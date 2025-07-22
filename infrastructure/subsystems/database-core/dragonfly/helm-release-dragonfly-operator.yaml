@@ -1,0 +1,56 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: dragonfly-operator-release
+  namespace: dragonfly-system
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: dragonfly-operator
+    namespace: flux-system
+  install:
+    crds: CreateReplace
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 15m0s
+  releaseName: dragonfly-operator
+  targetNamespace: dragonfly-system
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+  values:
+    manager:
+      resources:
+        limits:
+          memory: 128Mi
+        requests:
+          cpu: 10m
+          memory: 64Mi
+    rbacProxy:
+      resources:
+        limits:
+          memory: 128Mi
+        requests:
+          cpu: 10m
+          memory: 64Mi
+    serviceMonitor:
+      enabled: true
+
+    grafanaDashboard:
+      enabled: true
+      folder: dragonfly
+  postRenderers:
+  - kustomize:
+      patches:
+      - target:
+          kind: Deployment
+        # yamllint disable-line rule:indentation
+        patch: |-
+          - op: remove
+            path: /spec/template/spec/containers/0/resources/limits/cpu

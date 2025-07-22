@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dragonfly-auth-secret
+  namespace: default
+stringData:
+  password: example-password-here

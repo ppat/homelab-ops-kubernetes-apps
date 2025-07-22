@@ -30,6 +30,14 @@ patches:
   target:
     kind: Kustomization
     name: infra-security-core
+# yamllint disable-line rule:indentation
+- patch: |-
+    - op: replace
+      path: /spec/path
+      value: ./infrastructure/subsystems/database-core/cloudnative-pg
+  target:
+    kind: Kustomization
+    name: infra-database-core
 
 sortOptions:
   order: fifo
