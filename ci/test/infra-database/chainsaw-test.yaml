@@ -39,6 +39,21 @@ spec:
     use:
       template: ./validate-dragonfly-operator.yaml
 
+  - name: Apply test resources
+    try:
+    - description: Apply test-postgres-db
+      apply:
+        file: ./test-resources/test-postgres-db.yaml
+    - description: Apply test-dragonfly-db-creds
+      apply:
+        file: ./test-resources/test-dragonfly-db-creds.yaml
+    - description: Apply test-dragonfly-db
+      apply:
+        file: ./test-resources/test-dragonfly-db.yaml
+    catch:
+    - events:
+        namespace: default
+
   - name: Validate test-postgres-db
     use:
       template: ./validate-test-postgres-db.yaml

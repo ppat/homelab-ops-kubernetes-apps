@@ -5,9 +5,6 @@ metadata:
   name: validate-test-postgres-db
 spec:
   try:
-  - description: Apply test-postgres-db
-    apply:
-      file: ./test-postgres-db.yaml
   - description: Assert cluster.postgresql.cnpg.io/test-postgres-db
     assert:
       bindings:
@@ -22,7 +19,7 @@ spec:
         apiVersion: v1
         kind: Secret
         metadata:
-          name: test-postgres-db
+          name: test-postgres-db-app
           namespace: default
         data:
           (length(dbname) > `0`): true

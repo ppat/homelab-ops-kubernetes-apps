@@ -28,6 +28,7 @@ spec:
     manager:
       resources:
         limits:
+          cpu: ~
           memory: 128Mi
         requests:
           cpu: 10m
@@ -35,6 +36,7 @@ spec:
     rbacProxy:
       resources:
         limits:
+          cpu: ~
           memory: 128Mi
         requests:
           cpu: 10m
