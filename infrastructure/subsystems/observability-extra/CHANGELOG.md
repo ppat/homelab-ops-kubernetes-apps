@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.15](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.1.14...infra-observability-extra-v0.1.15) (2025-07-23)
+
+
+### ✨ Features
+
+* **infra-observability-extra:** update balabit/syslog-ng (4.8.3 -&gt; 4.9.0) ([#1797](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1797)) ([745839b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/745839b8facbed9bcb56dcdcf6c6ee2a11ae4311))
+* **infra-observability-extra:** update prometheus-snmp-exporter (9.5.0 -&gt; 9.6.0) ([#1798](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1798)) ([c1bd82e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c1bd82efd74d72fce3941e113596e3881f5247a0))
+
 ## [0.1.14](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.1.13...infra-observability-extra-v0.1.14) (2025-07-18)
 
 
