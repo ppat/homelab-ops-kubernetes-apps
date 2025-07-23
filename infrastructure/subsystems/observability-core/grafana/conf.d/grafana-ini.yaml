@@ -14,9 +14,8 @@ grafana.ini:
   news:
     news_feed_enabled: false
   plugins:
-    allow_loading_unsigned_plugins: natel-discrete-panel,pr0ps-trackmap-panel
+    allow_loading_unsigned_plugins: pr0ps-trackmap-panel
   security:
     allow_embedding: true
-    angular_support_enabled: true
   server:
     root_url: https://grafana.${domain_name}
