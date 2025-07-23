@@ -82,9 +82,6 @@ spec:
     plugins:
     - grafana-clock-panel
     - grafana-lokiexplore-app
-    - grafana-piechart-panel
-    - grafana-worldmap-panel
-    - natel-discrete-panel
     - pr0ps-trackmap-panel
     - vonage-status-panel
 
