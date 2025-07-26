@@ -8,4 +8,4 @@ spec:
   interval: 1h
   url: oci://ghcr.io/dragonflydb/dragonfly-operator/helm/dragonfly-operator
   ref:
-    tag: v1.1.11
+    tag: v1.1.11@sha256:3e2154dec85b1d1d8e806085ca1ae9ef9a3befc573390d3564aac6cd1f0627c7
