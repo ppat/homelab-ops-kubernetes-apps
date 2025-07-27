@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-core-v0.0.8...infra-kubernetes-core-v0.0.9) (2025-07-27)
+
+
+### ✨ Features
+
+* **infra-kubernetes-core:** update vpa (4.7.2 -&gt; 4.8.0) ([#1815](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1815)) ([e66eb49](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e66eb496962220b4c9741b5d3bb8a138dc4b4f16))
+
 ## [0.0.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-core-v0.0.7...infra-kubernetes-core-v0.0.8) (2025-07-11)
 
 
