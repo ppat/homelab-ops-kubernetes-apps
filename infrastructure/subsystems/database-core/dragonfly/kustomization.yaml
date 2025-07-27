@@ -4,7 +4,7 @@ kind: Kustomization
 
 resources:
 - namespace.yaml
-- helm-repository-dragonfly-operator.yaml
+- oci-repository-dragonfly-operator.yaml
 - helm-release-dragonfly-operator.yaml
 
 commonAnnotations:
