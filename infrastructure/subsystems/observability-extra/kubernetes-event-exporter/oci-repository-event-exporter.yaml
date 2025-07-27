@@ -1,0 +1,11 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: kubernetes-event-exporter-repository
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: oci://registry-1.docker.io/bitnamicharts/kubernetes-event-exporter
+  ref:
+    tag: 3.6.0

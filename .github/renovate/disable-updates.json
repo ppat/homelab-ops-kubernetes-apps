@@ -18,22 +18,6 @@
       ]
     },
     {
-      "description": "renovate bug that attempts to update a flux helmrelease for OCI repositories",
-      "enabled": false,
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchUpdateTypes": [
-        "digest",
-        "pin",
-        "pinDigest"
-      ],
-      "matchPackageNames": [
-        "bitnamicharts/kubernetes-event-exporter",
-        "registry-1.docker.io/bitnamicharts/kubernetes-event-exporter"
-      ]
-    },
-    {
       "description": "disable minio updates due to OSS unfriendly practices until a suitable replacement is found",
       "enabled": false,
       "matchDatasources": [
