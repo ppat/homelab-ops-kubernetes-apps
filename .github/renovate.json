@@ -21,7 +21,6 @@
     "helpers:pinGitHubActionDigests",
     "mergeConfidence:age-confidence-badges",
     "mergeConfidence:all-badges",
-    "security:openssf-scorecard",
     "workarounds:bitnamiDockerImageVersioning",
     "workarounds:k3sKubernetesVersioning",
     "github>ppat/renovate-presets#v0.0.2",
@@ -44,6 +43,7 @@
     "managerFilePatterns": [
       "/apps/.+\\.yaml$/",
       "/ci/.+\\.yaml$/",
+      "/components/.+\\.yaml$/",
       "/infrastructure/.+\\.yaml$/"
     ]
   },
@@ -52,6 +52,7 @@
     "managerFilePatterns": [
       "/apps/.+\\.yaml$/",
       "/ci/.+\\.yaml$/",
+      "/components/.+\\.yaml$/",
       "/infrastructure/.+\\.yaml$/"
     ],
     "ignorePaths": [

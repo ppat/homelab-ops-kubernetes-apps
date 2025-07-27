@@ -58,6 +58,16 @@
       "matchPackageNames": [
         "pihole/pihole"
       ]
+    },
+    {
+      "description": "disable pin digest on flux manager (as it tries to suffix digest to oci repository resource tags which flux rejects)",
+      "enabled": false,
+      "matchManagers": [
+        "flux"
+      ],
+      "matchUpdateTypes": [
+        "pinDigest"
+      ]
     }
   ]
 }
