@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.19](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.2.18...apps-ai-v0.2.19) (2025-07-27)
+
+
+### ✨ Features
+
+* **apps-ai:** update open-webui (6.23.0 -&gt; 6.24.0) ([#1796](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1796)) ([a82ea0c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a82ea0cb69a379f5bbd433bdf3a1ab8b7e9b4881))
+* **apps-ai:** update open-webui (6.24.0 -&gt; 6.26.0) ([#1823](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1823)) ([8cafcb5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8cafcb5597d61a55a3f3efcbc3fee6cf9164f185))
+
 ## [0.2.18](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.2.17...apps-ai-v0.2.18) (2025-07-17)
 
 

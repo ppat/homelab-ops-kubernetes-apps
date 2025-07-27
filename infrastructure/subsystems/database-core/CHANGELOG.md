@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.0.9...infra-database-core-v0.0.10) (2025-07-27)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-database-core:** fix typo in filename for dragonfly-operator ([#1825](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1825)) ([76f12df](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/76f12df79f615caa475defd7e01d35ee209e511b))
+
 ## [0.0.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.0.8...infra-database-core-v0.0.9) (2025-07-22)
 
 
