@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   test-apps-misc:
-    uses: ppat/github-workflows/.github/workflows/chainsaw-test.yaml@chainsaw-test
+    uses: ppat/github-workflows/.github/workflows/chainsaw-test.yaml@v1.1.0
     with:
       git_ref: ${{ github.head_ref || github.ref }}
       repository: ${{ github.repository }}
