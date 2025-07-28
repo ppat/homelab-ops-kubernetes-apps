@@ -17,49 +17,27 @@ permissions:
 
 jobs:
   detect-changes:
-    outputs:
-      actions_any_changed: ${{ steps.changed-files-yaml.outputs.actions_any_changed }}
-      actions_all_changed_files: ${{ steps.changed-files-yaml.outputs.actions_all_changed_files}}
-      kubernetes_any_changed: ${{ steps.changed-files-yaml.outputs.kubernetes_any_changed }}
-      kubernetes_all_changed_files: ${{ steps.changed-files-yaml.outputs.kubernetes_all_changed_files}}
-      markdown_any_changed: ${{ steps.changed-files-yaml.outputs.markdown_any_changed }}
-      markdown_all_changed_files: ${{ steps.changed-files-yaml.outputs.markdown_all_changed_files}}
-      renovate_any_changed: ${{ steps.changed-files-yaml.outputs.renovate_any_changed }}
-      renovate_all_changed_files: ${{ steps.changed-files-yaml.outputs.renovate_all_changed_files}}
-      shellscripts_any_changed: ${{ steps.changed-files-yaml.outputs.shellscripts_any_changed }}
-      shellscripts_all_changed_files: ${{ steps.changed-files-yaml.outputs.shellscripts_all_changed_files}}
-      yaml_any_changed: ${{ steps.changed-files-yaml.outputs.yaml_any_changed }}
-      yaml_all_changed_files: ${{ steps.changed-files-yaml.outputs.yaml_all_changed_files}}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-    - name: Checkout
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      with:
-        fetch-depth: 1
-
-    - name: Determine what files types have changed
-      id: changed-files-yaml
-      uses: tj-actions/changed-files@2f7c5bfce28377bc069a65ba478de0a74aa0ca32 # v46
-      with:
-        files_yaml: |
-          actions:
-          - .github/workflows/**
-          kubernetes:
-          - 'apps/**/*.yaml'
-          - 'ci/**/*.yaml'
-          - 'components/**/*.yaml'
-          - 'infrastructure/**/*.yaml'
-          markdown:
-          - '**.md'
-          - '!**/CHANGELOG.md'
-          renovate:
-          - .github/renovate.json
-          - .github/renovate/**
-          shellscripts:
-          - '**.sh'
-          yaml:
-          - '**.yaml'
+    uses: ppat/github-workflows/.github/workflows/detect-changed-files.yaml@41713cd533ed0760990fff6edf1d7f64ea24183b # v1.0.0
+    with:
+      # yamllint disable-line rule:indentation
+      files_yaml: |
+        actions:
+        - .github/workflows/**
+        kubernetes:
+        - 'apps/**/*.yaml'
+        - 'ci/**/*.yaml'
+        - 'components/**/*.yaml'
+        - 'infrastructure/**/*.yaml'
+        markdown:
+        - '**.md'
+        - '!**/CHANGELOG.md'
+        renovate:
+        - .github/renovate.json
+        - .github/renovate/**
+        shellscripts:
+        - '**.sh'
+        yaml:
+        - '**.yaml'
 
   commit-messages:
     if: ${{ github.event_name == 'pull_request' }}
@@ -72,15 +50,15 @@ jobs:
 
   github-actions:
     needs: [detect-changes]
-    if: ${{ github.event_name != 'pull_request' || needs.detect-changes.outputs.actions_any_changed == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).actions_any_changed == 'true' }}
     uses: ppat/github-workflows/.github/workflows/lint-github-actions.yaml@41713cd533ed0760990fff6edf1d7f64ea24183b # v1.0.0
     with:
       git_ref: ${{ github.head_ref || github.ref }}
-      files: ${{ github.event_name != 'pull_request' && 'ALL' || needs.detect-changes.outputs.actions_all_changed_files }}
+      files: ${{ github.event_name != 'pull_request' && 'ALL' || fromJSON(needs.detect-changes.outputs.results).actions_all_changed_files }}
 
   kubernetes-manifests:
     needs: [detect-changes]
-    if: ${{ github.event_name != 'pull_request' || needs.detect-changes.outputs.kubernetes_any_changed == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).kubernetes_any_changed == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -94,7 +72,7 @@ jobs:
       shell: bash
       # yamllint disable-line rule:indentation
       run: |
-        changed_files="${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.kubernetes_all_changed_files || '' }}"
+        changed_files="${{ github.event_name == 'pull_request' && fromJSON(needs.detect-changes.outputs.results).kubernetes_all_changed_files || '' }}"
         if [[ -n "$changed_files" ]]; then
           # Convert space-delimited string to a JSON array string
           echo "$changed_files" | tr ' ' '\n' | jq -R . | jq -s -c . > /tmp/files.json
@@ -116,11 +94,11 @@ jobs:
 
   markdown:
     needs: [detect-changes]
-    if: ${{ github.event_name != 'pull_request' || needs.detect-changes.outputs.markdown_any_changed == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).markdown_any_changed == 'true' }}
     uses: ppat/github-workflows/.github/workflows/lint-markdown.yaml@41713cd533ed0760990fff6edf1d7f64ea24183b # v1.0.0
     with:
       git_ref: ${{ github.head_ref || github.ref }}
-      files: ${{ github.event_name != 'pull_request' && 'ALL' || needs.detect-changes.outputs.markdown_all_changed_files }}
+      files: ${{ github.event_name != 'pull_request' && 'ALL' || fromJSON(needs.detect-changes.outputs.results).markdown_all_changed_files }}
 
   pre-commit:
     uses: ppat/github-workflows/.github/workflows/lint-pre-commit.yaml@41713cd533ed0760990fff6edf1d7f64ea24183b # v1.0.0
@@ -129,24 +107,24 @@ jobs:
 
   renovate-config-check:
     needs: [detect-changes]
-    if: ${{ github.event_name != 'pull_request' || needs.detect-changes.outputs.renovate_any_changed == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).renovate_any_changed == 'true' }}
     uses: ppat/github-workflows/.github/workflows/lint-renovate-config-check.yaml@41713cd533ed0760990fff6edf1d7f64ea24183b # v1.0.0
     with:
       git_ref: ${{ github.head_ref || github.ref }}
-      files: ${{ github.event_name != 'pull_request' && 'ALL' || needs.detect-changes.outputs.renovate_all_changed_files }}
+      files: ${{ github.event_name != 'pull_request' && 'ALL' || fromJSON(needs.detect-changes.outputs.results).renovate_all_changed_files }}
 
   shellcheck:
     needs: [detect-changes]
-    if: ${{ github.event_name != 'pull_request' || needs.detect-changes.outputs.shellscripts_any_changed == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).shellscripts_any_changed == 'true' }}
     uses: ppat/github-workflows/.github/workflows/lint-shellcheck.yaml@41713cd533ed0760990fff6edf1d7f64ea24183b # v1.0.0
     with:
       git_ref: ${{ github.head_ref || github.ref }}
-      files: ${{ github.event_name != 'pull_request' && 'ALL' || needs.detect-changes.outputs.shellscripts_all_changed_files }}
+      files: ${{ github.event_name != 'pull_request' && 'ALL' || fromJSON(needs.detect-changes.outputs.results).shellscripts_all_changed_files }}
 
   yaml:
     needs: [detect-changes]
-    if: ${{ github.event_name != 'pull_request' || needs.detect-changes.outputs.yaml_any_changed == 'true' }}
+    if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).yaml_any_changed == 'true' }}
     uses: ppat/github-workflows/.github/workflows/lint-yaml.yaml@41713cd533ed0760990fff6edf1d7f64ea24183b # v1.0.0
     with:
       git_ref: ${{ github.head_ref || github.ref }}
-      files: ${{ github.event_name != 'pull_request' && 'ALL' || needs.detect-changes.outputs.yaml_all_changed_files }}
+      files: ${{ github.event_name != 'pull_request' && 'ALL' || fromJSON(needs.detect-changes.outputs.results).yaml_all_changed_files }}
