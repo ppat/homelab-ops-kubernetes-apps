@@ -20,7 +20,7 @@ permissions: {}
 
 jobs:
   release:
-    uses: ppat/github-workflows/.github/workflows/release.yaml@074aab467dde65d49eeb370edb108689998f4e0f # v1.1.0
+    uses: ppat/github-workflows/.github/workflows/release.yaml@cb285d6ad5b04e96daba7a39cce99d1235415523 # v1.1.1
     with:
       repository: ${{ github.repository }}
     secrets:
