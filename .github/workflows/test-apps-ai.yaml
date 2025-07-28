@@ -21,7 +21,10 @@ permissions:
 
 jobs:
   test-apps-ai:
-    uses: ./.github/workflows/test-kubernetes-resources-workflow.yaml
+    uses: ppat/github-workflows/.github/workflows/chainsaw-test.yaml@v1.1.0
     with:
+      git_ref: ${{ github.head_ref || github.ref }}
+      repository: ${{ github.repository }}
       test_path: ./ci/test/apps-ai
-      kind_cluster_config: kind-cluster-single-node.yaml
+      chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
+      kind_config: .github/kind-cluster-single-node.yaml
