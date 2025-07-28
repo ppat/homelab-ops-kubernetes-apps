@@ -38,6 +38,7 @@ jobs:
         - '**.sh'
         yaml:
         - '**.yaml'
+      git_ref: ${{ github.head_ref || github.ref }}
 
   commit-messages:
     if: ${{ github.event_name == 'pull_request' }}
