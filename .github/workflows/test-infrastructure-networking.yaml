@@ -6,7 +6,6 @@ on:
   pull_request:
     paths:
     - '.github/workflows/test-infrastructure-networking.yaml'
-    - '.github/workflows/test-kubernetes-resources-workflow.yaml'
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/infra-networking/**'
     - 'infrastructure/subsystems/networking-core/**'
@@ -24,7 +23,10 @@ permissions:
 
 jobs:
   test-infrastructure-networking:
-    uses: ./.github/workflows/test-kubernetes-resources-workflow.yaml
+    uses: ppat/github-workflows/.github/workflows/chainsaw-test.yaml@chainsaw-test
     with:
+      git_ref: ${{ github.head_ref || github.ref }}
+      repository: ${{ github.repository }}
       test_path: ./ci/test/infra-networking
-      kind_cluster_config: kind-cluster-single-node.yaml
+      chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
+      kind_config: .github/kind-cluster-single-node.yaml
