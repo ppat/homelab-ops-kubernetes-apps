@@ -4,7 +4,7 @@ kind: Kustomization
 
 resources:
 # renovate-gh-release-asset: datasource=github-releases depName=longhorn/longhorn
-- https://github.com/longhorn/longhorn/releases/download/v1.9.0/longhorn.yaml
+- https://github.com/longhorn/longhorn/releases/download/v1.9.1/longhorn.yaml
 
 ###########################################################
 # allow these CRDs to be adopted by Flux HelmRelease
