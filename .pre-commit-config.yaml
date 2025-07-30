@@ -22,7 +22,7 @@ repos:
   - id: trailing-whitespace
     exclude: ^\.static/images/.*$
 - repo: https://github.com/sirosen/texthooks
-  rev: 0.6.8
+  rev: 0.7.0
   hooks:
   - id: fix-smartquotes
     exclude: ^\.static/images/.*$
@@ -56,7 +56,7 @@ repos:
     - 'commitlint-plugin-function-rules@4.0.1'
     args: ['--verbose']
 - repo: https://github.com/ppat/validate-kubernetes-manifests
-  rev: v0.1.1
+  rev: v0.1.2
   hooks:
   - id: validate-k8s
     args:
