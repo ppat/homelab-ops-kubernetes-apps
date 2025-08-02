@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.7.6...infra-networking-core-v0.7.7) (2025-08-02)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update digest busybox (f85340b -&gt; f9a104f) ([#1840](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1840)) ([696ccc6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/696ccc63852f1511b4e60155257fbb594eeb49f3))
+
 ## [0.7.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.7.5...infra-networking-core-v0.7.6) (2025-07-27)
 
 
