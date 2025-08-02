@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.20](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.0.19...infra-storage-core-v0.0.20) (2025-08-02)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** update longhorn (1.9.0 -&gt; 1.9.1) ([#1853](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1853)) ([b655fa8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b655fa80be0f377600252a12c9534250130f3905))
+
 ## [0.0.19](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.0.18...infra-storage-core-v0.0.19) (2025-07-09)
 
 
