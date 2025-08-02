@@ -99,7 +99,7 @@ spec:
           value: ""
         - name: MONGO_AUTHSOURCE
           value: ""
-        image: ghcr.io/linuxserver/unifi-network-application:9.1.120@sha256:304bb6bd0005861527719ef4a62cb1b756a64db3a800a0100680060f21a2c29b
+        image: ghcr.io/linuxserver/unifi-network-application:9.3.45@sha256:ee536899e67aaaf53e310cf3baa0c74293170902514c216f967795df47a68626
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
