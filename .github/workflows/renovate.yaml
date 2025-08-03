@@ -23,9 +23,8 @@ jobs:
       dry_run: "${{ github.event_name	== 'pull_request' }}"
       git_ref: ${{ github.head_ref || github.ref }}
       log_level: debug
-      repository: ${{ github.repository }}
     secrets:
-      renovate_app_id: ${{ secrets.RENOVATE_APP_ID }}
-      renovate_app_private_key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
+      app_id: ${{ secrets.RENOVATE_APP_ID }}
+      app_private_key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
       dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
       dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
