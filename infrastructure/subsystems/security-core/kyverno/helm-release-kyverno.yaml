@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: kyverno-repository
         namespace: flux-system
-      version: 3.4.4
+      version: 3.5.0
   install:
     createNamespace: false
     remediation:
