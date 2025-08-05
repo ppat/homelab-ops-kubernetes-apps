@@ -91,7 +91,6 @@ jobs:
         kubeconform-flags: '-skip=Secret,IPAddressPool'
         env-file: 'ci/validation/.env'
         base-kustomization-file: 'ci/validation/kustomization.yaml'
-        debug: true
 
   markdown:
     needs: [detect-changes]
