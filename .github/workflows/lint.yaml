@@ -79,23 +79,33 @@ jobs:
         if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
           if [[ "${K8S_MANIFESTS_CHANGED}" == "true" ]]; then
             if [[ -n "$CHANGED_K8S_MANIFESTS" ]]; then
+              echo "Performing linting on k8s manifests that have changed..."
               # Convert space-delimited string to a JSON array string
               echo "$CHANGED_K8S_MANIFESTS" | tr ' ' '\n' | jq -R . | jq -s -c . > /tmp/files.json
               echo "files_json=$(cat /tmp/files.json)" >> $GITHUB_OUTPUT
+              echo "validate_k8s_manifests=true" >> $GITHUB_OUTPUT
             else
+              echo "Skipping linting as no k8s manifests have changed..."
               echo "files_json=[]" >> $GITHUB_OUTPUT
+              echo "validate_k8s_manifests=false" >> $GITHUB_OUTPUT
             fi
           elif [[ "${GITHUB_ACTIONS_CHANGED}" == "true" ]]; then
-            echo 'files_json=["."]' >> $GITHUB_OUTPUT
-          else
+            echo "Performing linting on k8s manifests as github actions have changed (i.e. possible updates to actios)..."
             echo "files_json=[]" >> $GITHUB_OUTPUT
+            echo "validate_k8s_manifests=true" >> $GITHUB_OUTPUT
+          else
+            echo "Skipping linting as neither k8s manifests nor github actions have changed..."
+            echo "files_json=[]" >> $GITHUB_OUTPUT
+            echo "validate_k8s_manifests=false" >> $GITHUB_OUTPUT
           fi
         else
-          echo 'files_json=["."]' >> $GITHUB_OUTPUT
+          echo "Performing k8s manifests validation on ${GITHUB_EVENT_NAME}..."
+          echo "files_json=[]" >> $GITHUB_OUTPUT
+          echo "validate_k8s_manifests=true" >> $GITHUB_OUTPUT
         fi
 
     - name: Validate Kubernetes Manifests
-      if: ${{ steps.select-files.outputs.files_json != '[]' }}
+      if: ${{ steps.select-files.outputs.validate_k8s_manifests == 'true' }}
       uses: ppat/validate-kubernetes-manifests@c7e9801d6d66f2a833c7830be52b19387bdeb9dc # v0.1.4
       with:
         files: ${{ steps.select-files.outputs.files_json }}
