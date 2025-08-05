@@ -90,7 +90,7 @@ jobs:
               echo "validate_k8s_manifests=false" >> $GITHUB_OUTPUT
             fi
           elif [[ "${GITHUB_ACTIONS_CHANGED}" == "true" ]]; then
-            echo "Performing linting on k8s manifests as github actions have changed (i.e. possible updates to actios)..."
+            echo "Performing linting on k8s manifests as github actions have changed (i.e. possible updates to actions)..."
             echo "files_json=[]" >> $GITHUB_OUTPUT
             echo "validate_k8s_manifests=true" >> $GITHUB_OUTPUT
           else
