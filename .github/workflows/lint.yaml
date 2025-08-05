@@ -86,12 +86,12 @@ jobs:
               echo "files_json=[]" >> $GITHUB_OUTPUT
             fi
           elif [[ "${GITHUB_ACTIONS_CHANGED}" == "true" ]]; then
-            echo "files_json=['.']" >> $GITHUB_OUTPUT
+            echo 'files_json=["."]' >> $GITHUB_OUTPUT
           else
             echo "files_json=[]" >> $GITHUB_OUTPUT
           fi
         else
-          echo "files_json=['.']" >> $GITHUB_OUTPUT
+          echo 'files_json=["."]' >> $GITHUB_OUTPUT
         fi
 
     - name: Validate Kubernetes Manifests
