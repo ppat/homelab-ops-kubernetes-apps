@@ -59,7 +59,6 @@ jobs:
 
   kubernetes-manifests:
     needs: [detect-changes]
-    if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).kubernetes_any_changed == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -68,24 +67,48 @@ jobs:
       with:
         fetch-depth: 1
 
-    - name: Format file list for validation
-      id: format-files
+    - name: Select files for validation
+      id: select-files
+      env:
+        K8S_MANIFESTS_CHANGED: ${{ fromJSON(needs.detect-changes.outputs.results).kubernetes_any_changed == 'true' }}
+        GITHUB_ACTIONS_CHANGED: ${{ fromJSON(needs.detect-changes.outputs.results).actions_any_changed == 'true' }}
+        CHANGED_K8S_MANIFESTS: ${{ github.event_name == 'pull_request' && fromJSON(needs.detect-changes.outputs.results).kubernetes_all_changed_files || '' }}
       shell: bash
       # yamllint disable-line rule:indentation
       run: |
-        changed_files="${{ github.event_name == 'pull_request' && fromJSON(needs.detect-changes.outputs.results).kubernetes_all_changed_files || '' }}"
-        if [[ -n "$changed_files" ]]; then
-          # Convert space-delimited string to a JSON array string
-          echo "$changed_files" | tr ' ' '\n' | jq -R . | jq -s -c . > /tmp/files.json
-          echo "files_json=$(cat /tmp/files.json)" >> $GITHUB_OUTPUT
+        if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+          if [[ "${K8S_MANIFESTS_CHANGED}" == "true" ]]; then
+            if [[ -n "$CHANGED_K8S_MANIFESTS" ]]; then
+              echo "Performing linting on k8s manifests that have changed..."
+              # Convert space-delimited string to a JSON array string
+              echo "$CHANGED_K8S_MANIFESTS" | tr ' ' '\n' | jq -R . | jq -s -c . > /tmp/files.json
+              echo "files_json=$(cat /tmp/files.json)" >> $GITHUB_OUTPUT
+              echo "validate_k8s_manifests=true" >> $GITHUB_OUTPUT
+            else
+              echo "Skipping linting as no k8s manifests have changed..."
+              echo "files_json=[]" >> $GITHUB_OUTPUT
+              echo "validate_k8s_manifests=false" >> $GITHUB_OUTPUT
+            fi
+          elif [[ "${GITHUB_ACTIONS_CHANGED}" == "true" ]]; then
+            echo "Performing linting on k8s manifests as github actions have changed (i.e. possible updates to actions)..."
+            echo "files_json=[]" >> $GITHUB_OUTPUT
+            echo "validate_k8s_manifests=true" >> $GITHUB_OUTPUT
+          else
+            echo "Skipping linting as neither k8s manifests nor github actions have changed..."
+            echo "files_json=[]" >> $GITHUB_OUTPUT
+            echo "validate_k8s_manifests=false" >> $GITHUB_OUTPUT
+          fi
         else
+          echo "Performing k8s manifests validation on ${GITHUB_EVENT_NAME}..."
           echo "files_json=[]" >> $GITHUB_OUTPUT
+          echo "validate_k8s_manifests=true" >> $GITHUB_OUTPUT
         fi
 
     - name: Validate Kubernetes Manifests
+      if: ${{ steps.select-files.outputs.validate_k8s_manifests == 'true' }}
       uses: ppat/validate-kubernetes-manifests@c7e9801d6d66f2a833c7830be52b19387bdeb9dc # v0.1.4
       with:
-        files: ${{ steps.format-files.outputs.files_json }}
+        files: ${{ steps.select-files.outputs.files_json }}
         pkg-include: '["apps/*","infrastructure/*", "ci/test/*"]'
         pkg-exclude: '["components/*",".archive/*"]'
         kubeconform-flags: '-skip=Secret,IPAddressPool'
