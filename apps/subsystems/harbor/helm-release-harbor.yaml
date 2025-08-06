@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: harbor-repository
         namespace: flux-system
-      version: 1.17.1
+      version: 1.17.2
   install:
     createNamespace: false
     remediation:
