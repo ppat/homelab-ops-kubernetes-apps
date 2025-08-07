@@ -17,5 +17,6 @@
   "infrastructure/subsystems/observability-extra": "0.1.17",
   "infrastructure/subsystems/security-core": "0.0.33",
   "infrastructure/subsystems/security-extra": "0.1.12",
-  "infrastructure/subsystems/storage-core": "0.0.20"
+  "infrastructure/subsystems/storage-core": "0.0.20",
+  "apps/subsystems/downloaders": "0.0.1"
 }
