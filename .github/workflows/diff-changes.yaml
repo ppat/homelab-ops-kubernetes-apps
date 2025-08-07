@@ -55,7 +55,7 @@ jobs:
         resource_type: ${{ matrix.resource }}
         sources: "test-source=./"
 
-    - name: Add PR comment w/ diff
+    - name: Comment PR w/ diff
       uses: ppat/homelab-ops-actions/actions/comment-on-pr@flux-diff
       if: ${{ steps.flux-diff.outputs.diff != '' }}
       continue-on-error: true
