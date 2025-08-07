@@ -45,13 +45,24 @@ jobs:
         ref: "${{ github.event.repository.default_branch }}"
 
     - name: Flux Diff
+      id: flux-diff
       uses: ppat/homelab-ops-actions/actions/flux-diff@flux-diff
       with:
         log_level: DEBUG
-        message_id: "${{ github.event.pull_request.number }}/${{ matrix.resource }}"
         other_params: ${{ matrix.resource == 'helmrelease' && '--api-versions monitoring.coreos.com/v1' || '' }}
         path_after: after/ci/test
         path_before: before/ci/test
         resource_type: ${{ matrix.resource }}
         sources: "test-source=./"
+
+    - name: Add PR comment w/ diff
+      uses: ppat/homelab-ops-actions/actions/comment-on-pr@flux-diff
+      if: ${{ steps.flux-diff.outputs.diff != '' }}
+      continue-on-error: true
+      with:
+        message: |
+          `````diff
+          ${{ steps.flux-diff.outputs.diff }}
+          `````
+        message_id: "${{ github.event.pull_request.number }}/${{ matrix.resource }}"
         token: ${{ secrets.GITHUB_TOKEN }}
