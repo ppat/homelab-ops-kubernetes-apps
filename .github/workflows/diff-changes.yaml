@@ -44,41 +44,14 @@ jobs:
         persist-credentials: false
         ref: "${{ github.event.repository.default_branch }}"
 
-    - name: Run flux-local diff
-      uses: docker://ghcr.io/allenporter/flux-local:v7.5.4@sha256:72dbdeabca1eb4d1a053c78dfa0d1d8e2a4c4aee2c8d3938db1a382d22b0a6f9
+    - name: Flux Diff
+      uses: ppat/homelab-ops-actions/actions/flux-diff@flux-diff
       with:
-        args: >-
-          --log-level DEBUG
-          diff ${{ matrix.resource }}
-          --unified 6
-          --path /github/workspace/after/ci/test
-          --path-orig /github/workspace/before/ci/test
-          --skip-crds
-          --skip-secrets
-          --strip-attrs "helm.sh/chart,checksum/config,app.kubernetes.io/version,chart"
-          --limit-bytes 10000
-          --all-namespaces
-          --sources "test-source=./"
-          --output-file diff.patch
-          ${{ matrix.resource == 'helmrelease' && '--api-versions monitoring.coreos.com/v1' || '' }}
-
-    - name: Generate Diff
-      id: diff
-      run: |
-        echo 'diff<<EOF' >> $GITHUB_OUTPUT
-        cat diff.patch >> $GITHUB_OUTPUT
-        echo 'EOF' >> $GITHUB_OUTPUT
-        cat diff.patch
-
-    - name: Add PR comment w/ diff
-      uses: mshick/add-pr-comment@b8f338c590a895d50bcbfa6c5859251edc8952fc # v2
-      if: ${{ steps.diff.outputs.diff != '' }}
-      continue-on-error: true
-      with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        message-id: "${{ github.event.pull_request.number }}/${{ matrix.resource }}"
-        message-failure: Unable to post ${{ matrix.resource }} diff
-        message: |
-          `````diff
-          ${{ steps.diff.outputs.diff }}
-          `````
+        log_level: DEBUG
+        message_id: "${{ github.event.pull_request.number }}/${{ matrix.resource }}"
+        other_params: ${{ matrix.resource == 'helmrelease' && '--api-versions monitoring.coreos.com/v1' || '' }}
+        path_after: after/ci/test
+        path_before: before/ci/test
+        resource_type: ${{ matrix.resource }}
+        sources: "test-source=./"
+        token: ${{ secrets.GITHUB_TOKEN }}
