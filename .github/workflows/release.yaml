@@ -8,6 +8,7 @@ on:
     - main
     paths:
     - 'apps/**'
+    - 'components/**'
     - 'infrastructure/**'
     - '.release-please-manifest.json'
     - 'release-please-config.json'
