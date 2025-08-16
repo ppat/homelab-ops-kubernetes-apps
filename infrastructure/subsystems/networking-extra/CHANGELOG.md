@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.2.8...infra-networking-extra-v0.2.9) (2025-08-16)
+
+
+### ✨ Features
+
+* **infra-networking-extra:** update ghcr.io/linuxserver/unifi-network-application (9.1.120 -&gt; 9.2.87) ([#1445](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1445)) ([99b80bd](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/99b80bdbc3927a6de6f7956bea86b8b740ce1dbb))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update digest busybox (f9a104f -&gt; ab33eac) ([#1948](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1948)) ([c30a52d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c30a52d1ba8c33c246b0740a1b2ac63756cca1d7))
+* **infra-networking-extra:** update digest docker.io/mongo (54c5709 -&gt; 93a90c2) ([#1935](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1935)) ([3a80593](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3a8059368a0ddbe6f21ec2b8d5c2855dcc3a9d63))
+
 ## [0.2.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.2.7...infra-networking-extra-v0.2.8) (2025-08-07)
 
 
