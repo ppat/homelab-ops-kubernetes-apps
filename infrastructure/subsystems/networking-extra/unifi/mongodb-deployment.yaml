@@ -27,7 +27,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: unifi-db
-        image: docker.io/mongo:7.0.22@sha256:93a90c2ee50cc151797f668908835896bd2fa0703a69a4716f90453ea0fd355c
+        image: docker.io/mongo:8.0.11@sha256:dca8d11fe4673f4409e27361e9c5717bd35103c9c15b5b50fc6b2913b2407fed
         imagePullPolicy: IfNotPresent
         lifecycle:
           preStop:
