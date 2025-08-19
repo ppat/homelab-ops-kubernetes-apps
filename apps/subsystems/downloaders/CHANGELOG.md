@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.35](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.34...apps-downloaders-v0.1.35) (2025-08-17)
+## [0.1.35](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.1.34...apps-downloaders-v0.1.35) (2025-08-19)
 
 
 ### 🚀 Enhancements + Bug Fixes
