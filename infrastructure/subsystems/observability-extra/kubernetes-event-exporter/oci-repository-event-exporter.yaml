@@ -8,4 +8,4 @@ spec:
   interval: 1h
   url: oci://registry-1.docker.io/bitnamicharts/kubernetes-event-exporter
   ref:
-    tag: 3.6.0
+    tag: 3.6.3@sha256:bb99f20e7fae5283edf6b52dc041e462262ee7670ab37fe0de6a553d7125e641
