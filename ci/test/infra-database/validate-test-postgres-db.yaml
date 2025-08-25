@@ -13,6 +13,7 @@ spec:
       - name: namespace
         value: default
       file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
+      timeout: 2m
   - description: Assert secret/test-postgres-db-app
     assert:
       resource:

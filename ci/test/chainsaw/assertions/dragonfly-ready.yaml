@@ -5,4 +5,4 @@ metadata:
   name: ($name)
   namespace: ($namespace)
 status:
-  phase: 'ready'
+  phase: 'Ready'

@@ -24,7 +24,7 @@ spec:
           echo -----------------------------------------------------------------------
           flux get all --all-namespaces
           echo -----------------------------------------------------------------------
-          kubectl get -A crd,cm,secret,po,svc,ing,ingressroutes,deploy,ds,sts,cj,job,sc,pv,pvc,volumes,es,cert,cluster,ipaddresspools
+          kubectl get -A crd,cm,secret,po,svc,ing,ingressroutes,deploy,ds,sts,cj,job,sc,pv,pvc,volumes,es,cert,ipaddresspools,cluster,dragonfly
           echo -----------------------------------------------------------------------
 
   cleanup:
