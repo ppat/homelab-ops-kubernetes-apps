@@ -13,6 +13,7 @@ spec:
       - name: namespace
         value: default
       file: ../chainsaw/assertions/dragonfly-ready.yaml
+      timeout: 2m
   catch:
   - describe:
       apiVersion: dragonflydb.io/v1alpha1
