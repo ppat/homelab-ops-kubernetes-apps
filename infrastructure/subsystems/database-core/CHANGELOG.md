@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.13](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.0.12...infra-database-core-v0.0.13) (2025-08-25)
+
+
+### ✨ Features
+
+* **infra-database-core:** update ghcr.io/dragonflydb/dragonfly-operator/helm/dragonfly-operator (v1.1.11 -&gt; v1.2.1) ([#1967](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1967)) ([57a2d95](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/57a2d959c3525b6294ccd08abf1fe75b67e16456))
+
 ## [0.0.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.0.11...infra-database-core-v0.0.12) (2025-08-25)
 
 
