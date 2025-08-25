@@ -47,13 +47,13 @@
       "description": [
         "strip digests from OCIRepository tags (flux rejects digests in ref.tag field)"
       ],
+      "autoReplaceStringTemplate": "{{#if newValue}}{{newValue}}{{/if}}",
       "matchDatasources": [
         "docker"
       ],
       "matchManagers": [
         "flux"
-      ],
-      "versioning": "semver"
+      ]
     }
   ]
 }
