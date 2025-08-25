@@ -42,19 +42,6 @@
       "matchPackageNames": [
         "pihole/pihole"
       ]
-    },
-    {
-      "description": "disable pin digest types updates as flux rejects digests on OCIRepository resources",
-      "enabled": false,
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchManagers": [
-        "flux"
-      ],
-      "matchUpdateTypes": [
-        "pinDigest"
-      ]
     }
   ]
 }
