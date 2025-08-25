@@ -47,14 +47,17 @@
       "description": [
         "strip digests from OCIRepository tags (flux rejects digests in ref.tag field)"
       ],
-      "extractVersion": "^(?<version>[^@]+)",
       "matchDatasources": [
         "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/dragonflydb/dragonfly-operator/helm/dragonfly-operator",
+        "registry-1.docker.io/bitnamicharts/kubernetes-event-exporter"
       ],
       "matchManagers": [
         "flux"
       ],
-      "versioning": "regex:^v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"
+      "pinDigests": false
     }
   ]
 }
