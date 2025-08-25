@@ -9,7 +9,7 @@
   "apps/subsystems/misc": "0.0.5",
   "infrastructure/bootstrap/crds": "0.4.0",
   "infrastructure/subsystems/clusterops-core": "0.0.16",
-  "infrastructure/subsystems/database-core": "0.0.11",
+  "infrastructure/subsystems/database-core": "0.0.12",
   "infrastructure/subsystems/kubernetes-core": "0.0.10",
   "infrastructure/subsystems/kubernetes-extra": "0.0.21",
   "infrastructure/subsystems/networking-core": "0.7.6",
