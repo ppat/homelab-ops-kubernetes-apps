@@ -42,6 +42,18 @@
         "minio/mc"
       ],
       "versioning": "regex:^RELEASE\\.(?<major>\\d{4})-(?<minor>\\d{2})-(?<patch>\\d{2})T\\d{2}-\\d{2}-\\d{2}Z$"
+    },
+    {
+      "description": [
+        "strip digests from OCIRepository tags (flux rejects digests in ref.tag field)"
+      ],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchManagers": [
+        "flux"
+      ],
+      "versioning": "semver"
     }
   ]
 }
