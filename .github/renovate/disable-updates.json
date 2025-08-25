@@ -44,8 +44,23 @@
       ]
     },
     {
-      "description": "disable pin digest on flux manager (as it tries to suffix digest to oci repository resource tags which flux rejects)",
+      "description": [
+        "strip digests from OCIRepository tags (flux rejects digests in ref.tag field)"
+      ],
+      "extractVersion": "^(?<version>[^@]+)",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchManagers": [
+        "flux"
+      ]
+    },
+    {
+      "description": "disable pin digest types updates as flux rejects digests on OCIRepository resources",
       "enabled": false,
+      "matchDatasources": [
+        "docker"
+      ],
       "matchManagers": [
         "flux"
       ],
