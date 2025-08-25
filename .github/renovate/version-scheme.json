@@ -47,13 +47,14 @@
       "description": [
         "strip digests from OCIRepository tags (flux rejects digests in ref.tag field)"
       ],
+      "extractVersion": "^(?<version>[^@]+)",
       "matchDatasources": [
         "docker"
       ],
       "matchManagers": [
         "flux"
       ],
-      "versioning": "semver"
+      "versioning": "regex:^v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"
     }
   ]
 }
