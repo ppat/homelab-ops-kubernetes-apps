@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.8.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.7.6...infra-networking-core-v0.8.0) (2025-08-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-networking-core:** update traefik (36.3.0 -> 37.0.0) ([#2024](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2024))
+
+### ✨ Features
+
+* **infra-networking-core:** update traefik (36.3.0 -&gt; 37.0.0) ([#2024](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2024)) ([04ad576](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/04ad57673b4032550d132e28f03fb5a789078612))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** update digest traefik/whoami (1699d99 -&gt; 2006897) ([#1913](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1913)) ([081e061](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/081e0610a0738109f7b7875de34b73933a4bf1de))
+* **infra-networking-extra:** update digest busybox (f85340b -&gt; f9a104f) ([#1840](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1840)) ([696ccc6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/696ccc63852f1511b4e60155257fbb594eeb49f3))
+* **infra-networking-extra:** update digest busybox (f9a104f -&gt; ab33eac) ([#1948](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1948)) ([c30a52d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c30a52d1ba8c33c246b0740a1b2ac63756cca1d7))
+
 ## [0.7.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.7.5...infra-networking-core-v0.7.6) (2025-07-27)
 
 
