@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: coder-repository
         namespace: flux-system
-      version: 2.25.0
+      version: 2.25.2
   install:
     crds: CreateReplace
     createNamespace: false
