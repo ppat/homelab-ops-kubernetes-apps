@@ -32,7 +32,7 @@ spec:
           value: 0.0.0.0:8080
         - name: MAX_UPSTREAM_CONNS
           value: "5"
-        image: visibilityspots/cloudflared:v2025.7.0@sha256:210fae717e4bee3e8557c65a8451c391a09fc1926fc0c001cc1316339c41d8f4
+        image: visibilityspots/cloudflared:v2025.8.1@sha256:e7e36f2d8c07435e08c6260d7de76bef5ce3a5ab5084cf8cacb1ec4a8232f2cf
         imagePullPolicy: IfNotPresent
         livenessProbe:
           tcpSocket:
