@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.28](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.27...apps-coder-v0.0.28) (2025-09-08)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-coder:** allow coder control plane to get/list/watch k8s nodes ([#2059](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2059)) ([962c960](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/962c96069646868077d83e87b2a79e6821a631aa))
+
 ## [0.0.27](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.26...apps-coder-v0.0.27) (2025-09-07)
 
 
