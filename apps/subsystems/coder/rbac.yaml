@@ -20,6 +20,20 @@ rules:
   - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: coder-additional-cluster-perms
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: coder-additional-binding
@@ -31,3 +45,16 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: coder
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: coder-additional-cluster-binding
+roleRef:
+  kind: ClusterRole
+  name: coder-additional-cluster-perms
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: coder
+  namespace: coder
