@@ -7,7 +7,7 @@
   "apps/subsystems/home-automation": "0.0.38",
   "apps/subsystems/media": "0.0.31",
   "apps/subsystems/misc": "0.0.5",
-  "infrastructure/bootstrap/crds": "0.4.0",
+  "infrastructure/bootstrap/crds": "0.5.0",
   "infrastructure/subsystems/clusterops-core": "0.0.18",
   "infrastructure/subsystems/database-core": "0.0.13",
   "infrastructure/subsystems/kubernetes-core": "0.0.10",
