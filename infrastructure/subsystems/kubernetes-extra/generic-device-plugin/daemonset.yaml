@@ -22,7 +22,7 @@ spec:
       - operator: "Exists"
         effect: "NoSchedule"
       containers:
-      - image: squat/generic-device-plugin:latest@sha256:763e97fdaddf33232165d190234000d5b6a67dd2560a9c7a60afc5b258aa2745
+      - image: squat/generic-device-plugin:latest@sha256:c61dd84b6d8f1e07fb647949df9a13e705d3f3ee3b70fadce30319083528e687
         args:
         - --device
         # yamllint disable-line rule:indentation
