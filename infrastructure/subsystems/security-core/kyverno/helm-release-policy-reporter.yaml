@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: kyverno-policy-reporter-repository
         namespace: flux-system
-      version: 3.4.2
+      version: 3.5.0
   dependsOn:
   - name: kyverno-release
     namespace: kyverno
