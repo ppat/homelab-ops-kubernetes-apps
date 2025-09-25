@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.32](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.31...apps-media-v0.0.32) (2025-09-25)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** update plexinc/pms-docker (1.42.1.10060-4e8b05daf -&gt; 1.42.2.10156-f737b826c) ([#2127](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2127)) ([96375b8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/96375b86f7529c7a11a7b51a3a147c02e85ee176))
+* **infra-networking-extra:** update digest busybox (ab33eac -&gt; d82f458) ([#2087](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2087)) ([f283114](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f2831140cf68ef4c739babee7c32f47a371dc582))
+
 ## [0.0.31](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.30...apps-media-v0.0.31) (2025-09-12)
 
 
