@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.0.22](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.21...infra-kubernetes-extra-v0.0.22) (2025-09-25)
+
+
+### ✨ Features
+
+* **infra-kubernetes-extra:** update intel-device-plugins-gpu (0.32.1 -&gt; 0.34.0) ([#2107](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2107)) ([858e522](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/858e522216431dbbbd9960d4969b739df4ce124c))
+* **infra-kubernetes-extra:** update intel-device-plugins-operator (0.32.1 -&gt; 0.34.0) ([#2108](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2108)) ([886f534](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/886f534e755929210fc40631af15a32aa8c28a6b))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-kubernetes-extra:** update digest squat/generic-device-plugin (1f77944 -&gt; 7a248fb) ([#2022](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2022)) ([42289cf](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/42289cfedc93b8413c92142cbc957e6af5f83375))
+* **infra-kubernetes-extra:** update digest squat/generic-device-plugin (2bd8d2b -&gt; df82458) ([#2074](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2074)) ([2f10c48](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2f10c48310e865557db51d6e1daae5c92182f9c1))
+* **infra-kubernetes-extra:** update digest squat/generic-device-plugin (5aab484 -&gt; 2bd8d2b) ([#2065](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2065)) ([ab7403e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ab7403ebfee2112b3363bf9cf9b96f120ecc70fd))
+* **infra-kubernetes-extra:** update digest squat/generic-device-plugin (752a084 -&gt; e18ea28) ([#2116](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2116)) ([2357cb0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2357cb09288237b5103e769ad39ec0155eb58b7b))
+* **infra-kubernetes-extra:** update digest squat/generic-device-plugin (763e97f -&gt; c61dd84) ([#2084](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2084)) ([fbdc2bb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fbdc2bbe7def622f45770eb9ad715ede89dcac0a))
+* **infra-kubernetes-extra:** update digest squat/generic-device-plugin (7a248fb -&gt; 5aab484) ([#2031](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2031)) ([662b9ef](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/662b9ef32dd141b27c6dec67e170b2e51393a327))
+* **infra-kubernetes-extra:** update digest squat/generic-device-plugin (c61dd84 -&gt; 752a084) ([#2098](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2098)) ([efbcc59](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/efbcc59ae806ed884f7a21d4a4ece650846700a8))
+* **infra-kubernetes-extra:** update digest squat/generic-device-plugin (df82458 -&gt; 763e97f) ([#2081](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2081)) ([d5f2a0a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d5f2a0ab4793197a0ce762d2fa47beb8dab5ec81))
+* **infra-kubernetes-extra:** update digest squat/generic-device-plugin (e18ea28 -&gt; 4578784) ([#2118](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2118)) ([eee3959](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/eee3959367f65e69d265e46cad47b700b51ab856))
+
 ## [0.0.21](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.20...infra-kubernetes-extra-v0.0.21) (2025-07-10)
 
 
