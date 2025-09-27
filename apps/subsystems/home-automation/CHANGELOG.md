@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.41](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.0.40...apps-home-automation-v0.0.41) (2025-09-27)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-home-automation:** update digest emqx/nanomq (7da6916 -&gt; 2fe043d) ([#2117](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2117)) ([f2d7b61](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f2d7b6155ee461d12eb0afa4c3a6305ed14beef7))
+* **apps-home-automation:** update ghcr.io/coder/code-server (4.104.1 -&gt; 4.104.2) ([#2149](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2149)) ([95081a1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/95081a11533ae43f36e295f8ee0d90723a6b6942))
+
 ## [0.0.40](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.0.39...apps-home-automation-v0.0.40) (2025-09-20)
 
 
