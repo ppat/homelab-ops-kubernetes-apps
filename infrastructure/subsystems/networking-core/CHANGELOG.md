@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.8.3...infra-networking-core-v0.8.4) (2025-10-06)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** traefik log rotator should cleanup any remaining empty directories ([#2190](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2190)) ([a97bd60](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a97bd605c256f6e568332a7cf9a5ab7516d679aa))
+
 ## [0.8.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.8.2...infra-networking-core-v0.8.3) (2025-10-04)
 
 
