@@ -16,8 +16,6 @@ spec:
       db_storage_size: 1Gi
       dns_zone: example.com
       domain_name: cluster.example.com
-      redis_storage_class: standard
-      redis_storage_size: 1Gi
   prune: false
   sourceRef:
     kind: GitRepository

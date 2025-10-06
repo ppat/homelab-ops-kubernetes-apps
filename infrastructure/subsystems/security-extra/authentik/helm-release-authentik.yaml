@@ -88,7 +88,7 @@ spec:
             key: password
       # ----------------------- REDIS ------------------------
       - name: AUTHENTIK_REDIS__HOST
-        value: authentik-redis-master.authentik.svc.cluster.local
+        value: authentik-cache.authentik.svc.cluster.local
       - name: AUTHENTIK_REDIS__PORT
         value: "6379"
       - name: AUTHENTIK_REDIS__PASSWORD
@@ -162,28 +162,8 @@ spec:
       enabled: false
 
     redis:
-      enabled: true
-      architecture: standalone
-      auth:
-        enabled: true
-        existingSecret: authentik-credentials
-        existingSecretPasswordKey: authentik_redis_password
-      master:
-        persistence:
-          enabled: true
-          storageClass: ${redis_storage_class}
-          size: ${redis_storage_size}
-          annotations: {}
-          labels: {}
-          selector: {}
-      metrics:
-        enabled: true
-        service:
-          enabled: true
-        serviceMonitor:
-          enabled: true
-        prometheusRule:
-          enabled: true
+      enabled: false
+
   postRenderers:
   - kustomize:
       patches:
