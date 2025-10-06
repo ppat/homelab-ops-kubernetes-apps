@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.14...infra-security-extra-v0.2.0) (2025-10-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-security-extra:** switch to dragonfly from redis for authentik cache/queue ([#2199](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2199))
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-extra:** switch to dragonfly from redis for authentik cache/queue ([#2199](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2199)) ([b6f8c10](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b6f8c10e97d017accc3e8c44b9692449dfc19767))
+
 ## [0.1.14](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.13...infra-security-extra-v0.1.14) (2025-09-30)
 
 
