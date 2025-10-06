@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.15](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.0.14...infra-database-core-v0.0.15) (2025-10-06)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* trigger releasE ([9f9d025](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9f9d025a4526d5b192eb484a45be569405d977c2))
+
 ## [0.0.14](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.0.13...infra-database-core-v0.0.14) (2025-10-01)
 
 
