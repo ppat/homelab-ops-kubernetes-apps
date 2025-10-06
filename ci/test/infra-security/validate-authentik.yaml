@@ -21,15 +21,6 @@ spec:
       - name: namespace
         value: authentik
       file: ../chainsaw/assertions/certificate-ready.yaml
-  - description: Assert cluster.postgresql.cnpg.io/authentik-db
-    assert:
-      bindings:
-      - name: name
-        value: authentik-db
-      - name: namespace
-        value: authentik
-      file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
-      timeout: 3m
   - description: Assert dragonfly/authentik-cache
     assert:
       bindings:
@@ -38,7 +29,16 @@ spec:
       - name: namespace
         value: authentik
       file: ../chainsaw/assertions/dragonfly-ready.yaml
-      timeout: 3m
+      timeout: 2m
+  - description: Assert cluster.postgresql.cnpg.io/authentik-db
+    assert:
+      bindings:
+      - name: name
+        value: authentik-db
+      - name: namespace
+        value: authentik
+      file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
+      timeout: 2m
   - description: Assert deployment/authentik-server
     assert:
       bindings:
@@ -114,6 +114,9 @@ spec:
       namespace: authentik
 
   # Pod logs
+  - podLogs:
+      selector: app=authentik-cache
+      namespace: authentik
   - podLogs:
       selector: app.kubernetes.io/name=authentik
       namespace: authentik
