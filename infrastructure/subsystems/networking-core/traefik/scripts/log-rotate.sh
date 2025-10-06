@@ -52,6 +52,13 @@ while true; do
   done < <(find ${LOG_PARENT_DIR} -path "*/lost+found" -prune -o -mtime +2 -type f -print0)
   echo
 
+  echo "Removing any remaining empty directories..."
+  while IFS= read -r -d '' dir; do
+    echo "  - Removing empty directory: ${dir}"
+    rmdir "${dir}"
+  done < <(find ${LOG_PARENT_DIR} -mindepth 1 -path "*/lost+found" -prune -o -type d -empty -print0)
+  echo
+
   echo "Sleeping for 4 hours..."
   sleep 14400
   echo
