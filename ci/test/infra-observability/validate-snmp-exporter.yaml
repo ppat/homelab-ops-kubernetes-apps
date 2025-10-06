@@ -34,7 +34,7 @@ spec:
       name: prometheus-snmp-exporter
       namespace: monitoring
   - podLogs:
-      selector: app=prometheus-snmp-exporter
+      selector: app.kubernetes.io/name=prometheus-snmp-exporter
       namespace: monitoring
   - events:
       namespace: monitoring

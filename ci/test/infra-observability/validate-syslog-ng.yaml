@@ -21,7 +21,7 @@ spec:
       name: syslog
       namespace: logging
   - podLogs:
-      selector: app=syslog
+      selector: app.kubernetes.io/name=syslog
       namespace: logging
   - events:
       namespace: logging
