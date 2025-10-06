@@ -21,14 +21,14 @@ spec:
       - name: namespace
         value: authentik
       file: ../chainsaw/assertions/certificate-ready.yaml
-  - description: Assert statefulset/authentik-redis-master
+  - description: Assert dragonfly/authentik-cache
     assert:
       bindings:
       - name: name
-        value: authentik-redis-master
+        value: authentik-cache
       - name: namespace
         value: authentik
-      file: ../chainsaw/assertions/statefulset-ready.yaml
+      file: ../chainsaw/assertions/dragonfly-ready.yaml
       timeout: 2m
   - description: Assert cluster.postgresql.cnpg.io/authentik-db
     assert:
@@ -93,9 +93,9 @@ spec:
       name: authentik-db
       namespace: authentik
   - describe:
-      apiVersion: apps/v1
-      kind: StatefulSet
-      name: authentik-redis-master
+      apiVersion: dragonflydb.io/v1alpha1
+      kind: Dragonfly
+      name: authentik-cache
       namespace: authentik
   - describe:
       apiVersion: apps/v1
@@ -115,7 +115,10 @@ spec:
 
   # Pod logs
   - podLogs:
-      name: authentik-server
+      selector: app=authentik-cache
+      namespace: authentik
+  - podLogs:
+      selector: app.kubernetes.io/name=authentik
       namespace: authentik
   - events:
       namespace: authentik

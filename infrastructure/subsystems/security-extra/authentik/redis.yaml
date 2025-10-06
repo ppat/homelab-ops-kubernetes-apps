@@ -1,0 +1,30 @@
+---
+apiVersion: dragonflydb.io/v1alpha1
+kind: Dragonfly
+metadata:
+  name: authentik-cache
+  namespace: authentik
+spec:
+  args:
+  - --maxmemory=$(MAX_MEMORY)Mi
+  - --proactor_threads=1
+  - --cluster_mode=emulated
+  - --lock_on_hashtags
+  authentication:
+    passwordFromSecret:
+      name: authentik-credentials
+      key: authentik_redis_password
+  env:
+  - name: MAX_MEMORY
+    valueFrom:
+      resourceFieldRef:
+        resource: limits.memory
+        divisor: 1Mi
+  image: ghcr.io/dragonflydb/dragonfly:v1.34.1@sha256:99eb2dd14ca00b983c302d0a15d15176dccd5a9e85a375bcc5157e1cadd73099
+  replicas: ${redis_replicas:=1}
+  resources:
+    requests:
+      cpu: 32m
+      memory: 100Mi
+    limits:
+      memory: 256Mi

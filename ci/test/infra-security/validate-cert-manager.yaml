@@ -59,7 +59,7 @@ spec:
       kind: ClusterIssuer
       name: selfsigned-issuer
   - podLogs:
-      name: cert-manager
+      selector: app.kubernetes.io/instance=cert-manager
       namespace: cert-manager
   - events:
       namespace: cert-manager
