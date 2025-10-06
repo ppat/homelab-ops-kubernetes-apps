@@ -34,7 +34,7 @@ spec:
       name: unpoller
       namespace: monitoring
   - podLogs:
-      selector: app=unpoller
+      selector: app.kubernetes.io/name=unpoller
       namespace: monitoring
   - events:
       namespace: monitoring

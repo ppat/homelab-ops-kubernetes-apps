@@ -34,7 +34,7 @@ spec:
       name: node-problem-detector
       namespace: monitoring
   - podLogs:
-      selector: app=node-problem-detector
+      selector: app.kubernetes.io/name=node-problem-detector
       namespace: monitoring
   - events:
       namespace: monitoring
