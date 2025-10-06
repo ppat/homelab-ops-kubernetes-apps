@@ -24,7 +24,7 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=2m
         timeout: 2m
-    - description: Reconcile helmrelease/cloudnative-pg-release
+    - description: Reconcile helmrelease/dragonfly-operator-release
       script:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=dragonfly-operator-release --namespace=dragonfly-system --timeout=2m
