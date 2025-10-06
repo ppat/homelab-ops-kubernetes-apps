@@ -89,10 +89,6 @@ spec:
     use:
       template: ./validate-node-problem-detector.yaml
 
-  - name: Validate Event Exporter
-    use:
-      template: ./validate-event-exporter.yaml
-
   - name: Validate Syslog-NG
     use:
       template: ./validate-syslog-ng.yaml
