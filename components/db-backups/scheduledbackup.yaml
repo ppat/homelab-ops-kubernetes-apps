@@ -9,4 +9,4 @@ spec:
   immediate: true
   backupOwnerReference: cluster
   cluster:
-    name: ${db_name}-${db_name_suffix}
+    name: ${db_name}-${db_suffix_current}

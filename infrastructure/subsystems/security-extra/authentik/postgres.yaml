@@ -2,7 +2,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: ${db_name:=authentik-db}-${db_name_suffix:=default}
+  name: ${db_name:=authentik-db}-${db_suffix_current:=default}
   namespace: authentik
   annotations:
     kustomize.toolkit.fluxcd.io/prune: disabled

@@ -6,4 +6,4 @@ metadata:
   namespace: authentik
 spec:
   type: ExternalName
-  externalName: ${db_name:=authentik-db}-${db_name_suffix:=default}-rw.authentik.svc.cluster.local
+  externalName: ${db_name:=authentik-db}-${db_suffix_current:=default}-rw.authentik.svc.cluster.local
