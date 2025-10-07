@@ -2,15 +2,15 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: authentik-db
+  name: ${db_name:=authentik-db}-${db_name_suffix:=default}
   namespace: authentik
   annotations:
     kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   bootstrap:
     initdb:
-      database: authentik
-      owner: authentik
+      database: ${db_bootstrap_database:=authentik}
+      owner: ${db_bootstrap_owner:=authentik}
   imageName: ghcr.io/cloudnative-pg/postgresql:16.4
   instances: ${db_replicas:=2}
   monitoring:

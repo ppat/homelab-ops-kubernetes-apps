@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
 - certificate-signing.yaml
 - postgres.yaml
+- postgres-service.yaml
 - redis.yaml
 - secrets.yaml
 - helm-repository-authentik.yaml

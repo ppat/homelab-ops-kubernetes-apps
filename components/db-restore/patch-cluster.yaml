@@ -2,8 +2,8 @@
 - op: add
   path: /spec/bootstrap/recovery
   value:
-    database: ${db_restore_database}
-    owner: ${db_restore_owner}
+    database: ${db_bootstrap_database}
+    owner: ${db_bootstrap_owner}
     source: origin
 - op: remove
   path: /spec/bootstrap/initdb

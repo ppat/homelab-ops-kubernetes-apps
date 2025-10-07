@@ -11,7 +11,7 @@ spec:
     substitute:
       secret_store: fake
       cert_issuer: selfsigned-issuer
-      db_replicas: "1"
+      db_name_suffix: test
       db_storage_class: standard
       db_storage_size: 1Gi
       dns_zone: example.com
