@@ -71,20 +71,20 @@ spec:
             key: smtp_sender
       # --------------------- POSTGRES -----------------------
       - name: AUTHENTIK_POSTGRESQL__HOST
-        value: authentik-db-rw.authentik.svc.cluster.local
+        value: authentik-db.authentik.svc.cluster.local
       - name: AUTHENTIK_POSTGRESQL__PORT
         value: "5432"
       - name: AUTHENTIK_POSTGRESQL__NAME
-        value: authentik
+        value: ${db_bootstrap_database:=authentik}
       - name: AUTHENTIK_POSTGRESQL__USER
         valueFrom:
           secretKeyRef:
-            name: authentik-db-app
+            name: ${db_name:=authentik-db}-${db_suffix_current:=default}-app
             key: username
       - name: AUTHENTIK_POSTGRESQL__PASSWORD
         valueFrom:
           secretKeyRef:
-            name: authentik-db-app
+            name: ${db_name:=authentik-db}-${db_suffix_current:=default}-app
             key: password
       # ----------------------- REDIS ------------------------
       - name: AUTHENTIK_REDIS__HOST

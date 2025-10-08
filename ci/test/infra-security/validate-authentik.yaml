@@ -34,7 +34,7 @@ spec:
     assert:
       bindings:
       - name: name
-        value: authentik-db
+        value: authentik-db-test
       - name: namespace
         value: authentik
       file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
@@ -90,7 +90,7 @@ spec:
   - describe:
       apiVersion: postgresql.cnpg.io/v1
       kind: Cluster
-      name: authentik-db
+      name: authentik-db-test
       namespace: authentik
   - describe:
       apiVersion: dragonflydb.io/v1alpha1

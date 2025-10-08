@@ -7,6 +7,6 @@ metadata:
 spec:
   schedule: "0 0 4,12,20 * * *"  # every 8 hours
   immediate: true
-  backupOwnerReference: self
+  backupOwnerReference: cluster
   cluster:
-    name: ${db_name}
+    name: ${db_name}-${db_suffix_current}

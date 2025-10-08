@@ -10,7 +10,7 @@ spec:
         compression: snappy
       destinationPath: s3://nas-cloudnativepg-backups/${db_name}/
       endpointURL: https://s3.nas.${dns_zone}
-      serverName: ${db_server_name_backup}
+      serverName: ${db_suffix_current:=default}
       s3Credentials:
         accessKeyId:
           name: ${db_name}-backup-credentials
