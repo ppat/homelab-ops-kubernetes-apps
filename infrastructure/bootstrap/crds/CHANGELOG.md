@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.5.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.4.0...infra-bootstrap-crds-v0.5.0) (2025-10-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-bootstrap-crds:** update traefik/traefik-helm-chart (v36.3.0 -> v37.0.0) ([#2023](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2023))
+
+### ✨ Features
+
+* **infra-bootstrap-crds:** update cloudnative-pg/cloudnative-pg (v1.26.1 -&gt; v1.27.0) ([#1970](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1970)) ([63c7e9c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/63c7e9c060b93dd511343f3b6ae6e2649852278b))
+* **infra-bootstrap-crds:** update external-secrets/external-secrets (v0.18.2 -&gt; v0.19.0) ([#1921](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1921)) ([6e6efc8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6e6efc81a220acd7b8937fa5d9ebc1202f36366c))
+* **infra-bootstrap-crds:** update external-secrets/external-secrets (v0.19.2 -&gt; v0.20.1) ([#2155](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2155)) ([ee464eb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ee464eb61eb7f84f4465a8eb590d14b11e7b7eba))
+* **infra-bootstrap-crds:** update prometheus-operator/prometheus-operator (v0.83.0 -&gt; v0.84.0) ([#1793](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1793)) ([f3374e5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f3374e5d275b4e7dcbc1757f116565a6a378e0b5))
+* **infra-bootstrap-crds:** update prometheus-operator/prometheus-operator (v0.84.1 -&gt; v0.85.0) ([#2017](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2017)) ([45034c1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/45034c1281bd37bc5153f03cd1bbd29072692e1f))
+* **infra-bootstrap-crds:** update traefik/traefik-helm-chart (v36.3.0 -&gt; v37.0.0) ([#2023](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2023)) ([1da8c16](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1da8c16f4f153dcd1c8d1221d15df05f07691e21))
+* **infra-bootstrap-crds:** update traefik/traefik-helm-chart (v37.0.0 -&gt; v37.1.0) ([#2063](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2063)) ([ff67d4d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ff67d4d9c13ebedb53bb0e251f200162f197d9fd))
+* **infra-database-core:** add dragonfly operator ([#1802](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1802)) ([8201e0d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8201e0d7a958a53a7c681cbc48f33f3feabd6022))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-bootstrap-crds:** update cloudnative-pg/cloudnative-pg (v1.26.0 -&gt; v1.26.1) ([#1822](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1822)) ([12aba31](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/12aba3113715a30de303f699115ea12d934c8f11))
+* **infra-bootstrap-crds:** update external-secrets/external-secrets (v0.19.0 -&gt; v0.19.1) ([#1926](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1926)) ([4f2c0a4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4f2c0a49bbfdedf9534d47790ebc618699b76739))
+* **infra-bootstrap-crds:** update external-secrets/external-secrets (v0.19.1 -&gt; v0.19.2) ([#1945](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1945)) ([42ffc77](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/42ffc77b0c314ec5c6d0762fdac0bdc2312f045a))
+* **infra-bootstrap-crds:** update external-secrets/external-secrets (v0.20.1 -&gt; v0.20.2) ([#2204](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2204)) ([ef0633c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ef0633cc3a94310d8db2992cda3af1e0ed11870d))
+* **infra-bootstrap-crds:** update longhorn/longhorn (v1.9.0 -&gt; v1.9.1) ([#1852](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1852)) ([94db28f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/94db28fbd7aa0f3a745b19181c665400061551a7))
+* **infra-bootstrap-crds:** update longhorn/longhorn (v1.9.1 -&gt; v1.9.2) ([#2166](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2166)) ([28efdd3](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/28efdd34bfaf94816be5f2e2ffa07075a67de7d9))
+* **infra-bootstrap-crds:** update prometheus-operator/prometheus-operator (v0.84.0 -&gt; v0.84.1) ([#1900](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/1900)) ([d61ca9c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d61ca9cfe5777d8aea02ec69c9b8935c6018d664))
+* **infra-bootstrap-crds:** update traefik/traefik-helm-chart (v37.1.0 -&gt; v37.1.1) ([#2068](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2068)) ([307f2ed](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/307f2ed7f60fdf42d9aeb4da46e1d4f4a0970d6d))
+* **infra-bootstrap-crds:** update traefik/traefik-helm-chart (v37.1.1 -&gt; v37.1.2) ([#2185](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2185)) ([a34507a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a34507a49bb2e2eba841f185c56bd09aa3e07c2c))
+
 ## [0.4.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.3.1...infra-bootstrap-crds-v0.4.0) (2025-05-20)
 
 
