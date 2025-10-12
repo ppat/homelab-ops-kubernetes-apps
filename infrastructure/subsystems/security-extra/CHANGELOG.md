@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.2.0...infra-security-extra-v0.2.1) (2025-10-12)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-extra:** allow cnpg cluster name customization during restore ([#2210](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2210)) ([e5b3754](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e5b375490980ac39b2917a4d56eb2cee4b5c67eb))
+
 ## [0.2.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.1.14...infra-security-extra-v0.2.0) (2025-10-06)
 
 
