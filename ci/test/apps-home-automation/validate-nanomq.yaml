@@ -22,5 +22,5 @@ spec:
   - events:
       namespace: home-automation
   - podLogs:
-      name: nanomq
+      selector: app.kubernetes.io/name=nanomq
       namespace: home-automation

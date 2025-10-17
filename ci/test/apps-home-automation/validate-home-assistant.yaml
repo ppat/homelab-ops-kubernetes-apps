@@ -23,5 +23,5 @@ spec:
   - events:
       namespace: home-automation
   - podLogs:
-      name: home-assistant
+      selector: app.kubernetes.io/name=home-assistant
       namespace: home-automation

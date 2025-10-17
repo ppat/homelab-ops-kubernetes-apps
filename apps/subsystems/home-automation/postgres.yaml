@@ -2,15 +2,15 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: home-automation-db
+  name: ${db_name:=home-automation-db}-${db_suffix_current:=default}
   namespace: home-automation
   annotations:
     kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   bootstrap:
     initdb:
-      database: home-assistant
-      owner: home-assistant
+      database: ${db_bootstrap_database:=home-assistant}
+      owner: ${db_bootstrap_owner:=home-assistant}
   imageName: ghcr.io/cloudnative-pg/postgresql:16.4
   instances: ${db_replicas:=2}
   monitoring:
