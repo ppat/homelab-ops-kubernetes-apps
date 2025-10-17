@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.2.1...infra-security-extra-v0.2.2) (2025-10-17)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-extra:** update authentik (2025.8.3 -&gt; 2025.8.4) ([#2236](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2236)) ([104c333](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/104c33355d8a1edbc93f5cd6f2530f480a9e1531))
+* **infra-security-extra:** update ghcr.io/dragonflydb/dragonfly (v1.34.1 -&gt; v1.34.2) ([#2239](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2239)) ([6ed8a7c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6ed8a7c0b217111a607d76562e3a89577dc8caed))
+
 ## [0.2.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.2.0...infra-security-extra-v0.2.1) (2025-10-12)
 
 
