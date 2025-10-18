@@ -6,6 +6,7 @@ resources:
 - namespace.yaml
 - postgres.yaml
 - postgres-credentials.yaml
+- postgres-service.yaml
 - secrets.yaml
 - home-assistant/
 - nanomq/

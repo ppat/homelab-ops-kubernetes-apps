@@ -33,10 +33,10 @@ spec:
       name: wyoming-whisper
       namespace: home-automation
   - podLogs:
-      name: wyoming-piper
+      selector: app.kubernetes.io/name=wyoming-piper
       namespace: home-automation
   - podLogs:
-      name: wyoming-whisper
+      selector: app.kubernetes.io/name=wyoming-whisper
       namespace: home-automation
   - events:
       namespace: home-automation

@@ -9,7 +9,7 @@ spec:
     assert:
       bindings:
       - name: name
-        value: home-automation-db
+        value: home-automation-db-test
       - name: namespace
         value: home-automation
       file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
@@ -18,7 +18,7 @@ spec:
   - describe:
       apiVersion: postgresql.cnpg.io/v1
       kind: Cluster
-      name: home-automation-db
+      name: home-automation-db-test
       namespace: home-automation
   - events:
       namespace: cnpg-system
