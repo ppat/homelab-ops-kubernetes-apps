@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.0.41...apps-home-automation-v0.1.0) (2025-10-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* **apps-home-automation:** update home assistant db to use new component parameters for backups/restore ([#2265](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2265))
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-home-automation:** update ghcr.io/coder/code-server (4.104.2 -&gt; 4.104.3) ([#2208](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2208)) ([32aba6a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/32aba6a28ebcf77615c0eac20449338add52a7d8))
+* **apps-home-automation:** update ghcr.io/home-operations/home-assistant (2025.10.1 -&gt; 2025.10.2) ([#2228](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2228)) ([798d8ca](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/798d8ca8f812bf5fb06d5b22c65d4faf6a22dc94))
+* **apps-home-automation:** update ghcr.io/home-operations/home-assistant (2025.10.2 -&gt; 2025.10.3) ([#2271](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2271)) ([57e8c8f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/57e8c8ffab428952ab902e58c06f06a013ec71f5))
+* **apps-home-automation:** update home assistant db to use new component parameters for backups/restore ([#2265](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2265)) ([3a8de9d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3a8de9dfd9073a1d9130c40a5da2e9738e992291))
+
 ## [0.0.41](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.0.40...apps-home-automation-v0.0.41) (2025-10-04)
 
 
