@@ -9,7 +9,7 @@ spec:
     assert:
       bindings:
       - name: name
-        value: coder-db
+        value: coder-db-test
       - name: namespace
         value: coder
       file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
@@ -18,7 +18,7 @@ spec:
   - describe:
       apiVersion: postgresql.cnpg.io/v1
       kind: Cluster
-      name: coder-db
+      name: coder-db-test
       namespace: coder
   - events:
       namespace: cnpg-system

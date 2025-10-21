@@ -33,7 +33,7 @@ spec:
       name: coder
       namespace: coder
   - podLogs:
-      name: coder
+      selector: app.kubernetes.io/name=coder
       namespace: coder
   - events:
       namespace: coder
