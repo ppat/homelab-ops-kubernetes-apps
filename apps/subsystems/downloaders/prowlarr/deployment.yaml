@@ -48,7 +48,7 @@ spec:
         - name: PROWLARR__LOG__LEVEL
           value: info
         - name: PROWLARR__POSTGRES__HOST
-          value: downloaders-db-rw.downloaders.svc.cluster.local
+          value: downloaders-db.downloaders.svc.cluster.local
         - name: PROWLARR__POSTGRES__PORT
           value: "5432"
         - name: PROWLARR__POSTGRES__MAINDB
