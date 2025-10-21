@@ -2,15 +2,15 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: downloaders-db
+  name: ${db_name:=downloaders-db}-${db_suffix_current:=default}
   namespace: downloaders
   annotations:
     kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   bootstrap:
     initdb:
-      database: default
-      owner: downloader
+      database: ${db_bootstrap_database:=default}
+      owner: ${db_bootstrap_owner:=downloader}
       postInitSQL:
       - CREATE DATABASE bazarr WITH OWNER downloader
       - CREATE DATABASE lidarr WITH OWNER downloader

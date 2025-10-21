@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: lidarr
   annotations:
-    secret.reloader.stakater.com/reload: downloaders-db-app
+    secret.reloader.stakater.com/reload: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
 spec:
   replicas: 1
   strategy:
@@ -48,7 +48,7 @@ spec:
         - name: LIDARR__LOG__LEVEL
           value: info
         - name: LIDARR__POSTGRES__HOST
-          value: downloaders-db-rw.downloaders.svc.cluster.local
+          value: downloaders-db.downloaders.svc.cluster.local
         - name: LIDARR__POSTGRES__PORT
           value: "5432"
         - name: LIDARR__POSTGRES__MAINDB
@@ -56,12 +56,12 @@ spec:
         - name: LIDARR__POSTGRES__USER
           valueFrom:
             secretKeyRef:
-              name: downloaders-db-app
+              name: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
               key: username
         - name: LIDARR__POSTGRES__PASSWORD
           valueFrom:
             secretKeyRef:
-              name: downloaders-db-app
+              name: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
               key: password
         image: ghcr.io/linuxserver/lidarr:2.14.5@sha256:fc10fbd834e83c3f984c13a12c4fd663b23a8ed83e31f346650571f0a7aeeea7
         imagePullPolicy: IfNotPresent

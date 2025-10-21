@@ -19,5 +19,9 @@ spec:
       kind: Deployment
       name: sonarr
       namespace: downloaders
+  - podLogs:
+      selector: app.kubernetes.io/name=sonarr
+      namespace: downloaders
+      tail: 1000
   - events:
       namespace: downloaders

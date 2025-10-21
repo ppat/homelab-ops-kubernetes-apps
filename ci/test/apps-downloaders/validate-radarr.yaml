@@ -20,7 +20,8 @@ spec:
       name: radarr
       namespace: downloaders
   - podLogs:
-      name: radarr
+      selector: app.kubernetes.io/name=radarr
       namespace: downloaders
+      tail: 1000
   - events:
       namespace: downloaders
