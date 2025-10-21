@@ -2,13 +2,15 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: coder-db
+  name: ${db_name:=coder-db}-${db_suffix_current:=default}
   namespace: coder
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   bootstrap:
     initdb:
-      database: coder
-      owner: coder
+      database: ${db_bootstrap_database:=coder}
+      owner: ${db_bootstrap_owner:=coder}
   imageName: ghcr.io/cloudnative-pg/postgresql:16.4
   instances: ${db_replicas:=2}
   monitoring:

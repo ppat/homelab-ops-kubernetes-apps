@@ -33,14 +33,14 @@ spec:
   values:
     coder:
       annotations:
-        secret.reloader.stakater.com/reload: "coder-db-app,coder-sso-credentials"
+        secret.reloader.stakater.com/reload: "${db_name:=coder-db}-${db_suffix_current:=default}-app,coder-sso-credentials"
       env:
       - name: CODER_ACCESS_URL
         value: "https://coder.${domain_name}"
       - name: CODER_PG_CONNECTION_URL
         valueFrom:
           secretKeyRef:
-            name: coder-db-app
+            name: ${db_name:=coder-db}-${db_suffix_current:=default}-app
             key: uri
       - name: CODER_PROMETHEUS_ENABLE
         value: "true"

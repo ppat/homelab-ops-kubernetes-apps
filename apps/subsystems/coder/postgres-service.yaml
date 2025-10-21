@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: coder-db
+  namespace: coder
+spec:
+  type: ExternalName
+  externalName: ${db_name:=coder-db}-${db_suffix_current:=default}-rw.home-automation.svc.cluster.local
