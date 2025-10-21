@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: node-feature-discovery-repository
         namespace: flux-system
-      version: 0.18.1
+      version: 0.18.2
   install:
     crds: CreateReplace
     createNamespace: false
