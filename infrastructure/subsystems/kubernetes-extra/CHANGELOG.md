@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.23](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.22...infra-kubernetes-extra-v0.0.23) (2025-10-21)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-kubernetes-extra:** update digest squat/generic-device-plugin (359bcdd -&gt; 7b67623) ([#2188](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2188)) ([b72533a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b72533aa9506b7c49c9ab5c5f101b818bd2de1c8))
+* **infra-kubernetes-extra:** update digest squat/generic-device-plugin (4578784 -&gt; 359bcdd) ([#2153](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2153)) ([2e22cf1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2e22cf113f3bd7ec28e51e36893a3151ff47eaf2))
+* **infra-kubernetes-extra:** update digest squat/generic-device-plugin (7b67623 -&gt; dec95aa) ([#2232](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2232)) ([80e321f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/80e321f52566df347355d48b2ecf8b421573524e))
+* **infra-kubernetes-extra:** update digest squat/generic-device-plugin (99d6ec6 -&gt; dfed9c5) ([#2235](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2235)) ([8a3992a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8a3992a221d98260ed7c87878e2fcb5074fa6d13))
+* **infra-kubernetes-extra:** update digest squat/generic-device-plugin (dec95aa -&gt; 99d6ec6) ([#2234](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2234)) ([d953aa0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d953aa032e1edcbd54411b43a85380f5472a6395))
+* **infra-kubernetes-extra:** update digest squat/generic-device-plugin (dfed9c5 -&gt; 62dda74) ([#2280](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2280)) ([e3d6947](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e3d69472ad4defb8f8ad83859e7a525ac155f58c))
+
 ## [0.0.22](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.21...infra-kubernetes-extra-v0.0.22) (2025-09-25)
 
 
