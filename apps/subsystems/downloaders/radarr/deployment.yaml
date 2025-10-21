@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: radarr
   annotations:
-    secret.reloader.stakater.com/reload: downloaders-db-app
+    secret.reloader.stakater.com/reload: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
 spec:
   replicas: 1
   strategy:
@@ -48,7 +48,7 @@ spec:
         - name: RADARR__LOG__LEVEL
           value: info
         - name: RADARR__POSTGRES__HOST
-          value: downloaders-db-rw.downloaders.svc.cluster.local
+          value: downloaders-db.downloaders.svc.cluster.local
         - name: RADARR__POSTGRES__PORT
           value: "5432"
         - name: RADARR__POSTGRES__MAINDB
@@ -56,12 +56,12 @@ spec:
         - name: RADARR__POSTGRES__USER
           valueFrom:
             secretKeyRef:
-              name: downloaders-db-app
+              name: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
               key: username
         - name: RADARR__POSTGRES__PASSWORD
           valueFrom:
             secretKeyRef:
-              name: downloaders-db-app
+              name: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
               key: password
         image: ghcr.io/linuxserver/radarr:5.28.0@sha256:fae2aafa6ecace3524fc79d102f5bfd25fb151caed6a454cee46479236ac33bf
         imagePullPolicy: IfNotPresent

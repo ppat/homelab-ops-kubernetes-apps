@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: downloaders-db
+  namespace: downloaders
+spec:
+  type: ExternalName
+  externalName: ${db_name:=downloaders-db}-${db_suffix_current:=default}-rw.home-automation.svc.cluster.local

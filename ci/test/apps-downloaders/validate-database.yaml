@@ -9,7 +9,7 @@ spec:
     assert:
       bindings:
       - name: name
-        value: downloaders-db
+        value: downloaders-db-test
       - name: namespace
         value: downloaders
       file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
@@ -18,7 +18,7 @@ spec:
   - describe:
       apiVersion: postgresql.cnpg.io/v1
       kind: Cluster
-      name: downloaders-db
+      name: downloaders-db-test
       namespace: downloaders
   - events:
       namespace: downloaders

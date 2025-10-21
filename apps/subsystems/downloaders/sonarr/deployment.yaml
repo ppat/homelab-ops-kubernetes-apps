@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: sonarr
   annotations:
-    secret.reloader.stakater.com/reload: downloaders-db-app
+    secret.reloader.stakater.com/reload: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
 spec:
   replicas: 1
   strategy:
@@ -48,7 +48,7 @@ spec:
         - name: SONARR__LOG__LEVEL
           value: info
         - name: SONARR__POSTGRES__HOST
-          value: downloaders-db-rw.downloaders.svc.cluster.local
+          value: downloaders-db.downloaders.svc.cluster.local
         - name: SONARR__POSTGRES__PORT
           value: "5432"
         - name: SONARR__POSTGRES__MAINDB
@@ -56,12 +56,12 @@ spec:
         - name: SONARR__POSTGRES__USER
           valueFrom:
             secretKeyRef:
-              name: downloaders-db-app
+              name: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
               key: username
         - name: SONARR__POSTGRES__PASSWORD
           valueFrom:
             secretKeyRef:
-              name: downloaders-db-app
+              name: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
               key: password
         image: ghcr.io/linuxserver/sonarr:4.0.15@sha256:69d72f525bc181728c8f4788992a28ae1cd797ddd978f48bc2e271c7acd02e9b
         imagePullPolicy: IfNotPresent

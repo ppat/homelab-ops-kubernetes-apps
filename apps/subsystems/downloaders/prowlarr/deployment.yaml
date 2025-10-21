@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: prowlarr
   annotations:
-    secret.reloader.stakater.com/reload: downloaders-db-app
+    secret.reloader.stakater.com/reload: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
 spec:
   replicas: 1
   strategy:
@@ -56,12 +56,12 @@ spec:
         - name: PROWLARR__POSTGRES__USER
           valueFrom:
             secretKeyRef:
-              name: downloaders-db-app
+              name: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
               key: username
         - name: PROWLARR__POSTGRES__PASSWORD
           valueFrom:
             secretKeyRef:
-              name: downloaders-db-app
+              name: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
               key: password
         image: ghcr.io/linuxserver/prowlarr:2.0.5@sha256:366914352b21e79733f1bad1c3840ca679a55dc4875754eec06ccbcc49b649d1
         imagePullPolicy: IfNotPresent
