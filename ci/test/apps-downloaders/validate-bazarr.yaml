@@ -19,5 +19,8 @@ spec:
       kind: Deployment
       name: bazarr
       namespace: downloaders
+  - podLogs:
+      selector: app.kubernetes.io/name=bazarr
+      namespace: downloaders
   - events:
       namespace: downloaders

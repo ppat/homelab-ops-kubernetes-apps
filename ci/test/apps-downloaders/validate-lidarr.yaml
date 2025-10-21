@@ -19,5 +19,8 @@ spec:
       kind: Deployment
       name: lidarr
       namespace: downloaders
+  - podLogs:
+      selector: app.kubernetes.io/name=lidarr
+      namespace: downloaders
   - events:
       namespace: downloaders

@@ -19,5 +19,8 @@ spec:
       kind: Deployment
       name: overseerr
       namespace: downloaders
+  - podLogs:
+      selector: app.kubernetes.io/name=overseerr
+      namespace: downloaders
   - events:
       namespace: downloaders
