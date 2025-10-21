@@ -6,4 +6,4 @@ metadata:
   namespace: downloaders
 spec:
   type: ExternalName
-  externalName: ${db_name:=downloaders-db}-${db_suffix_current:=default}-rw.home-automation.svc.cluster.local
+  externalName: ${db_name:=downloaders-db}-${db_suffix_current:=default}-rw.downloaders.svc.cluster.local
