@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.43](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.0.42...infra-security-core-v0.0.43) (2025-10-21)
+
+
+### ✨ Features
+
+* **infra-security-core:** update trust-manager (v0.19.0 -&gt; v0.20.0) ([#2258](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2258)) ([32f6f64](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/32f6f64d0b99bdaa9f8fd722690aadfb3e9803de))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-core:** update trust-manager (v0.20.0 -&gt; v0.20.2) ([#2267](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2267)) ([ad6eaa1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ad6eaa1798773095979b7482a9c5a0a9756ef1b4))
+
 ## [0.0.42](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.0.41...infra-security-core-v0.0.42) (2025-10-17)
 
 
