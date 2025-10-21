@@ -22,5 +22,6 @@ spec:
   - podLogs:
       selector: app.kubernetes.io/name=sabnzbd
       namespace: downloaders
+      tail: 1000
   - events:
       namespace: downloaders
