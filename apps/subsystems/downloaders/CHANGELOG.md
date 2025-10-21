@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.2.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.2.3...apps-downloaders-v0.2.4) (2025-10-21)
+
+
+### ✨ Features
+
+* **apps-downloaders:** update ghcr.io/linuxserver/lidarr (2.13.3 -&gt; 2.14.5) ([#2217](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2217)) ([217918f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/217918f5804913fdaab1b917fb2ca2c1e183ee29))
+* **apps-downloaders:** update ghcr.io/linuxserver/radarr (5.27.5 -&gt; 5.28.0) ([#2272](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2272)) ([9ea42e9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9ea42e9fc443117184dc39820b79dc09a78d3935))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-downloaders:** update digest ghcr.io/linuxserver/bazarr (005f97f -&gt; 750251d) ([#2244](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2244)) ([26debc0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/26debc0ad3edd47743ee9cbb96517c911a34a522))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/bazarr (cf7a02a -&gt; 005f97f) ([#2212](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2212)) ([cd9d65a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/cd9d65aec74c190fcf4f2b1ba296b9d0698ae161))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/lidarr (2452f5d -&gt; e9ab17c) ([#2214](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2214)) ([b94626e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b94626ea0e6dc6d85049158b95525b4a550856f1))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/lidarr (5661b79 -&gt; fc10fbd) ([#2247](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2247)) ([8a1435b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8a1435b8bd58680c2a39a693408dc442e375a5c0))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/prowlarr (9644858 -&gt; 3669143) ([#2248](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2248)) ([8c05ad3](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8c05ad3626598ddd82d4ef4ef3437a806c7aecfe))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/prowlarr (fa81e47 -&gt; 9644858) ([#2215](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2215)) ([00c38ea](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/00c38ea1d4a3f35595f20db673f8c8da25a273d1))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/radarr (19474a6 -&gt; f174546) ([#2189](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2189)) ([e5ae9a5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e5ae9a54d63f2f39dec38077c779e7e37becdcf7))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/radarr (f174546 -&gt; af03fa6) ([#2233](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2233)) ([4ebb992](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4ebb99250e5e04fbf12278077e2ccc39a63165ee))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sabnzbd (26b99fb -&gt; 65aa549) ([#2171](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2171)) ([9f7b881](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9f7b88192f3d08569bc0ed9d5736d4e5348d0e2d))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sabnzbd (65aa549 -&gt; b425e5f) ([#2219](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2219)) ([19253f7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/19253f7597971b2ceb3fd70bf608c6d93ba9b334))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sabnzbd (b425e5f -&gt; 9011bb0) ([#2255](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2255)) ([66fba8d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/66fba8d03590c387cc28dc0614cd80893a713ef4))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sonarr (328d322 -&gt; f3a7fda) ([#2227](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2227)) ([b100c42](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b100c42c9724a895f157973bf6925ac695b4bb86))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sonarr (f3a7fda -&gt; 69d72f5) ([#2270](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2270)) ([8808ab8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8808ab892c3bf9063ffb05f69eeba72f7a96de3b))
+* **apps-downloaders:** update downloaders-db to use latest db components ([#2300](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2300)) ([7f2584f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7f2584f2a8d995f6993d9390808a015760a11c6c))
+
 ## [0.2.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.2.2...apps-downloaders-v0.2.3) (2025-10-01)
 
 
