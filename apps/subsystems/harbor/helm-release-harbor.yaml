@@ -86,7 +86,6 @@ spec:
         host: harbor-db.harbor.svc.cluster.local
         username: harbor
         existingSecret: ${db_name:=harbor-db}-${db_suffix_current:=default}-app
-        sslmode: verify-ca
 
   postRenderers:
   - kustomize:
