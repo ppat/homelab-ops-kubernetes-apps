@@ -52,8 +52,6 @@ spec:
         jobservice:
           jobLog:
             existingClaim: harbor-jobservice
-        redis:
-          existingClaim: harbor-redis
         trivy:
           existingClaim: harbor-trivy
       imageChartStorage:
