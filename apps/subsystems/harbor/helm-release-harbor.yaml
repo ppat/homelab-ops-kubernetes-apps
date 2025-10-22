@@ -88,6 +88,12 @@ spec:
         coreDatabase: registry
         existingSecret: ${db_name:=harbor-db}-${db_suffix_current:=default}-app
 
+    redis:
+      type: external
+      external:
+        addr: harbor-redis.harbor.svc.cluster.local:6379
+        existingSecret: harbor
+
   postRenderers:
   - kustomize:
       patches:
