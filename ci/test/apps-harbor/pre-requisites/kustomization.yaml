@@ -6,6 +6,7 @@ resources:
 - ../../../../infrastructure/bootstrap/crds/
 - namespaces.yaml
 - pvc/
+- ../../infra-database/infra-database-core.yaml
 - ../../infra-security/infra-security-core.yaml
 - fake-secret-store.yaml
 

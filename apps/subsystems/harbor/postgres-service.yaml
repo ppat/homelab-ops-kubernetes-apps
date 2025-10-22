@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: harbor-db
+  namespace: harbor
+spec:
+  type: ExternalName
+  externalName: ${db_name:=harbor-db}-${db_suffix_current:=default}-rw.harbor.svc.cluster.local
