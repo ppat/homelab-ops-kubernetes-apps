@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.2.2...infra-security-extra-v0.2.3) (2025-10-22)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-extra:** ensure authentik restart when db password changes ([#2302](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2302)) ([916c907](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/916c907ffa3a60303e059652b5c2d19becaa4bd6))
+
 ## [0.2.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.2.1...infra-security-extra-v0.2.2) (2025-10-17)
 
 
