@@ -52,8 +52,6 @@ spec:
         jobservice:
           jobLog:
             existingClaim: harbor-jobservice
-        database:
-          existingClaim: harbor-database
         redis:
           existingClaim: harbor-redis
         trivy:
@@ -81,6 +79,14 @@ spec:
         port: 8001
       serviceMonitor:
         enabled: true
+
+    database:
+      type: external
+      external:
+        host: harbor-db.harbor.svc.cluster.local
+        username: harbor
+        coreDatabase: registry
+        existingSecret: ${db_name:=harbor-db}-${db_suffix_current:=default}-app
 
   postRenderers:
   - kustomize:

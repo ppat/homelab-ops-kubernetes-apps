@@ -24,6 +24,11 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
         timeout: 2m
+    - description: Reconcile helmrelease/cloudnative-pg-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=2m
+        timeout: 2m
 
   - name: Apply apps-harbor module
     try:
@@ -31,6 +36,11 @@ spec:
       apply:
         file: ./apps-harbor.yaml
     catch:
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: infra-database-core
+        namespace: flux-system
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
@@ -50,9 +60,9 @@ spec:
           value: harbor
         file: ../chainsaw/assertions/externalsecret-ready.yaml
 
-  - name: Validate harbor db
+  - name: Validate database
     use:
-      template: ./validate-harbor-db.yaml
+      template: ./validate-database.yaml
 
   - name: Validate harbor redis
     use:

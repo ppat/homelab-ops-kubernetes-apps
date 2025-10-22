@@ -1,0 +1,24 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: ${db_name:=harbor-db}-${db_suffix_current:=default}
+  namespace: harbor
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  bootstrap:
+    initdb:
+      database: ${db_bootstrap_database:=registry}
+      owner: ${db_bootstrap_owner:=harbor}
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.4
+  instances: ${db_replicas:=1}
+  monitoring:
+    enablePodMonitor: true
+  primaryUpdateStrategy: unsupervised
+  resources: {}
+  startDelay: 300
+  stopDelay: 300
+  storage:
+    size: ${db_storage_size}
+    storageClass: ${db_storage_class}

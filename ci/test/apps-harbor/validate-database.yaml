@@ -1,0 +1,26 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-database
+spec:
+  try:
+  - description: Assert cluster.postgresql.cnpg.io/home-automation-db
+    assert:
+      bindings:
+      - name: name
+        value: harbor-db-test
+      - name: namespace
+        value: harbor
+      file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
+      timeout: 3m
+  catch:
+  - describe:
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      name: harbor-db-test
+      namespace: harbor
+  - events:
+      namespace: cnpg-system
+  - events:
+      namespace: harbor

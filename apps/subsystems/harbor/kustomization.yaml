@@ -4,6 +4,8 @@ kind: Kustomization
 
 resources:
 - namespace.yaml
+- postgres.yaml
+- postgres-service.yaml
 - helm-repository-harbor.yaml
 - helm-release-harbor.yaml
 - secrets.yaml
