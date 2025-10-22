@@ -9,7 +9,7 @@ metadata:
 spec:
   bootstrap:
     initdb:
-      database: ${db_bootstrap_database:=harbor}
+      database: ${db_bootstrap_database:=registry}
       owner: ${db_bootstrap_owner:=harbor}
   imageName: ghcr.io/cloudnative-pg/postgresql:16.4
   instances: ${db_replicas:=1}

@@ -85,6 +85,7 @@ spec:
       external:
         host: harbor-db.harbor.svc.cluster.local
         username: harbor
+        coreDatabase: registry
         existingSecret: ${db_name:=harbor-db}-${db_suffix_current:=default}-app
 
   postRenderers:
