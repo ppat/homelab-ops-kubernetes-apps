@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-harbor-v0.0.11...apps-harbor-v0.0.12) (2025-10-22)
+
+
+### ✨ Features
+
+* **apps-harbor:** switch to cloudnativepg postgres for harbor's database from internal ([#2306](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2306)) ([a7aaeeb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a7aaeeb9af1005cc0da4b06168b5f36ae73234d7))
+* **apps-harbor:** switch to dragonfly for harbor's redis from internal ([#2309](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2309)) ([51e27bd](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/51e27bdbfac44efa4ed1e58f16b10c90c696bf25))
+
 ## [0.0.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-harbor-v0.0.10...apps-harbor-v0.0.11) (2025-09-25)
 
 
