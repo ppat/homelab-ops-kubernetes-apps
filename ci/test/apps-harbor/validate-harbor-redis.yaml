@@ -5,18 +5,19 @@ metadata:
   name: validate-harbor-redis
 spec:
   try:
-  - description: Assert statefulset/harbor-redis
+  - description: Assert dragonfly/authentik-cache
     assert:
       bindings:
       - name: name
         value: harbor-redis
       - name: namespace
         value: harbor
-      file: ../chainsaw/assertions/statefulset-ready.yaml
+      file: ../chainsaw/assertions/dragonfly-ready.yaml
+      timeout: 2m
   catch:
   - describe:
-      apiVersion: apps/v1
-      kind: StatefulSet
+      apiVersion: dragonflydb.io/v1alpha1
+      kind: Dragonfly
       name: harbor-redis
       namespace: harbor
   - events:

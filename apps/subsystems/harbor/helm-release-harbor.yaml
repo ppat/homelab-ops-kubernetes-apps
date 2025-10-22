@@ -52,8 +52,6 @@ spec:
         jobservice:
           jobLog:
             existingClaim: harbor-jobservice
-        redis:
-          existingClaim: harbor-redis
         trivy:
           existingClaim: harbor-trivy
       imageChartStorage:
@@ -87,6 +85,12 @@ spec:
         username: harbor
         coreDatabase: registry
         existingSecret: ${db_name:=harbor-db}-${db_suffix_current:=default}-app
+
+    redis:
+      type: external
+      external:
+        addr: harbor-redis.harbor.svc.cluster.local:6379
+        existingSecret: harbor
 
   postRenderers:
   - kustomize:
