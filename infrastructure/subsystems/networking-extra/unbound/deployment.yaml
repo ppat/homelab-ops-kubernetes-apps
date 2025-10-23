@@ -25,7 +25,7 @@ spec:
         - configMapRef:
             name: unbound-optional-config
             optional: true
-        image: madnuttah/unbound:1.24.0-1@sha256:da64b7830ad7330e6b1e59ee976b01c8f0f71fa15d0d5507fc6aaec29fa4f2fd
+        image: madnuttah/unbound:1.24.1-0@sha256:d615fe69193264ff2de1c4b28c40211722523a97c9415159dd5edf6289090358
         imagePullPolicy: IfNotPresent
         livenessProbe:
           tcpSocket:
