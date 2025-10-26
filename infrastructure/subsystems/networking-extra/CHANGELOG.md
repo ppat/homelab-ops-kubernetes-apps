@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.2.11...infra-networking-extra-v0.2.12) (2025-10-26)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update digest ghcr.io/linuxserver/unifi-network-application (e2898e2 -&gt; 78abb35) ([#2298](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2298)) ([62d7d0c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/62d7d0c6db430155244b483c75510286ff5da01a))
+* **infra-networking-extra:** update madnuttah/unbound (1.24.0-1 -&gt; 1.24.1-0) ([#2322](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2322)) ([e9c71a2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e9c71a2831cef145c32dd021e2e4e048aaf9390e))
+
 ## [0.2.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.2.10...infra-networking-extra-v0.2.11) (2025-10-21)
 
 
