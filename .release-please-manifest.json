@@ -1,5 +1,5 @@
 {
-  "apps/subsystems/ai": "0.4.2",
+  "apps/subsystems/ai": "0.4.3",
   "apps/subsystems/bitwarden": "0.0.18",
   "apps/subsystems/coder": "0.0.31",
   "apps/subsystems/downloaders": "0.2.4",
