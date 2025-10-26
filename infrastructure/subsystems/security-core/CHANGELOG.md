@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.44](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.0.43...infra-security-core-v0.0.44) (2025-10-26)
+
+
+### ✨ Features
+
+* **infra-security-core:** update cert-manager (v1.18.3 -&gt; v1.19.1) ([#2316](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2316)) ([1e3cf21](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1e3cf213e452241b6b5d6cb864d8b849e464e649))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-core:** update external-secrets (0.20.3 -&gt; 0.20.4) ([#2330](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2330)) ([e80f0ff](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e80f0ffc02088b9d665038dd36ee408b02f3e9ee))
+
 ## [0.0.43](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.0.42...infra-security-core-v0.0.43) (2025-10-21)
 
 
