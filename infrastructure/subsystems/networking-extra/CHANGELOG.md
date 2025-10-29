@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.2.11...infra-networking-extra-v0.2.12) (2025-10-29)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update digest busybox (2f590fc -&gt; fba0711) ([#2346](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2346)) ([4b5881a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4b5881a9f199155021515d9089fe4d687c32ba72))
+* **infra-networking-extra:** update digest ghcr.io/linuxserver/unifi-network-application (e2898e2 -&gt; 78abb35) ([#2298](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2298)) ([62d7d0c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/62d7d0c6db430155244b483c75510286ff5da01a))
+* **infra-networking-extra:** update docker.io/mongo (7.0.24 -&gt; 7.0.25) ([#2336](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2336)) ([34f0d14](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/34f0d14935d54758f3a01fd7f228ea3057cf49a1))
+* **infra-networking-extra:** update ghcr.io/fluxcd/flux-cli (v2.7.2 -&gt; v2.7.3) ([#2343](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2343)) ([b8300ee](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b8300ee31efe8436bfba92f762f2445762057d79))
+* **infra-networking-extra:** update madnuttah/unbound (1.24.0-1 -&gt; 1.24.1-0) ([#2322](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2322)) ([e9c71a2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e9c71a2831cef145c32dd021e2e4e048aaf9390e))
+
 ## [0.2.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.2.10...infra-networking-extra-v0.2.11) (2025-10-21)
 
 
