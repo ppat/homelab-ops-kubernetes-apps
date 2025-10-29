@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.34](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.33...apps-media-v0.0.34) (2025-10-29)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** update ghcr.io/jellyfin/jellyfin (10.11.0 -&gt; 10.11.1) ([#2340](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2340)) ([f0d16f5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f0d16f5e9e14160f3c973c3f32e102df3d396944))
+* **infra-networking-extra:** update digest busybox (2f590fc -&gt; fba0711) ([#2346](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2346)) ([4b5881a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4b5881a9f199155021515d9089fe4d687c32ba72))
+
 ## [0.0.33](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.32...apps-media-v0.0.33) (2025-10-21)
 
 
