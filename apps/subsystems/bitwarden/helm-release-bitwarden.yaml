@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: bitwarden-repository
         namespace: flux-system
-      version: 2025.9.2
+      version: 2025.10.0
   install:
     createNamespace: false
     remediation:
