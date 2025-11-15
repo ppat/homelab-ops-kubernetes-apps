@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.23](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.1.22...infra-observability-extra-v0.1.23) (2025-11-15)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-extra:** update prometheus-snmp-exporter (9.8.1 -&gt; 9.8.2) ([#2395](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2395)) ([0646050](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/06460508807acd08b1b20886d5b18630bb7319f9))
+
 ## [0.1.22](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.1.21...infra-observability-extra-v0.1.22) (2025-10-21)
 
 
