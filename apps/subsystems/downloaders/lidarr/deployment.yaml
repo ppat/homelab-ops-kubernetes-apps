@@ -63,7 +63,7 @@ spec:
             secretKeyRef:
               name: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
               key: password
-        image: ghcr.io/linuxserver/lidarr:3.0.1@sha256:be5501c386d0d2d1c4076a23d5db0aa07f784ef10ac3c42b0c9fe47bd7d9ce53
+        image: ghcr.io/linuxserver/lidarr:3.1.0@sha256:f2a186ce04ec5adb133f92a08dd3efbc918fc71b33077426ef099d94350dfa1b
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
