@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.13](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-harbor-v0.0.12...apps-harbor-v0.0.13) (2025-11-23)
+
+
+### ✨ Features
+
+* update ghcr.io/dragonflydb/dragonfly (v1.34.2 -&gt; v1.35.0) ([#2430](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2430)) ([5026685](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5026685b43479ea258417cb781a3c09f99c69924))
+
 ## [0.0.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-harbor-v0.0.11...apps-harbor-v0.0.12) (2025-10-22)
 
 
