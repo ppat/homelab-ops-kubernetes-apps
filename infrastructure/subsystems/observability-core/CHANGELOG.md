@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.14.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.14.0...infra-observability-core-v0.14.1) (2025-11-30)
+
+
+### ✨ Features
+
+* **infra-observability-core:** update grafana (10.1.5 -&gt; 10.2.0) ([#2466](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2466)) ([81db20d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/81db20d5bbfcb29631fbc170cd2416917a1f1086))
+* **infra-observability-core:** update kube-prometheus-stack (79.5.0 -&gt; 79.6.1) ([#2458](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2458)) ([aa49a9b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/aa49a9bf3ab90b22db23b92e8ff959b87704fdad))
+* **infra-observability-core:** update kube-prometheus-stack (79.6.1 -&gt; 79.7.1) ([#2468](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2468)) ([38692cb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/38692cb4daee25b040e45506f0c475fbc25dfbb8))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** update grafana (10.1.4 -&gt; 10.1.5) ([#2441](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2441)) ([3b72bbf](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3b72bbf2c8499b1a1698caccb5cd40909dc97ae6))
+
 ## [0.14.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.13.1...infra-observability-core-v0.14.0) (2025-11-12)
 
 
