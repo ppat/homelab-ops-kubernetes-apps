@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.3.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.2.12...infra-networking-extra-v0.3.0) (2025-12-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-networking-extra:** update ghcr.io/linuxserver/unifi-network-application (9.5.21 -> 10.0.162) ([#2453](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2453))
+
+### ✨ Features
+
+* **infra-networking-extra:** update ghcr.io/linuxserver/unifi-network-application (9.5.21 -&gt; 10.0.162) ([#2453](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2453)) ([b5847bd](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b5847bd3392ed62bec008c8d04ddc5f37cb20b30))
+* **infra-networking-extra:** update tailscale-operator (1.88.4 -&gt; 1.90.6) ([#2387](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2387)) ([6d4c341](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6d4c34104ceffb136d2973b366ae7a6225a306b7))
+* **infra-networking-extra:** update visibilityspots/cloudflared (v2025.10.1 -&gt; v2025.11.1) ([#2442](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2442)) ([be19a45](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/be19a4557f0e655db3ad6bbbfcb2ae7df9a62b0e))
+* **infra-networking-extra:** update visibilityspots/cloudflared (v2025.9.1 -&gt; v2025.10.0) ([#2347](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2347)) ([d09ae15](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d09ae1581d21551c74d5ef62d053dfeaba4f578d))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update digest busybox (e3652a0 -&gt; d80cd69) ([#2499](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2499)) ([e1877b6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e1877b6ec8ef260af8b5aa9f42993ff5d0d87428))
+* **infra-networking-extra:** update digest busybox (fba0711 -&gt; e3652a0) ([#2351](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2351)) ([4feaf2c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4feaf2c5f8a14ef31b8f683fdd3d818dc7d54adf))
+* **infra-networking-extra:** update digest docker.io/mongo (408c597 -&gt; 82db6c6) ([#2417](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2417)) ([0411ef8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0411ef8cedcb6f40fec68d4bc5f9307f286496a6))
+* **infra-networking-extra:** update digest docker.io/mongo (a814f93 -&gt; 408c597) ([#2404](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2404)) ([c1f1506](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c1f15064f761759144ffe838f632b88d385a6621))
+* **infra-networking-extra:** update ghcr.io/fluxcd/flux-cli (v2.7.3 -&gt; v2.7.4) ([#2450](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2450)) ([b4173d1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b4173d1b2c8626fa191fc70f816ecc1e14f386b9))
+* **infra-networking-extra:** update ghcr.io/fluxcd/flux-cli (v2.7.4 -&gt; v2.7.5) ([#2460](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2460)) ([42088a6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/42088a6ec79941b5a3d97982e818812e0f1e4469))
+* **infra-networking-extra:** update madnuttah/unbound (1.24.1-0 -&gt; 1.24.2-0) ([#2461](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2461)) ([fe5eae5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fe5eae515d6ece7d1020c40f9336a8648db99875))
+* **infra-networking-extra:** update tailscale-operator (1.90.6 -&gt; 1.90.8) ([#2440](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2440)) ([8aa9333](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8aa9333baaee39418fcf95b3ac1a0ee05c0cb1cf))
+* **infra-networking-extra:** update tailscale-operator (1.90.8 -&gt; 1.90.9) ([#2457](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2457)) ([11adf8e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/11adf8ec5aa5aedb276e2b167c657e936a487066))
+* **infra-networking-extra:** update visibilityspots/cloudflared (v2025.10.0 -&gt; v2025.10.1) ([#2394](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2394)) ([263513b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/263513bd60f9390145cec92d2402075e59e753a3))
+
 ## [0.2.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.2.11...infra-networking-extra-v0.2.12) (2025-10-29)
 
 

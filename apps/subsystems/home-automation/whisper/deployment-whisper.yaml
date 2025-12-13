@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: wyoming-whisper
-        image: rhasspy/wyoming-whisper:2.5.0@sha256:0d78ad506e450fb113616650b7328233385905e2f2ed07fa59221012144500e3
+        image: rhasspy/wyoming-whisper:3.0.2@sha256:995b37523bc422f4f7649e50ccded97a5b9bf6d1d0420591183a778dd5d7d3f2
         args: ["--model", "medium-int8"]
         livenessProbe:
           tcpSocket:
