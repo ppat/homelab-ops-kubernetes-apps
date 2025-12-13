@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.4.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.4.3...apps-ai-v0.4.4) (2025-12-13)
+
+
+### ✨ Features
+
+* **apps-ai:** update ollama (1.32.0 -&gt; 1.33.0) ([#2402](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2402)) ([8cd6734](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8cd6734d281887ae0c70532b9df86de0bfbf4933))
+* **apps-ai:** update ollama (1.33.0 -&gt; 1.34.0) ([#2421](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2421)) ([6883753](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6883753fe4db0ded996ed54319cdfaa7a65a385f))
+* **apps-ai:** update ollama (1.34.0 -&gt; 1.35.0) ([#2463](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2463)) ([9e32deb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9e32deb40b1e9607853292a36b1ed1ea16fc7d2b))
+* **apps-ai:** update open-webui (8.12.3 -&gt; 8.14.0) ([#2416](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2416)) ([dbed528](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/dbed52865f63874906529192060f2b0174057eed))
+* **apps-ai:** update open-webui (8.14.0 -&gt; 8.16.0) ([#2476](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2476)) ([1bd7837](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1bd7837a94bd41788f1a516de45bf042ba7711ba))
+* **apps-ai:** update open-webui (8.16.0 -&gt; 8.18.0) ([#2479](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2479)) ([6abc0a5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6abc0a5ed1e88d731f3ee51f34cc37fd794feeca))
+* **apps-ai:** update open-webui (8.18.0 -&gt; 8.19.0) ([#2506](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2506)) ([9a14d31](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9a14d318742bc724a8a2887990a5b963705ab7be))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** update open-webui (8.12.2 -&gt; 8.12.3) ([#2375](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2375)) ([bb2494c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/bb2494cfd62c4383f00b4129f1738ce793b91acd))
+
 ## [0.4.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.4.2...apps-ai-v0.4.3) (2025-10-26)
 
 
