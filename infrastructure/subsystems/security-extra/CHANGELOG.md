@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.2.4...infra-security-extra-v0.2.5) (2025-12-15)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-extra:** remove redis dependency from authentik as authentik no longer uses redis ([#2540](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2540)) ([f0983d0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f0983d0345dee8a04b3a69296a0507a659fe0d21))
+
 ## [0.2.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.2.3...infra-security-extra-v0.2.4) (2025-12-13)
 
 
