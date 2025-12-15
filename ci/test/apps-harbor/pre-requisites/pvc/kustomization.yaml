@@ -5,3 +5,4 @@ kind: Kustomization
 resources:
 - harbor-jobservice.yaml
 - harbor-registry.yaml
+- harbor-trivy.yaml

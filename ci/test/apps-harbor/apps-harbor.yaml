@@ -33,7 +33,13 @@ spec:
         namespace: harbor
       spec:
         values:
+          redis:
+            # this is needed for flux-diff to not err out
+            external:
+              password: "not-a-secure-password"
+              existingSecret: ""
           trivy:
+            enabled: true
             skipUpdate: true
             skipJavaDBUpdate: true
     target:
