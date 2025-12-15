@@ -33,6 +33,10 @@ spec:
         namespace: harbor
       spec:
         values:
+          redis:
+            external:
+              password: "not-a-secure-password"
+              existingSecret: ""
           trivy:
             enabled: true
             skipUpdate: true

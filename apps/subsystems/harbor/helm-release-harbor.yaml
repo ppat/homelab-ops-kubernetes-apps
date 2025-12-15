@@ -96,8 +96,6 @@ spec:
       external:
         addr: harbor-redis.harbor.svc.cluster.local:6379
         existingSecret: harbor
-    trivy:
-      enabled: ${harbor_trivy_enabled:=false}
 
   postRenderers:
   - kustomize:

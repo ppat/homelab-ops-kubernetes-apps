@@ -87,6 +87,9 @@ spec:
   - name: Validate harbor portal
     use:
       template: ./validate-harbor-portal.yaml
+  - name: Validate harbor trivy
+    use:
+      template: ./validate-harbor-trivy.yaml
 
   - name: Validate harbor release
     use:
