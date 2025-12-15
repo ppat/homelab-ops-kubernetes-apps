@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.20](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-bitwarden-v0.0.19...apps-bitwarden-v0.0.20) (2025-12-15)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-bitwarden:** bitwarden helm chart switched to semver for chart version while still using calver for app version ([#2542](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2542)) ([f3c2245](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f3c2245064d4781081cccdde5be3a2ec4aa7c3ce))
+
 ## [0.0.19](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-bitwarden-v0.0.18...apps-bitwarden-v0.0.19) (2025-12-13)
 
 
