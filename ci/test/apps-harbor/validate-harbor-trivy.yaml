@@ -1,0 +1,26 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-harbor-registry
+spec:
+  try:
+  - description: Assert deployment/harbor-registry
+    assert:
+      bindings:
+      - name: name
+        value: harbor-registry
+      - name: namespace
+        value: harbor
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: harbor-registry
+      namespace: harbor
+  - podLogs:
+      selector: app.kubernetes.io/name=harbor,app.kubernetes.io/component=registry
+      namespace: harbor
+  - events:
+      namespace: harbor
