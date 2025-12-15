@@ -1,0 +1,26 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-harbor-core
+spec:
+  try:
+  - description: Assert deployment/harbor-core
+    assert:
+      bindings:
+      - name: name
+        value: harbor-core
+      - name: namespace
+        value: harbor
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: harbor-core
+      namespace: harbor
+  - podLogs:
+      selector: app.kubernetes.io/name=harbor,app.kubernetes.io/component=core
+      namespace: harbor
+  - events:
+      namespace: harbor

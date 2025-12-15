@@ -29,6 +29,11 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=2m
         timeout: 2m
+    - description: Reconcile helmrelease/dragonfly-operator-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=dragonfly-operator-release --namespace=dragonfly-system --timeout=2m
+        timeout: 2m
 
   - name: Apply apps-harbor module
     try:
@@ -63,14 +68,25 @@ spec:
   - name: Validate database
     use:
       template: ./validate-database.yaml
-
   - name: Validate harbor redis
     use:
       template: ./validate-harbor-redis.yaml
 
-  - name: Validate harbor services
+  - name: Validate harbor registry
     use:
-      template: ./validate-harbor-services.yaml
+      template: ./validate-harbor-registry.yaml
+  - name: Validate harbor core
+    use:
+      template: ./validate-harbor-core.yaml
+  - name: Validate harbor exporter
+    use:
+      template: ./validate-harbor-exporter.yaml
+  - name: Validate harbor jobservice
+    use:
+      template: ./validate-harbor-jobservice.yaml
+  - name: Validate harbor portal
+    use:
+      template: ./validate-harbor-portal.yaml
 
   - name: Validate harbor release
     use:

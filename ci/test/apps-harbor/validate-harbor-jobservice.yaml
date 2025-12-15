@@ -1,0 +1,26 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-harbor-jobservice
+spec:
+  try:
+  - description: Assert deployment/harbor-jobservice
+    assert:
+      bindings:
+      - name: name
+        value: harbor-jobservice
+      - name: namespace
+        value: harbor
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: harbor-jobservice
+      namespace: harbor
+  - podLogs:
+      selector: app.kubernetes.io/name=harbor,app.kubernetes.io/component=jobservice
+      namespace: harbor
+  - events:
+      namespace: harbor
