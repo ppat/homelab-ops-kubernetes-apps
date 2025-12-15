@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.0.13](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-harbor-v0.0.12...apps-harbor-v0.0.13) (2025-12-15)
+
+
+### ✨ Features
+
+* update ghcr.io/dragonflydb/dragonfly (v1.34.2 -&gt; v1.35.0) ([#2430](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2430)) ([5026685](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5026685b43479ea258417cb781a3c09f99c69924))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-harbor:** re-enable trivy in chainsaw test ([#2545](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2545)) ([cf49eba](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/cf49eba89b34aee4c5f48e0e1333dcb2418d0a4d))
+* **apps-harbor:** trivy db downloads should not be rate limited by github ([#2544](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2544)) ([3ef2844](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3ef284443f5b65152181674cab0b86957a4d8270))
+* **apps-harbor:** update harbor (1.18.0 -&gt; 1.18.1) ([#2503](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2503)) ([c73ae46](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c73ae4614a273f229fcb60844c675e0e639ea0f5))
+* **infra-security-extra:** update ghcr.io/dragonflydb/dragonfly (v1.35.0 -&gt; v1.35.1) ([#2452](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2452)) ([8075545](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/80755450098758a944d09b462faa9b7a770688d0))
+
 ## [0.0.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-harbor-v0.0.11...apps-harbor-v0.0.12) (2025-10-22)
 
 
