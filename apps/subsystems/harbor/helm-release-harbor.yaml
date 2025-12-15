@@ -29,6 +29,12 @@ spec:
       ignoreTestFailures: false
       retries: 3
       strategy: rollback
+  valuesFrom:
+  - kind: Secret
+    name: harbor
+    valuesKey: trivy_github_token
+    targetPath: trivy.gitHubToken
+    optional: true
   values:
     expose:
       type: ingress
@@ -82,15 +88,18 @@ spec:
       type: external
       external:
         host: harbor-db.harbor.svc.cluster.local
+        port: "5432"
         username: harbor
         coreDatabase: registry
         existingSecret: ${db_name:=harbor-db}-${db_suffix_current:=default}-app
-
+        sslmode: "verify-ca"
     redis:
       type: external
       external:
         addr: harbor-redis.harbor.svc.cluster.local:6379
         existingSecret: harbor
+    trivy:
+      enabled: ${harbor_trivy_enabled:=false}
 
   postRenderers:
   - kustomize:

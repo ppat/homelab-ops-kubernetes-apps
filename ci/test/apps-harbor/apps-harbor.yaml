@@ -14,6 +14,7 @@ spec:
       db_storage_class: standard
       db_storage_size: 1Gi
       db_suffix_current: test
+      harbor_trivy_enabled: "true"
       secret_store: fake
       dns_zone: example.com
       domain_name: cluster.example.com
@@ -23,3 +24,19 @@ spec:
     namespace: flux-system
   timeout: 2m0s
   wait: false
+  patches:
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: harbor-release
+        namespace: harbor
+      spec:
+        values:
+          trivy:
+            skipUpdate: true
+            skipJavaDBUpdate: true
+    target:
+      kind: HelmRelease
+      name: harbor-release
