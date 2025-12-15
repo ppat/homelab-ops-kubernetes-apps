@@ -68,7 +68,7 @@ spec:
     existingSecretSecretKey: harbor
 
     metrics:
-      enabled: true
+      enabled: false
       core:
         path: /metrics
         port: 8001
@@ -82,7 +82,7 @@ spec:
         path: /metrics
         port: 8001
       serviceMonitor:
-        enabled: true
+        enabled: false
 
     database:
       type: external
