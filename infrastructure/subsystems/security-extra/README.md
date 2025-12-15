@@ -14,7 +14,6 @@ The security-extra module provides four main capabilities:
    - High-availability server deployment (3 replicas)
    - Background worker for async tasks
    - PostgreSQL cluster (2 instances)
-   - Redis for caching and sessions
    - S3-based media storage
    - SMTP integration for notifications
 
@@ -28,7 +27,6 @@ The security-extra module provides four main capabilities:
 3. Monitoring Integration
    - ServiceMonitor for servers
    - PodMonitor for database
-   - Redis metrics collection
    - Prometheus rules
    - Health checks
 
@@ -63,7 +61,6 @@ flowchart TB
         direction TB
         pg-primary["PostgreSQL Primary<br/>(Config/Data)"]:::db
         pg-replica["PostgreSQL Replica<br/>(HA/Failover)"]:::db
-        redis["Redis<br/>(Cache/Sessions)"]:::db
     end
 
     %% Storage Layer
@@ -71,7 +68,6 @@ flowchart TB
         direction TB
         pg-primary-pvc["PostgreSQL Primary PVC"]:::storage
         pg-replica-pvc["PostgreSQL Replica PVC"]:::storage
-        redis-pvc["Redis PVC"]:::storage
         s3-media["S3 Bucket: Media<br/>homelab-authentik-media"]:::storage
         s3-backup["S3 Bucket: Backups<br/>homelab-authentik-backup"]:::storage
     end
@@ -97,9 +93,6 @@ flowchart TB
     server-1 --> pg-primary
     server-2 --> pg-primary
     server-3 --> pg-primary
-    server-1 --> redis
-    server-2 --> redis
-    server-3 --> redis
     server-1 --> s3-media
     server-2 --> s3-media
     server-3 --> s3-media
@@ -107,7 +100,6 @@ flowchart TB
 
     %% Worker Dependencies
     worker --> pg-primary
-    worker --> redis
     worker --> s3-media
     worker --> smtp
 
@@ -115,7 +107,6 @@ flowchart TB
     pg-primary --> pg-primary-pvc
     pg-primary --> s3-backup
     pg-replica --> pg-replica-pvc
-    redis --> redis-pvc
 
     %% Legend
     subgraph Legend[" "]
@@ -135,11 +126,10 @@ flowchart TB
 ### Component Details
 
 | Component | Primary Role | Integration Points |
-|-----------|-------------|-------------------|
+| --------- | ----------- | ----------------- |
 | Server | Core identity management | • Runs 3 replicas for HA<br>• Handles API requests and flows<br>• Processes SSO operations<br>• Routes static assets<br>• Hosts embedded outpost |
 | Background Worker | Async task processing | • Sends notifications<br>• Processes events<br>• Handles system tasks<br>• Manages email delivery |
-| PostgreSQL | Data persistence | • Primary-replica setup<br>• Stores configuration<br>• Manages user data<br>• Custom storage class<br>• PodMonitor enabled |
-| Redis | Session management | • Caches authentication data<br>• Manages user sessions<br>• Persistent storage<br>• Metrics collection |
+| PostgreSQL | Data persistence<br>Session management | • Primary-replica setup<br>• Stores configuration<br>• Manages user data<br>• Caches authentication data<br>• Manages user sessions<br>• Persistent storage<br>• Custom storage class<br>• PodMonitor enabled |
 | Embedded Outpost | Forward authentication | • Handles Traefik auth<br>• Provides identity headers<br>• Supports wildcard domains<br>• Real-time config updates |
 | External Outpost | Remote authentication | • Optional deployment<br>• Supports airgapped setups<br>• Uses service account<br>• Websocket health checks |
 
@@ -148,7 +138,7 @@ flowchart TB
 1. Required Components
 
    | Component | Purpose | Configuration |
-   |-----------|---------|---------------|
+   | --------- | ------- | ------------- |
    | PostgreSQL | Data persistence | From database-core |
    | S3 Storage | Media storage | From storage-core |
    | Certificate Manager | JWT signing | From security-core |
@@ -156,18 +146,17 @@ flowchart TB
 2. Required Variables
 
    | Variable | Purpose | Example |
-   |----------|---------|---------|
+   | -------- | ------- | ------- |
    | domain_name | Base domain | example.com |
    | dns_zone | Cookie domain | homelab.local |
    | cert_issuer | Certificate issuer | letsencrypt-prod |
    | db_storage_size | Database size | 10Gi |
-   | redis_storage_size | Cache size | 1Gi |
 
 3. Required Secrets
 
    | Secret Name | Purpose | Required Keys |
-   |-------------|---------|---------------|
-   | authentik-credentials | Core credentials | authentik_secret_key, authentik_redis_password |
+   | ----------- | ------- | ------------- |
+   | authentik-credentials | Core credentials | authentik_secret_key |
    | authentik-db-app | Database access | username, password |
    | authentik-signing-cert | JWT signing | tls.key, tls.crt |
 

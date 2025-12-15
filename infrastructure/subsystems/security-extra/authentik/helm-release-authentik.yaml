@@ -86,16 +86,6 @@ spec:
           secretKeyRef:
             name: ${db_name:=authentik-db}-${db_suffix_current:=default}-app
             key: password
-      # ----------------------- REDIS ------------------------
-      - name: AUTHENTIK_REDIS__HOST
-        value: authentik-cache.authentik.svc.cluster.local
-      - name: AUTHENTIK_REDIS__PORT
-        value: "6379"
-      - name: AUTHENTIK_REDIS__PASSWORD
-        valueFrom:
-          secretKeyRef:
-            name: authentik-credentials
-            key: authentik_redis_password
       # ------------------------- S3 -------------------------
       - name: AUTHENTIK_STORAGE__MEDIA__BACKEND
         value: "s3"
@@ -159,9 +149,6 @@ spec:
         enabled: true
 
     postgresql:
-      enabled: false
-
-    redis:
       enabled: false
 
   postRenderers:
