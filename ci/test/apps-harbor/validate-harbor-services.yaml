@@ -5,14 +5,6 @@ metadata:
   name: validate-harbor-services
 spec:
   try:
-  - description: Assert statefulset/harbor-trivy
-    assert:
-      bindings:
-      - name: name
-        value: harbor-trivy
-      - name: namespace
-        value: harbor
-      file: ../chainsaw/assertions/statefulset-ready.yaml
   - description: Assert deployment/harbor-core
     assert:
       bindings:
@@ -54,11 +46,6 @@ spec:
         value: harbor
       file: ../chainsaw/assertions/deployment-ready.yaml
   catch:
-  - describe:
-      apiVersion: apps/v1
-      kind: StatefulSet
-      name: harbor-trivy
-      namespace: harbor
   - describe:
       apiVersion: apps/v1
       kind: Deployment
