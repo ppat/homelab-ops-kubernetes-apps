@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: ollama-repository
         namespace: flux-system
-      version: 1.35.0
+      version: 1.36.0
   install:
     createNamespace: false
     remediation:
