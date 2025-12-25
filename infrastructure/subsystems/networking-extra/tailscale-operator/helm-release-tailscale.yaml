@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: tailscale-repository
         namespace: flux-system
-      version: 1.90.9
+      version: 1.92.3
   install:
     createNamespace: false
     remediation:
