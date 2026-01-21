@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: prometheus-community-repository
         namespace: flux-system
-      version: 80.14.2
+      version: 80.14.4
   install:
     crds: CreateReplace
     createNamespace: false
