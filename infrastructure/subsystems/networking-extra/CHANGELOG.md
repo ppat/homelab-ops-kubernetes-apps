@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.3.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.1...infra-networking-extra-v0.3.2) (2026-01-24)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update digest busybox (2383baa -&gt; e226d63) ([#2658](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2658)) ([008540b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/008540ba187bde34ff627738732d0e1b1d172332))
+* **infra-networking-extra:** update digest busybox (d80cd69 -&gt; 2383baa) ([#2610](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2610)) ([d703f9a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d703f9a2cd605abe4ab40399b155d923badd6bd7))
+* **infra-networking-extra:** update digest ghcr.io/linuxserver/unifi-network-application (2683402 -&gt; 7948b8c) ([#2645](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2645)) ([76f27f3](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/76f27f3760bc5d9c905f995be040bb12e8009ec5))
+* **infra-networking-extra:** update tailscale-operator (1.92.4 -&gt; 1.92.5) ([#2612](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2612)) ([eb53dfd](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/eb53dfdac72be623bb4e159b6154514ae516c9e3))
+
 ## [0.3.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.0...infra-networking-extra-v0.3.1) (2026-01-04)
 
 
