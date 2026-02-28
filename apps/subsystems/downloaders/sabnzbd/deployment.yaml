@@ -26,7 +26,7 @@ spec:
         env:
         - name: TZ
           value: Etc/UTC
-        image: ghcr.io/linuxserver/sabnzbd:4.5.5@sha256:a4f65481b436424d90c53f0975f3d5cc6cabb95f5c00624b78c370dddf9b83ad
+        image: ghcr.io/linuxserver/sabnzbd:4.5.5@sha256:1a26f56dfc047b62d5ddc20bc92bdebfbe7c3cb58d2d3523958838a09182d77a
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
