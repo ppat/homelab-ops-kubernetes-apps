@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.3.2...apps-home-automation-v0.3.3) (2026-02-28)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-home-automation:** update emqx/nanomq (0.24.6 -&gt; 0.24.10) ([#2739](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2739)) ([0315f8d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0315f8dd2b59f0670c197aa284e075bc41c849ea))
+* **apps-home-automation:** update rhasspy/wyoming-piper (2.2.1 -&gt; 2.2.2) ([#2734](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2734)) ([7fcc42b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7fcc42b172fad205b59081bc1e6efb43ae19f83e))
+
 ## [0.3.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.3.1...apps-home-automation-v0.3.2) (2026-01-31)
 
 
