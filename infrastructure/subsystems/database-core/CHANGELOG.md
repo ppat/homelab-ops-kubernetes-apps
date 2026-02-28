@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.17](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.0.16...infra-database-core-v0.0.17) (2026-02-28)
+
+
+### ✨ Features
+
+* **infra-database-core:** update cloudnative-pg (0.26.1 -&gt; 0.27.0) ([#2548](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2548)) ([b16a301](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b16a301cb8a347fd055826d45aa156e3372784be))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-database-core:** update cloudnative-pg (0.27.0 -&gt; 0.27.1) ([#2735](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2735)) ([a0c5016](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a0c5016d5ff8133e587c8699c22645312775d931))
+
 ## [0.0.16](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.0.15...infra-database-core-v0.0.16) (2025-12-13)
 
 
