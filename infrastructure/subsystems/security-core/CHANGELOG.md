@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.1.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.1.5...infra-security-core-v0.1.6) (2026-02-28)
+
+
+### ✨ Features
+
+* **infra-security-core:** update kyverno (3.6.2 -&gt; 3.7.0) ([#2740](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2740)) ([dbacc16](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/dbacc16db4d5daaf194c5f466c845c6115cfde0a))
+* **infra-security-core:** update trust-manager (v0.20.3 -&gt; v0.21.0) ([#2783](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2783)) ([09a249a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/09a249a99b3f26386cf520df2df2038fc96ce135))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-core:** update cert-manager (v1.19.2 -&gt; v1.19.3) ([#2721](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2721)) ([3fd532e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3fd532e8c44d4ef910cf47c89301ae2fce430f54))
+* **infra-security-core:** update cert-manager (v1.19.3 -&gt; v1.19.4) ([#2774](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2774)) ([0d72615](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0d7261576e129c480d8c7a03af5b83d048067518))
+* **infra-security-core:** update external-secrets (1.3.1 -&gt; 1.3.2) ([#2730](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2730)) ([42280ae](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/42280ae9c7447ca5fd8b4d2df246614fe38ecedf))
+* **infra-security-core:** update kyverno (3.7.0 -&gt; 3.7.1) ([#2768](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2768)) ([79e0361](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/79e0361a4ed1232269b92d7c7c60d2b38c166163))
+* **infra-security-core:** update policy-reporter (3.7.1 -&gt; 3.7.2) ([#2761](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2761)) ([312a066](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/312a0662e71409ed0550b1aafdf46425d4487ffd))
+* **infra-security-core:** update trust-manager (v0.21.0 -&gt; v0.21.1) ([#2787](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2787)) ([4cf55db](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4cf55db026cc1687d51086a8ceb44f87c8b60935))
+
 ## [0.1.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.1.4...infra-security-core-v0.1.5) (2026-01-29)
 
 
