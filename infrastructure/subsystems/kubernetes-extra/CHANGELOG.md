@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.27](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.26...infra-kubernetes-extra-v0.0.27) (2026-03-10)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-kubernetes-extra:** update descheduler (0.35.0 -&gt; 0.35.1) ([#2812](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2812)) ([5c2423a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5c2423adf1c29e7c99147f018a5a84fd4ba04c60))
+* **infra-kubernetes-extra:** update digest squat/generic-device-plugin (8e74085 -&gt; 5acdaa4) ([#2776](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2776)) ([675408b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/675408b6fc2d5181ae9119ef7d28b16f1bb442c6))
+
 ## [0.0.26](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.25...infra-kubernetes-extra-v0.0.26) (2026-03-10)
 
 
