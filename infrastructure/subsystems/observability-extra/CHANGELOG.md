@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.27](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.1.26...infra-observability-extra-v0.1.27) (2026-03-10)
+
+
+### ✨ Features
+
+* **infra-observability-extra:** update ghcr.io/unpoller/unpoller (v2.29.0 -&gt; v2.34.0) ([#2829](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2829)) ([109030c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/109030c3cf7ccc48c17731b51f56678794df1407))
+
 ## [0.1.26](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.1.25...infra-observability-extra-v0.1.26) (2026-03-10)
 
 
