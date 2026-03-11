@@ -50,9 +50,12 @@ spec:
         pluginConfig:
         - name: DefaultEvictor
           args:
-            evictFailedBarePods: false
-            evictLocalStoragePods: true
+            minPodAge: 30m
             nodeFit: true
+            noEvictionPolicy: Mandatory
+            podProtections:
+              defaultDisabled:
+              - "PodsWithLocalStorage"
         - name: RemovePodsViolatingInterPodAntiAffinity
         - name: RemovePodsViolatingTopologySpreadConstraint
           args:
@@ -68,23 +71,22 @@ spec:
           args:
             nodeAffinityType:
             - requiredDuringSchedulingIgnoredDuringExecution
+            - preferredDuringSchedulingIgnoredDuringExecution
         - name: "LowNodeUtilization"
           args:
             thresholds:
               cpu: 30
               memory: 30
             targetThresholds:
-              cpu: 60
-              memory: 60
+              cpu: 50
+              memory: 50
             metricsUtilization:
-              metricsServer: true
+              source: KubernetesMetrics
             evictableNamespaces:
               exclude:
               - kube-system
               - longhorn-system
-              - logging
               - dns
-              - coder
         plugins:
           balance:
             enabled:
