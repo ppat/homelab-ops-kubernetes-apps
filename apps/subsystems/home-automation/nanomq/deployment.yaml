@@ -35,7 +35,7 @@ spec:
             secretKeyRef:
               key: nanomq_admin_password
               name: home-automation-secrets
-        image: emqx/nanomq:0.24.10-slim@sha256:bfe838c1e025df5753dd66e8d4717643635044723069515f5e87624e7d83d94b
+        image: emqx/nanomq:0.24.11-slim@sha256:1f4df1d736cc103d8c5bbb1b691cd3df0993ccca8ca1c483f7b82d8db9c7295e
         livenessProbe:
           tcpSocket:
             port: mqtt
