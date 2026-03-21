@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.0.38](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.37...apps-media-v0.0.38) (2026-03-21)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** update ghcr.io/jellyfin/jellyfin (10.11.5 -&gt; 10.11.6) ([#2809](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2809)) ([3a2afad](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3a2afadaacd9530d9403dd64215da0fd224b9ce0))
+* **apps-media:** update ghcr.io/tautulli/tautulli (v2.16.0 -&gt; v2.16.1) ([#2810](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2810)) ([55786f8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/55786f8c6f989e50c1f00bf358f083a7491f0ef1))
+* **infra-networking-extra:** update digest busybox (2383baa -&gt; e226d63) ([#2658](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2658)) ([008540b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/008540ba187bde34ff627738732d0e1b1d172332))
+* **infra-networking-extra:** update digest busybox (d80cd69 -&gt; 2383baa) ([#2610](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2610)) ([d703f9a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d703f9a2cd605abe4ab40399b155d923badd6bd7))
+* **infra-networking-extra:** update digest busybox (e226d63 -&gt; b3255e7) ([#2718](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2718)) ([5a00e80](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5a00e80710e4b714ae01f063717c7ce6b601a412))
+
 ## [0.0.37](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.36...apps-media-v0.0.37) (2026-01-04)
 
 
