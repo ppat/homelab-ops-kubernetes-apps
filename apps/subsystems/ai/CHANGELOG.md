@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.6.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.5.0...apps-ai-v0.6.0) (2026-04-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* **apps-ai:** update open-webui (10.2.1 -> 11.1.0) ([#2850](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2850))
+
+### ✨ Features
+
+* **apps-ai:** update ollama (1.37.0 -&gt; 1.38.0) ([#2666](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2666)) ([7124e8a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7124e8ab3d2ec6336e09ead3d65bc29dbc561391))
+* **apps-ai:** update ollama (1.38.0 -&gt; 1.39.0) ([#2715](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2715)) ([5766949](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/576694966bc36fa173522dd09c00c1876f1872eb))
+* **apps-ai:** update ollama (1.39.0 -&gt; 1.40.0) ([#2733](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2733)) ([3678c12](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3678c1205db2c181c8fafafde4131ef520e50f90))
+* **apps-ai:** update ollama (1.40.0 -&gt; 1.41.0) ([#2745](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2745)) ([d7a9086](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d7a90866970efe25a58824e46e22a64822e4d748))
+* **apps-ai:** update ollama (1.41.0 -&gt; 1.42.0) ([#2765](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2765)) ([1c6a020](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1c6a02023df34477e39ce57e966d4647facff195))
+* **apps-ai:** update ollama (1.42.0 -&gt; 1.43.0) ([#2770](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2770)) ([184af80](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/184af806f189b774afc9ccdf117678359c5dc3b3))
+* **apps-ai:** update ollama (1.43.0 -&gt; 1.44.0) ([#2780](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2780)) ([20faa7d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/20faa7d6e4117d64fae46869a36b23c9cd514795))
+* **apps-ai:** update ollama (1.44.0 -&gt; 1.45.0) ([#2789](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2789)) ([7084a45](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7084a45e93cada7cd63ddfe83ff836cfb6c49b1b))
+* **apps-ai:** update ollama (1.45.0 -&gt; 1.46.0) ([#2792](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2792)) ([aa18864](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/aa188645cea53e96d88f6061907c48f48d096612))
+* **apps-ai:** update ollama (1.46.0 -&gt; 1.47.0) ([#2803](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2803)) ([0e30845](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0e30845a57fad3076beef8561cf3666992097b98))
+* **apps-ai:** update ollama (1.47.0 -&gt; 1.48.0) ([#2805](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2805)) ([d97f5aa](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d97f5aa2b36d20f8eb40d66d1088cab2c12da652))
+* **apps-ai:** update ollama (1.48.0 -&gt; 1.50.0) ([#2824](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2824)) ([1650e0e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1650e0ec267c7130e5da2bf5f5d14d47f68dabe8))
+* **apps-ai:** update ollama (1.50.0 -&gt; 1.51.0) ([#2868](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2868)) ([2230590](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2230590f5c0ced8c45991129c50a0cb6e17ff16b))
+* **apps-ai:** update ollama (1.51.0 -&gt; 1.52.0) ([#2872](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2872)) ([cf21cc1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/cf21cc1a18153700dff805451eea88289f3d2a12))
+* **apps-ai:** update ollama (1.52.0 -&gt; 1.53.0) ([#2897](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2897)) ([10556b2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/10556b2b8b478cea374615daa38de21b59fb3c78))
+* **apps-ai:** update ollama (1.53.0 -&gt; 1.54.0) ([#2901](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2901)) ([09b5e8b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/09b5e8bfbda46c40dff79123701624e512821e49))
+* **apps-ai:** update open-webui (10.2.1 -&gt; 11.1.0) ([#2850](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2850)) ([f5f2fcc](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f5f2fccf16fbe857eb4f515c9503af80d4499866))
+
 ## [0.5.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.4.5...apps-ai-v0.5.0) (2026-01-24)
 
 
