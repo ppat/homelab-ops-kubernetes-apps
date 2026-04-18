@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.4...infra-networking-extra-v0.3.5) (2026-04-18)
+
+
+### ✨ Features
+
+* **infra-networking-extra:** update tailscale-operator (1.94.2 -&gt; 1.96.5) ([#2921](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2921)) ([7d52adf](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7d52adfbfc0fa8f21075ec5c04650b7ebbfc8bb9))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update digest busybox (b3255e7 -&gt; 1487d0a) ([#2870](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2870)) ([b29d1fc](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b29d1fc16ba71c2de8465b4c22c1ca7f94bbc793))
+* **infra-networking-extra:** update digest docker.io/mongo (81ed620 -&gt; adfc10c) ([#2839](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2839)) ([19d49f0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/19d49f012012e3c34ec8d8f555704ae60c19ee51))
+* **infra-networking-extra:** update digest docker.io/mongo (adfc10c -&gt; da7bfd4) ([#2853](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2853)) ([fd562a3](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fd562a3631adc1991ce85fb80e9a9acfe7c6e177))
+* **infra-networking-extra:** update madnuttah/unbound (1.24.2-1 -&gt; 1.24.2-2) ([#2908](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2908)) ([4d8a723](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4d8a723c1d9ba0bfc64289c00fb61d434fe19ec2))
+
 ## [0.3.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.3...infra-networking-extra-v0.3.4) (2026-03-10)
 
 
