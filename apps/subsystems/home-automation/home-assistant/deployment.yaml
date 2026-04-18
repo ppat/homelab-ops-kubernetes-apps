@@ -27,7 +27,7 @@ spec:
         env:
         - name: TZ
           value: US/Eastern
-        image: ghcr.io/home-operations/home-assistant:2026.3.1@sha256:067e54e2e107892a584936f064147f8bf47c0120eed34e272cf6eb6c8520b0de
+        image: ghcr.io/home-operations/home-assistant:2026.4.3@sha256:328680ff068d032fed0b0f64c26bd474ae6983e25d633ac8debce858a4742698
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
