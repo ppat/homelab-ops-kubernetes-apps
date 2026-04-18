@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-misc-v0.0.6...apps-misc-v0.0.7) (2026-04-18)
+
+
+### ✨ Features
+
+* **apps-misc:** update foxcpp/maddy (0.8.2 -&gt; 0.9.0) ([#2893](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2893)) ([7b1a6d9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7b1a6d9b731001c9e5fe0eef62dc09f902f8fac6))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-misc:** update foxcpp/maddy (0.9.0 -&gt; 0.9.2) ([#2894](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2894)) ([e18ebbb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e18ebbb3eed4d9df6ac832e71908ebe4e96f306e))
+* **apps-misc:** update foxcpp/maddy (0.9.2 -&gt; 0.9.3) ([#2918](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2918)) ([b17ae85](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b17ae8530e756d76ec47c69828ab91854eb26fd4))
+
 ## [0.0.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-misc-v0.0.5...apps-misc-v0.0.6) (2026-01-20)
 
 
