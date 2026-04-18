@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-core-v0.1.6...infra-clusterops-core-v0.1.7) (2026-04-18)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-clusterops-core:** update rancher/system-upgrade-controller (v0.19.0 -&gt; v0.19.1) ([#2906](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2906)) ([5705a3a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5705a3a48dd7e24b64d47c4199a054d8462e15db))
+* **infra-clusterops-core:** update rancher/system-upgrade-controller (v0.19.1 -&gt; v0.19.2) ([#2915](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2915)) ([b87b540](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b87b540c6feb30cba7c377b0496bbbe090fd1026))
+* **infra-clusterops-core:** update reloader (2.2.10 -&gt; 2.2.11) ([#2922](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2922)) ([1359a27](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1359a276ac9c6d9e930495c93ca774b7f31661f0))
+* **infra-clusterops-core:** update reloader (2.2.9 -&gt; 2.2.10) ([#2920](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2920)) ([53684b2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/53684b2608168534f48fe010e9cf0714267801a6))
+
 ## [0.1.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-core-v0.1.5...infra-clusterops-core-v0.1.6) (2026-03-09)
 
 
