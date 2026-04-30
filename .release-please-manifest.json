@@ -1,7 +1,7 @@
 {
   "apps/subsystems/ai": "0.5.0",
   "apps/subsystems/bitwarden": "0.0.22",
-  "apps/subsystems/coder": "0.0.39",
+  "apps/subsystems/coder": "0.0.40",
   "apps/subsystems/downloaders": "0.3.3",
   "apps/subsystems/harbor": "0.0.15",
   "apps/subsystems/home-automation": "0.3.4",
@@ -18,5 +18,5 @@
   "infrastructure/subsystems/observability-extra": "0.1.28",
   "infrastructure/subsystems/security-core": "0.2.1",
   "infrastructure/subsystems/security-extra": "0.2.11",
-  "infrastructure/subsystems/storage-core": "0.2.0"
+  "infrastructure/subsystems/storage-core": "0.2.1"
 }
