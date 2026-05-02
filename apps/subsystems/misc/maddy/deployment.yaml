@@ -38,7 +38,7 @@ spec:
             secretKeyRef:
               name: maddy-credentials
               key: smtp_remote_host
-        image: foxcpp/maddy:0.9.3@sha256:2ce7ce6343816c8c96056776dd06660987d97ada96d31163cdd968d62e496a12
+        image: foxcpp/maddy:0.9.4@sha256:cf79fddee12228b3c47af5fbbfadceef115d46d4ae434429bef70f1d565a0abf
         livenessProbe:
           tcpSocket:
             port: smtp-explicit
