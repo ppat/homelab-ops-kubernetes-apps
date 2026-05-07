@@ -4,7 +4,7 @@ kind: Kustomization
 
 resources:
 # renovate-gh-raw-url: datasource=github-releases depName=external-secrets/external-secrets
-- https://raw.githubusercontent.com/external-secrets/external-secrets/v2.3.0/deploy/crds/bundle.yaml
+- https://raw.githubusercontent.com/external-secrets/external-secrets/v2.4.1/deploy/crds/bundle.yaml
 
 patches:
 ###########################################################
