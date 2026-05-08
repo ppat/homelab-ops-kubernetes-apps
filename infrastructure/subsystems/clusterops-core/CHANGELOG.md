@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-core-v0.1.7...infra-clusterops-core-v0.2.0) (2026-05-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-clusterops-core:** update fluxcd/flux2 (v2.7.5 -> v2.8.5) ([#2875](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2875))
+
+### ✨ Features
+
+* **infra-clusterops-core:** update fluxcd/flux2 (v2.7.5 -&gt; v2.8.5) ([#2875](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2875)) ([5059967](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5059967eaf1ebb7a66a7fe8f0c42f4767d9b30bd))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-clusterops-core:** update fluxcd/flux2 (v2.8.5 -&gt; v2.8.6) ([#2978](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2978)) ([5379e89](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5379e893f663231aca54bc887c75b899290051eb))
+
 ## [0.1.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-core-v0.1.6...infra-clusterops-core-v0.1.7) (2026-04-18)
 
 
