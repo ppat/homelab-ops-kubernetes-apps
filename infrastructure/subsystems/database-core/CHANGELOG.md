@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.0.17](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.0.16...infra-database-core-v0.0.17) (2026-05-15)
+
+
+### ✨ Features
+
+* **infra-database-core:** update cloudnative-pg (0.26.1 -&gt; 0.27.0) ([#2548](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2548)) ([b16a301](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b16a301cb8a347fd055826d45aa156e3372784be))
+* **infra-database-core:** update cloudnative-pg (0.27.1 -&gt; 0.28.0) ([#2907](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2907)) ([3ce0e02](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3ce0e02b9704c35305c58905e505dd2290da7f84))
+* **infra-database-core:** update ghcr.io/dragonflydb/dragonfly-operator/helm/dragonfly-operator (v1.3.1 -&gt; v1.4.0) ([#2826](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2826)) ([50107e4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/50107e48606fb9b94461613f042d4664306484a6))
+* **infra-database-core:** update ghcr.io/dragonflydb/dragonfly-operator/helm/dragonfly-operator (v1.4.0 -&gt; v1.5.0) ([#2982](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2982)) ([a191ec6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a191ec6a53b6b2a3ec5197a5bea729b8e0c13634))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-database-core:** update cloudnative-pg (0.27.0 -&gt; 0.27.1) ([#2735](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2735)) ([a0c5016](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a0c5016d5ff8133e587c8699c22645312775d931))
+* **infra-database-core:** update cloudnative-pg (0.28.0 -&gt; 0.28.1) ([#3005](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3005)) ([70b57d8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/70b57d800682e0c4b9883473106668191df9a12b))
+* **infra-database-core:** update cloudnative-pg (0.28.1 -&gt; 0.28.2) ([#3010](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3010)) ([7e5ac11](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7e5ac1115cbd16dbd24e24c2f24b39f49749378c))
+
 ## [0.0.16](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.0.15...infra-database-core-v0.0.16) (2025-12-13)
 
 
