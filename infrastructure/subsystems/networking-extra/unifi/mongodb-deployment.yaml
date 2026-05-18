@@ -60,7 +60,7 @@ spec:
           subPath: init-mongo.js
       initContainers:
       - name: init-mongodb-init-script
-        image: ghcr.io/fluxcd/flux-cli:v2.7.5@sha256:3a4f9b0a26c26db8193c476e0abe33c32187eae8ce7a0a604d38a51783544946
+        image: ghcr.io/fluxcd/flux-cli:v2.8.7@sha256:4bd0394705637ad5dfd63d70893a56c980d2e438def0b8a4579d54fad9be9593
         command:
         - "/bin/sh"
         - "-c"
