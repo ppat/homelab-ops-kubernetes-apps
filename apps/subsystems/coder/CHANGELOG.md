@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.43](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.42...apps-coder-v0.0.43) (2026-05-24)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-coder:** update coder (2.32.2 -&gt; 2.32.3) ([#3033](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3033)) ([f77e540](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f77e5401761cc21f06b103a98cfd6cee33edd279))
+* **apps-coder:** update coder (2.32.3 -&gt; 2.32.4) ([#3039](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3039)) ([a314bc4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a314bc41a84a80501c73a0b2212074ed98334b53))
+
 ## [0.0.42](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.41...apps-coder-v0.0.42) (2026-05-18)
 
 

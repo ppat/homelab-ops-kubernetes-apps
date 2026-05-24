@@ -1,7 +1,7 @@
 {
   "apps/subsystems/ai": "0.5.0",
   "apps/subsystems/bitwarden": "0.0.23",
-  "apps/subsystems/coder": "0.0.42",
+  "apps/subsystems/coder": "0.0.43",
   "apps/subsystems/downloaders": "0.3.6",
   "apps/subsystems/harbor": "0.0.16",
   "apps/subsystems/home-automation": "0.3.6",
@@ -14,7 +14,7 @@
   "infrastructure/subsystems/kubernetes-extra": "0.0.29",
   "infrastructure/subsystems/networking-core": "0.10.4",
   "infrastructure/subsystems/networking-extra": "0.3.7",
-  "infrastructure/subsystems/observability-core": "0.19.0",
+  "infrastructure/subsystems/observability-core": "0.20.0",
   "infrastructure/subsystems/observability-extra": "0.1.30",
   "infrastructure/subsystems/security-core": "0.2.4",
   "infrastructure/subsystems/security-extra": "0.2.12",
