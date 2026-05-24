@@ -37,4 +37,4 @@ spec:
         path: /spec/template/spec/containers/0/volumeMounts/1
     target:
       kind: Deployment
-      name: '^(bazarr|lidarr|radarr|sabnzbd|sonarr)$'
+      name: '^(bazarr|lidarr|qbittorrent|radarr|sabnzbd|sonarr)$'
