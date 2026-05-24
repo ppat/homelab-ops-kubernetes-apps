@@ -1,0 +1,23 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-agregarr
+spec:
+  try:
+  - description: Assert deployment/agregarr
+    assert:
+      bindings:
+      - name: name
+        value: agregarr
+      - name: namespace
+        value: media
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: agregarr
+      namespace: media
+  - events:
+      namespace: media

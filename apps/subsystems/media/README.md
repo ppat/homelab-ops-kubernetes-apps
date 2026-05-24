@@ -4,11 +4,11 @@ Media streaming and management platform providing multiple specialized services 
 
 ## Quick Links
 
- <a href="https://freetubeapp.io/" target="_blank"><img src="../../../.static/images/logos/freetube.svg" width="32" height="32" alt="FreeTube"></a> <a href="https://jellyfin.org/" target="_blank"><img src="../../../.static/images/logos/jellyfin.svg" width="32" height="32" alt="Jellyfin"></a> <a href="https://www.plex.tv/" target="_blank"><img src="../../../.static/images/logos/plex.svg" width="32" height="32" alt="Plex"></a> <a href="https://tautulli.com/" target="_blank"><img src="../../../.static/images/logos/tautulli.svg" width="32" height="32" alt="Tautulli"></a>
+ <a href="https://github.com/agregarr/agregarr" target="_blank"><img src="../../../.static/images/logos/agregarr.svg" width="32" height="32" alt="Agregarr"></a> <a href="https://freetubeapp.io/" target="_blank"><img src="../../../.static/images/logos/freetube.svg" width="32" height="32" alt="FreeTube"></a> <a href="https://jellyfin.org/" target="_blank"><img src="../../../.static/images/logos/jellyfin.svg" width="32" height="32" alt="Jellyfin"></a> <a href="https://www.plex.tv/" target="_blank"><img src="../../../.static/images/logos/plex.svg" width="32" height="32" alt="Plex"></a> <a href="https://tautulli.com/" target="_blank"><img src="../../../.static/images/logos/tautulli.svg" width="32" height="32" alt="Tautulli"></a>
 
 ## Overview
 
-The media subsystem consists of three main capability groups:
+The media subsystem consists of four main capability groups:
 
 1. Media Streaming
    - Multiple streaming server options
@@ -28,10 +28,17 @@ The media subsystem consists of three main capability groups:
    - Privacy-focused alternatives
    - Performance monitoring
 
+4. Collection Management
+   - Dynamic collection building from external sources
+   - Plex home screen curation and rotation
+   - Missing item acquisition via Radarr/Sonarr
+   - Time-restricted and scheduled collections
+
 ### Component Details
 
 | Component | Type | Primary Role | Key Features | Integration Points |
-|-----------|------|--------------|--------------|-------------------|
+| --- | --- | --- | --- | --- |
+| Agregarr | Supporting | Collection Manager | • Dynamic collection building from IMDb, Trakt, TMDb, MDBList, FlixPatrol, Tautulli, and more<br>• Plex home screen curation with randomized rotation<br>• Time-restricted and per-collection custom sync scheduling<br>• Missing item push to Radarr/Sonarr or Overseerr | • Connects to Plex via OAuth<br>• Integrates with Tautulli for "Most Watched" collections<br>• Integrates with Radarr/Sonarr/Overseerr for missing item acquisition<br>• State persistence in agregarr-data PVC |
 | Jellyfin | Core | Media Server | • Hardware-accelerated transcoding with Intel GPU<br>• Comprehensive library organization and metadata<br>• Advanced multi-user access control<br>• Automatic client discovery and streaming | • Direct access to shared media storage<br>• State persistence in PostgreSQL database<br>• Hardware integration with Intel GPU for transcoding |
 | Plex | Core | Media Server | • Hardware-accelerated transcoding with Intel GPU<br>• Rich metadata management and matching<br>• Sophisticated multi-user system<br>• Smart client auto-discovery | • Seamless access to shared media storage<br>• Efficient Intel GPU transcoding pipeline<br>• Optional external authentication system |
 | Tautulli | Supporting | Analytics Platform | • Detailed streaming usage analytics<br>• Comprehensive user activity monitoring<br>• In-depth library statistics<br>• Real-time performance tracking | • Deep integration with Plex server monitoring<br>• Long-term historical data retention<br>• Detailed analytics processing |
@@ -42,14 +49,15 @@ The media subsystem consists of three main capability groups:
 1. Node Requirements
 
    | Requirement | Purpose | Notes |
-   |------------|---------|--------|
+   | --- | --- | --- |
    | Node Label | Transcoding support | Label: `intel.feature.node.kubernetes.io/gpu: "true"` |
    | Intel GPU | Hardware transcoding | Required for Plex and Jellyfin |
 
 2. Persistent Storage
 
    | PVC Name | Purpose | Access Mode | Notes |
-   |----------|---------|-------------|--------|
+   | --- | --- | --- | --- |
+   | agregarr-data | Agregarr configuration and database | RWX | Agregarr server state |
    | media-read-only | Media library | RWX | Shared between all services |
    | plex-data | Plex configuration | RWX | Plex server state |
    | plex-logs | Plex logs | RWX | Plex logs |
@@ -59,12 +67,12 @@ The media subsystem consists of three main capability groups:
 3. Required Variables
 
    | Variable | Purpose | Used By |
-   |----------|---------|----------|
+   | --- | --- | --- |
    | plex_external_ip_address | External access URL | Plex ADVERTISE_IP |
    | jellyfin_external_ip_address | External access URL | Jellyfin PublishedServerUrl |
 
 4. Required Secrets
 
    | Secret Name | Purpose | Required Keys |
-   |-------------|---------|---------------|
+   | --- | --- | --- |
    | plex-secrets | Plex configuration | Optional, service-specific |
