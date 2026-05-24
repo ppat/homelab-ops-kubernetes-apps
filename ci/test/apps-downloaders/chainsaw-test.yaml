@@ -64,10 +64,6 @@ spec:
     use:
       template: ./validate-database.yaml
 
-  - name: Validate qbittorrent
-    use:
-      template: ./validate-qbittorrent.yaml
-
   - name: Validate radarr
     use:
       template: ./validate-radarr.yaml
@@ -99,3 +95,7 @@ spec:
   - name: Validate bazarr
     use:
       template: ./validate-bazarr.yaml
+
+  - name: Validate qbittorrent
+    use:
+      template: ./validate-qbittorrent.yaml
