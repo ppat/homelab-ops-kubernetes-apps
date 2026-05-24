@@ -18,6 +18,7 @@ spec:
       - CREATE DATABASE overseerr WITH OWNER downloader
       - CREATE DATABASE prowlarr WITH OWNER downloader
       - CREATE DATABASE radarr WITH OWNER downloader
+      - CREATE DATABASE seerr WITH OWNER downloader
       - CREATE DATABASE sonarr WITH OWNER downloader
   imageName: ghcr.io/cloudnative-pg/postgresql:16.4
   instances: ${db_replicas:=2}
