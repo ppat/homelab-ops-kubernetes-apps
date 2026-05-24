@@ -10,4 +10,5 @@ resources:
 - radarr-data.yaml
 - recyclarr-data.yaml
 - sabnzbd-data.yaml
+- seerr-data.yaml
 - sonarr-data.yaml

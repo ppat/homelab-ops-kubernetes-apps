@@ -4,7 +4,7 @@ Integrated media management solution enabling automated downloading and organiza
 
 ## Quick Links
 
-<a href="https://github.com/lidarr/Lidarr" target="_blank"><img src="../../../.static/images/logos/lidarr.svg" width="32" height="32" alt="Lidarr"></a> <a href="https://github.com/Prowlarr/Prowlarr" target="_blank"><img src="../../../.static/images/logos/prowlarr.svg" width="32" height="32" alt="Prowlarr"></a> <a href="https://github.com/Radarr/Radarr" target="_blank"><img src="../../../.static/images/logos/radarr.svg" width="32" height="32" alt="Radarr"></a> <a href="https://github.com/recyclarr/recyclarr" target="_blank"><img src="../../../.static/images/logos/recyclarr.png" width="32" height="32" alt="Recyclarr"></a> <a href="https://sabnzbd.org/" target="_blank"><img src="../../../.static/images/logos/sabnzbd.svg" width="32" height="32" alt="SABnzbd"></a> <a href="https://github.com/Sonarr/Sonarr" target="_blank"><img src="../../../.static/images/logos/sonarr.svg" width="32" height="32" alt="Sonarr"></a>
+<a href="https://github.com/lidarr/Lidarr" target="_blank"><img src="../../../.static/images/logos/lidarr.svg" width="32" height="32" alt="Lidarr"></a> <a href="https://github.com/Prowlarr/Prowlarr" target="_blank"><img src="../../../.static/images/logos/prowlarr.svg" width="32" height="32" alt="Prowlarr"></a> <a href="https://github.com/Radarr/Radarr" target="_blank"><img src="../../../.static/images/logos/radarr.svg" width="32" height="32" alt="Radarr"></a> <a href="https://github.com/recyclarr/recyclarr" target="_blank"><img src="../../../.static/images/logos/recyclarr.png" width="32" height="32" alt="Recyclarr"></a> <a href="https://sabnzbd.org/" target="_blank"><img src="../../../.static/images/logos/sabnzbd.svg" width="32" height="32" alt="SABnzbd"></a> <a href="https://github.com/seerr-team/seerr" target="_blank"><img src="../../../.static/images/logos/seerr.svg" width="32" height="32" alt="Seerr"></a> <a href="https://github.com/Sonarr/Sonarr" target="_blank"><img src="../../../.static/images/logos/sonarr.svg" width="32" height="32" alt="Sonarr"></a>
 
 ## Overview
 
@@ -57,6 +57,7 @@ flowchart TB
 
     %% Request Management
     overseerr[Overseerr<br/>Requests]:::request
+    seerr[Seerr<br/>Requests]:::request
 
     %% Shared Infrastructure
     subgraph infrastructure[Shared Infrastructure]
@@ -68,6 +69,8 @@ flowchart TB
     %% Request Flow
     overseerr --> radarr
     overseerr --> sonarr
+    seerr --> radarr
+    seerr --> sonarr
 
     %% Media Management Flow
     radarr --> prowlarr
@@ -95,6 +98,7 @@ flowchart TB
     bazarr -.-> postgres
     prowlarr -.-> postgres
     overseerr -.-> postgres
+    seerr -.-> postgres
 
     %% Configuration Management
     recyclarr --> radarr
@@ -121,12 +125,13 @@ flowchart TB
 ### Component Details
 
 | Component | Type | Primary Role | Key Features | Integration Points |
-|-----------|------|--------------|--------------|-------------------|
+| --- | --- | --- | --- | --- |
 | Radarr | Media Manager | Movie Management | • Comprehensive movie library organization<br>• Advanced quality profile management<br>• Intelligent release filtering<br>• State persistence in PostgreSQL | • Searches content through Prowlarr's indexer network<br>• Automatically sends download tasks to SABnzbd<br>• Receives configuration updates from Recyclarr |
 | Sonarr | Media Manager | TV Series Management | • Complete TV series tracking<br>• Automated season/episode management<br>• Smart media file renaming<br>• State persistence in PostgreSQL | • Searches content through Prowlarr's indexer network<br>• Automatically sends download tasks to SABnzbd<br>• Receives configuration updates from Recyclarr |
 | Lidarr | Media Manager | Music Management | • Comprehensive music library organization<br>• Detailed artist/album tracking<br>• Advanced quality profiles<br>• State persistence in PostgreSQL | • Searches content through Prowlarr's indexer network<br>• Automatically sends download tasks to SABnzbd<br>• Receives configuration updates from Recyclarr |
 | Bazarr | Media Manager | Subtitle Management | • Automated subtitle downloading<br>• Multi-language management<br>• Intelligent subtitle synchronization<br>• State persistence in PostgreSQL | • Actively monitors Radarr/Sonarr media libraries<br>• Directly manages subtitle files in media storage |
 | Overseerr | Media Manager | Request Management | • User-friendly request interface<br>• Comprehensive request tracking<br>• Integrated library discovery<br>• State persistence in PostgreSQL | • Forwards movie/TV requests to Radarr/Sonarr<br>• Integrates with external authentication systems |
+| Seerr | Media Manager | Request Management | • Successor to Overseerr with Plex, Jellyfin, and Emby support<br>• User-friendly request interface<br>• Comprehensive request tracking<br>• PostgreSQL database support | • Forwards movie/TV requests to Radarr/Sonarr<br>• Integrates with Plex/Jellyfin/Emby for library discovery<br>• Supports external authentication systems |
 | Prowlarr | Download Service | Indexer Management | • Centralized indexer configuration<br>• Unified search API for all services<br>• Detailed statistics tracking<br>• State persistence in PostgreSQL | • Processes search requests from all *arr services<br>• Manages indexer API keys and capabilities<br>• Continuously monitors indexer health status |
 | SABnzbd | Download Service | Download Client | • Full Usenet download management<br>• Intelligent post-processing<br>• Priority-based download handling<br>• Pre-optimized configuration | • Processes download requests from *arr services<br>• Handles extraction and cleanup of downloads<br>• Reports detailed download status to services |
 | Recyclarr | Configuration Service | Config Management | • Automated daily configuration sync<br>• Comprehensive profile management<br>• Scheduled updates (18:00 UTC)<br>• Custom format definitions | • Maintains consistent configuration across *arr services<br>• Manages quality definitions and scoring<br>• Updates custom format specifications |
@@ -136,7 +141,7 @@ flowchart TB
 1. Persistent Storage
 
    | PVC Name | Purpose | Access Mode |
-   |----------|---------|-------------|
+   | --- | --- | --- |
    | media | Shared media storage | RWX |
    | radarr-data | Radarr configuration | RWX |
    | sonarr-data | Sonarr configuration | RWX |
@@ -145,18 +150,19 @@ flowchart TB
    | prowlarr-data | Prowlarr configuration | RWX |
    | overseerr-data | Overseerr configuration | RWX |
    | sabnzbd-data | SABnzbd configuration | RWX |
+   | seerr-data | Seerr configuration | RWX |
 
 2. Required Secrets
 
    | Secret Name | Purpose | Required Keys |
-   |-------------|---------|---------------|
+   | --- | --- | --- |
    | downloaders-db-app | Database access | username, password |
    | downloader-api-keys | Service API keys | radarr_api_key, sonarr_api_key, etc. |
 
 3. Required Variables
 
    | Variable | Purpose | Used By |
-   |----------|---------|---------|
+   | --- | --- | --- |
    | media_writer_uid | File ownership | All services |
    | media_writer_gid | File ownership | All services |
    | db_storage_size | Database storage | PostgreSQL |
