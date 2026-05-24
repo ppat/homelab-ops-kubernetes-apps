@@ -624,7 +624,7 @@ Each module is versioned and released independently.
 ## End-to-End Infrastructure Automation: How Everything Comes Together
 
 | Category | Tool/Mechanism | Purpose | Key Features & Data |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **GitOps & Continuous Sync** | FluxCD GitOps | Cluster deployment & state reconciliation | - Continuously syncs desired state from Git<br>- Uses FluxCD Kustomization CRDs for automated module deployments<br>- Acts as the central control plane for GitOps workflows<br>- Propagates changes via FluxCD's continuous reconciliation |
 | **Application Deployment** | HelmRelease via FluxCD | Deploy applications & version upgrades | - FluxCD HelmRelease defines how a helm deployment can be carried out<br>- Coordinates version upgrades<br> |
 | **Configuration Management** | Kustomize Patches via FluxCD | Module-specific parameterization | - Applies inline patches for targeted configuration adjustments<br>- Modifies resource definitions<br> |
