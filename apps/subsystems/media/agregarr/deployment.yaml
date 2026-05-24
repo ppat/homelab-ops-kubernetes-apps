@@ -1,0 +1,69 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agregarr
+  namespace: media
+  labels:
+    app.kubernetes.io/name: agregarr
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: agregarr
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: agregarr
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: agregarr
+        env:
+        - name: TZ
+          value: Etc/UTC
+        image: agregarr/agregarr:v2.4.2
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /api/v1/status
+            port: 7171
+          initialDelaySeconds: 30
+        ports:
+        - name: agregarr
+          containerPort: 7171
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /api/v1/status
+            port: 7171
+          initialDelaySeconds: 15
+        resources:
+          requests:
+            cpu: 15m
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /app/config
+          name: agregarr-data
+        - mountPath: /tmp
+          name: agregarr-temp
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      volumes:
+      - name: agregarr-data
+        persistentVolumeClaim:
+          claimName: agregarr-data
+      - name: agregarr-temp
+        emptyDir: {}
