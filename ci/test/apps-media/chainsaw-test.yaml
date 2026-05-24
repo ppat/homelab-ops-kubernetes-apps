@@ -31,6 +31,10 @@ spec:
     - events:
         namespace: flux-system
 
+  - name: Validate agregarr
+    use:
+      template: ./validate-agregarr.yaml
+
   - name: Validate freetube
     use:
       template: ./validate-freetube.yaml

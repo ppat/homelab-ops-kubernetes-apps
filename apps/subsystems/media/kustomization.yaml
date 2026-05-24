@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
 - namespace.yaml
+- agregarr/
 - freetube/
 - jellyfin/
 - plex/
