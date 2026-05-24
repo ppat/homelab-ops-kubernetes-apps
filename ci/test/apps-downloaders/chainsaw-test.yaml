@@ -84,6 +84,10 @@ spec:
     use:
       template: ./validate-overseerr.yaml
 
+  - name: Validate seerr
+    use:
+      template: ./validate-seerr.yaml
+
   - name: Validate prowlarr
     use:
       template: ./validate-prowlarr.yaml

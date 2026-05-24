@@ -15,6 +15,7 @@ resources:
 - radarr/
 - recyclarr/
 - sabnzbd/
+- seerr/
 - sonarr/
 
 

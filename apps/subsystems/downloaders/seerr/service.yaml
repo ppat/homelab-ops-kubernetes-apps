@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: seerr
+  namespace: downloaders
+  labels:
+    app.kubernetes.io/name: seerr
+spec:
+  selector:
+    app.kubernetes.io/name: seerr
+  ports:
+  - name: seerr
+    port: 5055
+    targetPort: seerr
+    protocol: TCP
+  type: ClusterIP
