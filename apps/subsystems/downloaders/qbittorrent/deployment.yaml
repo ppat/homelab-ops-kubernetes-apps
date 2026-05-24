@@ -1,0 +1,94 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent
+  namespace: downloaders
+  labels:
+    app.kubernetes.io/name: qbittorrent
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: qbittorrent
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: qbittorrent
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: qbittorrent
+        env:
+        - name: TZ
+          value: Etc/UTC
+        - name: QBT_WEBUI_PORT
+          value: "8080"
+        - name: QBT_TORRENTING_PORT
+          value: "50469"
+        image: ghcr.io/home-operations/qbittorrent:5.1.4
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /api/v2/app/version
+            port: 8080
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 5
+        ports:
+        - name: qbittorrent
+          containerPort: 8080
+          protocol: TCP
+        - name: torrent-tcp
+          containerPort: 50469
+          protocol: TCP
+        - name: torrent-udp
+          containerPort: 50469
+          protocol: UDP
+        readinessProbe:
+          httpGet:
+            path: /api/v2/app/version
+            port: 8080
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+        startupProbe:
+          httpGet:
+            path: /api/v2/app/version
+            port: 8080
+          failureThreshold: 30
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 200m
+            memory: 1Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /config
+          name: qbittorrent-data
+        - mountPath: /data
+          name: qbittorrent-media
+        - mountPath: /tmp
+          name: qbittorrent-temp
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: ${media_writer_uid}
+        runAsGroup: ${media_writer_gid}
+        fsGroup: ${media_writer_gid}
+        fsGroupChangePolicy: OnRootMismatch
+      volumes:
+      - name: qbittorrent-data
+        persistentVolumeClaim:
+          claimName: qbittorrent-data
+      - name: qbittorrent-media
+        persistentVolumeClaim:
+          claimName: media
+      - name: qbittorrent-temp
+        emptyDir: {}

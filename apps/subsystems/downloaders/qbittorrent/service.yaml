@@ -1,0 +1,40 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qbittorrent
+  namespace: downloaders
+  labels:
+    app.kubernetes.io/name: qbittorrent
+spec:
+  selector:
+    app.kubernetes.io/name: qbittorrent
+  ports:
+  - name: qbittorrent
+    port: 8080
+    targetPort: qbittorrent
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qbittorrent-torrent
+  namespace: downloaders
+  labels:
+    app.kubernetes.io/name: qbittorrent
+    app.kubernetes.io/component: qbittorrent-torrent
+spec:
+  selector:
+    app.kubernetes.io/name: qbittorrent
+  externalTrafficPolicy: Local
+  ports:
+  - name: torrent-tcp
+    port: 50469
+    targetPort: torrent-tcp
+    protocol: TCP
+  - name: torrent-udp
+    port: 50469
+    targetPort: torrent-udp
+    protocol: UDP
+  type: LoadBalancer
