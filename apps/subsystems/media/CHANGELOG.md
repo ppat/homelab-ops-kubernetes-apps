@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.0.39](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.38...apps-media-v0.0.39) (2026-05-24)
+
+
+### ✨ Features
+
+* **apps-media:** add agregarr to media subsystem ([#3059](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3059)) ([3ddae15](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3ddae15426caf3233b0123540e83cf0cfbd35d86))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** update ghcr.io/jellyfin/jellyfin (10.11.8 -&gt; 10.11.9) ([#3049](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3049)) ([b8aecdf](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b8aecdfcb22f6f1563dc6c970b91506d9eabc035))
+* **apps-media:** update plexinc/pms-docker (1.43.1.10611-1e34174b1 -&gt; 1.43.2.10687-563d026ea) ([#3038](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3038)) ([d6374f8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d6374f82cf5d2af1c4c5260dfd932cbf06d23f07))
+* **infra-networking-extra:** update digest busybox (1487d0a -&gt; 32015ee) ([#3054](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3054)) ([e93ed7a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e93ed7af97552d31623fca47d91b734ec9cd3098))
+
 ## [0.0.38](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.37...apps-media-v0.0.38) (2026-04-30)
 
 
