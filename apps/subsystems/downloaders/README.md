@@ -4,7 +4,7 @@ Integrated media management solution enabling automated downloading and organiza
 
 ## Quick Links
 
-<a href="https://github.com/lidarr/Lidarr" target="_blank"><img src="../../../.static/images/logos/lidarr.svg" width="32" height="32" alt="Lidarr"></a> <a href="https://github.com/Prowlarr/Prowlarr" target="_blank"><img src="../../../.static/images/logos/prowlarr.svg" width="32" height="32" alt="Prowlarr"></a> <a href="https://github.com/qbittorrent/qBittorrent" target="_blank"><img src="../../../.static/images/logos/qbittorrent.png" width="32" height="32" alt="qBittorrent"></a> <a href="https://github.com/Radarr/Radarr" target="_blank"><img src="../../../.static/images/logos/radarr.svg" width="32" height="32" alt="Radarr"></a> <a href="https://github.com/recyclarr/recyclarr" target="_blank"><img src="../../../.static/images/logos/recyclarr.png" width="32" height="32" alt="Recyclarr"></a> <a href="https://sabnzbd.org/" target="_blank"><img src="../../../.static/images/logos/sabnzbd.svg" width="32" height="32" alt="SABnzbd"></a> <a href="https://github.com/seerr-team/seerr" target="_blank"><img src="../../../.static/images/logos/seerr.png" width="32" height="32" alt="Seerr"></a> <a href="https://github.com/Sonarr/Sonarr" target="_blank"><img src="../../../.static/images/logos/sonarr.svg" width="32" height="32" alt="Sonarr"></a>
+<a href="https://github.com/lidarr/Lidarr" target="_blank"><img src="../../../.static/images/logos/lidarr.svg" width="32" height="32" alt="Lidarr"></a> <a href="https://github.com/Prowlarr/Prowlarr" target="_blank"><img src="../../../.static/images/logos/prowlarr.svg" width="32" height="32" alt="Prowlarr"></a> <a href="https://github.com/qbittorrent/qBittorrent" target="_blank"><img src="../../../.static/images/logos/qbittorrent.png" width="32" height="32" alt="qBittorrent"></a> <a href="https://getqui.com/" target="_blank"><img src="../../../.static/images/logos/qui.png" width="32" height="32" alt="qui"></a> <a href="https://github.com/Radarr/Radarr" target="_blank"><img src="../../../.static/images/logos/radarr.svg" width="32" height="32" alt="Radarr"></a> <a href="https://github.com/recyclarr/recyclarr" target="_blank"><img src="../../../.static/images/logos/recyclarr.png" width="32" height="32" alt="Recyclarr"></a> <a href="https://sabnzbd.org/" target="_blank"><img src="../../../.static/images/logos/sabnzbd.svg" width="32" height="32" alt="SABnzbd"></a> <a href="https://github.com/seerr-team/seerr" target="_blank"><img src="../../../.static/images/logos/seerr.png" width="32" height="32" alt="Seerr"></a> <a href="https://github.com/Sonarr/Sonarr" target="_blank"><img src="../../../.static/images/logos/sonarr.svg" width="32" height="32" alt="Sonarr"></a>
 
 ## Overview
 
@@ -59,6 +59,7 @@ flowchart TB
     %% Request Management
     overseerr[Overseerr<br/>Requests]:::request
     seerr[Seerr<br/>Requests]:::request
+    qui[qui<br/>qBit UI + Cross-seed]:::request
 
     %% Shared Infrastructure
     subgraph infrastructure[Shared Infrastructure]
@@ -72,6 +73,7 @@ flowchart TB
     overseerr --> sonarr
     seerr --> radarr
     seerr --> sonarr
+    qui --> qbittorrent
 
     %% Media Management Flow
     radarr --> prowlarr
@@ -103,6 +105,7 @@ flowchart TB
     bazarr -.-> postgres
     prowlarr -.-> postgres
     overseerr -.-> postgres
+    qui -.-> postgres
     seerr -.-> postgres
 
     %% Configuration Management
@@ -138,7 +141,8 @@ flowchart TB
 | Overseerr | Media Manager | Request Management | • User-friendly request interface<br>• Comprehensive request tracking<br>• Integrated library discovery<br>• State persistence in PostgreSQL | • Forwards movie/TV requests to Radarr/Sonarr<br>• Integrates with external authentication systems |
 | Seerr | Media Manager | Request Management | • Successor to Overseerr with Plex, Jellyfin, and Emby support<br>• User-friendly request interface<br>• Comprehensive request tracking<br>• PostgreSQL database support | • Forwards movie/TV requests to Radarr/Sonarr<br>• Integrates with Plex/Jellyfin/Emby for library discovery<br>• Supports external authentication systems |
 | Prowlarr | Download Service | Indexer Management | • Centralized indexer configuration<br>• Unified search API for all services<br>• Detailed statistics tracking<br>• State persistence in PostgreSQL | • Processes search requests from all *arr services<br>• Manages indexer API keys and capabilities<br>• Continuously monitors indexer health status |
-| qBittorrent | Download Service | BitTorrent Client | • Full BitTorrent download management<br>• Web UI on port 8080<br>• Configurable torrent listening port (50469)<br>• All traffic routed through Gluetun VPN sidecar (ProtonVPN WireGuard) | • Processes torrent download requests from *arr services<br>• Exposes torrent port via LoadBalancer service<br>• Writes downloads directly to shared media storage<br>• Gluetun native sidecar ensures VPN tunnel is up before qBittorrent starts |
+| qui | Download Service | qBittorrent UI + Cross-seed | • Modern multi-instance qBittorrent web interface<br>• Built-in cross-seed support (RSS, library scan, on-completion)<br>• OIDC SSO support<br>• State persistence in PostgreSQL | • Manages qBittorrent instances via their WebUI API<br>• Cross-seeds torrents across trackers automatically<br>• Integrates with autobrr natively |
+| qBittorrent | Download Service | BitTorrent Client | • Full BitTorrent download management<br>• Web UI on port 8080<br>• All traffic routed through Gluetun VPN sidecar (ProtonVPN WireGuard)<br>• Torrent port assigned dynamically via ProtonVPN NAT-PMP | • Processes torrent download requests from *arr services<br>• Writes downloads directly to shared media storage<br>• Gluetun native sidecar ensures VPN tunnel is up before qBittorrent starts |
 | SABnzbd | Download Service | Download Client | • Full Usenet download management<br>• Intelligent post-processing<br>• Priority-based download handling<br>• Pre-optimized configuration | • Processes download requests from *arr services<br>• Handles extraction and cleanup of downloads<br>• Reports detailed download status to services |
 | Recyclarr | Configuration Service | Config Management | • Automated daily configuration sync<br>• Comprehensive profile management<br>• Scheduled updates (18:00 UTC)<br>• Custom format definitions | • Maintains consistent configuration across *arr services<br>• Manages quality definitions and scoring<br>• Updates custom format specifications |
 
@@ -155,6 +159,7 @@ flowchart TB
    | bazarr-data | Bazarr configuration | RWX |
    | prowlarr-data | Prowlarr configuration | RWX |
    | overseerr-data | Overseerr configuration | RWX |
+   | qui-data | qui configuration | RWX |
    | qbittorrent-data | qBittorrent configuration | RWX |
    | sabnzbd-data | SABnzbd configuration | RWX |
    | seerr-data | Seerr configuration | RWX |

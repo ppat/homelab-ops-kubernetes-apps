@@ -1,0 +1,27 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-qui
+spec:
+  try:
+  - description: Assert deployment/qui
+    assert:
+      bindings:
+      - name: name
+        value: qui
+      - name: namespace
+        value: downloaders
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: qui
+      namespace: downloaders
+  - podLogs:
+      selector: app.kubernetes.io/name=qui
+      namespace: downloaders
+      tail: 1000
+  - events:
+      namespace: downloaders

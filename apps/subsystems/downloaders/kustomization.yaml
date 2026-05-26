@@ -13,6 +13,7 @@ resources:
 - overseerr/
 - prowlarr/
 - qbittorrent/
+- qui/
 - radarr/
 - recyclarr/
 - sabnzbd/

@@ -99,3 +99,7 @@ spec:
   - name: Validate qbittorrent
     use:
       template: ./validate-qbittorrent.yaml
+
+  - name: Validate qui
+    use:
+      template: ./validate-qui.yaml

@@ -8,6 +8,7 @@ resources:
 - overseerr-data.yaml
 - prowlarr-data.yaml
 - qbittorrent-data.yaml
+- qui-data.yaml
 - radarr-data.yaml
 - recyclarr-data.yaml
 - sabnzbd-data.yaml
