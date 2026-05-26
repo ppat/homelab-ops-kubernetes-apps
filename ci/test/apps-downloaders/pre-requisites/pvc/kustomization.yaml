@@ -3,6 +3,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
+- autobrr-data.yaml
 - bazarr-data.yaml
 - lidarr-data.yaml
 - overseerr-data.yaml

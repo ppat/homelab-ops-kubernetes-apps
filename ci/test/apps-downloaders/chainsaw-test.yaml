@@ -100,6 +100,10 @@ spec:
     use:
       template: ./validate-qbittorrent.yaml
 
+  - name: Validate autobrr
+    use:
+      template: ./validate-autobrr.yaml
+
   - name: Validate qui
     use:
       template: ./validate-qui.yaml

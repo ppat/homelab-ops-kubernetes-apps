@@ -4,7 +4,7 @@ Integrated media management solution enabling automated downloading and organiza
 
 ## Quick Links
 
-<a href="https://github.com/lidarr/Lidarr" target="_blank"><img src="../../../.static/images/logos/lidarr.svg" width="32" height="32" alt="Lidarr"></a> <a href="https://github.com/Prowlarr/Prowlarr" target="_blank"><img src="../../../.static/images/logos/prowlarr.svg" width="32" height="32" alt="Prowlarr"></a> <a href="https://github.com/qbittorrent/qBittorrent" target="_blank"><img src="../../../.static/images/logos/qbittorrent.png" width="32" height="32" alt="qBittorrent"></a> <a href="https://getqui.com/" target="_blank"><img src="../../../.static/images/logos/qui.png" width="32" height="32" alt="qui"></a> <a href="https://github.com/Radarr/Radarr" target="_blank"><img src="../../../.static/images/logos/radarr.svg" width="32" height="32" alt="Radarr"></a> <a href="https://github.com/recyclarr/recyclarr" target="_blank"><img src="../../../.static/images/logos/recyclarr.png" width="32" height="32" alt="Recyclarr"></a> <a href="https://sabnzbd.org/" target="_blank"><img src="../../../.static/images/logos/sabnzbd.svg" width="32" height="32" alt="SABnzbd"></a> <a href="https://github.com/seerr-team/seerr" target="_blank"><img src="../../../.static/images/logos/seerr.png" width="32" height="32" alt="Seerr"></a> <a href="https://github.com/Sonarr/Sonarr" target="_blank"><img src="../../../.static/images/logos/sonarr.svg" width="32" height="32" alt="Sonarr"></a>
+<a href="https://autobrr.com/" target="_blank"><img src="../../../.static/images/logos/autobrr.png" width="32" height="32" alt="autobrr"></a> <a href="https://github.com/lidarr/Lidarr" target="_blank"><img src="../../../.static/images/logos/lidarr.svg" width="32" height="32" alt="Lidarr"></a> <a href="https://github.com/Prowlarr/Prowlarr" target="_blank"><img src="../../../.static/images/logos/prowlarr.svg" width="32" height="32" alt="Prowlarr"></a> <a href="https://github.com/qbittorrent/qBittorrent" target="_blank"><img src="../../../.static/images/logos/qbittorrent.png" width="32" height="32" alt="qBittorrent"></a> <a href="https://getqui.com/" target="_blank"><img src="../../../.static/images/logos/qui.png" width="32" height="32" alt="qui"></a> <a href="https://github.com/Radarr/Radarr" target="_blank"><img src="../../../.static/images/logos/radarr.svg" width="32" height="32" alt="Radarr"></a> <a href="https://github.com/recyclarr/recyclarr" target="_blank"><img src="../../../.static/images/logos/recyclarr.png" width="32" height="32" alt="Recyclarr"></a> <a href="https://sabnzbd.org/" target="_blank"><img src="../../../.static/images/logos/sabnzbd.svg" width="32" height="32" alt="SABnzbd"></a> <a href="https://github.com/seerr-team/seerr" target="_blank"><img src="../../../.static/images/logos/seerr.png" width="32" height="32" alt="Seerr"></a> <a href="https://github.com/Sonarr/Sonarr" target="_blank"><img src="../../../.static/images/logos/sonarr.svg" width="32" height="32" alt="Sonarr"></a>
 
 ## Overview
 
@@ -57,6 +57,7 @@ flowchart TB
     recyclarr[Recyclarr<br/>Config Sync]:::config
 
     %% Request Management
+    autobrr[autobrr<br/>IRC/RSS Automation]:::request
     overseerr[Overseerr<br/>Requests]:::request
     seerr[Seerr<br/>Requests]:::request
     qui[qui<br/>qBit UI + Cross-seed]:::request
@@ -69,6 +70,9 @@ flowchart TB
     end
 
     %% Request Flow
+    autobrr --> radarr
+    autobrr --> sonarr
+    autobrr --> qbittorrent
     overseerr --> radarr
     overseerr --> sonarr
     seerr --> radarr
@@ -104,6 +108,7 @@ flowchart TB
     lidarr -.-> postgres
     bazarr -.-> postgres
     prowlarr -.-> postgres
+    autobrr -.-> postgres
     overseerr -.-> postgres
     qui -.-> postgres
     seerr -.-> postgres
@@ -134,6 +139,7 @@ flowchart TB
 
 | Component | Type | Primary Role | Key Features | Integration Points |
 | --- | --- | --- | --- | --- |
+| autobrr | Download Service | IRC/RSS Automation | • Real-time IRC and RSS monitoring for new releases<br>• Custom filter engine with regex and scene rules<br>• OIDC SSO support<br>• State persistence in PostgreSQL | • Pushes matched releases directly to qBittorrent, SABnzbd, Radarr, or Sonarr<br>• Integrates natively with qui for cross-seed workflows<br>• Monitors hundreds of IRC announce channels simultaneously |
 | Radarr | Media Manager | Movie Management | • Comprehensive movie library organization<br>• Advanced quality profile management<br>• Intelligent release filtering<br>• State persistence in PostgreSQL | • Searches content through Prowlarr's indexer network<br>• Automatically sends download tasks to SABnzbd<br>• Receives configuration updates from Recyclarr |
 | Sonarr | Media Manager | TV Series Management | • Complete TV series tracking<br>• Automated season/episode management<br>• Smart media file renaming<br>• State persistence in PostgreSQL | • Searches content through Prowlarr's indexer network<br>• Automatically sends download tasks to SABnzbd<br>• Receives configuration updates from Recyclarr |
 | Lidarr | Media Manager | Music Management | • Comprehensive music library organization<br>• Detailed artist/album tracking<br>• Advanced quality profiles<br>• State persistence in PostgreSQL | • Searches content through Prowlarr's indexer network<br>• Automatically sends download tasks to SABnzbd<br>• Receives configuration updates from Recyclarr |
@@ -152,6 +158,7 @@ flowchart TB
 
    | PVC Name | Purpose | Access Mode |
    | --- | --- | --- |
+   | autobrr-data | autobrr configuration | RWX |
    | media | Shared media storage | RWX |
    | radarr-data | Radarr configuration | RWX |
    | sonarr-data | Sonarr configuration | RWX |
