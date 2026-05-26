@@ -27,7 +27,7 @@ spec:
       # qbittorrent will not start until this container's readiness probe passes,
       # ensuring all traffic is routed through the VPN tunnel.
       - name: gluetun
-        image: qmcgaw/gluetun:v3.40.0
+        image: qmcgaw/gluetun:v3.41.1
         imagePullPolicy: IfNotPresent
         restartPolicy: Always
         envFrom:
@@ -85,7 +85,7 @@ spec:
         # Torrenting port is managed dynamically by gluetun's VPN_PORT_FORWARDING_UP_COMMAND.
         # ProtonVPN assigns a forwarded port via NAT-PMP; gluetun updates qBittorrent
         # automatically when the port changes.
-        image: ghcr.io/home-operations/qbittorrent:5.1.4
+        image: ghcr.io/home-operations/qbittorrent:5.2.1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
