@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.3.6...apps-downloaders-v0.3.7) (2026-05-26)
+
+
+### ✨ Features
+
+* **apps-downloaders:** add qbittorrent (with gluetun for vpn), qui and autobrr to downloaders ([#3065](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3065)) ([8ef28d7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8ef28d7f56add9c1d99acf8e2bf90968ef4a0025))
+
 ## [0.3.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.3.5...apps-downloaders-v0.3.6) (2026-05-24)
 
 
