@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: stakater-repository
         namespace: flux-system
-      version: 2.2.11
+      version: 2.2.12
   install:
     createNamespace: false
     remediation:
