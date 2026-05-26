@@ -38,3 +38,11 @@ spec:
     target:
       kind: Deployment
       name: '^(bazarr|lidarr|qbittorrent|radarr|sabnzbd|sonarr)$'
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      # disable gluetun sidecar in CI - remove initContainers entirely
+      - op: remove
+        path: /spec/template/spec/initContainers
+    target:
+      kind: Deployment
+      name: qbittorrent

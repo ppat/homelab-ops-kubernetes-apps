@@ -6,6 +6,9 @@ metadata:
   namespace: downloaders
   labels:
     app.kubernetes.io/name: qbittorrent
+  annotations:
+    configmap.reloader.stakater.com/reload: "gluetun-config"
+    secret.reloader.stakater.com/reload: "gluetun-secrets"
 spec:
   replicas: 1
   strategy:
@@ -19,6 +22,53 @@ spec:
         app.kubernetes.io/name: qbittorrent
     spec:
       automountServiceAccountToken: false
+      initContainers:
+      # Native sidecar: starts before qbittorrent and keeps running alongside it.
+      # qbittorrent will not start until this container's readiness probe passes,
+      # ensuring all traffic is routed through the VPN tunnel.
+      - name: gluetun
+        image: qmcgaw/gluetun:v3.40.0
+        imagePullPolicy: IfNotPresent
+        restartPolicy: Always
+        envFrom:
+        - configMapRef:
+            name: gluetun-config
+        - secretRef:
+            name: gluetun-secrets
+        env:
+        # Allow inbound traffic on the default (eth0) interface so that:
+        #   - *arr apps (Radarr/Sonarr) can reach the qBittorrent WebUI (8080)
+        #   - the Kubernetes liveness/readiness probes can reach the health endpoint (9999)
+        - name: FIREWALL_INPUT_PORTS
+          value: "8080,9999"
+        - name: TZ
+          value: Etc/UTC
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 9999
+          initialDelaySeconds: 5
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 9999
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        securityContext:
+          # NET_ADMIN is required to configure the WireGuard tunnel and firewall rules.
+          # privileged is required in Kubernetes to open the TUN device.
+          privileged: true
+          capabilities:
+            add:
+            - NET_ADMIN
+        volumeMounts:
+        - mountPath: /tmp
+          name: gluetun-temp
       containers:
       - name: qbittorrent
         env:
@@ -26,8 +76,9 @@ spec:
           value: Etc/UTC
         - name: QBT_WEBUI_PORT
           value: "8080"
-        - name: QBT_TORRENTING_PORT
-          value: "50469"
+        # Torrenting port is managed dynamically by gluetun's VPN_PORT_FORWARDING_UP_COMMAND.
+        # ProtonVPN assigns a forwarded port via NAT-PMP; gluetun updates qBittorrent
+        # automatically when the port changes.
         image: ghcr.io/home-operations/qbittorrent:5.1.4
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -41,12 +92,6 @@ spec:
         - name: qbittorrent
           containerPort: 8080
           protocol: TCP
-        - name: torrent-tcp
-          containerPort: 50469
-          protocol: TCP
-        - name: torrent-udp
-          containerPort: 50469
-          protocol: UDP
         readinessProbe:
           httpGet:
             path: /api/v2/app/version
@@ -91,4 +136,6 @@ spec:
         persistentVolumeClaim:
           claimName: media
       - name: qbittorrent-temp
+        emptyDir: {}
+      - name: gluetun-temp
         emptyDir: {}

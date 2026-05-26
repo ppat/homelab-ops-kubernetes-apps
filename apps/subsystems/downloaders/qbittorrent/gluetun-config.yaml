@@ -1,0 +1,42 @@
+---
+# Gluetun VPN client configuration for the qBittorrent sidecar.
+# Full list of configurable options: https://github.com/qdm12/gluetun-wiki/tree/main/setup/options
+# ProtonVPN-specific options:        https://github.com/qdm12/gluetun-wiki/blob/main/setup/providers/protonvpn.md
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gluetun-config
+  namespace: downloaders
+  labels:
+    app.kubernetes.io/name: qbittorrent
+data:
+  # Health server must listen on all interfaces so Kubernetes kubelet probes
+  # (which come from the node, not localhost) can reach port 9999.
+  # Default is 127.0.0.1:9999 which would cause probe failures in Kubernetes.
+  HEALTH_SERVER_ADDRESS: 0.0.0.0:9999
+
+  # VPN provider and protocol
+  VPN_SERVICE_PROVIDER: protonvpn
+  VPN_TYPE: wireguard
+
+  # Server selection — override with gluetun_server_countries Flux variable
+  SERVER_COUNTRIES: ${gluetun_server_countries:=United States}
+
+  # Port forwarding — ProtonVPN assigns a port dynamically via NAT-PMP.
+  # PORT_FORWARD_ONLY filters for P2P-capable servers only.
+  VPN_PORT_FORWARDING: "on"
+  PORT_FORWARD_ONLY: "on"
+
+  # When ProtonVPN assigns a forwarded port, update qBittorrent's listen port
+  # via its API so peers can connect through the VPN tunnel.
+  # {{PORT}} and {{VPN_INTERFACE}} are substituted by gluetun at runtime.
+  VPN_PORT_FORWARDING_UP_COMMAND: >-
+    /bin/sh -c 'wget -O- -nv --retry-connrefused
+    --post-data "json={\"listen_port\":{{PORT}},\"random_port\":false,\"upnp\":false}"
+    http://127.0.0.1:8080/api/v2/app/setPreferences'
+
+  # Reset qBittorrent's listen port when the VPN tunnel goes down.
+  VPN_PORT_FORWARDING_DOWN_COMMAND: >-
+    /bin/sh -c 'wget -O- -nv --retry-connrefused
+    --post-data "json={\"listen_port\":0}"
+    http://127.0.0.1:8080/api/v2/app/setPreferences'

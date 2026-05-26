@@ -138,7 +138,7 @@ flowchart TB
 | Overseerr | Media Manager | Request Management | • User-friendly request interface<br>• Comprehensive request tracking<br>• Integrated library discovery<br>• State persistence in PostgreSQL | • Forwards movie/TV requests to Radarr/Sonarr<br>• Integrates with external authentication systems |
 | Seerr | Media Manager | Request Management | • Successor to Overseerr with Plex, Jellyfin, and Emby support<br>• User-friendly request interface<br>• Comprehensive request tracking<br>• PostgreSQL database support | • Forwards movie/TV requests to Radarr/Sonarr<br>• Integrates with Plex/Jellyfin/Emby for library discovery<br>• Supports external authentication systems |
 | Prowlarr | Download Service | Indexer Management | • Centralized indexer configuration<br>• Unified search API for all services<br>• Detailed statistics tracking<br>• State persistence in PostgreSQL | • Processes search requests from all *arr services<br>• Manages indexer API keys and capabilities<br>• Continuously monitors indexer health status |
-| qBittorrent | Download Service | BitTorrent Client | • Full BitTorrent download management<br>• Web UI on port 8080<br>• Configurable torrent listening port (50469)<br>• Lightweight with no database dependency | • Processes torrent download requests from *arr services<br>• Exposes torrent port via LoadBalancer service<br>• Writes downloads directly to shared media storage |
+| qBittorrent | Download Service | BitTorrent Client | • Full BitTorrent download management<br>• Web UI on port 8080<br>• Configurable torrent listening port (50469)<br>• All traffic routed through Gluetun VPN sidecar (ProtonVPN WireGuard) | • Processes torrent download requests from *arr services<br>• Exposes torrent port via LoadBalancer service<br>• Writes downloads directly to shared media storage<br>• Gluetun native sidecar ensures VPN tunnel is up before qBittorrent starts |
 | SABnzbd | Download Service | Download Client | • Full Usenet download management<br>• Intelligent post-processing<br>• Priority-based download handling<br>• Pre-optimized configuration | • Processes download requests from *arr services<br>• Handles extraction and cleanup of downloads<br>• Reports detailed download status to services |
 | Recyclarr | Configuration Service | Config Management | • Automated daily configuration sync<br>• Comprehensive profile management<br>• Scheduled updates (18:00 UTC)<br>• Custom format definitions | • Maintains consistent configuration across *arr services<br>• Manages quality definitions and scoring<br>• Updates custom format specifications |
 
@@ -165,6 +165,7 @@ flowchart TB
    | --- | --- | --- |
    | downloaders-db-app | Database access | username, password |
    | downloader-api-keys | Service API keys | radarr_api_key, sonarr_api_key, etc. |
+   | gluetun-secrets | Gluetun VPN credentials | wireguard_private_key |
 
 3. Required Variables
 
@@ -174,3 +175,4 @@ flowchart TB
    | media_writer_gid | File ownership | All services |
    | db_storage_size | Database storage | PostgreSQL |
    | db_storage_class | Database storage | PostgreSQL |
+   | gluetun_server_countries | ProtonVPN server country filter | qBittorrent/Gluetun (default: United States) |
