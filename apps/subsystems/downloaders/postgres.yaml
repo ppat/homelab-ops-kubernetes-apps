@@ -12,11 +12,13 @@ spec:
       database: ${db_bootstrap_database:=default}
       owner: ${db_bootstrap_owner:=downloader}
       postInitSQL:
+      - CREATE DATABASE autobrr WITH OWNER downloader
       - CREATE DATABASE bazarr WITH OWNER downloader
       - CREATE DATABASE lidarr WITH OWNER downloader
       - CREATE DATABASE "lidarr-log" WITH OWNER downloader
       - CREATE DATABASE overseerr WITH OWNER downloader
       - CREATE DATABASE prowlarr WITH OWNER downloader
+      - CREATE DATABASE qui WITH OWNER downloader
       - CREATE DATABASE radarr WITH OWNER downloader
       - CREATE DATABASE seerr WITH OWNER downloader
       - CREATE DATABASE sonarr WITH OWNER downloader

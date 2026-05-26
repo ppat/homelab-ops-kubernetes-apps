@@ -1,0 +1,95 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autobrr
+  namespace: downloaders
+  labels:
+    app.kubernetes.io/name: autobrr
+  annotations:
+    secret.reloader.stakater.com/reload: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: autobrr
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: autobrr
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: autobrr
+        env:
+        - name: TZ
+          value: Etc/UTC
+        - name: AUTOBRR__HOST
+          value: 0.0.0.0
+        - name: AUTOBRR__PORT
+          value: "7474"
+        - name: AUTOBRR__LOG_LEVEL
+          value: INFO
+        - name: AUTOBRR__CHECK_FOR_UPDATES
+          value: "false"
+        - name: AUTOBRR__DATABASE_TYPE
+          value: postgres
+        - name: AUTOBRR__POSTGRES_HOST
+          value: downloaders-db.downloaders.svc.cluster.local
+        - name: AUTOBRR__POSTGRES_PORT
+          value: "5432"
+        - name: AUTOBRR__POSTGRES_DATABASE
+          value: autobrr
+        - name: AUTOBRR__POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
+              key: username
+        - name: AUTOBRR__POSTGRES_PASS
+          valueFrom:
+            secretKeyRef:
+              name: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
+              key: password
+        image: ghcr.io/autobrr/autobrr:v1.79.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /api/healthz/liveness
+            port: 7474
+        ports:
+        - name: autobrr
+          containerPort: 7474
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /api/healthz/liveness
+            port: 7474
+        resources:
+          requests:
+            cpu: 15m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /config
+          name: autobrr-data
+        - mountPath: /tmp
+          name: autobrr-temp
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      volumes:
+      - name: autobrr-data
+        persistentVolumeClaim:
+          claimName: autobrr-data
+      - name: autobrr-temp
+        emptyDir: {}

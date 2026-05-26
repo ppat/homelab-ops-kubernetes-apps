@@ -8,10 +8,13 @@ resources:
 - postgres-service.yaml
 - postgres-credentials.yaml
 - secrets.yaml
+- autobrr/
 - bazarr/
 - lidarr/
 - overseerr/
 - prowlarr/
+- qbittorrent/
+- qui/
 - radarr/
 - recyclarr/
 - sabnzbd/

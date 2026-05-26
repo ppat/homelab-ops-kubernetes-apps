@@ -1,0 +1,89 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qui
+  namespace: downloaders
+  labels:
+    app.kubernetes.io/name: qui
+  annotations:
+    secret.reloader.stakater.com/reload: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: qui
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: qui
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: qui
+        env:
+        - name: TZ
+          value: Etc/UTC
+        - name: QUI__LOG_LEVEL
+          value: INFO
+        - name: QUI__DATABASE_ENGINE
+          value: postgres
+        - name: QUI__DATABASE_HOST
+          value: downloaders-db.downloaders.svc.cluster.local
+        - name: QUI__DATABASE_PORT
+          value: "5432"
+        - name: QUI__DATABASE_NAME
+          value: qui
+        - name: QUI__DATABASE_USER
+          valueFrom:
+            secretKeyRef:
+              name: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
+              key: username
+        - name: QUI__DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
+              key: password
+        image: ghcr.io/autobrr/qui:v1.19.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 7476
+        ports:
+        - name: qui
+          containerPort: 7476
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 7476
+        resources:
+          requests:
+            cpu: 15m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /config
+          name: qui-data
+        - mountPath: /tmp
+          name: qui-temp
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      volumes:
+      - name: qui-data
+        persistentVolumeClaim:
+          claimName: qui-data
+      - name: qui-temp
+        emptyDir: {}
