@@ -64,7 +64,11 @@ spec:
         securityContext:
           # NET_ADMIN is required to configure the WireGuard tunnel and firewall rules.
           # privileged is required in Kubernetes to open the TUN device.
+          # runAsUser/runAsNonRoot are overridden here because gluetun must run as root
+          # to manipulate iptables rules, regardless of the pod-level security context.
           privileged: true
+          runAsNonRoot: false
+          runAsUser: 0
           capabilities:
             add:
             - NET_ADMIN
