@@ -4,7 +4,5 @@ kind: Kustomization
 
 resources:
 - deployment.yaml
-- gluetun-config.yaml
-- secrets.yaml
 - service.yaml
 - ingress.yaml

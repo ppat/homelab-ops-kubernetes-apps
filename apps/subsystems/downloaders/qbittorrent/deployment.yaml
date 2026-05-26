@@ -7,7 +7,6 @@ metadata:
   labels:
     app.kubernetes.io/name: qbittorrent
   annotations:
-    configmap.reloader.stakater.com/reload: "gluetun-config"
     secret.reloader.stakater.com/reload: "gluetun-secrets"
 spec:
   replicas: 1

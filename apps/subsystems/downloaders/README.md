@@ -4,7 +4,7 @@ Integrated media management solution enabling automated downloading and organiza
 
 ## Quick Links
 
-<a href="https://github.com/lidarr/Lidarr" target="_blank"><img src="../../../.static/images/logos/lidarr.svg" width="32" height="32" alt="Lidarr"></a> <a href="https://github.com/Prowlarr/Prowlarr" target="_blank"><img src="../../../.static/images/logos/prowlarr.svg" width="32" height="32" alt="Prowlarr"></a> <a href="https://github.com/qbittorrent/qBittorrent" target="_blank"><img src="../../../.static/images/logos/qbittorrent.png" width="32" height="32" alt="qBittorrent"></a> <a href="https://github.com/Radarr/Radarr" target="_blank"><img src="../../../.static/images/logos/radarr.svg" width="32" height="32" alt="Radarr"></a> <a href="https://github.com/recyclarr/recyclarr" target="_blank"><img src="../../../.static/images/logos/recyclarr.png" width="32" height="32" alt="Recyclarr"></a> <a href="https://sabnzbd.org/" target="_blank"><img src="../../../.static/images/logos/sabnzbd.svg" width="32" height="32" alt="SABnzbd"></a> <a href="https://github.com/seerr-team/seerr" target="_blank"><img src="../../../.static/images/logos/seerr.svg" width="32" height="32" alt="Seerr"></a> <a href="https://github.com/Sonarr/Sonarr" target="_blank"><img src="../../../.static/images/logos/sonarr.svg" width="32" height="32" alt="Sonarr"></a>
+<a href="https://github.com/lidarr/Lidarr" target="_blank"><img src="../../../.static/images/logos/lidarr.svg" width="32" height="32" alt="Lidarr"></a> <a href="https://github.com/Prowlarr/Prowlarr" target="_blank"><img src="../../../.static/images/logos/prowlarr.svg" width="32" height="32" alt="Prowlarr"></a> <a href="https://github.com/qbittorrent/qBittorrent" target="_blank"><img src="../../../.static/images/logos/qbittorrent.png" width="32" height="32" alt="qBittorrent"></a> <a href="https://github.com/Radarr/Radarr" target="_blank"><img src="../../../.static/images/logos/radarr.svg" width="32" height="32" alt="Radarr"></a> <a href="https://github.com/recyclarr/recyclarr" target="_blank"><img src="../../../.static/images/logos/recyclarr.png" width="32" height="32" alt="Recyclarr"></a> <a href="https://sabnzbd.org/" target="_blank"><img src="../../../.static/images/logos/sabnzbd.svg" width="32" height="32" alt="SABnzbd"></a> <a href="https://github.com/seerr-team/seerr" target="_blank"><img src="../../../.static/images/logos/seerr.png" width="32" height="32" alt="Seerr"></a> <a href="https://github.com/Sonarr/Sonarr" target="_blank"><img src="../../../.static/images/logos/sonarr.svg" width="32" height="32" alt="Sonarr"></a>
 
 ## Overview
 
@@ -165,7 +165,6 @@ flowchart TB
    | --- | --- | --- |
    | downloaders-db-app | Database access | username, password |
    | downloader-api-keys | Service API keys | radarr_api_key, sonarr_api_key, etc. |
-   | gluetun-secrets | Gluetun VPN credentials | wireguard_private_key |
 
 3. Required Variables
 
@@ -175,4 +174,76 @@ flowchart TB
    | media_writer_gid | File ownership | All services |
    | db_storage_size | Database storage | PostgreSQL |
    | db_storage_class | Database storage | PostgreSQL |
-   | gluetun_server_countries | ProtonVPN server country filter | qBittorrent/Gluetun (default: United States) |
+
+### qBittorrent VPN Configuration
+
+qBittorrent routes all traffic through a [Gluetun](https://github.com/qdm12/gluetun-wiki) VPN sidecar. The sidecar requires two resources that are **not provided by this subsystem** — they must be created at point of use (e.g. in your cluster overlay). This allows you to extend or override keys as needed without modifying the subsystem.
+
+Full option reference:
+
+- Gluetun options: <https://github.com/qdm12/gluetun-wiki/tree/main/setup/options>
+- ProtonVPN options: <https://github.com/qdm12/gluetun-wiki/blob/main/setup/providers/protonvpn.md>
+
+#### `gluetun-config` ConfigMap
+
+```yaml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gluetun-config
+  namespace: downloaders
+data:
+  # Health server must listen on all interfaces so Kubernetes kubelet probes
+  # (which come from the node, not localhost) can reach port 9999.
+  # Default is 127.0.0.1:9999 which would cause probe failures in Kubernetes.
+  HEALTH_SERVER_ADDRESS: 0.0.0.0:9999
+
+  # VPN provider and protocol
+  VPN_SERVICE_PROVIDER: protonvpn
+  VPN_TYPE: wireguard
+
+  # Server selection
+  SERVER_COUNTRIES: United States
+
+  # Port forwarding — ProtonVPN assigns a port dynamically via NAT-PMP.
+  # PORT_FORWARD_ONLY filters for P2P-capable servers only.
+  VPN_PORT_FORWARDING: "on"
+  PORT_FORWARD_ONLY: "on"
+
+  # When ProtonVPN assigns a forwarded port, update qBittorrent's listen port
+  # via its API so peers can connect through the VPN tunnel.
+  # {{PORT}} is substituted by gluetun at runtime.
+  VPN_PORT_FORWARDING_UP_COMMAND: >-
+    /bin/sh -c 'wget -O- -nv --retry-connrefused
+    --post-data "json={\"listen_port\":{{PORT}},\"random_port\":false,\"upnp\":false}"
+    http://127.0.0.1:8080/api/v2/app/setPreferences'
+
+  # Reset qBittorrent's listen port when the VPN tunnel goes down.
+  VPN_PORT_FORWARDING_DOWN_COMMAND: >-
+    /bin/sh -c 'wget -O- -nv --retry-connrefused
+    --post-data "json={\"listen_port\":0}"
+    http://127.0.0.1:8080/api/v2/app/setPreferences'
+```
+
+#### `gluetun-secrets` Secret
+
+The WireGuard private key is obtained from your ProtonVPN dashboard under **Downloads → WireGuard configuration**.
+
+```yaml
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: gluetun-secrets
+  namespace: downloaders
+spec:
+  data:
+  - secretKey: wireguard_private_key
+    remoteRef:
+      key: downloaders_gluetun_wireguard_private_key
+  refreshInterval: 24h
+  secretStoreRef:
+    name: <your-secret-store>
+    kind: ClusterSecretStore
+```
