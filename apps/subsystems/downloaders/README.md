@@ -58,7 +58,6 @@ flowchart TB
 
     %% Request Management
     autobrr[autobrr<br/>IRC/RSS Automation]:::request
-    overseerr[Overseerr<br/>Requests]:::request
     seerr[Seerr<br/>Requests]:::request
     qui[qui<br/>qBit UI + Cross-seed]:::request
 
@@ -73,8 +72,6 @@ flowchart TB
     autobrr --> radarr
     autobrr --> sonarr
     autobrr --> qbittorrent
-    overseerr --> radarr
-    overseerr --> sonarr
     seerr --> radarr
     seerr --> sonarr
     qui --> qbittorrent
@@ -109,7 +106,6 @@ flowchart TB
     bazarr -.-> postgres
     prowlarr -.-> postgres
     autobrr -.-> postgres
-    overseerr -.-> postgres
     qui -.-> postgres
     seerr -.-> postgres
 
@@ -144,7 +140,6 @@ flowchart TB
 | Sonarr | Media Manager | TV Series Management | • Complete TV series tracking<br>• Automated season/episode management<br>• Smart media file renaming<br>• State persistence in PostgreSQL | • Searches content through Prowlarr's indexer network<br>• Automatically sends download tasks to SABnzbd<br>• Receives configuration updates from Recyclarr |
 | Lidarr | Media Manager | Music Management | • Comprehensive music library organization<br>• Detailed artist/album tracking<br>• Advanced quality profiles<br>• State persistence in PostgreSQL | • Searches content through Prowlarr's indexer network<br>• Automatically sends download tasks to SABnzbd<br>• Receives configuration updates from Recyclarr |
 | Bazarr | Media Manager | Subtitle Management | • Automated subtitle downloading<br>• Multi-language management<br>• Intelligent subtitle synchronization<br>• State persistence in PostgreSQL | • Actively monitors Radarr/Sonarr media libraries<br>• Directly manages subtitle files in media storage |
-| Overseerr | Media Manager | Request Management | • User-friendly request interface<br>• Comprehensive request tracking<br>• Integrated library discovery<br>• State persistence in PostgreSQL | • Forwards movie/TV requests to Radarr/Sonarr<br>• Integrates with external authentication systems |
 | Seerr | Media Manager | Request Management | • Successor to Overseerr with Plex, Jellyfin, and Emby support<br>• User-friendly request interface<br>• Comprehensive request tracking<br>• PostgreSQL database support | • Forwards movie/TV requests to Radarr/Sonarr<br>• Integrates with Plex/Jellyfin/Emby for library discovery<br>• Supports external authentication systems |
 | Prowlarr | Download Service | Indexer Management | • Centralized indexer configuration<br>• Unified search API for all services<br>• Detailed statistics tracking<br>• State persistence in PostgreSQL | • Processes search requests from all *arr services<br>• Manages indexer API keys and capabilities<br>• Continuously monitors indexer health status |
 | qui | Download Service | qBittorrent UI + Cross-seed | • Modern multi-instance qBittorrent web interface<br>• Built-in cross-seed support (RSS, library scan, on-completion)<br>• OIDC SSO support<br>• State persistence in PostgreSQL | • Manages qBittorrent instances via their WebUI API<br>• Cross-seeds torrents across trackers automatically<br>• Integrates with autobrr natively |
@@ -165,7 +160,6 @@ flowchart TB
    | lidarr-data | Lidarr configuration | RWX |
    | bazarr-data | Bazarr configuration | RWX |
    | prowlarr-data | Prowlarr configuration | RWX |
-   | overseerr-data | Overseerr configuration | RWX |
    | qui-data | qui configuration | RWX |
    | qbittorrent-data | qBittorrent configuration | RWX |
    | sabnzbd-data | SABnzbd configuration | RWX |

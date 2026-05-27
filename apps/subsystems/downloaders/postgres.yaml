@@ -16,7 +16,6 @@ spec:
       - CREATE DATABASE bazarr WITH OWNER downloader
       - CREATE DATABASE lidarr WITH OWNER downloader
       - CREATE DATABASE "lidarr-log" WITH OWNER downloader
-      - CREATE DATABASE overseerr WITH OWNER downloader
       - CREATE DATABASE prowlarr WITH OWNER downloader
       - CREATE DATABASE qui WITH OWNER downloader
       - CREATE DATABASE radarr WITH OWNER downloader
