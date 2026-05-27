@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.3.7...apps-downloaders-v0.3.8) (2026-05-27)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-downloaders:** drop overseerr as we now have seerr as its replacement ([#3076](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3076)) ([86c83e4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/86c83e4b082fa4578e8c1db544ac376a32d23b12))
+
 ## [0.3.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.3.6...apps-downloaders-v0.3.7) (2026-05-26)
 
 
