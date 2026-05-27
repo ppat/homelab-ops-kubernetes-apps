@@ -80,10 +80,6 @@ spec:
     use:
       template: ./validate-lidarr.yaml
 
-  - name: Validate overseerr
-    use:
-      template: ./validate-overseerr.yaml
-
   - name: Validate seerr
     use:
       template: ./validate-seerr.yaml
