@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: metallb-repository
         namespace: flux-system
-      version: 0.15.3
+      version: 0.16.1
   install:
     crds: CreateReplace
     createNamespace: false
