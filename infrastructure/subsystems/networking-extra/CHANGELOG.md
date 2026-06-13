@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.8...infra-networking-extra-v0.3.9) (2026-06-13)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update freeradius/freeradius-server (3.2.9 -&gt; 3.2.10) ([#3102](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3102)) ([a96518d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a96518dc30deb37c3fe637b0c03c3f0e7f436f1b))
+* **infra-networking-extra:** update madnuttah/unbound (1.25.1-2 -&gt; 1.25.1-3) ([#3120](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3120)) ([b5ec168](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b5ec16877dc5acefff4c332b9927c3a3bd6012cd))
+
 ## [0.3.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.7...infra-networking-extra-v0.3.8) (2026-06-04)
 
 
