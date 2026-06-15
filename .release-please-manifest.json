@@ -1,8 +1,8 @@
 {
   "apps/subsystems/ai": "0.5.0",
   "apps/subsystems/bitwarden": "0.0.23",
-  "apps/subsystems/coder": "0.0.44",
-  "apps/subsystems/downloaders": "0.3.8",
+  "apps/subsystems/coder": "0.0.45",
+  "apps/subsystems/downloaders": "0.3.9",
   "apps/subsystems/harbor": "0.0.17",
   "apps/subsystems/home-automation": "0.3.6",
   "apps/subsystems/media": "0.0.39",
@@ -11,12 +11,12 @@
   "infrastructure/subsystems/clusterops-core": "0.2.2",
   "infrastructure/subsystems/database-core": "0.0.16",
   "infrastructure/subsystems/kubernetes-core": "0.0.19",
-  "infrastructure/subsystems/kubernetes-extra": "0.0.29",
+  "infrastructure/subsystems/kubernetes-extra": "0.0.30",
   "infrastructure/subsystems/networking-core": "0.11.0",
-  "infrastructure/subsystems/networking-extra": "0.3.8",
-  "infrastructure/subsystems/observability-core": "0.20.1",
-  "infrastructure/subsystems/observability-extra": "0.1.30",
+  "infrastructure/subsystems/networking-extra": "0.3.9",
+  "infrastructure/subsystems/observability-core": "0.21.0",
+  "infrastructure/subsystems/observability-extra": "0.1.31",
   "infrastructure/subsystems/security-core": "0.2.5",
-  "infrastructure/subsystems/security-extra": "0.2.12",
+  "infrastructure/subsystems/security-extra": "0.2.13",
   "infrastructure/subsystems/storage-core": "0.2.2"
 }
