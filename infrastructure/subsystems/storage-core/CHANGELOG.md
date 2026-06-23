@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.2.2...infra-storage-core-v0.2.3) (2026-06-23)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** update csi-driver-nfs (4.13.2 -&gt; 4.13.3) ([#3154](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3154)) ([f780127](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f780127c3e87d09511d0f983e0151f1929c1acc6))
+
 ## [0.2.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.2.1...infra-storage-core-v0.2.2) (2026-05-18)
 
 
