@@ -19,6 +19,8 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: plex
+      annotations:
+        descheduler.alpha.kubernetes.io/prefer-no-eviction: "true"
     spec:
       automountServiceAccountToken: false
       initContainers:
