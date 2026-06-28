@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.0.40](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.39...apps-media-v0.0.40) (2026-06-28)
+
+
+### ✨ Features
+
+* **apps-media:** update ghcr.io/tautulli/tautulli (v2.16.1 -&gt; v2.17.1) ([#3104](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3104)) ([fe76ed6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fe76ed613e6d5824c3f438314409d8c73f87fbd4))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** plex should not be evicted by descheduler ([#3176](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3176)) ([0b8fdb2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0b8fdb217c4fa969406a38c4c5059d89851dcaf1))
+* **apps-media:** update ghcr.io/jellyfin/jellyfin (10.11.9 -&gt; 10.11.10) ([#3101](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3101)) ([f8d44d9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f8d44d97d3ca4cb4465b728c976a1520e6f95663))
+* **infra-networking-extra:** update digest busybox (32015ee -&gt; fd8d9aa) ([#3063](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3063)) ([5d7dc4c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5d7dc4cabe64d1d5bfa0dfdd5cec491b23dde0d0))
+
 ## [0.0.39](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.38...apps-media-v0.0.39) (2026-05-24)
 
 
