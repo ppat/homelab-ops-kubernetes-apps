@@ -4,7 +4,7 @@
   "apps/subsystems/coder": "0.0.47",
   "apps/subsystems/downloaders": "0.3.10",
   "apps/subsystems/harbor": "0.0.17",
-  "apps/subsystems/home-automation": "0.3.8",
+  "apps/subsystems/home-automation": "0.3.9",
   "apps/subsystems/media": "0.0.40",
   "apps/subsystems/misc": "0.0.9",
   "infrastructure/bootstrap/crds": "0.4.0",
