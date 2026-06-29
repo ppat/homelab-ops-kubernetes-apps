@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.3.8...apps-home-automation-v0.3.9) (2026-06-29)
+
+
+### ✨ Features
+
+* **apps-home-automation:** update ghcr.io/coder/code-server (4.123.0 -&gt; 4.126.0) ([#3183](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3183)) ([8c2de6a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8c2de6a1174313813146baa49045a6477751dc5a))
+* **apps-home-automation:** update rhasspy/wyoming-whisper (3.2.0 -&gt; 3.3.1) ([#3184](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3184)) ([7a04f6b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7a04f6b7346c6e13419e37da588a75d08b83b948))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-home-automation:** update emqx/nanomq (0.25.1 -&gt; 0.25.2) ([#3173](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3173)) ([cd19fb4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/cd19fb472152b1f66a5d50671a66cc7a4705bd0c))
+* **apps-home-automation:** update ghcr.io/home-operations/home-assistant (2026.6.3 -&gt; 2026.6.4) ([#3180](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3180)) ([7ec9426](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7ec94262f02c67fb1c59cf962aba6f983858352c))
+
 ## [0.3.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.3.7...apps-home-automation-v0.3.8) (2026-06-23)
 
 
