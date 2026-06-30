@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.41](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.40...apps-media-v0.0.41) (2026-06-30)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** update ghcr.io/jellyfin/jellyfin (10.11.10 -&gt; 10.11.11) ([#3181](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3181)) ([7e0b94a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7e0b94a31a7cf0811f9928c9b1945d92d9927ce5))
+* **apps-media:** update ghcr.io/tautulli/tautulli (v2.17.1 -&gt; v2.17.2) ([#3182](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3182)) ([0e014d6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0e014d6a6554a0c0e428361b8a42d8b3650864a5))
+
 ## [0.0.40](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.39...apps-media-v0.0.40) (2026-06-28)
 
 
