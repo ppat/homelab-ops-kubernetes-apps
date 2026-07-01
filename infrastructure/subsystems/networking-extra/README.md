@@ -4,7 +4,7 @@ This module provides advanced networking capabilities through DNS filtering, VPN
 
 ## Quick Links
 
-<a href="https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/tunnel-guide/" target="_blank"><img src="../../../.static/images/logos/cloudflared.png" width="32" height="32" alt="Cloudflared"></a> <a href="https://freeradius.org/" target="_blank"><img src="../../../.static/images/logos/freeradius.svg" width="32" height="32" alt="FreeRADIUS"></a> <a href="https://pi-hole.net/" target="_blank"><img src="../../../.static/images/logos/pi-hole.svg" width="32" height="32" alt="Pi-hole"></a> <a href="https://tailscale.com/" target="_blank"><img src="../../../.static/images/logos/tailscale.png" width="32" height="32" alt="Tailscale"></a> <a href="https://nlnetlabs.nl/documentation/unbound/" target="_blank"><img src="../../../.static/images/logos/unbound.png" width="32" height="32" alt="Unbound"></a> <a href="https://ui.com/" target="_blank"><img src="../../../.static/images/logos/unifi.svg" width="32" height="32" alt="UniFi"></a>
+<a href="https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/tunnel-guide/" target="_blank"><img src="../../../.static/images/logos/cloudflared.png" width="32" height="32" alt="Cloudflared"></a> <a href="https://freeradius.org/" target="_blank"><img src="../../../.static/images/logos/freeradius.svg" width="32" height="32" alt="FreeRADIUS"></a> <a href="https://pi-hole.net/" target="_blank"><img src="../../../.static/images/logos/pi-hole.svg" width="32" height="32" alt="Pi-hole"></a> <a href="https://tailscale.com/" target="_blank"><img src="../../../.static/images/logos/tailscale.png" width="32" height="32" alt="Tailscale"></a> <a href="https://nlnetlabs.nl/documentation/unbound/" target="_blank"><img src="../../../.static/images/logos/unbound.png" width="32" height="32" alt="Unbound"></a>
 
 ## Overview
 
@@ -36,23 +36,7 @@ The networking-extra module provides four main capabilities:
      - WireGuard encryption
      - Identity-based access
 
-3. Network Management
-   - UniFi Network Application:
-     - Device discovery and adoption
-     - Network monitoring
-     - Configuration management
-     - Firmware updates
-   - Service ports:
-     - L2 discovery (UDP 1900)
-     - Device adoption (TCP 8080)
-     - STUN (UDP 3478)
-     - DNS (TCP/UDP 53)
-     - NTP (UDP 123)
-     - Remote syslog (UDP 5514)
-     - Speed test (TCP 6789)
-     - Management UI (TCP 8443)
-
-4. RADIUS Authentication
+3. RADIUS Authentication
     - FreeRADIUS server:
       - MAC-based authentication for wireless clients connecting to UniFi networks
       - VLAN assignment based on client MAC address
@@ -180,7 +164,6 @@ flowchart TB
 | Cloudflared | DNS-over-HTTPS | • Connects to Cloudflare DNS<br>• Uses malware-blocking resolvers<br>• Exposes metrics endpoint<br>• Supports connection pooling |
 | Unbound | DNS resolution | • Performs DNSSEC validation<br>• Implements privacy features<br>• Optimizes caching<br>• Supports prefetching |
 | Tailscale | VPN access | • Manages network access<br>• Supports custom hostnames<br>• Enables API server proxy<br>• Zero-trust architecture |
-| UniFi | Network management | • Controls network devices<br>• Manages configurations<br>• Handles firmware updates<br>• Collects device statistics |
 | FreeRADIUS | RADIUS authentication | • Authenticates wireless clients by MAC address (on behalf of Unifi)<br>• Assigns VLANs based on client identity<br>• Integrates with UniFi for wireless networks<br>• Provides configurable default VLAN |
 
 ## Prerequisites
@@ -208,7 +191,6 @@ flowchart TB
    | Secret Name | Purpose | Required Keys |
    |-------------|---------|---------------|
    | pihole-secrets | Pi-hole admin | pihole_password |
-   | unifi-secrets | UniFi database | unifi_db_user, unifi_db_password |
    | tailscale-auth | VPN access | authkey |
    | freeradius-client-credentials | RADIUS clients | unifi_secret |
    | freeradius-mac2vlan-map | MAC to VLAN mapping | mac2vlan_map, default_vlan |
@@ -220,7 +202,6 @@ flowchart TB
 - Application modules requiring:
   - DNS filtering and security
   - VPN access
-  - Network management
 
 ### Depends On
 
