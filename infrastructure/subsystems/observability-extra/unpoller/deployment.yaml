@@ -25,7 +25,7 @@ spec:
         - name: UP_POLLER_DEBUG
           value: "true"
         - name: UP_UNIFI_DEFAULT_URL
-          value: "https://unifi.${domain_name}"
+          value: "https://unifi.nodes.${dns_zone}"
         - name: UP_UNIFI_DEFAULT_USER
           valueFrom:
             secretKeyRef:
