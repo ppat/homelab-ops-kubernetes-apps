@@ -4,18 +4,13 @@ This module extends the core observability stack with specialized collectors and
 
 ## Quick Links
 
-<a href="https://github.com/resmoio/kubernetes-event-exporter" target="_blank"><img src="../../../.static/images/logos/resmoio.png" width="32" height="32" alt="Kubernetes Event Exporter"></a> <a href="https://github.com/kubernetes/node-problem-detector" target="_blank"><img src="../../../.static/images/logos/kubernetes.svg" width="32" height="32" alt="Node Problem Detector"></a> <a href="https://github.com/prometheus/snmp_exporter" target="_blank"><img src="../../../.static/images/logos/prometheus.svg" width="32" height="32" alt="SNMP Exporter"></a> <a href="https://www.syslog-ng.com/technical-documents/doc/syslog-ng-open-source-edition/3.37/administration-guide/" target="_blank"><img src="../../../.static/images/logos/syslog-ng.png" width="32" height="32" alt="Syslog-ng"></a> <a href="https://unpoller.com/" target="_blank"><img src="../../../.static/images/logos/unifi-poller.png" width="32" height="32" alt="UniFi Poller"></a>
+<a href="https://github.com/kubernetes/node-problem-detector" target="_blank"><img src="../../../.static/images/logos/kubernetes.svg" width="32" height="32" alt="Node Problem Detector"></a> <a href="https://github.com/prometheus/snmp_exporter" target="_blank"><img src="../../../.static/images/logos/prometheus.svg" width="32" height="32" alt="SNMP Exporter"></a> <a href="https://www.syslog-ng.com/technical-documents/doc/syslog-ng-open-source-edition/3.37/administration-guide/" target="_blank"><img src="../../../.static/images/logos/syslog-ng.png" width="32" height="32" alt="Syslog-ng"></a> <a href="https://unpoller.com/" target="_blank"><img src="../../../.static/images/logos/unifi-poller.png" width="32" height="32" alt="UniFi Poller"></a>
 
 ## Overview
 
 The observability-extra module provides five main capabilities:
 
 1. Event Collection
-   - Kubernetes event export to Loki:
-     - 60-second event retention
-     - Custom stream labels
-     - Flexible routing rules
-     - Structured logging
    - Node problem detection:
      - System log monitoring
      - Kernel problem detection
@@ -123,7 +118,6 @@ flowchart TB
 
 | Component | Primary Role | Integration Points |
 |-----------|-------------|-------------------|
-| Event Exporter | Event collection | • Exports Kubernetes events<br>• Routes to Loki<br>• Custom stream labels<br>• 60s event retention |
 | Problem Detector | Node monitoring | • System log analysis<br>• Kernel monitoring<br>• PrometheusRules<br>• ServiceMonitor enabled |
 | SNMP Exporter | Network metrics | • Custom scrape configs<br>• Instance relabeling<br>• Anti-affinity rules<br>• Timeout handling |
 | Syslog-ng | Log aggregation | • Dual protocol support<br>• Batch processing<br>• Worker scaling<br>• Flow control |
@@ -137,7 +131,6 @@ flowchart TB
    |-----------|---------|---------------|
    | Loki | Log storage | From observability-core |
    | Prometheus | Metrics storage | From observability-core |
-   | UniFi Controller | Network stats | From networking-extra |
 
 2. Required Variables
 
@@ -156,7 +149,6 @@ flowchart TB
 ### Required By
 
 - Application modules requiring:
-  - Event monitoring
   - Network metrics
   - Log aggregation
   - Problem detection
@@ -164,4 +156,3 @@ flowchart TB
 ### Depends On
 
 - [observability-core](../observability-core) - For storage backends
-- [networking-extra](../networking-extra) - For UniFi integration
