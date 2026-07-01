@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.11.2...infra-networking-core-v0.11.3) (2026-07-01)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** fix external-dns unifi provider versioning ([#3211](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3211)) ([fbf83a2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fbf83a2fc82e30e447072271e79b359fac739831))
+
 ## [0.11.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.11.1...infra-networking-core-v0.11.2) (2026-07-01)
 
 
