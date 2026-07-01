@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.1.33...infra-observability-extra-v0.2.0) (2026-07-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-observability-extra:** update ghcr.io/unpoller/unpoller (v2.39.0 -> v3.3.1) ([#3210](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3210))
+
+### ✨ Features
+
+* **infra-observability-extra:** update balabit/syslog-ng (4.11.0 -&gt; 4.12.0) ([#3215](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3215)) ([ce52fb3](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ce52fb3969efde3d4ca1ec0f93c754c59d28906c))
+* **infra-observability-extra:** update ghcr.io/unpoller/unpoller (v2.39.0 -&gt; v3.3.1) ([#3210](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3210)) ([db40320](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/db4032003b888a4e0e589085b11670f8e9ecd8e5))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-extra:** fix unpoller link to unifi service ([#3220](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3220)) ([63bac88](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/63bac880f5dcbf9f03dbae518ab275fcc181e354))
+
 ## [0.1.33](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.1.32...infra-observability-extra-v0.1.33) (2026-07-01)
 
 
