@@ -13,23 +13,9 @@
       "minimumReleaseAge": "7 days"
     },
     {
-      "description": "delay patch updates to 30 days (from 1 day)",
-      "matchPackageNames": [
-        "docker.io/mongo",
-        "ghcr.io/linuxserver/unifi-network-application"
-      ],
-      "matchUpdateTypes": [
-        "digest",
-        "patch"
-      ],
-      "minimumReleaseAge": "30 days"
-    },
-    {
       "description": "delay minor updates to 30 days (from 7 days)",
       "matchPackageNames": [
         "coder",
-        "docker.io/mongo",
-        "ghcr.io/linuxserver/unifi-network-application",
         "longhorn",
         "longhorn/longhorn"
       ],

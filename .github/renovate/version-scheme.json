@@ -52,8 +52,7 @@
         "docker"
       ],
       "matchPackageNames": [
-        "ghcr.io/dragonflydb/dragonfly-operator/helm/dragonfly-operator",
-        "registry-1.docker.io/bitnamicharts/kubernetes-event-exporter"
+        "ghcr.io/dragonflydb/dragonfly-operator/helm/dragonfly-operator"
       ],
       "matchManagers": [
         "flux"
