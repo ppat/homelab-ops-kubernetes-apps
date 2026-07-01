@@ -14,7 +14,6 @@ spec:
       domain_name: cluster.example.com
       freeradius_external_ip_address: 10.112.1.6
       pihole_external_ip_address: 10.112.1.1
-      unifi_external_ip_address: 10.112.1.2
   prune: false
   sourceRef:
     kind: GitRepository

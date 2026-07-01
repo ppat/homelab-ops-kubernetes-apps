@@ -68,10 +68,6 @@ spec:
     use:
       template: ./validate-pihole.yaml
 
-  - name: Validate UniFi
-    use:
-      template: ./validate-unifi.yaml
-
   - name: Validate External-DNS
     use:
       template: ./validate-external-dns.yaml
