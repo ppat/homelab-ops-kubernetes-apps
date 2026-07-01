@@ -11,7 +11,7 @@ provider:
       tag: "0.10.7"
     env:
     - name: UNIFI_HOST
-      value: https://unifi.${dns_zone}
+      value: https://unifi.nodes.${dns_zone}
     - name: UNIFI_API_KEY
       valueFrom:
         secretKeyRef:
