@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.4.0...apps-downloaders-v0.5.0) (2026-07-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* **apps-downloaders:** update ghcr.io/recyclarr/recyclarr (7.5.2 -> 8.4.0) ([#2832](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2832))
+
+### ✨ Features
+
+* **apps-downloaders:** update ghcr.io/recyclarr/recyclarr (7.5.2 -&gt; 8.4.0) ([#2832](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2832)) ([c68bf55](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c68bf550b569600abdbcbbabc9bc415764728768))
+
 ## [0.4.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.3.10...apps-downloaders-v0.4.0) (2026-07-01)
 
 
