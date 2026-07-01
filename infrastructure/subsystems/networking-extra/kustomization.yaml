@@ -8,7 +8,6 @@ resources:
 - unbound/
 - pihole/
 - freeradius/
-- unifi/
 - tailscale-operator/
 
 sortOptions:
