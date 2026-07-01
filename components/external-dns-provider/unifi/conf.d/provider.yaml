@@ -8,7 +8,7 @@ provider:
     image:
       repository: ghcr.io/home-operations/external-dns-unifi-webhook
       # renovate: datasource=github-releases depName=home-operations/external-dns-unifi-webhook
-      tag: "v0.10.7"
+      tag: "0.10.7"
     env:
     - name: UNIFI_HOST
       value: https://unifi.${dns_zone}

@@ -45,7 +45,6 @@ spec:
     - ingress
     - service
 
-    resources: {}
     serviceMonitor:
       enabled: true
     tolerations:
