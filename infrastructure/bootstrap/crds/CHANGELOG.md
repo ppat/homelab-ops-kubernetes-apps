@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.5.0...infra-bootstrap-crds-v0.5.1) (2026-07-01)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-bootstrap-crds:** update prometheus-operator/prometheus-operator (v0.92.0 -&gt; v0.92.1) ([#3225](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3225)) ([f1a569a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f1a569a3bdb2dba1db5d4568646c1ada36c2dd58))
+
 ## [0.5.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.4.0...infra-bootstrap-crds-v0.5.0) (2026-07-01)
 
 
