@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: goldilocks-repository
         namespace: flux-system
-      version: 10.4.0
+      version: 10.4.1
   install:
     crds: CreateReplace
     createNamespace: false
