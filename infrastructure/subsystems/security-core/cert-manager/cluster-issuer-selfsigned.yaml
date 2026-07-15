@@ -1,12 +1,4 @@
 ---
-# Self-signed ClusterIssuer used for development/test environments.
-#
-# This is deliberately a standalone Kustomize resource rather than a Helm
-# `extraObjects` entry: cert-manager does not support creating a CR (here a
-# ClusterIssuer) for one of its own CRDs from within the same HelmRelease,
-# because Helm applies it in the same batch as the webhook Deployment and the
-# validating webhook is not yet serving (connection refused). Applying it via
-# the Kustomization (before the webhook is registered) avoids that race.
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:

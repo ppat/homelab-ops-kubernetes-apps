@@ -1,9 +1,4 @@
 ---
-# Traefik Middleware/ServersTransport resources are deliberately standalone
-# Kustomize resources rather than Helm `extraObjects` entries: Helm does not
-# support creating CRs for CRDs installed by the same chart, because it applies
-# them in the same batch as the chart's own resources before the CRDs/API are
-# reliably ready. Applying them via the Kustomization avoids that race.
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
