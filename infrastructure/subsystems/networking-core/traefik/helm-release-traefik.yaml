@@ -170,36 +170,3 @@ spec:
       default:
         defaultCertificate:
           secretName: default-tls-cert
-
-    extraObjects:
-    # yamllint disable-line rule:indentation
-    - |
-      apiVersion: traefik.io/v1alpha1
-      kind: Middleware
-      metadata:
-        name: header-forwarded
-        namespace: traefik
-      spec:
-        headers:
-          customRequestHeaders:
-            X-Forwarded-Proto: "https"
-    # yamllint disable-line rule:indentation
-    - |
-      apiVersion: traefik.io/v1alpha1
-      kind: Middleware
-      metadata:
-        name: redirect
-        namespace: traefik
-      spec:
-        redirectScheme:
-          scheme: https
-          permanent: true
-    # yamllint disable-line rule:indentation
-    - |
-      apiVersion: traefik.io/v1alpha1
-      kind: ServersTransport
-      metadata:
-        name: insecure-skip-verify
-        namespace: traefik
-      spec:
-        insecureSkipVerify: true

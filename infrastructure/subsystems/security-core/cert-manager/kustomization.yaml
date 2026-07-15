@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
 - helm-repository-cert-manager.yaml
 - helm-release-cert-manager.yaml
+- cluster-issuer-selfsigned.yaml
 
 commonAnnotations:
   # as this is a critical infrastructure component, prevent pruning unintentionally

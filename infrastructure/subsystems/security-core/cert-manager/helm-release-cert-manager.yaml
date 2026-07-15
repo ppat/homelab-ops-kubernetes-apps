@@ -68,13 +68,3 @@ spec:
         enabled: true
       podmonitor:
         enabled: false
-
-    extraObjects:
-    # yamllint disable-line rule:indentation
-    - |
-      apiVersion: cert-manager.io/v1
-      kind: ClusterIssuer
-      metadata:
-        name: selfsigned-issuer
-      spec:
-        selfSigned: {}
