@@ -6,6 +6,9 @@ resources:
 - certificate-default.yaml
 - helm-repository-traefik.yaml
 - helm-release-traefik.yaml
+- middleware-header-forwarded.yaml
+- middleware-redirect.yaml
+- serverstransport-insecure-skip-verify.yaml
 - whoami-deployment.yaml
 - whoami-service.yaml
 - whoami-ingress.yaml
