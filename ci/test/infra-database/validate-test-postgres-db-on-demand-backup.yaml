@@ -60,5 +60,25 @@ spec:
       selector: app=minio
       namespace: minio
       tail: 50
+  # Credential ground-truth. The backup fails with SignatureDoesNotMatch while the
+  # access key IS accepted - so the SECRET barman signs with differs from the secret
+  # minio provisioned user 'cloudnativepg' with (a mismatch), OR the two are identical
+  # and the fault is in barman's request signing (SDK/checksum), not the credentials.
+  # These two secrets are the decisive discriminator - decode both and compare. The
+  # values are wrapped in [] so trailing whitespace/newlines are visible.
+  #   barman-side: default/test-postgres-db-backup-credentials -> s3_secretaccesskey
+  #   minio-side:  minio/minio-user-credentials -> cloudnativepg-secret-key
+  - script:
+      timeout: 60s
+      # yamllint disable rule:line-length rule:indentation
+      content: |
+        BARMAN_AK=$(kubectl get secret test-postgres-db-backup-credentials -n default -o jsonpath='{.data.s3_accesskeyid}' | base64 -d)
+        BARMAN_SK=$(kubectl get secret test-postgres-db-backup-credentials -n default -o jsonpath='{.data.s3_secretaccesskey}' | base64 -d)
+        MINIO_SK=$(kubectl get secret minio-user-credentials -n minio -o jsonpath='{.data.cloudnativepg-secret-key}' | base64 -d)
+        echo "barman access_key = [${BARMAN_AK}]"
+        echo "barman secret_key = [${BARMAN_SK}]"
+        echo "minio  secret_key = [${MINIO_SK}]"
+        [ "${BARMAN_SK}" = "${MINIO_SK}" ] && echo "SECRETS_MATCH -> credentials fine; fault is barman request signing" || echo "SECRETS_DIFFER -> credential mismatch is the root cause"
+      # yamllint enable rule:line-length rule:indentation
   - events:
       namespace: default
