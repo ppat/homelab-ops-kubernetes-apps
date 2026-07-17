@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.2.7...infra-security-core-v0.2.8) (2026-07-17)
+
+
+### ✨ Features
+
+* **infra-security-core:** update cert-manager (v1.20.3 -&gt; v1.21.0) ([#3287](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3287)) ([63b5efe](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/63b5efe61983d339ec764396363e14b7b2c7383d))
+* **infra-security-core:** update policy-reporter (3.7.4 -&gt; 3.8.1) ([#3272](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3272)) ([5553b19](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5553b19ab3a23a8314c67418e3dff5747520acaf))
+* **infra-security-core:** update trust-manager (v0.23.0 -&gt; v0.24.0) ([#3263](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3263)) ([55833ed](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/55833ed17a3b8e0d1119a93911b2e5a03b11888d))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-core:** update kyverno (3.8.1 -&gt; 3.8.2) ([#3269](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3269)) ([2660ca1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2660ca19c0aa42ecd34c6d8044b1a553bcd9e5ec))
+* move chart-owned CRs out of Helm extraObjects into Kustomize ([#3276](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3276)) ([046ec3d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/046ec3d7c2dac27bade57445abac831869b0f1da))
+
 ## [0.2.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.2.6...infra-security-core-v0.2.7) (2026-07-03)
 
 
