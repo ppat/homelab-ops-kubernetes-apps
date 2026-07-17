@@ -37,21 +37,30 @@ spec:
             parameters:
               barmanObjectName: test-postgres-db-backup-store
               serverName: v1
-  - description: Assert continuous WAL archiving to the object store is working
-    # Gates the on-demand backup: proves the sidecar is up and can reach S3
-    # (guards against the "requested plugin is not available" race and confirms
-    # the boto3 checksum workaround lets barman-cloud-wal-archive reach MinIO).
+  - description: Assert the barman-cloud sidecar is injected and ready on the instance
+    # This is the gate for the on-demand backup step that follows. Enabling backups
+    # adds the plugin to the Cluster spec, which makes CNPG restart the instance pod
+    # to inject the barman-cloud sidecar (an "UpgradingInstance" event). A Backup that
+    # fires DURING that restart dies with "instance manager was restarted during
+    # backup" and does NOT retry (one-shot Backup). The sidecar container only exists,
+    # and only reports ready, once that restart has fully completed - so gating on it
+    # guarantees the instance is stable before we trigger a backup. (The cluster's
+    # ContinuousArchiving condition is NOT a usable gate here: it flips True on
+    # operator intent, before the injection restart even begins.)
     assert:
       timeout: 5m
       resource:
-        apiVersion: postgresql.cnpg.io/v1
-        kind: Cluster
+        apiVersion: v1
+        kind: Pod
         metadata:
-          name: test-postgres-db-v1
           namespace: default
+          labels:
+            cnpg.io/cluster: test-postgres-db-v1
+            cnpg.io/podRole: instance
         status:
-          (conditions[?type == 'ContinuousArchiving']):
-          - status: 'True'
+          phase: Running
+          # v0.13.0 injects the sidecar as a native (restartable init) container.
+          (initContainerStatuses[?name == 'plugin-barman-cloud'] | [0].ready): true
   catch:
   - describe:
       apiVersion: postgresql.cnpg.io/v1
@@ -63,8 +72,27 @@ spec:
       kind: ObjectStore
       name: test-postgres-db-backup-store
       namespace: default
+  # Instance pod: describe (restart/upgrade events) + BOTH containers' logs. The
+  # barman-cloud sidecar container is where WAL-archive / backup errors surface.
+  - get:
+      apiVersion: v1
+      kind: Pod
+      namespace: default
+      selector: cnpg.io/cluster=test-postgres-db-v1
   - podLogs:
       selector: cnpg.io/cluster=test-postgres-db-v1
       namespace: default
+      container: postgres
+      tail: 100
+  - podLogs:
+      selector: cnpg.io/cluster=test-postgres-db-v1
+      namespace: default
+      container: plugin-barman-cloud
+      tail: 200
+  # Operator-side plugin logs: the sidecar-injection lifecycle happens here.
+  - podLogs:
+      selector: app.kubernetes.io/name=plugin-barman-cloud
+      namespace: cnpg-system
+      tail: 100
   - events:
       namespace: default

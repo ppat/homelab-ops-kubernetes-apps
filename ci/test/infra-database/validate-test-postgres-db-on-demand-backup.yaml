@@ -15,6 +15,8 @@ spec:
       file: ../chainsaw/assertions/cnpg-backup-completed.yaml
       timeout: 5m
   catch:
+  # The Backup object carries the failure reason in status.error and names the
+  # target instance pod in status.instanceID.podName.
   - describe:
       apiVersion: postgresql.cnpg.io/v1
       kind: Backup
@@ -25,8 +27,38 @@ spec:
       kind: Cluster
       name: test-postgres-db-v1
       namespace: default
+  - describe:
+      apiVersion: barmancloud.cnpg.io/v1
+      kind: ObjectStore
+      name: test-postgres-db-backup-store
+      namespace: default
+  # Instance pod state + BOTH containers. The barman-cloud sidecar container on the
+  # INSTANCE pod (not the operator-side plugin deployment) is where base-backup and
+  # WAL-archive errors actually surface - this is the log we were missing.
+  - get:
+      apiVersion: v1
+      kind: Pod
+      namespace: default
+      selector: cnpg.io/cluster=test-postgres-db-v1
+  - podLogs:
+      selector: cnpg.io/cluster=test-postgres-db-v1
+      namespace: default
+      container: plugin-barman-cloud
+      tail: 200
+  - podLogs:
+      selector: cnpg.io/cluster=test-postgres-db-v1
+      namespace: default
+      container: postgres
+      tail: 100
+  # Operator-side plugin logs (sidecar-injection lifecycle + backup orchestration).
   - podLogs:
       selector: app.kubernetes.io/name=plugin-barman-cloud
       namespace: cnpg-system
+      tail: 100
+  # Object-store contents: proves whether anything actually landed in fake S3.
+  - podLogs:
+      selector: app=minio
+      namespace: minio
+      tail: 50
   - events:
       namespace: default
