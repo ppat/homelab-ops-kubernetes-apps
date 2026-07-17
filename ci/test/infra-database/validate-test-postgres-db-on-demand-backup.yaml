@@ -1,0 +1,32 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-test-postgres-db-on-demand-backup
+spec:
+  try:
+  - description: Assert backup/test-postgres-db-on-demand completed
+    assert:
+      bindings:
+      - name: name
+        value: test-postgres-db-on-demand
+      - name: namespace
+        value: default
+      file: ../chainsaw/assertions/cnpg-backup-completed.yaml
+      timeout: 5m
+  catch:
+  - describe:
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Backup
+      name: test-postgres-db-on-demand
+      namespace: default
+  - describe:
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      name: test-postgres-db-v1
+      namespace: default
+  - podLogs:
+      selector: app.kubernetes.io/name=plugin-barman-cloud
+      namespace: cnpg-system
+  - events:
+      namespace: default

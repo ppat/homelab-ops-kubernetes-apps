@@ -2,11 +2,14 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:
-  name: ${db_name}-backups
+  name: ${db_name}-${db_suffix_current}-backups
   namespace: ${db_namespace}
 spec:
   schedule: "0 0 4,12,20 * * *"  # every 8 hours
   immediate: true
   backupOwnerReference: cluster
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
   cluster:
     name: ${db_name}-${db_suffix_current}

@@ -1,0 +1,70 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-test-postgres-db-backup
+spec:
+  try:
+  - description: Assert objectstore/test-postgres-db-backup-store exists
+    assert:
+      resource:
+        apiVersion: barmancloud.cnpg.io/v1
+        kind: ObjectStore
+        metadata:
+          name: test-postgres-db-backup-store
+          namespace: default
+  - description: Assert cluster.postgresql.cnpg.io/test-postgres-db-v1 is ready
+    assert:
+      bindings:
+      - name: name
+        value: test-postgres-db-v1
+      - name: namespace
+        value: default
+      file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
+      timeout: 5m
+  - description: Assert cluster has the barman-cloud WAL archiver plugin wired
+    assert:
+      resource:
+        apiVersion: postgresql.cnpg.io/v1
+        kind: Cluster
+        metadata:
+          name: test-postgres-db-v1
+          namespace: default
+        spec:
+          plugins:
+          - name: barman-cloud.cloudnative-pg.io
+            isWALArchiver: true
+            parameters:
+              barmanObjectName: test-postgres-db-backup-store
+              serverName: v1
+  - description: Assert continuous WAL archiving to the object store is working
+    # Gates the on-demand backup: proves the sidecar is up and can reach S3
+    # (guards against the "requested plugin is not available" race and confirms
+    # the boto3 checksum workaround lets barman-cloud-wal-archive reach MinIO).
+    assert:
+      timeout: 5m
+      resource:
+        apiVersion: postgresql.cnpg.io/v1
+        kind: Cluster
+        metadata:
+          name: test-postgres-db-v1
+          namespace: default
+        status:
+          (conditions[?type == 'ContinuousArchiving']):
+          - status: 'True'
+  catch:
+  - describe:
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      name: test-postgres-db-v1
+      namespace: default
+  - describe:
+      apiVersion: barmancloud.cnpg.io/v1
+      kind: ObjectStore
+      name: test-postgres-db-backup-store
+      namespace: default
+  - podLogs:
+      selector: cnpg.io/cluster=test-postgres-db-v1
+      namespace: default
+  - events:
+      namespace: default

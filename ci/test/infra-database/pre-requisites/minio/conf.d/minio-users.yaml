@@ -1,0 +1,6 @@
+---
+users:
+- accessKey: cloudnativepg
+  existingSecret: minio-user-credentials
+  existingSecretKey: cloudnativepg-secret-key
+  policy: cloudnativepg

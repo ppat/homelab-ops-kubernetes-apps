@@ -1,0 +1,46 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: test-postgres-db
+  namespace: flux-system
+spec:
+  interval: 15m0s
+  path: ./ci/test/infra-database/test-resources/postgres-db
+  components:
+  - ../../../../../components/db-backups
+  - ../../../../../components/db-restore
+  postBuild:
+    substitute:
+      db_name: test-postgres-db
+      db_namespace: default
+      db_suffix_current: v2
+      db_suffix_restore: v1
+      db_bootstrap_database: test
+      db_bootstrap_owner: test
+      dns_zone: example.com
+      secret_store: fake
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: test-source
+    namespace: flux-system
+  timeout: 5m0s
+  wait: false
+  patches:
+  # point the ObjectStore at the in-cluster minio (fake S3) over plain http
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      apiVersion: barmancloud.cnpg.io/v1
+      kind: ObjectStore
+      metadata:
+        name: test-postgres-db-backup-store
+        namespace: default
+      spec:
+        configuration:
+          endpointURL: http://minio.minio.svc.cluster.local.:9000
+    target:
+      group: barmancloud.cnpg.io
+      kind: ObjectStore
+      name: test-postgres-db-backup-store
+      namespace: default

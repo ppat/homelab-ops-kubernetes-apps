@@ -14,11 +14,12 @@ The database-core module provides:
 
 1. Database Management Capabilities
    - CloudNativePG operator deployment
+   - Barman Cloud Plugin deployment (object-store backup/recovery)
    - Custom Resource Definitions for PostgreSQL
    - Operator monitoring integration
    - Operator high availability configuration
 
-2. Data Protection Framework
+2. Data Protection Framework (via the Barman Cloud Plugin)
    - S3 backup configuration
    - WAL archiving setup
    - Backup retention configuration
@@ -96,8 +97,9 @@ flowchart TB
 ### Component Details
 
 | Component | Primary Role | Integration Points |
-|-----------|-------------|-------------------|
+| ----------- | ------------- | ------------------- |
 | CloudNativePG Operator | Database management | • Provides CRDs for PostgreSQL management<br>• Enables high availability and failover<br>• Configures backup and recovery<br>• Integrates with monitoring stack<br>• Collects operator/cluster metrics via PodMonitor<br>• Provides default Grafana dashboards |
+| Barman Cloud Plugin | Backup and recovery | • Provides the `ObjectStore` CRD (`barmancloud.cnpg.io`)<br>• Implements object-store backups/WAL archiving as a CNPG-I plugin (replaces the deprecated in-tree `barmanObjectStore`)<br>• Consumed by the `db-backups` / `db-restore` components<br>• Uses cert-manager for its gRPC TLS certificates |
 
 ## Prerequisites
 
@@ -112,4 +114,4 @@ None for this subsystem (which provides the cloudnativepg operator). But creatin
 
 ### Depends On
 
-None
+- [security-core](../security-core) (cert-manager — required by the barman-cloud plugin for its gRPC TLS certificates)

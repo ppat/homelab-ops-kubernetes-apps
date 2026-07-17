@@ -5,22 +5,22 @@ metadata:
   name: validate-test-postgres-db
 spec:
   try:
-  - description: Assert cluster.postgresql.cnpg.io/test-postgres-db
+  - description: Assert cluster.postgresql.cnpg.io/test-postgres-db-v1
     assert:
       bindings:
       - name: name
-        value: test-postgres-db
+        value: test-postgres-db-v1
       - name: namespace
         value: default
       file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
-      timeout: 2m
-  - description: Assert secret/test-postgres-db-app
+      timeout: 5m
+  - description: Assert secret/test-postgres-db-v1-app
     assert:
       resource:
         apiVersion: v1
         kind: Secret
         metadata:
-          name: test-postgres-db-app
+          name: test-postgres-db-v1-app
           namespace: default
         data:
           (length(dbname) > `0`): true
@@ -32,15 +32,15 @@ spec:
   - describe:
       apiVersion: postgresql.cnpg.io/v1
       kind: Cluster
-      name: test-postgres-db
+      name: test-postgres-db-v1
       namespace: default
   - describe:
       apiVersion: v1
       kind: Secret
-      name: test-postgres-db-app
+      name: test-postgres-db-v1-app
       namespace: default
   - podLogs:
-      selector: application=test-postgres-db
+      selector: cnpg.io/cluster=test-postgres-db-v1
       namespace: default
   - events:
       namespace: default

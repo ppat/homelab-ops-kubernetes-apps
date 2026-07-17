@@ -17,6 +17,24 @@ spec:
         - name: prerequisites_path
           value: ./ci/test/infra-database/pre-requisites
 
+  - name: Reconcile pre-requisites
+    try:
+    - description: Reconcile helmrelease/cert-manager-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cert-manager-release --namespace=cert-manager --timeout=2m
+        timeout: 2m
+    - description: Reconcile helmrelease/external-secrets-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
+        timeout: 2m
+    - description: Reconcile kustomization/minio
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=minio --namespace=flux-system --timeout=3m
+        timeout: 3m
+
   - name: Apply infra-database modules
     try:
     - description: Apply infra-database-core
@@ -35,15 +53,101 @@ spec:
     use:
       template: ./validate-cloudnative-pg.yaml
 
+  - name: Validate plugin-barman-cloud
+    use:
+      template: ./validate-plugin-barman-cloud.yaml
+
   - name: Validate dragonfly-operator
     use:
       template: ./validate-dragonfly-operator.yaml
 
-  - name: Apply test resources
+  # ------------------------------------------------------------------
+  # A basic (plain) postgres cluster stands up with no backup wiring.
+  # ------------------------------------------------------------------
+  - name: Apply basic postgres cluster
     try:
-    - description: Apply test-postgres-db
+    - description: Apply test-postgres-db (no components)
       apply:
-        file: ./test-resources/test-postgres-db.yaml
+        file: ./test-resources/test-postgres-db-bare.yaml
+    catch:
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: test-postgres-db
+        namespace: flux-system
+    - events:
+        namespace: default
+
+  - name: Validate basic postgres cluster
+    use:
+      template: ./validate-test-postgres-db.yaml
+
+  # ------------------------------------------------------------------
+  # Update that same cluster with the db-backups component (barman-cloud
+  # plugin + ObjectStore + ScheduledBackup), then verify it is wired.
+  # ------------------------------------------------------------------
+  - name: Enable backups on postgres cluster
+    try:
+    - description: Apply test-postgres-db (with db-backups component)
+      apply:
+        file: ./test-resources/test-postgres-db-backup-enabled.yaml
+    catch:
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: test-postgres-db
+        namespace: flux-system
+    - events:
+        namespace: default
+
+  - name: Validate backups enabled
+    use:
+      template: ./validate-test-postgres-db-backup.yaml
+
+  # ------------------------------------------------------------------
+  # Trigger an on-demand backup and verify it completes into fake S3.
+  # ------------------------------------------------------------------
+  - name: Trigger on-demand backup
+    try:
+    - description: Apply test-postgres-db-on-demand backup
+      apply:
+        file: ./test-resources/test-postgres-db-on-demand-backup.yaml
+    catch:
+    - events:
+        namespace: default
+
+  - name: Validate on-demand backup completed
+    use:
+      template: ./validate-test-postgres-db-on-demand-backup.yaml
+
+  # ------------------------------------------------------------------
+  # Restore: rotate the same cluster to a new generation (db_suffix_current
+  # v1 -> v2) in the SAME namespace, recovering from the v1 backup via the
+  # db-restore component. Flux prunes the old v1 cluster.
+  # ------------------------------------------------------------------
+  - name: Restore backup into new generation
+    try:
+    - description: Apply test-postgres-db (with db-backups + db-restore components)
+      apply:
+        file: ./test-resources/test-postgres-db-restore.yaml
+    catch:
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: test-postgres-db
+        namespace: flux-system
+    - events:
+        namespace: default
+
+  - name: Validate restored cluster
+    use:
+      template: ./validate-test-postgres-db-restore.yaml
+
+  # ------------------------------------------------------------------
+  # Dragonfly (unchanged).
+  # ------------------------------------------------------------------
+  - name: Apply dragonfly test resources
+    try:
     - description: Apply test-dragonfly-db-creds
       apply:
         file: ./test-resources/test-dragonfly-db-creds.yaml
@@ -53,10 +157,6 @@ spec:
     catch:
     - events:
         namespace: default
-
-  - name: Validate test-postgres-db
-    use:
-      template: ./validate-test-postgres-db.yaml
 
   - name: Validate test-dragonfly-db
     use:
