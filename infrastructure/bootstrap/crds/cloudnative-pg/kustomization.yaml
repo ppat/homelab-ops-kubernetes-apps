@@ -4,11 +4,13 @@ kind: Kustomization
 
 resources:
 # renovate-gh-release-asset: datasource=github-releases depName=cloudnative-pg/cloudnative-pg
-- https://github.com/cloudnative-pg/cloudnative-pg/releases/download/v1.27.0/cnpg-1.27.0.yaml
+- https://github.com/cloudnative-pg/cloudnative-pg/releases/download/v1.30.0/cnpg-1.30.0.yaml
+# renovate-gh-release-asset: datasource=github-releases depName=cloudnative-pg/plugin-barman-cloud
+- https://github.com/cloudnative-pg/plugin-barman-cloud/releases/download/v0.13.0/manifest.yaml
 
 patches:
 ###########################################################
-# allow these CRDs to be adopted by Flux HelmRelease
+# allow the cloudnative-pg CRDs to be adopted by its Flux HelmRelease
 ###########################################################
 # yamllint disable-line rule:indentation
 - patch: |-
@@ -27,3 +29,25 @@ patches:
     group: apiextensions.k8s.io
     version: v1
     kind: CustomResourceDefinition
+    name: .*\.postgresql\.cnpg\.io
+###########################################################
+# allow the barman-cloud plugin CRDs to be adopted by its Flux HelmRelease
+###########################################################
+# yamllint disable-line rule:indentation
+- patch: |-
+    apiVersion: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    metadata:
+      annotations:
+        meta.helm.sh/release-name: plugin-barman-cloud
+        meta.helm.sh/release-namespace: cnpg-system
+      labels:
+        app.kubernetes.io/managed-by: Helm
+        helm.toolkit.fluxcd.io/name: plugin-barman-cloud-release
+        helm.toolkit.fluxcd.io/namespace: flux-system
+      name: irrelevant
+  target:
+    group: apiextensions.k8s.io
+    version: v1
+    kind: CustomResourceDefinition
+    name: .*\.barmancloud\.cnpg\.io

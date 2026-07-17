@@ -1,0 +1,23 @@
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: ${db_name}-backup-store
+  namespace: ${db_namespace}
+spec:
+  retentionPolicy: "30d"
+  configuration:
+    destinationPath: s3://nas-cloudnativepg-backups/${db_name}/
+    endpointURL: https://s3.nas.${dns_zone}
+    s3Credentials:
+      accessKeyId:
+        name: ${db_name}-backup-credentials
+        key: s3_accesskeyid
+      secretAccessKey:
+        name: ${db_name}-backup-credentials
+        key: s3_secretaccesskey
+    data:
+      compression: snappy
+    wal:
+      compression: snappy
+      maxParallel: 8

@@ -1,0 +1,60 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-test-postgres-db-restore
+spec:
+  try:
+  - description: Assert restored cluster.postgresql.cnpg.io/test-postgres-db-v2 is ready
+    assert:
+      bindings:
+      - name: name
+        value: test-postgres-db-v2
+      - name: namespace
+        value: default
+      file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
+      timeout: 5m
+  - description: Assert restored cluster recovered from the backup object store
+    assert:
+      resource:
+        apiVersion: postgresql.cnpg.io/v1
+        kind: Cluster
+        metadata:
+          name: test-postgres-db-v2
+          namespace: default
+        spec:
+          bootstrap:
+            recovery:
+              source: origin
+          externalClusters:
+          - name: origin
+            plugin:
+              name: barman-cloud.cloudnative-pg.io
+              parameters:
+                barmanObjectName: test-postgres-db-backup-store
+                serverName: v1
+  - description: Assert restored -app secret is populated
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: test-postgres-db-v2-app
+          namespace: default
+        data:
+          (length(dbname) > `0`): true
+          (length(host) > `0`): true
+          (length(uri) > `0`): true
+          (length(username) > `0`): true
+          (length(password) > `0`): true
+  catch:
+  - describe:
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      name: test-postgres-db-v2
+      namespace: default
+  - podLogs:
+      selector: cnpg.io/cluster=test-postgres-db-v2
+      namespace: default
+  - events:
+      namespace: default

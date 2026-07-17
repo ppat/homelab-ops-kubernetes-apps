@@ -1,0 +1,4 @@
+---
+buckets:
+- name: nas-cloudnativepg-backups
+  policy: none

@@ -4,6 +4,7 @@ kind: Component
 
 resources:
 - externalsecret-backup-credentials.yaml
+- objectstore.yaml
 - scheduledbackup.yaml
 
 patches:

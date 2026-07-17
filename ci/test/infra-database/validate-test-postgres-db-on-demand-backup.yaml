@@ -1,0 +1,59 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-test-postgres-db-on-demand-backup
+spec:
+  try:
+  - description: Assert backup/test-postgres-db-on-demand completed
+    assert:
+      bindings:
+      - name: name
+        value: test-postgres-db-on-demand
+      - name: namespace
+        value: default
+      file: ../chainsaw/assertions/cnpg-backup-completed.yaml
+      timeout: 5m
+  catch:
+  - describe:
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Backup
+      name: test-postgres-db-on-demand
+      namespace: default
+  - describe:
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      name: test-postgres-db-v1
+      namespace: default
+  - describe:
+      apiVersion: barmancloud.cnpg.io/v1
+      kind: ObjectStore
+      name: test-postgres-db-backup-store
+      namespace: default
+  # WAL-archive / backup errors surface in the barman-cloud sidecar on the INSTANCE
+  # pod, not the operator - so capture both instance containers here.
+  - get:
+      apiVersion: v1
+      kind: Pod
+      namespace: default
+      selector: cnpg.io/cluster=test-postgres-db-v1
+  - podLogs:
+      selector: cnpg.io/cluster=test-postgres-db-v1
+      namespace: default
+      container: plugin-barman-cloud
+      tail: 200
+  - podLogs:
+      selector: cnpg.io/cluster=test-postgres-db-v1
+      namespace: default
+      container: postgres
+      tail: 100
+  - podLogs:
+      selector: app.kubernetes.io/name=plugin-barman-cloud
+      namespace: cnpg-system
+      tail: 100
+  - podLogs:
+      selector: app=minio
+      namespace: minio
+      tail: 50
+  - events:
+      namespace: default

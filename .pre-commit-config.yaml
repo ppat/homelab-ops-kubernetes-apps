@@ -63,7 +63,7 @@ repos:
     - --pkg-include
     - '["apps/*","infrastructure/*"]'
     - --pkg-exclude
-    - '["components/*",".archive/*"]'
+    - '["components/*",".archive/*","infrastructure/bootstrap/crds/*"]'
     - --kubeconform-flags
     - '-skip=Secret,IPAddressPool'
     - --env-file

@@ -4,21 +4,9 @@ kind: Cluster
 metadata:
   name: irrelevant
 spec:
-  backup:
-    barmanObjectStore:
-      data:
-        compression: snappy
-      destinationPath: s3://nas-cloudnativepg-backups/${db_name}/
-      endpointURL: https://s3.nas.${dns_zone}
+  plugins:
+  - name: barman-cloud.cloudnative-pg.io
+    isWALArchiver: true
+    parameters:
+      barmanObjectName: ${db_name}-backup-store
       serverName: ${db_suffix_current:=default}
-      s3Credentials:
-        accessKeyId:
-          name: ${db_name}-backup-credentials
-          key: s3_accesskeyid
-        secretAccessKey:
-          name: ${db_name}-backup-credentials
-          key: s3_secretaccesskey
-      wal:
-        compression: snappy
-        maxParallel: 8
-    retentionPolicy: "30d"

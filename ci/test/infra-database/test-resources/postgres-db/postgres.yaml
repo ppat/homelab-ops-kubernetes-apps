@@ -1,0 +1,18 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: ${db_name:=test-postgres-db}-${db_suffix_current:=default}
+  namespace: ${db_namespace:=default}
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.4
+  storage:
+    size: 1Gi
+    storageClass: standard
+  monitoring:
+    enablePodMonitor: true
+  bootstrap:
+    initdb:
+      database: ${db_bootstrap_database:=test}
+      owner: ${db_bootstrap_owner:=test}

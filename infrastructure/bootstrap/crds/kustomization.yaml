@@ -24,4 +24,4 @@ patches:
     metadata:
       name: irrelevant
   target:
-    kind: "(ConfigMap|ClusterRole|ClusterRoleBinding|DaemonSet|Deployment|MutatingWebhookConfiguration|Namespace|PriorityClass|Role|RoleBinding|Secret|Service|ServiceAccount|ValidatingWebhookConfiguration)"
+    kind: "(Certificate|ConfigMap|ClusterRole|ClusterRoleBinding|DaemonSet|Deployment|Issuer|MutatingWebhookConfiguration|Namespace|PriorityClass|Role|RoleBinding|Secret|Service|ServiceAccount|ValidatingWebhookConfiguration)"

@@ -1,0 +1,52 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: test-postgres-db
+  namespace: flux-system
+spec:
+  interval: 15m0s
+  path: ./ci/test/infra-database/test-resources/postgres-db
+  components:
+  - ../../../../../components/db-backups
+  - ../../../../../components/db-restore
+  postBuild:
+    substitute:
+      db_name: test-postgres-db
+      db_namespace: default
+      db_suffix_current: v2
+      db_suffix_restore: v1
+      db_bootstrap_database: test
+      db_bootstrap_owner: test
+      dns_zone: example.com
+      secret_store: fake
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: test-source
+    namespace: flux-system
+  timeout: 5m0s
+  wait: false
+  patches:
+  # Repoint the ObjectStore endpoint at the in-cluster minio. Two non-obvious traps:
+  #
+  # 1. Target by KIND, not name: Flux applies spec.patches at kustomize-build time,
+  #    BEFORE postBuild.substitute, so the resource is still named ${db_name}-backup-
+  #    store here - a name of "test-postgres-db-backup-store" matches nothing and the
+  #    patch silently no-ops, leaving the production endpoint in place.
+  # 2. No trailing dot on the host: barman-cloud signs with boto3, which folds the
+  #    host into the SigV4 canonical request; a trailing-dot FQDN changes the signed
+  #    Host header so minio rejects every request with SignatureDoesNotMatch
+  #    (aws/aws-cli#9023, botocore#2965).
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      apiVersion: barmancloud.cnpg.io/v1
+      kind: ObjectStore
+      metadata:
+        name: ${db_name}-backup-store
+      spec:
+        configuration:
+          endpointURL: http://minio.minio.svc.cluster.local:9000
+    target:
+      group: barmancloud.cnpg.io
+      kind: ObjectStore

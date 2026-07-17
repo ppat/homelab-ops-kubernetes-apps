@@ -6,6 +6,7 @@ resources:
 - namespace.yaml
 - helm-repository-cloudnative-pg.yaml
 - helm-release-cloudnative-pg.yaml
+- helm-release-plugin-barman-cloud.yaml
 
 commonAnnotations:
   # as this is a critical infrastructure component, prevent pruning unintentionally
