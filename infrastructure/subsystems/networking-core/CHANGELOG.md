@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.11.4...infra-networking-core-v0.11.5) (2026-07-17)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* move chart-owned CRs out of Helm extraObjects into Kustomize ([#3276](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3276)) ([046ec3d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/046ec3d7c2dac27bade57445abac831869b0f1da))
+
 ## [0.11.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.11.3...infra-networking-core-v0.11.4) (2026-07-01)
 
 
