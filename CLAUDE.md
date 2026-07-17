@@ -75,6 +75,14 @@ chainsaw test ./ci/test/<module-dir> --config ./ci/test/chainsaw/.chainsaw.yaml
 
 Test suite layout per module (see `ci/test/apps-ai/` as reference): `pre-requisites/` (namespaces, fake secret stores, PVCs needed before the module can deploy), the module's Flux `Kustomization` manifest, `validate-*.yaml` chainsaw assertions. Shared bootstrap steps and readiness assertions live in `ci/test/chainsaw/` — reuse those (`assertions/*-ready.yaml`) rather than writing new ones.
 
+## Comments in committed manifests
+
+A comment must earn its place by telling a future maintainer something the manifest itself cannot. Committed content is not a scratchpad — keep debugging narration, "what I changed and why it's better now", and diff-state notes (e.g. "unchanged", "was X, now Y") out of it; that belongs in the PR/commit message, not the file.
+
+- **Do comment**: non-obvious behavior and gotchas that cost real effort to discover (e.g. Flux applies `spec.patches` before `postBuild.substitute`; a trailing-dot endpoint breaking SigV4 signing) — especially workarounds a maintainer would otherwise "clean up" and re-break. Cite an issue link when there is one.
+- **Do use** section/grouping headers when they improve readability of a long file, and follow the header style already in that file (match the surrounding convention rather than inventing one).
+- **Don't** restate what the line does (`# set replicas to 3`), narrate the flow already given by a `name:`/`description:` field, or explain a well-established repo pattern — if a pattern needs documenting, it goes in the module `README.md` or `projectBrief.md`, not inline.
+
 ## Commit conventions
 
 Conventional Commits, enforced by commitlint (`commitlint.config.js`):
