@@ -86,6 +86,5 @@ flowchart LR
 ## Notes
 
 - Backups are written to `s3://nas-cloudnativepg-backups/${db_name}/`, scoped per database, under `serverName` `${db_suffix_current}` — so each cluster generation archives to its own server path within the shared bucket.
-- The `ObjectStore` sets `AWS_REQUEST_CHECKSUM_CALCULATION` / `AWS_RESPONSE_CHECKSUM_VALIDATION` to `when_required` on the instance sidecar: the backup target is MinIO, which rejects the request checksums recent boto3 releases send by default (otherwise `barman-cloud-wal-archive` fails with `exit status 4`). See the [plugin object-store docs](https://cloudnative-pg.io/plugin-barman-cloud/docs/object_stores).
 - The `ScheduledBackup` name is suffixed with `${db_suffix_current}` on purpose: in CloudNativePG a `ScheduledBackup`'s `.spec.cluster` is immutable after creation, so rotating a cluster to a new generation must create a new `ScheduledBackup` (and prune the old) rather than mutate the existing one.
 - Pair with [db-restore](../db-restore) to bootstrap a new cluster generation from these backups.

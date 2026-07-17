@@ -72,8 +72,8 @@ spec:
       kind: ObjectStore
       name: test-postgres-db-backup-store
       namespace: default
-  # Instance pod: describe (restart/upgrade events) + BOTH containers' logs. The
-  # barman-cloud sidecar container is where WAL-archive / backup errors surface.
+  # WAL-archive / backup errors surface in the barman-cloud sidecar on the INSTANCE
+  # pod, not the operator - so capture both instance containers here.
   - get:
       apiVersion: v1
       kind: Pod
@@ -89,7 +89,6 @@ spec:
       namespace: default
       container: plugin-barman-cloud
       tail: 200
-  # Operator-side plugin logs: the sidecar-injection lifecycle happens here.
   - podLogs:
       selector: app.kubernetes.io/name=plugin-barman-cloud
       namespace: cnpg-system

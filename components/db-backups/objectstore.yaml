@@ -6,16 +6,6 @@ metadata:
   namespace: ${db_namespace}
 spec:
   retentionPolicy: "30d"
-  # MinIO (and other non-AWS S3 stores) reject the request checksums that recent
-  # boto3 releases send by default, surfacing as "barman-cloud-wal-archive: exit
-  # status 4". Restrict checksums to when the protocol requires them.
-  # https://cloudnative-pg.io/plugin-barman-cloud/docs/object_stores
-  instanceSidecarConfiguration:
-    env:
-    - name: AWS_REQUEST_CHECKSUM_CALCULATION
-      value: when_required
-    - name: AWS_RESPONSE_CHECKSUM_VALIDATION
-      value: when_required
   configuration:
     destinationPath: s3://nas-cloudnativepg-backups/${db_name}/
     endpointURL: https://s3.nas.${dns_zone}

@@ -62,7 +62,7 @@ spec:
       template: ./validate-dragonfly-operator.yaml
 
   # ------------------------------------------------------------------
-  # A basic (plain) postgres cluster stands up with no backup wiring.
+  # Baseline: a plain cluster with no backup component must stand up first.
   # ------------------------------------------------------------------
   - name: Apply basic postgres cluster
     try:
@@ -83,8 +83,8 @@ spec:
       template: ./validate-test-postgres-db.yaml
 
   # ------------------------------------------------------------------
-  # Update that same cluster with the db-backups component (barman-cloud
-  # plugin + ObjectStore + ScheduledBackup), then verify it is wired.
+  # Layer the db-backups component onto the SAME cluster (in-place update,
+  # not a new cluster) to prove backups can be added to a running database.
   # ------------------------------------------------------------------
   - name: Enable backups on postgres cluster
     try:
@@ -104,9 +104,6 @@ spec:
     use:
       template: ./validate-test-postgres-db-backup.yaml
 
-  # ------------------------------------------------------------------
-  # Trigger an on-demand backup and verify it completes into fake S3.
-  # ------------------------------------------------------------------
   - name: Trigger on-demand backup
     try:
     - description: Apply test-postgres-db-on-demand backup
@@ -121,9 +118,8 @@ spec:
       template: ./validate-test-postgres-db-on-demand-backup.yaml
 
   # ------------------------------------------------------------------
-  # Restore: rotate the same cluster to a new generation (db_suffix_current
-  # v1 -> v2) in the SAME namespace, recovering from the v1 backup via the
-  # db-restore component. Flux prunes the old v1 cluster.
+  # Restore = same-namespace generation rotation (v1 -> v2): the new cluster
+  # recovers from v1's backup while Flux prunes the old v1 cluster.
   # ------------------------------------------------------------------
   - name: Restore backup into new generation
     try:
@@ -143,9 +139,6 @@ spec:
     use:
       template: ./validate-test-postgres-db-restore.yaml
 
-  # ------------------------------------------------------------------
-  # Dragonfly (unchanged).
-  # ------------------------------------------------------------------
   - name: Apply dragonfly test resources
     try:
     - description: Apply test-dragonfly-db-creds
