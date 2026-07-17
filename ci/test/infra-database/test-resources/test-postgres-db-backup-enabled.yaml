@@ -26,19 +26,24 @@ spec:
   timeout: 5m0s
   wait: false
   patches:
-  # point the ObjectStore at the in-cluster minio (fake S3) over plain http
+  # Point the ObjectStore at the in-cluster minio (fake S3) over plain http.
+  #
+  # Target by KIND ONLY - not by name. Flux applies spec.patches at kustomize-build
+  # time, BEFORE postBuild.substitute runs, so at patch time the ObjectStore is still
+  # literally named "${db_name}-backup-store" (substitution to
+  # "test-postgres-db-backup-store" happens afterwards). A name-matched target would
+  # silently no-op, leaving the production endpointURL (s3.nas.${dns_zone}) in place.
+  # There is exactly one ObjectStore in this build, so a kind-only target is
+  # unambiguous. The body name is the pre-substitution literal for self-consistency.
   # yamllint disable-line rule:indentation
   - patch: |-
       apiVersion: barmancloud.cnpg.io/v1
       kind: ObjectStore
       metadata:
-        name: test-postgres-db-backup-store
-        namespace: default
+        name: ${db_name}-backup-store
       spec:
         configuration:
           endpointURL: http://minio.minio.svc.cluster.local.:9000
     target:
       group: barmancloud.cnpg.io
       kind: ObjectStore
-      name: test-postgres-db-backup-store
-      namespace: default
