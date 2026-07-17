@@ -6,6 +6,7 @@ resources:
 - namespace.yaml
 - helm-repository-prometheus-community.yaml
 - helm-repository-grafana.yaml
+- helm-repository-grafana-community.yaml
 - kube-prometheus-stack/
 - k3s-monitoring/
 - loki/

@@ -12,9 +12,9 @@ spec:
       reconcileStrategy: ChartVersion
       sourceRef:
         kind: HelmRepository
-        name: grafana-repository
+        name: grafana-community-repository
         namespace: flux-system
-      version: 10.5.1
+      version: 12.7.2
   install:
     createNamespace: false
     remediation:
