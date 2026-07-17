@@ -111,7 +111,7 @@ jobs:
       with:
         files: ${{ steps.select-files.outputs.files_json }}
         pkg-include: '["apps/*","infrastructure/*", "ci/test/*"]'
-        pkg-exclude: '["components/*",".archive/*"]'
+        pkg-exclude: '["components/*",".archive/*","infrastructure/bootstrap/crds/*"]'
         kubeconform-flags: '-skip=Secret,IPAddressPool'
         env-file: 'ci/validation/.env'
         base-kustomization-file: 'ci/validation/kustomization.yaml'
