@@ -41,6 +41,10 @@ spec:
     openaiApiKeyExistingSecret: openwebui-secrets
     openaiApiKeyExistingSecretKey: apikey_openrouter_openwebui
 
+    extraEnvVars:
+    - name: ENABLE_SIGNUP
+      value: "false"
+
     service:
       appProtocol: kubernetes.io/ws
 
