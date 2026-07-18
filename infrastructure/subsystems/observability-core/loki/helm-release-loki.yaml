@@ -111,6 +111,14 @@ spec:
 
     ######################################################################################################################
     # Deployment mode: Monolithic (HA, 3 replicas)
+    #
+    # This is the "HA monolithic" pattern from grafana.com's deployment-modes docs, but without
+    # the horizontal_scaling_mode/thanos-objstore config those docs describe for large-scale HA -
+    # that machinery is only for an optional feature (distributing deletion-filter chunk
+    # processing to dedicated workers), not a requirement for basic multi-replica correctness.
+    # The compactor already self-elects a single active leader via its own ring (backed by
+    # memberlist, wired in by the chart unconditionally) - the same mechanism that already
+    # coordinated our prior 3-replica SimpleScalable `backend` target safely.
     ######################################################################################################################
     deploymentMode: Monolithic
     singleBinary:
