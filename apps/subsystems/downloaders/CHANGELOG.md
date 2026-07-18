@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.5.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.5.1...apps-downloaders-v0.5.2) (2026-07-17)
+
+
+### ✨ Features
+
+* **apps-downloaders:** update ghcr.io/autobrr/autobrr (v1.81.0 -&gt; v1.82.1) ([#3309](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3309)) ([5aa46ba](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5aa46ba0951fefb06f335cdfdba2671d9b74991d))
+* **apps-downloaders:** update ghcr.io/autobrr/qui (v1.22.0 -&gt; v1.23.0) ([#3310](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3310)) ([d19972f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d19972f56b0390a8624ae135dd71a0d348e159b2))
+* **apps-downloaders:** update ghcr.io/linuxserver/bazarr (1.5.6 -&gt; 1.6.0) ([#3311](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3311)) ([6279713](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/627971378cac8ab54c01a11873aea342b31d592c))
+* **apps-downloaders:** update ghcr.io/linuxserver/radarr (6.2.1 -&gt; 6.3.0) ([#3312](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3312)) ([13f1a92](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/13f1a92f0662560710c5b7a44c380d953fd2e809))
+* **apps-downloaders:** update ghcr.io/recyclarr/recyclarr (8.4.0 -&gt; 8.7.0) ([#3313](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3313)) ([94a61cf](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/94a61cff24a52edb9a73c4f33a8f898055d3ade6))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-downloaders:** update ghcr.io/home-operations/qbittorrent (5.2.2 -&gt; 5.2.3) ([#3307](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3307)) ([fb87a08](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fb87a08e26a33c4175094d6bf19a186f9adbcb66))
+
+## [0.5.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.5.0...apps-downloaders-v0.5.1) (2026-07-17)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-downloaders:** update digest ghcr.io/linuxserver/lidarr (ba7d43f -&gt; 1caffbd) ([#3264](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3264)) ([23f545d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/23f545dd3cd3bcfbd416aada5eac78b0e156baf6))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/prowlarr (3e9bd62 -&gt; 4fd7a16) ([#3265](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3265)) ([fad9728](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fad9728001d85d9bce819eeba7c24704b02a7f8d))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/radarr (39da107 -&gt; 549c4a0) ([#3266](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3266)) ([a619f8f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a619f8fcd4fe6fdd0e34ca679abd8e2dd24dc48f))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sabnzbd (30cc2eb -&gt; b67039e) ([#3267](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3267)) ([840e7d7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/840e7d76d8baf805d6aeb2e9aebcb4748cfb1a65))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sabnzbd (3df6abb -&gt; 30cc2eb) ([#3231](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3231)) ([bafe120](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/bafe120f905d56237da1d9d5be5463573674cf6f))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sonarr (633e0e6 -&gt; 4b02535) ([#3268](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3268)) ([01bb6ee](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/01bb6ee96974a4c8c5e9fcd406d75ee7ea6a0fcb))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sonarr (fbb15bb -&gt; 633e0e6) ([#3244](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3244)) ([e228cd0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e228cd0d1036af8f81df8fd6c62e50ad8a53a322))
+
 ## [0.5.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.4.0...apps-downloaders-v0.5.0) (2026-07-01)
 
 
