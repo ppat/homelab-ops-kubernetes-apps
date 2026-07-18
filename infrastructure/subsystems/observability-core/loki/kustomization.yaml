@@ -5,14 +5,3 @@ kind: Kustomization
 resources:
 - helm-release-loki.yaml
 - secrets.yaml
-
-# Generate configMap with configuration for deployment modes
-configMapGenerator:
-- name: loki-deployment-mode-config
-  namespace: logging
-  files:
-  - conf.d/mode-simple-scalable.yaml
-  - conf.d/mode-single-binary.yaml
-
-configurations:
-- name-reference.yaml

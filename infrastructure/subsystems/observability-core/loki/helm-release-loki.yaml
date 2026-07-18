@@ -12,9 +12,9 @@ spec:
       reconcileStrategy: ChartVersion
       sourceRef:
         kind: HelmRepository
-        name: grafana-repository
+        name: grafana-community-repository
         namespace: flux-system
-      version: 7.0.0
+      version: 18.5.1
   install:
     createNamespace: false
     remediation:
@@ -31,10 +31,6 @@ spec:
       strategy: rollback
 
   valuesFrom:
-  - kind: ConfigMap
-    name: loki-deployment-mode-config
-    valuesKey: mode-${loki_deployment_mode}.yaml
-    optional: false
   - kind: Secret
     name: loki-s3-credentials
     valuesKey: loki_s3_endpoint
@@ -114,6 +110,25 @@ spec:
                 addresses: dnssrvnoa+_memcached-client._tcp.loki-results-cache.logging.svc.cluster.local
 
     ######################################################################################################################
+    # Deployment mode: Monolithic (HA, 3 replicas)
+    ######################################################################################################################
+    deploymentMode: Monolithic
+    singleBinary:
+      replicas: 3
+      persistence:
+        size: ${loki_singlebinary_storage_size}
+        storageClass: ${loki_storage_class}
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+    write:
+      replicas: 0
+    read:
+      replicas: 0
+    backend:
+      replicas: 0
+
+    ######################################################################################################################
     # Canary
     ######################################################################################################################
     lokiCanary:
@@ -143,15 +158,13 @@ spec:
     ######################################################################################################################
     resultsCache:
       enabled: true
-      # see: https://fluxcd.io/flux/components/kustomize/kustomizations/#post-build-substitution-of-numbers-and-booleans
-      allocatedMemory: ${quote}${loki_results_cache_memory}${quote}
+      allocatedMemory: ${loki_results_cache_memory}
       tolerations:
       - key: node-role.kubernetes.io/control-plane
         operator: Exists
     chunksCache:
       enabled: true
-      # see: https://fluxcd.io/flux/components/kustomize/kustomizations/#post-build-substitution-of-numbers-and-booleans
-      allocatedMemory: ${quote}${loki_chunks_cache_memory}${quote}
+      allocatedMemory: ${loki_chunks_cache_memory}
       tolerations:
       - key: node-role.kubernetes.io/control-plane
         operator: Exists
@@ -177,15 +190,10 @@ spec:
           grafana_dashboard: "1"
       rules:
         enabled: true
-        alerting: true
+      alerts:
+        enabled: true
       serviceMonitor:
         enabled: true
-        metricsInstance:
-          enabled: false
-      selfMonitoring:
-        enabled: false
-        grafanaAgent:
-          installOperator: false
     ######################################################################################################################
     sidecar:
       resources: {}

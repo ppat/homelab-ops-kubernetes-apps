@@ -20,11 +20,7 @@ spec:
       prometheus_storage_class: standard
       prometheus_storage_size: 1Gi
       prometheus_volume_name: deleted-by-kustomize-patch
-      loki_deployment_mode: simple-scalable
       loki_storage_class: standard
-      loki_read_storage_size: 1Gi
-      loki_write_storage_size: 1Gi
-      loki_backend_storage_size: 1Gi
       loki_singlebinary_storage_size: 1Gi
       loki_results_cache_memory: "512"
       loki_chunks_cache_memory: "512"

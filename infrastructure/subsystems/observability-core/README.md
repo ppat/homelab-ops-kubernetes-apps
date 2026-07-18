@@ -159,7 +159,6 @@ flowchart TB
    | alertmanager_retention_period | Alert retention time | AlertManager |
    | alertmanager_storage_class | Storage class for alerts | AlertManager |
    | alertmanager_storage_size | PVC size for alerts | AlertManager |
-   | loki_deployment_mode | Deployment mode (simple-scalable/single-binary) | Loki |
    | loki_retention_size | Default log retention period | Loki |
    | loki_results_cache_memory | Results cache size | Loki |
    | loki_chunks_cache_memory | Chunks cache size | Loki |
