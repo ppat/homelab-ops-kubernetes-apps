@@ -35,15 +35,11 @@ spec:
     pipelines:
       enabled: false
 
-    extraEnvVars:
-    - name: OPENAI_API_KEY
-      valueFrom:
-        secretKeyRef:
-          name: openwebui-secrets
-          key: apikey_openrouter_openwebui
     ollamaUrls:
     - http://ollama.ai.svc.cluster.local:11434
     openaiBaseApiUrl: https://openrouter.ai/api/v1
+    openaiApiKeyExistingSecret: openwebui-secrets
+    openaiApiKeyExistingSecretKey: apikey_openrouter_openwebui
 
     service:
       appProtocol: kubernetes.io/ws
