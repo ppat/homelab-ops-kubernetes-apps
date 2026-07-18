@@ -1,45 +1,20 @@
 ---
 - op: add
-  path: /spec/values/extraEnvVars/-
+  path: /spec/values/sso
   value:
-    name: ENABLE_OAUTH_SIGNUP
-    value: "true"
-- op: add
-  path: /spec/values/extraEnvVars/-
-  value:
-    name: OAUTH_CLIENT_ID
-    valueFrom:
-      secretKeyRef:
-        name: openwebui-sso-credentials
-        key: oidc_openwebui_clientid
-- op: add
-  path: /spec/values/extraEnvVars/-
-  value:
-    name: OAUTH_CLIENT_SECRET
-    valueFrom:
-      secretKeyRef:
-        name: openwebui-sso-credentials
-        key: oidc_openwebui_clientsecret
-- op: add
-  path: /spec/values/extraEnvVars/-
-  value:
-    name: OAUTH_MERGE_ACCOUNTS_BY_EMAIL
-    value: "true"
-- op: add
-  path: /spec/values/extraEnvVars/-
-  value:
-    name: OAUTH_PROVIDER_NAME
-    value: "Authentik"
-- op: add
-  path: /spec/values/extraEnvVars/-
-  value:
-    name: OAUTH_SCOPES
-    value: "openid email profile"
-- op: add
-  path: /spec/values/extraEnvVars/-
-  value:
-    name: OPENID_PROVIDER_URL
-    value: "https://auth.homelab.${dns_zone}/application/o/openwebui/.well-known/openid-configuration"
+    enabled: true
+    enableSignup: true
+    mergeAccountsByEmail: true
+    enableRoleManagement: false
+    enableGroupManagement: false
+    oidc:
+      enabled: true
+      clientExistingSecret: openwebui-sso-credentials
+      clientIdExistingSecretKey: oidc_openwebui_clientid
+      clientExistingSecretKey: oidc_openwebui_clientsecret
+      providerUrl: "https://auth.homelab.${dns_zone}/application/o/openwebui/.well-known/openid-configuration"
+      providerName: "Authentik"
+      scopes: "openid email profile"
 - op: add
   path: /spec/values/extraEnvVars/-
   value:
