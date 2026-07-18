@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.6.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.5.1...infra-bootstrap-crds-v0.6.0) (2026-07-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-database-core:** migrate CNPG backups to barman-cloud plugin ([#3290](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3290))
+* **infra-crds:** update longhorn/longhorn (v1.11.2 -> v1.12.0) ([#3232](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3232))
+
+### ✨ Features
+
+* **infra-bootstrap-crds:** update external-secrets/external-secrets (v2.6.0 -&gt; v2.7.0) ([#3241](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3241)) ([e214a0b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e214a0b4783f901835ffe6b7bf8b298592ff14d9))
+* **infra-crds:** update longhorn/longhorn (v1.11.2 -&gt; v1.12.0) ([#3232](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3232)) ([fe2ed49](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fe2ed490c7e4f063efc773dd3fb1302931b97560))
+* **infra-database-core:** migrate CNPG backups to barman-cloud plugin ([#3290](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3290)) ([e78160e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e78160e71b387b4e817906f5b052569611f7a540))
+
 ## [0.5.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.5.0...infra-bootstrap-crds-v0.5.1) (2026-07-01)
 
 

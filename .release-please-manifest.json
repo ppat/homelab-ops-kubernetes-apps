@@ -7,7 +7,7 @@
   "apps/subsystems/home-automation": "0.3.11",
   "apps/subsystems/media": "0.0.42",
   "apps/subsystems/misc": "0.0.9",
-  "infrastructure/bootstrap/crds": "0.5.1",
+  "infrastructure/bootstrap/crds": "0.6.0",
   "infrastructure/subsystems/clusterops-core": "0.3.0",
   "infrastructure/subsystems/database-core": "0.1.1",
   "infrastructure/subsystems/kubernetes-core": "0.0.21",
@@ -15,7 +15,7 @@
   "infrastructure/subsystems/networking-core": "0.11.5",
   "infrastructure/subsystems/networking-extra": "0.3.11",
   "infrastructure/subsystems/observability-core": "0.22.2",
-  "infrastructure/subsystems/observability-extra": "0.2.0",
+  "infrastructure/subsystems/observability-extra": "0.3.0",
   "infrastructure/subsystems/security-core": "0.2.8",
   "infrastructure/subsystems/security-extra": "0.2.14",
   "infrastructure/subsystems/storage-core": "0.2.3"
