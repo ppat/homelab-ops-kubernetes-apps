@@ -50,8 +50,6 @@ spec:
       passwordKey: password
     serviceMonitor:
       enabled: true
-      labels:
-        release: kube-prometheus-stack
       relabelings:
       - sourceLabels:
         - __address__
