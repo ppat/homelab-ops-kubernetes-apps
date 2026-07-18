@@ -30,9 +30,6 @@ spec:
       retries: 3
       strategy: rollback
   values:
-    extraEnv:
-    - name: OLLAMA_HOST
-      value: "0.0.0.0:11434"
     ingress:
       enabled: true
       annotations:
