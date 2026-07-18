@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.24.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.23.0...infra-observability-core-v0.24.0) (2026-07-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-observability-core:** update loki (chart 7.0.0 -> 18.5.1) and switch to monolithic deployment mode ([#3326](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3326))
+
+### ✨ Features
+
+* **infra-observability-core:** update loki (chart 7.0.0 -&gt; 18.5.1) and switch to monolithic deployment mode ([#3326](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3326)) ([dadcd98](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/dadcd98bb0c019610f8e4d7d22a652cc029136ee)), closes [#3323](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3323)
+
 ## [0.23.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.22.2...infra-observability-core-v0.23.0) (2026-07-18)
 
 
