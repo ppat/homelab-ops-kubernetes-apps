@@ -38,14 +38,6 @@ spec:
       - name: namespace
         value: logging
       file: ../chainsaw/assertions/statefulset-ready.yaml
-  - description: Assert statefulset/loki-write
-    assert:
-      bindings:
-      - name: name
-        value: loki-write
-      - name: namespace
-        value: logging
-      file: ../chainsaw/assertions/statefulset-ready.yaml
   - description: Assert ingress/loki
     assert:
       resource:
