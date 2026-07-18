@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.0...apps-ai-v0.6.1) (2026-07-18)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** fix sso/oidc configuration component for openwebui ([#3335](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3335)) ([3242e4d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3242e4dfd6bbf65faeccfe6ada9103752022369c))
+
 ## [0.6.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.5.0...apps-ai-v0.6.0) (2026-07-18)
 
 
