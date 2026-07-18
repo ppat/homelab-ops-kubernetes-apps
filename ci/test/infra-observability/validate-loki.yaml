@@ -13,23 +13,15 @@ spec:
       - name: namespace
         value: logging
       file: ../chainsaw/assertions/externalsecret-ready.yaml
-  - description: Assert deployment/loki-read
+  - description: Assert statefulset/loki
     assert:
       bindings:
       - name: name
-        value: loki-read
-      - name: namespace
-        value: logging
-      file: ../chainsaw/assertions/deployment-ready.yaml
-      timeout: 2m
-  - description: Assert statefulset/loki-backend
-    assert:
-      bindings:
-      - name: name
-        value: loki-backend
+        value: loki
       - name: namespace
         value: logging
       file: ../chainsaw/assertions/statefulset-ready.yaml
+      timeout: 2m
   - description: Assert statefulset/loki-chunks-cache
     assert:
       bindings:
@@ -43,14 +35,6 @@ spec:
       bindings:
       - name: name
         value: loki-results-cache
-      - name: namespace
-        value: logging
-      file: ../chainsaw/assertions/statefulset-ready.yaml
-  - description: Assert statefulset/loki-write
-    assert:
-      bindings:
-      - name: name
-        value: loki-write
       - name: namespace
         value: logging
       file: ../chainsaw/assertions/statefulset-ready.yaml
@@ -79,13 +63,8 @@ spec:
       namespace: logging
   - describe:
       apiVersion: apps/v1
-      kind: Deployment
-      name: loki-read
-      namespace: logging
-  - describe:
-      apiVersion: apps/v1
       kind: StatefulSet
-      name: loki-backend
+      name: loki
       namespace: logging
   - describe:
       apiVersion: apps/v1
@@ -96,11 +75,6 @@ spec:
       apiVersion: apps/v1
       kind: StatefulSet
       name: loki-results-cache
-      namespace: logging
-  - describe:
-      apiVersion: apps/v1
-      kind: StatefulSet
-      name: loki-write
       namespace: logging
   - describe:
       apiVersion: networking.k8s.io/v1
