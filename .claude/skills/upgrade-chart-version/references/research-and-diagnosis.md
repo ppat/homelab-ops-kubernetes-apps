@@ -52,6 +52,25 @@ chart-level values/schema difference at all, or the chart's own docs lag behind
 the app's — in those cases, go read the app's own release notes directly rather
 than assuming the chart's notes are a complete proxy.
 
+## Historical CI runs are not research material
+
+Don't inspect this repo's past GitHub Actions run history — an open Renovate
+PR's failed checks, a previous manual attempt's log, unrelated branches' CI
+state — as part of scoping this upgrade or deciding what to research. None of
+that is signal about what actually changed in the chart/app between versions;
+at best it tells you *something* about one attempt failed, which isn't the
+same question as *why*, and reading it costs real context for no research
+value. Decide the target version and scope from the sources this file already
+names (release notes, `values.yaml`, `Chart.yaml`, the CRD spec) — not from
+what a bot's PR happened to propose or how its CI happened to go.
+
+The one place a past or concurrent run's pass/fail state is legitimate
+evidence is later and narrower: diagnosing a failure in *your own* current
+run. See `diagnostic-approach.md`'s "Recognizing a pre-existing or unrelated
+CI failure" — and even there, it's something the subagent watching your own
+run checks to rule in/out an environmental cause, not something to go digging
+into speculatively before you have a failure to diagnose.
+
 ## Getting release notes
 
 `gh release view <tag> --repo <org>/<repo>` (or `gh api
