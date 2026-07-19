@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.11...infra-networking-extra-v0.3.12) (2026-07-19)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update tailscale-operator (1.98.4 -&gt; 1.98.9) ([#3338](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3338)) ([db9ffa0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/db9ffa002533acfc81166de1c255fc9fa3bc1a86))
+
 ## [0.3.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.10...infra-networking-extra-v0.3.11) (2026-07-01)
 
 
