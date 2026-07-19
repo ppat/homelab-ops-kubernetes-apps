@@ -87,8 +87,9 @@ A comment must earn its place by telling a future maintainer something the manif
 
 Conventional Commits, enforced by commitlint (`commitlint.config.js`):
 
-- header max 120 chars; scope must be one of the enums in `commitlint.config.js` (`apps-*`, `infra-*`, `component-*`, or `renovate`/`release`/`github-actions`/`kubernetes-api`/`dev-tools`)
+- header max 120 chars; scope must be one of the enums in `commitlint.config.js` (`apps-*`, `infra-*`, `component-*`, or `renovate`/`release`/`github-actions`/`kubernetes-api`/`dev-tools`/`claude`)
 - scope generally matches the module directory name, e.g. a change under `apps/subsystems/ai/` uses scope `apps-ai`
+- use scope `claude` for changes under `.claude/` (skills, agents, settings) — use `dev-tools` for other repo/CI tooling config
 
 ## Releases
 

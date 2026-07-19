@@ -34,6 +34,7 @@ module.exports = {
     'scope-enum': [2, 'always',
       [
         '',
+        'claude',
         'dev-tools',
         'github-actions',
         'kubernetes-api',
