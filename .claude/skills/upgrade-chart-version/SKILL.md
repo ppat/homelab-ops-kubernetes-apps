@@ -1,48 +1,41 @@
 ---
 name: upgrade-chart-version
 description: >
-  Use this skill when a Helm chart/app upgrade in this repo needs a human-designed
-  fix, not just a version bump — Renovate already tried and it broke (a renovate PR
-  is red, a chart/CRD major bump failed CI, values got restructured upstream, a new
-  CRD or a new required dependency appeared, or a deprecated feature is being
-  removed). Covers finding what actually changed between two chart/app versions,
-  locating every place this repo configures the module (HelmRelease
-  values/valuesFrom/postRenderers, Kustomization patches/postBuild substitutions),
-  checking CRD schema changes for downstream CR breakage, reworking the module's
-  chainsaw test suite, and scoping (but not making) the production rollout in the
-  sibling clusters repo. Do NOT use this for a bump that would just work with
-  Renovate — this skill is specifically for the upgrades that don't.
+  Use this skill when a Helm chart/app upgrade in this repo needs a
+  human-designed fix, not just a version bump — Renovate's own bump already
+  failed, or the bump is one you already know needs judgment (a major version,
+  a chart/CRD with a track record of breaking changes, a deprecated feature
+  being removed, a new required dependency). Runs a fixed, ordered research →
+  plan → implement → verify → rollout-scoping procedure, delegating research
+  and CI-log analysis to subagents. Do NOT use this for a bump that would just
+  work with Renovate — this skill is specifically for the ones that don't.
 ---
 
 # Upgrading a chart/app version by hand
 
-> **STATUS: DRAFT.** This skill was written from a single worked example (the CNPG
-> operator + barman-cloud backup migration, PR #3290 / branch `fix-test-dbs`) and
-> has not yet been run against a second, independent upgrade. See **Iteration
-> protocol** at the bottom before treating anything here as settled.
+## Required Procedure — Execute Every Step, In Order
 
-Read [`README.md`](../../../README.md) and [`projectBrief.md`](../../../projectBrief.md)
-first for the module catalog, the three configuration mechanisms, and the
-core/extra dependency rules — this skill assumes that context and does not repeat
-it. The module's own `README.md` (`infrastructure/subsystems/<module>/README.md` or
-`apps/subsystems/<module>/README.md`) has its specific Dependencies section
-(Required By / Depends On) — read that too before touching it.
+Before anything else: read [`README.md`](../../../README.md) and
+[`projectBrief.md`](../../../projectBrief.md) for the module catalog, the three
+configuration mechanisms, and the core/extra dependency rules, plus the target
+module's own `README.md` (`infrastructure/subsystems/<module>/README.md` or
+`apps/subsystems/<module>/README.md`) for its Dependencies section (Required By
+/ Depends On) — quick, local, cheap, do these reads directly.
 
-## Why this is a skill and not "just bump the version"
+Then, before any other file read, grep, or subagent spawn: call `TaskCreate`
+once per step below (9 tasks, in order), copying that step's delegation
+requirement into the task's *description*, not just its title. Work through
+them via `TaskUpdate` — `in_progress` before starting a step, `completed`
+before moving to the next.
 
-This skill only gets invoked once it's already established that Renovate's own
-bump won't just work — either it already failed, or the bump is one you already
-know needs judgment (a major version, a chart with a track record of breaking
-changes). Take it as given and go straight to finding *why* it needs help: a
-values key moved, a CRD's schema changed in a way that breaks an existing CR,
-the chart now needs a resource this repo doesn't have yet (a database, a cert-manager
-Issuer, a new HelmRepository), or the app deprecated/removed something this repo's
-manifests still use. Finding *which* of those it is — and finding all of it, not
-just the first symptom CI shows you — is the actual work. Guessing costs the same
-repeated-failed-CI-round-trip cycle this skill exists to avoid; reading structurally
-is what actually shortens it.
-
-## The shape of the work
+This isn't ceremony. The steps below are a specification of who does what, not
+a script your next tool call automatically follows — and a request like
+"upgrade X to latest" pattern-matches straight to "go inspect X's files,"
+which is exactly the shortcut that skips step 1's mandatory delegation. Once
+the steps are tracked tasks, "which step am I on, and does it require
+delegation" becomes a fact you can check against tool state — not something
+reconstructed from scrollback, which gets unreliable fast once background
+research agents start reporting back interleaved with your own tool calls.
 
 1. Research our usage and configuration of the helm chart in question
    - Who:
@@ -180,7 +173,7 @@ is what actually shortens it.
      - When a test run fails, do not fix within the subagent itself — subagents should review ci
        run logs, derive insights and perform root cause identification and hand off the
        resulting findings to main loop
-9. Record the clusters-repo rollout as a github issue
+9. Record the clusters-repo rollout as a github issue — only if needed
    - Who:
      - main loop
    - What:
@@ -188,9 +181,30 @@ is what actually shortens it.
    - Where:
      - clusters repo (`../homelab-ops-kubernetes-clusters`)
    - How:
-     - Create a github issue (under clusters repo) that captures in detail what needs to happen
-       within the clusters repo, as well as a short but descriptive summary of what was
-       implemented in apps repo.
+     - Gate this on step 6's plan: does the clusters repo need anything beyond
+       the version bump itself — a patch targeting a value path the upgrade
+       changed, a new required substitution variable, a new dependency, a new
+       secret/resource? If nothing in the plan required a clusters-repo
+       change, Renovate's own routine bump PR will pick up the new released
+       tag with no manual step — say so explicitly and skip filing an issue.
+     - Only when the plan did identify something Renovate's routine bump
+       can't do alone, create a github issue (under clusters repo) that
+       captures in detail what needs to happen within the clusters repo, plus
+       a short but descriptive summary of what was implemented in this repo.
+
+## Why this is a skill and not "just bump the version"
+
+This skill only gets invoked once it's already established that Renovate's own
+bump won't just work — either it already failed, or the bump is one you already
+know needs judgment (a major version, a chart with a track record of breaking
+changes). Take it as given and go straight to finding *why* it needs help: a
+values key moved, a CRD's schema changed in a way that breaks an existing CR,
+the chart now needs a resource this repo doesn't have yet (a database, a cert-manager
+Issuer, a new HelmRepository), or the app deprecated/removed something this repo's
+manifests still use. Finding *which* of those it is — and finding all of it, not
+just the first symptom CI shows you — is the actual work. Guessing costs the same
+repeated-failed-CI-round-trip cycle this skill exists to avoid; reading structurally
+is what actually shortens it.
 
 ## Delegating to subagents — two distinct reasons, don't conflate them
 
@@ -237,6 +251,14 @@ task at hand.
 | `references/cost-tradeoffs.md` | When upfront token spend (deeper research, local repro, an instrumented diagnostic commit) lowers total session cost, grounded in how prompt caching and CI round-trip cost actually work |
 
 ## Iteration protocol
+
+> **STATUS: DRAFT.** This skill has gone through three worked examples so far —
+> Loki (the upgrade that produced the first draft), Bitwarden (first fresh-session
+> run, learnings folded back in), and Traefik (the first run that executed the
+> procedure cleanly end-to-end, aside from one same-session ordering correction
+> that produced the "Required Procedure" section above). Drop this status line
+> once two or three more independent upgrades go through it without needing a
+> same-session correction.
 
 This skill is being deliberately iterated **across sessions**, not within one —
 each upgrade is its own large context window, and folding "run the skill" and
@@ -316,3 +338,13 @@ Before folding a learning in, check it against these:
   do — check before generalizing, the same way this file avoids being
   prescriptive about tag naming precisely because different chart repos use
   different schemes.
+
+## Before you touch anything
+
+If you haven't called `TaskCreate` for all 9 steps in
+[Required Procedure](#required-procedure--execute-every-step-in-order), stop
+and do that now — before another file read, grep, or subagent spawn. This is
+the one failure mode that has actually derailed a run of this skill. Everything
+else here is recoverable mid-session; skipping the task list at the start
+isn't, because by the time it's noticed, research has already happened in the
+main loop instead of a subagent, and has to be thrown away and redone.
