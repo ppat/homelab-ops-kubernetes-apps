@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: traefik-repository
         namespace: flux-system
-      version: 40.3.0
+      version: 41.0.2
   dependsOn:
   - name: metallb-release
     namespace: metallb-system
@@ -34,9 +34,8 @@ spec:
       retries: 3
       strategy: rollback
   values:
-    logs:
-      general:
-        level: ${traefik_log_level:=INFO}
+    log:
+      level: ${traefik_log_level:=INFO}
 
     deployment:
       kind: DaemonSet
