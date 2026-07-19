@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-bitwarden-v0.0.23...apps-bitwarden-v0.1.0) (2026-07-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* **apps-bitwarden:** self-host chart v2.0.0 removed the deprecated database.image.name field in favor of database.image.repository; renamed accordingly. Verified via rendered-manifest diff against this module's actual values that no other config surface (ingress, postRenderers, secrets, PVC claim names) is affected by the 1.x -> 2.x chart change.
+
+### ✨ Features
+
+* **apps-bitwarden:** update self-host (1.1.12 -&gt; 2.1.0) ([#3340](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3340)) ([6e30e29](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6e30e292f634ee2756753f8a17f6e3341fbad66f))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-bitwarden:** update self-host (1.1.11 -&gt; 1.1.12) ([#3055](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3055)) ([279b74d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/279b74dc97018785053430c134f0975547824bbb))
+* **apps-bitwarden:** update self-host (1.1.8 -&gt; 1.1.11) ([#2910](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/2910)) ([83c30eb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/83c30ebcb6bbef20eeba3283f26e150da1ae218f))
+
 ## [0.0.23](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-bitwarden-v0.0.22...apps-bitwarden-v0.0.23) (2026-05-08)
 
 
