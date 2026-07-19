@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: bitwarden-repository
         namespace: flux-system
-      version: 1.1.12
+      version: 2.1.0
   install:
     createNamespace: false
     remediation:
@@ -54,7 +54,7 @@ spec:
     database:
       enabled: true
       image:
-        name: mcr.microsoft.com/mssql/server
+        repository: mcr.microsoft.com/mssql/server
         # renovate: datasource=docker depName=mcr.microsoft.com/mssql/server versioning=loose
         tag: "2022-CU16-ubuntu-22.04"
       volume:
