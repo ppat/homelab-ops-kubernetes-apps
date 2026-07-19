@@ -33,110 +33,199 @@ it. The module's own `README.md` (`infrastructure/subsystems/<module>/README.md`
 This skill only gets invoked once it's already established that Renovate's own
 bump won't just work — either it already failed, or the bump is one you already
 know needs judgment (a major version, a chart with a track record of breaking
-changes). Don't spend a step re-confirming that; take it as given and go straight
-to finding *why* it needs help: a values key moved, a CRD's schema changed in a
-way that breaks an existing CR, the chart now needs a resource this repo doesn't
-have yet (a database, a cert-manager Issuer, a new HelmRepository), or the app
-deprecated/removed something this repo's manifests still use. Finding *which* of
-those it is — and finding all of it, not just the first symptom CI shows you — is
-the actual work. Guessing costs the same repeated-failed-CI-round-trip cycle this
-skill exists to avoid; reading structurally is what actually shortens it.
+changes). Take it as given and go straight to finding *why* it needs help: a
+values key moved, a CRD's schema changed in a way that breaks an existing CR,
+the chart now needs a resource this repo doesn't have yet (a database, a cert-manager
+Issuer, a new HelmRepository), or the app deprecated/removed something this repo's
+manifests still use. Finding *which* of those it is — and finding all of it, not
+just the first symptom CI shows you — is the actual work. Guessing costs the same
+repeated-failed-CI-round-trip cycle this skill exists to avoid; reading structurally
+is what actually shortens it.
 
 ## The shape of the work
 
-1. **Scope the diff — by chart version, then confirm the app version it ships.**
-   This repo's HelmReleases almost always pin only `spec.chart.spec.version`; a
-   separate app-version field is rare. Don't assume the two move in lockstep,
-   though — confirm what app version the target chart version actually ships
-   (its `Chart.yaml` `appVersion:`, or `helm show chart`) rather than inferring it
-   from the version number alone. See **references/research-and-diagnosis.md**.
-2. **Fan out research in parallel, before writing anything.** This is retrieval,
-   not judgment, and it's independent per topic — cheap to parallelize, cheap to
-   run on a smaller model. See **Delegating to subagents** below.
-3. **Consume release notes, `values.yaml`, `Chart.yaml`, and the CRD spec as
-   separate sources — don't conflate them.** Each tells you something the others
-   don't. The most direct way to see what changes *for this repo's actual
-   config* is `helm template` old-vs-new with this module's real values, not a
-   raw values/templates diff. See **references/research-and-diagnosis.md** for
-   the full method, including when a chart-repo clone (for comments a rendered
-   values dump strips) beats rendering.
-4. **Enumerate every configuration surface this repo actually uses for the
-   module** — including any `components/*` layered on in production even if
-   untested — not just the obvious one. See **references/config-surfaces.md**.
-5. **If the chart installs a CRD, gate the investigation on actual usage
-   first** — grep for the `kind`/`apiVersion` across this repo and the clusters
-   repo before spending any effort on whether its schema changed. If it's used
-   and the schema did change, the bootstrap CRDs bundle
-   (`infrastructure/bootstrap/crds/`) almost certainly needs the same version
-   bump. Also check whether the new version needs (or drops) a dependency this
-   repo doesn't declare yet. See **references/research-and-diagnosis.md**.
-6. **Make the change, then reproduce locally before pushing to CI.** A `kustomize
-   build` or `helm template` that runs in seconds beats a CI round trip that
-   takes 10 minutes and returns a large, non-cacheable log dump. See
-   **references/cost-tradeoffs.md** for why this isn't just "be careful" advice —
-   it's the correct trade given how the costs actually stack up here.
-7. **Update the module's chainsaw suite** (`ci/test/<module>/`) to exercise
-   whatever changed — reuse `ci/test/chainsaw/assertions/*-ready.yaml` and an
-   existing similar module's prerequisite pattern before writing anything new.
-8. **Push, watch CI, and diagnose failures by narrowing with evidence, not by
-   guessing and re-pushing.** Every failure has a specific cause that this repo's
-   tooling can usually surface directly — you don't need this skill to tell you
-   *what* is wrong with a given error, only *how to go get the evidence* that
-   tells you (and how to keep that evidence-gathering from flooding your own
-   context). See **references/diagnostic-approach.md**.
-9. **Scope the clusters-repo rollout — don't do it in this PR.** Check
-   `../homelab-ops-kubernetes-clusters/clusters/*/kustomizations/` for how the
-   module is consumed today (tag pin, `dependsOn`, `postBuild.substitute`) so you
-   know what the follow-up needs, but land it separately once this repo releases.
+1. Research our usage and configuration of the helm chart in question
+   - Who:
+     - Delegate to subagent (Mandatory; see **Delegating to subagents** below)
+   - What:
+     - Every configuration surface affecting this helm chart (see
+       **references/config-surfaces.md**), including but not limited to:
+       - HelmRelease values
+       - HelmRelease patches or postRender configurations
+       - Kustomization patches or post build variables
+       - Kustomize components
+       - Explicitly referenced versions (of charts, docker images, modules, etc)
+       - Differences in cfg between module and chainsaw tests
+       - Differences between module and production (i.e. clusters repo cfg)
+       - List of CRDs (`Group`/`Kind`/`Version`) in use
+   - Where:
+     - Within this repo & the ../homelab-ops-kubernetes-clusters repo
+   - How:
+     - Utilize local file reads
+     - Use the cheapest viable LLM model (usually Haiku) for the subagent
+     - Response to main should capture
+       - all findings covering `What`
+       - any additional notable (or unusual) insights
+       - post mortem summary of approach taken, what worked, what didn't, what eventually succeeded
+       - provide context appropriate sources for all findings and notable insights
+2. Determine the range of chart versions affected
+   - Who:
+     - main loop
+   - What:
+     - FROM-version:
+         earliest-of(
+           current version from chart reference within module's HelmRelease in this repo,
+           chart version corresponding to module version utilized within cluster repo
+         )
+     - TO-version:
+       - There is nothing to interpret here, if a user said to upgrade to an
+         explicit version, pick that. If the user said, latest then that is also
+         clear cut.
+3. Research what changed between FROM and TO versions
+   - Who:
+     - Delegate to subagent (Mandatory; see **Delegating to subagents** below)
+   - What:
+     - Helm Chart itself (values.yaml, Chart.yaml, rendered chart w/ defaults,
+       rendered chart with current effective HelmRelease values, app versions corresponding
+       to chart versions in question, a list of CRDs maintained by the Helm Chart)
+     - Release Notes of chart
+   - Where:
+     - External sources
+   - How:
+     - Research as described within **references/research-and-diagnosis.md**
+     - Use the cheapest viable LLM model (usually Haiku) for the subagent
+     - Fan out to subagents for each `What` so that research can run in parallel
+     - Response to main should capture
+       - all findings covering `What`
+       - any additional notable (or unusual) insights
+       - post mortem summary of approach taken, what worked, what didn't, what eventually succeeded
+       - provide context appropriate sources for all findings and notable insights
+4. Decide whether further research is warranted
+   - Who:
+     - main loop
+   - What:
+     - Is app version change research warranted?
+     - Is research of CRD specs warranted?
+     - Is a specific data or infrastructure migration necessary?
+   - Where:
+     - Use knowledge acquired from previous steps
+   - How:
+     - Do we have reason to believe that significant changes were made between app versions that
+       could affect our task outcome negatively if we don't review?
+     - Did any of the CRDs that we actually use include any changes? Sometimes CRDs get additive
+       changes that don't result in version changes, so as long as there were changes, it might be
+       useful to review
+     - Do we have reason to believe that special migration steps or intervention are necessary
+       for data or infrastructure that's not already captured by the chart or app itself?
+5. Conduct further research if deemed warranted
+   - If:
+     - Gate run on whether step 4 determined this is necessary
+   - Who:
+     - Delegate to subagent (Mandatory; see **Delegating to subagents** below)
+   - What:
+     - What was deemed warranted in step 4
+   - Where:
+     - External sources
+   - How:
+     - same as `How` of step 3
+6. Synthesize all researched insights into an actionable upgrade plan
+   - Who:
+     - main loop
+   - What:
+     - create an upgrade plan that spans,
+       - chart versions
+       - chart configuration and customizations in all its forms (see
+         **references/config-surfaces.md**) including but not limited to
+         configmaps and secrets
+       - how downstream use of chart provided constructions like CRs based on CRDs
+         need adaptation, if any
+       - changes to tests
+       - did chart essentially change the overall shape of infrastructure that requires a deep
+         re-think of downstream consequences or implications
+   - Where:
+     - Use knowledge and insights from previous steps
+7. Execute the plan and make the necessary changes
+   - Who:
+     - main loop
+   - What:
+     - plan from step 6
+   - Where:
+     - this repository
+   - How:
+     - create branch and implement plan's changes scoped for entirety of this repo (version, cfg,
+       tests, etc)
+     - reproduce locally before pushing to CI. A `kustomize build` or `helm template` that runs
+       in seconds beats a CI round trip that takes 10 minutes and returns a large, non-cacheable
+       log dump. See **references/cost-tradeoffs.md** for why
+     - be acutely aware that you may also need to adjust the plan as you go along. keep track.
+8. Trigger CI test runs, diagnose failures, fix and loop till success
+   - Who:
+     - change commit, push and ci trigger -> main loop
+     - ci run watch, results log analysis, insight generation and root cause identification ->
+       Delegate to subagent (Mandatory; see **Delegating to subagents** below)
+     - ci run failure insights driven changes and looping this step till success -> main loop
+   - What:
+     - Implementation according to plan
+   - Where:
+     - This repository
+   - How:
+     - Commit to branch, push and create PR to trigger CI run
+     - Diagnose failures by narrowing with evidence, not by guessing and re-pushing. Every
+       failure has a specific cause that this repo's tooling can usually surface directly
+     - Ensure the CI watch itself also occurs within the subagent, don't poll it yourself
+       while you wait, and don't wait to delegate until a failure shows up.
+     - See **references/diagnostic-approach.md**
+     - In this scenario, the subagent may need a more capable model than the cheapest, fastest
+       one (say maybe Sonnet instead of Haiku) as it needs to perform root cause analysis
+     - When a test run fails, do not fix within the subagent itself — subagents should review ci
+       run logs, derive insights and perform root cause identification and hand off the
+       resulting findings to main loop
+9. Record the clusters-repo rollout as a github issue
+   - Who:
+     - main loop
+   - What:
+     - Corresponding parts of plan from step 6 w.r.t. rollout to production
+   - Where:
+     - clusters repo (`../homelab-ops-kubernetes-clusters`)
+   - How:
+     - Create a github issue (under clusters repo) that captures in detail what needs to happen
+       within the clusters repo, as well as a short but descriptive summary of what was
+       implemented in apps repo.
 
 ## Delegating to subagents — two distinct reasons, don't conflate them
 
-**Coverage delegation** (steps 2 and 4): "what files exist," "what does this
-HelmRelease currently set," "which consumers use this Kind," "how does the
-clusters repo reference this module today" are enumeration, not reasoning. A
-cheap/fast-model subagent handles these as well as the main model, at a fraction
-of the cost — the value is in coverage (did we check every consumer, every
-configuration mechanism, every clusters-repo reference), not in insight. Spawn
-`Agent` calls in a **single message** (so they run in parallel), one per
-independent research surface, e.g.:
+**Coverage delegation** (steps 1, 3 and 5):
 
-- "explore the module's current chart/CRD version and every HelmRelease/HelmRepository file"
-- "explore `components/` for every db/cache/storage-related Kustomize component touching this module, and whether any consuming cluster applies it in production"
-- "explore every consumer app/infra subsystem that uses this module, quoting their current config"
-- "explore `../homelab-ops-kubernetes-clusters/clusters/*/` for how this module is referenced today"
-
-Pass `model: "haiku"` (or the fastest model available) on these — they're
-read-only `Explore`-style sweeps with a clear "report back what you found"
-contract, not open-ended design work.
+- Research of local files within repositories and external sources to capture factual insights via
+  simple tool calls, local file reads or simple log analysis. A cheap/fast-model subagent handles
+  these as well as the main model, at a fraction of the cost — the value is in coverage (did we check
+  every consumer, every configuration mechanism, every clusters-repo reference, every version for
+  release notes, every helm chart templated out, etc), not in deep insight, judgement or open ended
+  design or planning effort. Spawn `Agent` calls so they run in parallel, one per independent research
+  surface.
 
 **Context-isolation delegation** (step 8, and anywhere a fetch returns a large
-payload): `gh run view --log-failed` on a real CI run is the main case in this
-repo — there's no local cluster, so a chainsaw test's `describe`/`get`/
-`podLogs`/`events` output only exists as whatever got captured into that CI log,
-never as a command you can run directly. That log can run to thousands of lines
-that are mostly noise relative to the one answer you need — and because that
-content is new every time, it's never a prompt-cache hit, so once it's in your
-context it's paid for in full and stays there. Delegate the fetch itself to a
-subagent with a specific question ("find the actual underlying error and the
-endpoint/config it used"), and have it return the extracted answer **plus** its
-own brief read of anything else in the log that looked notable — it already paid
-the cost of reading the whole dump, so let that coverage benefit you even where
-you didn't think to ask. This is **not** about the task being easy — a genuinely
-hard diagnosis can still get this treatment, with the subagent running on the
-main/reasoning model rather than a cheap one. The two delegation reasons compose
-independently: a fetch can be both noisy *and* need a strong model to interpret,
-in which case delegate to a strong-model subagent anyway, just to keep the raw
-payload out of the main thread. See **references/diagnostic-approach.md** and
-**references/cost-tradeoffs.md** for the reasoning behind each axis.
+payload):
 
-Reserve the main-thread reasoning model for the steps that need actual judgment
-that benefits from you keeping full session context: deciding whether a
-release-note callout applies to how *this* repo uses the resource, weighing
-competing hypotheses for a live failure, and writing the actual manifests. Don't
-fan a live diagnosis *decision* out to a cheap model just because it's a
-subagent call — narrowing between competing hypotheses is where a weaker model's
-answer isn't trustworthy enough to act on, and re-diagnosing after a wrong turn
-costs more than the model-tier savings.
+- `gh run view --log-failed` on a real CI run is the main case in this repo. That log can run to
+  thousands of lines that are mostly noise relative to the one answer you need — and because that
+  content is new every time, it's never a prompt-cache hit, so once it's in your
+  context it's paid for in full and stays there.
+- If the run fails, that same subagent (not a fresh one) fetches the log and finds a specific
+  question ("find the actual underlying error and the endpoint/config it used"), and returns the
+  extracted answer, its own brief read of anything else in the log that looked notable, and a short
+  postmortem of its own approach — what it tried that didn't pan out, what eventually worked. It already
+  paid the cost of reading the whole dump, so let all three of those benefit you, including the parts
+  you didn't think to ask about. This is **not** about the task being easy — a genuinely hard diagnosis
+  can still get this treatment, with the subagent running on a better than the most cheapest model. The
+  two delegation reasons compose independently: a fetch can be both noisy *and* need a strong model to
+  interpret, in which case delegate to a strong-model subagent anyway, just to keep the raw payload
+  out of the main thread. See **references/diagnostic-approach.md** and **references/cost-tradeoffs.md**
+  for the reasoning behind each axis.
+
+Reserve the main-thread reasoning model for the steps that need actual judgment that benefits from
+you keeping full session context, overall planning, design, implementation and orchestration of the
+task at hand.
 
 ## Reference files
 

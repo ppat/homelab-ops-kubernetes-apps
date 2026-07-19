@@ -94,12 +94,18 @@ no-op obvious immediately.
 
 ## Recognizing a pre-existing or unrelated CI failure
 
-Not every red check is caused by your change. Before spending a diagnostic cycle
-on a failure, check whether it was already failing before your branch (a quick
-`gh run list` against the base branch, or checking the check's failure reason
-against something structurally unrelated to what you touched — e.g. a workflow
-config gap that predates your commit, or a diff/comparison job that trips over
-resource-name collisions between fixtures that both existed before you started).
+Not every red check is caused by your change. This is a check the subagent
+watching your run makes as part of diagnosing *its* failure (see "Delegate the
+whole watch, not just the failure" in the main skill file) — not a reason to
+go browsing other runs' history speculatively before you have a failure of
+your own to explain (see `research-and-diagnosis.md`'s "Historical CI runs are
+not research material"). Before spending a diagnostic cycle on a failure,
+check whether it was already failing before your branch (a quick `gh run list`
+against the base branch, or checking the check's failure reason against
+something structurally unrelated to what you touched — e.g. a workflow config
+gap that predates your commit, or a diff/comparison job that trips over
+resource-name collisions between fixtures that both existed before you
+started).
 Fixing or working around an unrelated failure is a legitimate task, but it's a
 different task from the upgrade — don't let it consume diagnostic effort you
 haven't confirmed is actually about your change, and confirm with whoever's
