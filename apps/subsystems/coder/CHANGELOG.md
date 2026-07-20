@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.51](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.50...apps-coder-v0.0.51) (2026-07-20)
+
+
+### ✨ Features
+
+* **apps-coder:** Kyverno policy to set hostUsers on docker workspaces ([#3351](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3351)) ([0a7a435](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0a7a435261352be9df33412a8e4673700559214a))
+
 ## [0.0.50](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.49...apps-coder-v0.0.50) (2026-07-17)
 
 
