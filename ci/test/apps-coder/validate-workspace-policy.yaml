@@ -1,0 +1,101 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-workspace-policy
+spec:
+  try:
+  # The ClusterPolicy must be Ready (its admission webhook configured by Kyverno)
+  # BEFORE we create probe pods -- mutation happens at admission time, so a pod
+  # created while the webhook is still registering would be admitted un-mutated
+  # and no amount of assert-retry could fix it after the fact.
+  - description: Assert clusterpolicy/coder-workspace-hostusers is Ready
+    assert:
+      resource:
+        apiVersion: kyverno.io/v1
+        kind: ClusterPolicy
+        metadata:
+          name: coder-workspace-hostusers
+        status:
+          (conditions[?type == 'Ready']):
+          - status: "True"
+
+  # Positive case: a pod carrying the docker-enabled marker (plus the two
+  # standard workspace labels) must be mutated to spec.hostUsers=false.
+  - description: Create a docker-enabled workspace probe pod
+    apply:
+      resource:
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: policy-probe-docker-enabled
+          namespace: coder
+          labels:
+            app.kubernetes.io/part-of: coder-workspace
+            com.coder.resource: "true"
+            com.coder.workspace.docker-enabled: "true"
+        spec:
+          # never scheduled/pulled -- we only assert the admission-time mutation
+          nodeSelector:
+            chainsaw.io/nonexistent: "true"
+          containers:
+          - name: probe
+            image: registry.k8s.io/pause:3.9
+  - description: Assert hostUsers was mutated to false on the marked pod
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: policy-probe-docker-enabled
+          namespace: coder
+        spec:
+          hostUsers: false
+
+  # Negative case: a workspace pod WITHOUT the docker-enabled marker must be
+  # left untouched (hostUsers stays at its default of true / unset).
+  - description: Create a non-docker workspace probe pod
+    apply:
+      resource:
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: policy-probe-no-docker
+          namespace: coder
+          labels:
+            app.kubernetes.io/part-of: coder-workspace
+            com.coder.resource: "true"
+        spec:
+          nodeSelector:
+            chainsaw.io/nonexistent: "true"
+          containers:
+          - name: probe
+            image: registry.k8s.io/pause:3.9
+  - description: Assert hostUsers was NOT mutated on the unmarked pod
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: policy-probe-no-docker
+          namespace: coder
+        spec:
+          # The policy must leave this pod alone: hostUsers stays absent (the
+          # API server does not default it), so assert it is not present.
+          # `!= false` fails on an absent field, so test for null explicitly.
+          (hostUsers == `null`): true
+  catch:
+  - describe:
+      apiVersion: kyverno.io/v1
+      kind: ClusterPolicy
+      name: coder-workspace-hostusers
+  - get:
+      apiVersion: v1
+      kind: Pod
+      namespace: coder
+      selector: app.kubernetes.io/part-of=coder-workspace
+  finally:
+  - description: Clean up probe pods
+    script:
+      content: |
+        kubectl delete pod -n coder policy-probe-docker-enabled policy-probe-no-docker --ignore-not-found

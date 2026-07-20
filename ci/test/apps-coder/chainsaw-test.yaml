@@ -68,3 +68,7 @@ spec:
   - name: Validate coder application
     use:
       template: ./validate-coder-application.yaml
+
+  - name: Validate workspace hostUsers policy
+    use:
+      template: ./validate-workspace-policy.yaml
