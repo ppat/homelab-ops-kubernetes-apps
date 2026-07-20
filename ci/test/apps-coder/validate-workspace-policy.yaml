@@ -71,7 +71,7 @@ spec:
           containers:
           - name: probe
             image: registry.k8s.io/pause:3.9
-  - description: Assert hostUsers was NOT set on the unmarked pod
+  - description: Assert hostUsers was NOT mutated on the unmarked pod
     assert:
       resource:
         apiVersion: v1
@@ -80,7 +80,10 @@ spec:
           name: policy-probe-no-docker
           namespace: coder
         spec:
-          (hostUsers != false): true
+          # The policy must leave this pod alone: hostUsers stays absent (the
+          # API server does not default it), so assert it is not present.
+          # `!= false` fails on an absent field, so test for null explicitly.
+          (hostUsers == `null`): true
   catch:
   - describe:
       apiVersion: kyverno.io/v1
