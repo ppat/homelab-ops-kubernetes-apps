@@ -11,6 +11,7 @@ resources:
 - helm-release-coder.yaml
 - ingress.yaml
 - rbac.yaml
+- policy-workspace-hostusers.yaml
 
 
 sortOptions:

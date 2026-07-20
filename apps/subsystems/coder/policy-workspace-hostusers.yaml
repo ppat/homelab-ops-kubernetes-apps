@@ -1,0 +1,53 @@
+---
+# Cross-repo coupling: this policy pairs with the `coder` repo's workspace
+# template, which stamps the `com.coder.workspace.docker-enabled: "true"`
+# marker label onto the pod ONLY when the user opts into Docker. The label
+# selector below is the contract between the two repos — neither the marker
+# label here nor in the template should change in isolation.
+#
+# Retirement: this whole policy can be RETIRED once the hashicorp/kubernetes
+# Terraform provider gains a `host_users` field (draft PR
+# hashicorp/terraform-provider-kubernetes#2914). At that point the workspace
+# template sets `spec.hostUsers: false` directly and this mutation is redundant.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: coder-workspace-hostusers
+  annotations:
+    policies.kyverno.io/title: Coder workspace hostUsers
+    policies.kyverno.io/category: Mutations
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/minversion: 1.6.0
+    policies.kyverno.io/description: >-
+      Coder workspace pods that opt into Docker need a private user namespace so
+      the in-workspace container engine cannot map to host UIDs. This policy
+      mutates those pods (identified by the template's docker-enabled marker
+      label) to set spec.hostUsers=false at admission time.
+spec:
+  # Admission-time mutation only; there is nothing to reconcile in the
+  # background for pods that already exist.
+  background: false
+  # Ignore (not Fail): this is a homelab. A Kyverno outage must NOT block
+  # workspace creation. If the webhook is unavailable the mutation is simply
+  # skipped and the pod ships with the weaker (hostUsers=true) posture, which
+  # still runs — a degraded workspace beats no workspace.
+  failurePolicy: Ignore
+  rules:
+  - name: add-hostusers-false
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+          namespaces:
+          - coder
+          selector:
+            matchLabels:
+              app.kubernetes.io/part-of: coder-workspace
+              com.coder.resource: "true"
+              com.coder.workspace.docker-enabled: "true"
+    mutate:
+      patchStrategicMerge:
+        spec:
+          hostUsers: false
