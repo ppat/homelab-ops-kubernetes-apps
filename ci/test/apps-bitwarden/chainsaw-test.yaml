@@ -58,10 +58,6 @@ spec:
     use:
       template: ./validate-bitwarden-admin.yaml
 
-  - name: Validate bitwarden api
-    use:
-      template: ./validate-bitwarden-api.yaml
-
   - name: Validate bitwarden attachments
     use:
       template: ./validate-bitwarden-attachments.yaml
@@ -89,6 +85,10 @@ spec:
   - name: Validate bitwarden web
     use:
       template: ./validate-bitwarden-web.yaml
+
+  - name: Validate bitwarden api
+    use:
+      template: ./validate-bitwarden-api.yaml
 
   - name: Validate bitwarden release
     use:
