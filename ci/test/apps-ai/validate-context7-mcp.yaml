@@ -21,7 +21,7 @@ spec:
       - name: namespace
         value: ai
       file: ../chainsaw/assertions/deployment-ready.yaml
-      timeout: 3m
+      timeout: 5m
   catch:
   - describe:
       apiVersion: apps/v1

@@ -39,6 +39,11 @@ spec:
       - name: namespace
         value: ai
       file: ../chainsaw/assertions/helmrelease-ready.yaml
+      # The chart's own Helm install action runs with a 5m internal timeout, and
+      # this needs to sequence after CNPG's Cluster + a pre-install migrations Job
+      # + the proxy pod itself passing its startup probe -- longer than the
+      # default 1m assert timeout.
+      timeout: 8m
   catch:
   - describe:
       apiVersion: helm.toolkit.fluxcd.io/v2
