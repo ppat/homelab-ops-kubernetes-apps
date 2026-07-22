@@ -144,16 +144,16 @@ spec:
       general_settings:
         master_key: os.environ/PROXY_MASTER_KEY
         forward_client_headers_to_llm_api: true
+        health_check_interval: 300
 
       router_settings:
         redis_host: litellm-redis.ai.svc.cluster.local
-        redis_port: 6379
+        redis_port: "6379"
         redis_password: os.environ/REDIS_PASSWORD
         routing_strategy: simple-shuffle
-        enable_pre_call_check: true
+        enable_pre_call_checks: true
         allowed_fails: 3
         cooldown_time: 60
-        health_check_interval: 300
         fallbacks:
         - claude-sonnet-max: ["claude-sonnet-openrouter"]
         - claude-opus-max: ["claude-opus-openrouter"]
