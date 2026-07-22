@@ -4,7 +4,7 @@ Self-hosted AI platform providing local large language model capabilities and a 
 
 ## Quick Links
 
-<a href="https://github.com/ollama/ollama" target="_blank"><img src="../../../.static/images/logos/ollama.png" width="32" height="32" alt="Ollama"></a> <a href="https://github.com/open-webui/open-webui" target="_blank"><img src="../../../.static/images/logos/open-webui.png" width="32" height="32" alt="OpenWebUI"></a>
+<a href="https://www.litellm.ai" target="_blank"><img src="../../../.static/images/logos/litellm.svg" width="32" height="32" alt="LiteLLM"></a> <a href="https://github.com/ollama/ollama" target="_blank"><img src="../../../.static/images/logos/ollama.png" width="32" height="32" alt="Ollama"></a> <a href="https://github.com/open-webui/open-webui" target="_blank"><img src="../../../.static/images/logos/open-webui.png" width="32" height="32" alt="OpenWebUI"></a>
 
 ## Overview
 
