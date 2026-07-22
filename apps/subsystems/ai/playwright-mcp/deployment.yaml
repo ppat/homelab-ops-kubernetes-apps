@@ -63,9 +63,13 @@ spec:
           capabilities:
             drop:
             - ALL
-      # The image's Dockerfile already declares `USER node` (non-root), so this is
-      # confirmed compatible. Not setting readOnlyRootFilesystem/seccompProfile:
-      # headless Chromium needs to write its own profile/cache data at runtime and
-      # the image doesn't document read-only-root-fs support.
-      securityContext:
-        runAsNonRoot: true
+      # The image's Dockerfile declares `USER node` (a name, not a numeric UID), so
+      # the container already runs non-root by default -- but the kubelet can't
+      # verify that against runAsNonRoot without also being told the numeric UID,
+      # and failed admission ("cannot verify user is non-root") when that wasn't
+      # set. Not guessing at the UID here (no image-inspection tooling available to
+      # confirm it); the image's own USER directive is left to take effect as-is.
+      # Not setting readOnlyRootFilesystem/seccompProfile: headless Chromium needs
+      # to write its own profile/cache data at runtime and the image doesn't
+      # document read-only-root-fs support.
+      securityContext: {}
