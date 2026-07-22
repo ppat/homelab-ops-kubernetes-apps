@@ -1,0 +1,82 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-litellm
+spec:
+  try:
+  - description: Assert cluster.postgresql.cnpg.io/litellm-db-test
+    assert:
+      bindings:
+      - name: name
+        value: litellm-db-test
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
+      timeout: 3m
+  - description: Assert dragonfly/litellm-redis
+    assert:
+      bindings:
+      - name: name
+        value: litellm-redis
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/dragonfly-ready.yaml
+      timeout: 2m
+  - description: Assert externalsecret/litellm-secrets
+    assert:
+      bindings:
+      - name: name
+        value: litellm-secrets
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
+  - description: Assert deployment/litellm
+    assert:
+      bindings:
+      - name: name
+        value: litellm
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      # The chart's own Helm install action runs with a 5m internal timeout, and
+      # this needs to sequence after CNPG's Cluster + a pre-install migrations Job
+      # + the proxy pod itself passing its startup probe -- longer than the
+      # default 1m assert timeout.
+      timeout: 8m
+  - description: Assert litellm-release
+    assert:
+      bindings:
+      - name: name
+        value: litellm-release
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+  catch:
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: litellm-release
+      namespace: ai
+  - describe:
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      name: litellm-db-test
+      namespace: ai
+  - describe:
+      apiVersion: dragonflydb.io/v1alpha1
+      kind: Dragonfly
+      name: litellm-redis
+      namespace: ai
+  - podLogs:
+      selector: app.kubernetes.io/name=litellm,app.kubernetes.io/instance=litellm
+      namespace: ai
+      tail: 200
+  - podLogs:
+      selector: job-name=litellm-migrations
+      namespace: ai
+      tail: 200
+  - events:
+      namespace: cnpg-system
+  - events:
+      namespace: ai

@@ -1,0 +1,75 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-playwright
+  namespace: ai
+  labels:
+    app.kubernetes.io/name: mcp-playwright
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mcp-playwright
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mcp-playwright
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: mcp-playwright
+        image: mcr.microsoft.com/playwright/mcp:v0.0.78@sha256:3d871c22ea2d4cca0966e2cfb1860e1cb03eb7353725a3d6cffd133296fb04eb
+        imagePullPolicy: IfNotPresent
+        # Overrides the image's default ENTRYPOINT (which spawns one client session
+        # over stdio) to run as a persistent HTTP service instead, per the upstream
+        # "long-lived service" invocation documented in the project README.
+        command:
+        - node
+        args:
+        - /app/cli.js
+        - --headless
+        - --browser
+        - chromium
+        - --no-sandbox
+        - --port
+        - "8931"
+        - --host
+        - 0.0.0.0
+        ports:
+        - name: http
+          containerPort: 8931
+          protocol: TCP
+        # No documented health endpoint for this image; fall back to a TCP check.
+        livenessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 20
+          periodSeconds: 20
+        readinessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: "1"
+            memory: 1Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      # The image's Dockerfile declares `USER node` (a name, not a numeric UID), so
+      # the container already runs non-root by default -- but the kubelet can't
+      # verify that against runAsNonRoot without also being told the numeric UID,
+      # and failed admission ("cannot verify user is non-root") when that wasn't
+      # set. Not guessing at the UID here (no image-inspection tooling available to
+      # confirm it); the image's own USER directive is left to take effect as-is.
+      # Not setting readOnlyRootFilesystem/seccompProfile: headless Chromium needs
+      # to write its own profile/cache data at runtime and the image doesn't
+      # document read-only-root-fs support.
+      securityContext: {}

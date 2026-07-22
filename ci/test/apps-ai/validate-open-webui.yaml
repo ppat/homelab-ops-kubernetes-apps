@@ -5,11 +5,11 @@ metadata:
   name: validate-open-webui
 spec:
   try:
-  - description: Assert externalsecret/openwebui-secrets
+  - description: Assert externalsecret/litellm-openwebui-key
     assert:
       bindings:
       - name: name
-        value: openwebui-secrets
+        value: litellm-openwebui-key
       - name: namespace
         value: ai
       file: ../chainsaw/assertions/externalsecret-ready.yaml

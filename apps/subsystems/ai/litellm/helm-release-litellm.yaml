@@ -1,0 +1,144 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: litellm-release
+  namespace: ai
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: litellm
+    namespace: flux-system
+  install:
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 15m0s
+  releaseName: litellm
+  targetNamespace: ai
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+
+  valuesFrom:
+  - kind: ConfigMap
+    name: litellm-model-config
+    valuesKey: model-config.yaml
+    optional: true
+
+  values:
+    image:
+      repository: ghcr.io/berriai/litellm-database
+      tag: "v1.93.0"
+
+    masterkeySecretName: litellm-secrets
+    masterkeySecretKey: LITELLM_MASTER_KEY
+
+    # Exports every key in litellm-secrets (LITELLM_SALT_KEY, OPENROUTER_API_KEY,
+    # REDIS_PASSWORD, LITELLM_MASTER_KEY) as env vars of the same name, so
+    # os.environ/<KEY> in proxy_config below resolves inside the pod.
+    environmentSecrets:
+    - litellm-secrets
+
+    db:
+      useExisting: true
+      deployStandalone: false
+      endpoint: litellm-db.ai.svc.cluster.local:5432
+      database: litellm
+      secret:
+        # usernameKey/passwordKey are left at the chart default (username/password),
+        # which already matches the keys on CNPG's auto-generated "<cluster>-app" secret.
+        name: ${db_name:=litellm-db}-${db_suffix_current:=default}-app
+
+    migrationJob:
+      # Runs the DB-migration Job as a Helm pre-install/pre-upgrade hook instead of an
+      # unordered resource in the same release, so schema migration deterministically
+      # completes before the proxy Deployment starts (chart defaults this to false).
+      hooks:
+        helm:
+          enabled: true
+
+    # The chart's bundled Redis subchart is unused (redis.enabled stays false);
+    # coordination/cache instead point at the external litellm-redis Dragonfly
+    # instance via router_settings/cache_params in proxy_config below.
+
+    # livenessProbe/readinessProbe already default to /health/liveliness and
+    # /health/readiness (not the heavy, every-provider-calling /health) -- no override needed.
+
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: 0
+        maxSurge: 1
+    terminationGracePeriodSeconds: 90
+    lifecycle:
+      preStop:
+        exec:
+          command: ["/bin/sh", "-c", "sleep 15"]
+      # Chart also supports a bounded /health/drain preStop probe (general_settings.enable_drain_endpoint
+      # + a shared drain token) instead of a fixed sleep; not wired here to avoid a second auth token, revisit
+      # if 15s proves too short/long under real rollout traffic.
+
+    ingress:
+      enabled: true
+      # Chart defaults className to "nginx"; this cluster's ingress controller is Traefik.
+      className: ""
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: litellm.${domain_name}
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
+      hosts:
+      - host: litellm.${domain_name}
+        paths:
+        - path: /
+          pathType: Prefix
+
+    proxy_config:
+      # model_list and the model-dependent router_settings (fallbacks, routing_strategy,
+      # allowed_fails, cooldown_time) are intentionally absent here -- they're supplied by
+      # the cluster repo via the optional litellm-model-config ConfigMap in valuesFrom above,
+      # so the model catalog can change per-cluster without a module release. When that
+      # ConfigMap is absent (e.g. this module's own CI), the chart falls back to its own
+      # built-in placeholder models instead of failing to start.
+      general_settings:
+        master_key: os.environ/PROXY_MASTER_KEY
+        forward_client_headers_to_llm_api: true
+        health_check_interval: 300
+
+      router_settings:
+        # redis_* and cache_params below point at this same module's own Dragonfly instance,
+        # not a per-cluster detail, so they stay here rather than in the cluster ConfigMap.
+        redis_host: litellm-redis.ai.svc.cluster.local
+        redis_port: "6379"
+        redis_password: os.environ/REDIS_PASSWORD
+        enable_pre_call_checks: true
+
+      litellm_settings:
+        callbacks: ["prometheus", "detect_prompt_injection"]
+        cache: true
+        cache_params:
+          # Cache is proxy-wide once enabled; scoping it OFF for Claude-Code/coding-assistant
+          # traffic needs a per-request no-cache override sent by the calling client, not
+          # something this static config alone can express per-key.
+          type: redis
+          host: litellm-redis.ai.svc.cluster.local
+          port: 6379
+          password: os.environ/REDIS_PASSWORD
+        mcp_aliases:
+          context7: context7_mcp
+          playwright: playwright_mcp
+
+      mcp_servers:
+        context7_mcp:
+          url: "http://mcp-context7.ai.svc.cluster.local:8080/mcp"
+          transport: "http"
+          auth_type: "none"
+          description: "Self-hosted context7 documentation lookup MCP server"
+        playwright_mcp:
+          url: "http://mcp-playwright.ai.svc.cluster.local:8931/mcp"
+          transport: "http"
+          auth_type: "none"
+          description: "Self-hosted Playwright browser automation MCP server"
