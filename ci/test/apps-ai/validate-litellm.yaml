@@ -60,6 +60,14 @@ spec:
       kind: Dragonfly
       name: litellm-redis
       namespace: ai
+  - podLogs:
+      selector: app.kubernetes.io/name=litellm,app.kubernetes.io/instance=litellm
+      namespace: ai
+      tail: 200
+  - podLogs:
+      selector: job-name=litellm-migrations
+      namespace: ai
+      tail: 200
   - events:
       namespace: cnpg-system
   - events:
