@@ -2,23 +2,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: context7-mcp
+  name: mcp-context7
   namespace: ai
   labels:
-    app.kubernetes.io/name: context7-mcp
+    app.kubernetes.io/name: mcp-context7
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: context7-mcp
+      app.kubernetes.io/name: mcp-context7
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: context7-mcp
+        app.kubernetes.io/name: mcp-context7
     spec:
       automountServiceAccountToken: false
       containers:
-      - name: context7-mcp
+      - name: mcp-context7
         # Upstash doesn't publish an official ghcr.io/Docker Hub image under its own
         # namespace for self-hosting (only the npm package and a private ECR image).
         # This is Docker Inc's "MCP Catalog" build of the same upstream Dockerfile
@@ -30,7 +30,7 @@ spec:
         - name: CONTEXT7_API_KEY
           valueFrom:
             secretKeyRef:
-              name: context7-mcp-secrets
+              name: mcp-context7-secrets
               key: CONTEXT7_API_KEY
         ports:
         - name: http

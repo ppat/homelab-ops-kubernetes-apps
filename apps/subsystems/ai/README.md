@@ -89,9 +89,9 @@ flowchart TB
 | ----------- | ------ | -------------- | -------------- | ------------------- |
 | Ollama | Core | LLM Server | • Run large language models locally<br>• Efficient model management<br>• API-based interaction<br>• Model downloading and serving | • Direct user access via API<br>• OpenWebUI integration<br>• Persistent storage for models |
 | OpenWebUI | Core | Web Interface | • User-friendly chat interface<br>• Conversation management<br>• Model selection and configuration<br>• Optional cloud LLM integration | • Ollama API integration<br>• LiteLLM gateway integration for cloud model access<br>• Direct user access via web browser<br>• Persistent storage for settings |
-| LiteLLM | Gateway | AI Gateway | • Unified routing across multiple LLM providers with automatic failover<br>• Virtual key, team, and budget management<br>• Request caching and cost tracking<br>• Hosts MCP servers for client tool access | • OpenWebUI and other gateway consumer integration<br>• PostgreSQL for persistent configuration and spend data<br>• Redis-compatible cache for response caching<br>• context7-mcp and playwright-mcp integration |
-| context7-mcp | Core | Documentation MCP Server | • Self-hosted library/API documentation lookup<br>• MCP protocol interface for AI clients<br>• Stateless, lightweight process | • Hosted behind the LiteLLM gateway<br>• Provides documentation context to AI assistants |
-| playwright-mcp | Core | Browser Automation MCP Server | • Self-hosted browser automation and web interaction<br>• MCP protocol interface for AI clients<br>• Headless browser execution | • Hosted behind the LiteLLM gateway<br>• Provides browsing/automation tools to AI assistants |
+| LiteLLM | Gateway | AI Gateway | • Unified routing across multiple LLM providers with automatic failover<br>• Virtual key, team, and budget management<br>• Request caching and cost tracking<br>• Hosts MCP servers for client tool access | • OpenWebUI and other gateway consumer integration<br>• PostgreSQL for persistent configuration and spend data<br>• Redis-compatible cache for response caching<br>• mcp-context7 and mcp-playwright integration |
+| mcp-context7 | Core | Documentation MCP Server | • Self-hosted library/API documentation lookup<br>• MCP protocol interface for AI clients<br>• Stateless, lightweight process | • Hosted behind the LiteLLM gateway<br>• Provides documentation context to AI assistants |
+| mcp-playwright | Core | Browser Automation MCP Server | • Self-hosted browser automation and web interaction<br>• MCP protocol interface for AI clients<br>• Headless browser execution | • Hosted behind the LiteLLM gateway<br>• Provides browsing/automation tools to AI assistants |
 
 ## Prerequisites
 
@@ -118,7 +118,7 @@ This module also depends on a PostgreSQL and Redis-compatible cache, provisioned
    | litellm_salt_key | Encryption salt for virtual keys persisted in LiteLLM's database |
    | apikey_openrouter_litellm | OpenRouter API key used by LiteLLM to route requests to OpenRouter-hosted models |
    | litellm_redis_password | Password for LiteLLM's Redis-compatible cache |
-   | apikey_context7_mcp | context7 API key required by the self-hosted context7-mcp server |
+   | apikey_context7_mcp | context7 API key required by the self-hosted mcp-context7 server |
 
 3. Required Variables
 

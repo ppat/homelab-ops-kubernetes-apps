@@ -61,10 +61,10 @@ spec:
     use:
       template: ./validate-litellm.yaml
 
-  - name: Validate context7-mcp
+  - name: Validate mcp-context7
     use:
-      template: ./validate-context7-mcp.yaml
+      template: ./validate-mcp-context7.yaml
 
-  - name: Validate playwright-mcp
+  - name: Validate mcp-playwright
     use:
-      template: ./validate-playwright-mcp.yaml
+      template: ./validate-mcp-playwright.yaml

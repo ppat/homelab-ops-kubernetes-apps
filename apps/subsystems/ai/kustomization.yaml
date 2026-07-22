@@ -4,11 +4,11 @@ kind: Kustomization
 
 resources:
 - namespace.yaml
-- context7-mcp/
 - litellm/
+- mcp-context7/
+- mcp-playwright/
 - ollama/
 - openwebui/
-- playwright-mcp/
 
 sortOptions:
   order: fifo

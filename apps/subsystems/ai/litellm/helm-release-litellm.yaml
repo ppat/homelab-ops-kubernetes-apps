@@ -133,12 +133,12 @@ spec:
 
       mcp_servers:
         context7_mcp:
-          url: "http://context7-mcp.ai.svc.cluster.local:8080/mcp"
+          url: "http://mcp-context7.ai.svc.cluster.local:8080/mcp"
           transport: "http"
           auth_type: "none"
           description: "Self-hosted context7 documentation lookup MCP server"
         playwright_mcp:
-          url: "http://playwright-mcp.ai.svc.cluster.local:8931/mcp"
+          url: "http://mcp-playwright.ai.svc.cluster.local:8931/mcp"
           transport: "http"
           auth_type: "none"
           description: "Self-hosted Playwright browser automation MCP server"

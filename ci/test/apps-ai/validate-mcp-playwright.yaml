@@ -2,14 +2,14 @@
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: StepTemplate
 metadata:
-  name: validate-playwright-mcp
+  name: validate-mcp-playwright
 spec:
   try:
-  - description: Assert deployment/playwright-mcp
+  - description: Assert deployment/mcp-playwright
     assert:
       bindings:
       - name: name
-        value: playwright-mcp
+        value: mcp-playwright
       - name: namespace
         value: ai
       file: ../chainsaw/assertions/deployment-ready.yaml
@@ -18,7 +18,7 @@ spec:
   - describe:
       apiVersion: apps/v1
       kind: Deployment
-      name: playwright-mcp
+      name: mcp-playwright
       namespace: ai
   - events:
       namespace: ai

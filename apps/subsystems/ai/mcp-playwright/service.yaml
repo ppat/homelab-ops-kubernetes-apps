@@ -2,16 +2,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: context7-mcp
+  name: mcp-playwright
   namespace: ai
   labels:
-    app.kubernetes.io/name: context7-mcp
+    app.kubernetes.io/name: mcp-playwright
 spec:
   type: ClusterIP
   selector:
-    app.kubernetes.io/name: context7-mcp
+    app.kubernetes.io/name: mcp-playwright
   ports:
   - name: http
-    port: 8080
+    port: 8931
     targetPort: http
     protocol: TCP

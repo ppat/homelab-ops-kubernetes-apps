@@ -2,23 +2,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: playwright-mcp
+  name: mcp-playwright
   namespace: ai
   labels:
-    app.kubernetes.io/name: playwright-mcp
+    app.kubernetes.io/name: mcp-playwright
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: playwright-mcp
+      app.kubernetes.io/name: mcp-playwright
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: playwright-mcp
+        app.kubernetes.io/name: mcp-playwright
     spec:
       automountServiceAccountToken: false
       containers:
-      - name: playwright-mcp
+      - name: mcp-playwright
         image: mcr.microsoft.com/playwright/mcp:v0.0.78@sha256:3d871c22ea2d4cca0966e2cfb1860e1cb03eb7353725a3d6cffd133296fb04eb
         imagePullPolicy: IfNotPresent
         # Overrides the image's default ENTRYPOINT (which spawns one client session
