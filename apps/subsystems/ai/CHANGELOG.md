@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.1...apps-ai-v0.6.2) (2026-07-22)
+
+
+### ✨ Features
+
+* **apps-ai:** add litellm AI gateway with self-hosted context7/playwright MCP servers ([#3356](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3356)) ([7dab5c9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7dab5c98624f2ec22b57181afc2fa4d931908f3a))
+
 ## [0.6.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.0...apps-ai-v0.6.1) (2026-07-18)
 
 
