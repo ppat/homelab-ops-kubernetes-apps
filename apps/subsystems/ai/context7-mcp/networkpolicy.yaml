@@ -1,0 +1,55 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: context7-mcp
+  namespace: ai
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: context7-mcp
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Only other pods in this namespace (litellm) call context7-mcp.
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ai
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  # DNS resolution via CoreDNS.
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # Other pods in this namespace, in case of future intra-namespace calls.
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ai
+  # context7 is a narrow, fixed docs-lookup proxy (not general browsing), so egress
+  # is limited to HTTPS out to the internet (Upstash's backend) rather than a general
+  # allow. ipBlock/except is the standard way to express "internet but not internal"
+  # since NetworkPolicy has no DNS-name-based matching.
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 10.0.0.0/8
+        - 172.16.0.0/12
+        - 192.168.0.0/16
+    ports:
+    - protocol: TCP
+      port: 443

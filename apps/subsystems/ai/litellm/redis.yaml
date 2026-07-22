@@ -1,0 +1,30 @@
+---
+apiVersion: dragonflydb.io/v1alpha1
+kind: Dragonfly
+metadata:
+  name: litellm-redis
+  namespace: ai
+spec:
+  args:
+  - --maxmemory=$(MAX_MEMORY)Mi
+  - --proactor_threads=1
+  - --cluster_mode=emulated
+  - --lock_on_hashtags
+  authentication:
+    passwordFromSecret:
+      name: litellm-secrets
+      key: REDIS_PASSWORD
+  env:
+  - name: MAX_MEMORY
+    valueFrom:
+      resourceFieldRef:
+        resource: limits.memory
+        divisor: 1Mi
+  image: ghcr.io/dragonflydb/dragonfly:v1.39.0@sha256:0fa01a2b929e704c7a9300d23e7f52002ebd39e90996fb8bb63826aed92fa06f
+  replicas: ${redis_replicas:=1}
+  resources:
+    requests:
+      cpu: 32m
+      memory: 100Mi
+    limits:
+      memory: 256Mi

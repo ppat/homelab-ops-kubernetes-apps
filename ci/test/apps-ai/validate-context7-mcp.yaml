@@ -1,0 +1,32 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-context7-mcp
+spec:
+  try:
+  - description: Assert externalsecret/context7-mcp-secrets
+    assert:
+      bindings:
+      - name: name
+        value: context7-mcp-secrets
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
+  - description: Assert deployment/context7-mcp
+    assert:
+      bindings:
+      - name: name
+        value: context7-mcp
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 3m
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: context7-mcp
+      namespace: ai
+  - events:
+      namespace: ai

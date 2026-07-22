@@ -24,6 +24,16 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
         timeout: 2m
+    - description: Reconcile helmrelease/cloudnative-pg-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=2m
+        timeout: 2m
+    - description: Reconcile helmrelease/dragonfly-operator-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=dragonfly-operator-release --namespace=dragonfly-system --timeout=2m
+        timeout: 2m
 
   - name: Apply apps-ai module
     try:
@@ -46,3 +56,15 @@ spec:
   - name: Validate open-webui
     use:
       template: ./validate-open-webui.yaml
+
+  - name: Validate litellm
+    use:
+      template: ./validate-litellm.yaml
+
+  - name: Validate context7-mcp
+    use:
+      template: ./validate-context7-mcp.yaml
+
+  - name: Validate playwright-mcp
+    use:
+      template: ./validate-playwright-mcp.yaml

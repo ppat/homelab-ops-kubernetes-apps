@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: playwright-mcp
+  namespace: ai
+  labels:
+    app.kubernetes.io/name: playwright-mcp
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: playwright-mcp
+  ports:
+  - name: http
+    port: 8931
+    targetPort: http
+    protocol: TCP

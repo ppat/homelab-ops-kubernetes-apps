@@ -37,9 +37,9 @@ spec:
 
     ollamaUrls:
     - http://ollama.ai.svc.cluster.local:11434
-    openaiBaseApiUrl: https://openrouter.ai/api/v1
-    openaiApiKeyExistingSecret: openwebui-secrets
-    openaiApiKeyExistingSecretKey: apikey_openrouter_openwebui
+    openaiBaseApiUrl: http://litellm.ai.svc.cluster.local:4000/v1
+    openaiApiKeyExistingSecret: litellm-openwebui-key
+    openaiApiKeyExistingSecretKey: apikey
 
     extraEnvVars:
     - name: ENABLE_SIGNUP
