@@ -6,7 +6,6 @@ resources:
 - deployment.yaml
 - service.yaml
 - secrets.yaml
-- networkpolicy.yaml
 
 sortOptions:
   order: fifo

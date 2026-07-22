@@ -90,56 +90,59 @@ spec:
           pathType: Prefix
 
     proxy_config:
-      model_list:
-      - model_name: claude-sonnet-max
-        litellm_params:
-          model: anthropic/claude-sonnet-4-5-20250929
-          # no api_key -- relies on general_settings.forward_client_headers_to_llm_api below
-          # for Max-subscription OAuth passthrough (client-side wrapper script tracked separately)
-      - model_name: claude-sonnet-openrouter
-        litellm_params:
-          model: openrouter/anthropic/claude-sonnet-4.5
-          api_key: os.environ/OPENROUTER_API_KEY
-          input_cost_per_token: 0.000003
-          output_cost_per_token: 0.000015
-      - model_name: claude-opus-max
-        litellm_params:
-          model: anthropic/claude-opus-4-1-20250805
-      - model_name: claude-opus-openrouter
-        litellm_params:
-          model: openrouter/anthropic/claude-opus-4.1
-          api_key: os.environ/OPENROUTER_API_KEY
-          input_cost_per_token: 0.000015
-          output_cost_per_token: 0.000075
-      - model_name: claude-haiku-max
-        litellm_params:
-          # TODO: verify exact dated model ID for the current Claude Haiku 4.5 release
-          model: anthropic/claude-haiku-4-5-20251001
-      - model_name: claude-haiku-openrouter
-        litellm_params:
-          model: openrouter/anthropic/claude-haiku-4.5
-          api_key: os.environ/OPENROUTER_API_KEY
-          input_cost_per_token: 0.000001
-          output_cost_per_token: 0.000005
-      - model_name: gpt-5
-        litellm_params:
-          model: openrouter/openai/gpt-5
-          api_key: os.environ/OPENROUTER_API_KEY
-      - model_name: gemini
-        litellm_params:
-          # TODO: verify current flagship Gemini slug on OpenRouter (plain text-completion
-          # "gemini-3-pro" could not be confirmed at time of writing)
-          model: openrouter/google/gemini-3-pro
-          api_key: os.environ/OPENROUTER_API_KEY
-      - model_name: kimi
-        litellm_params:
-          model: openrouter/moonshotai/kimi-k2
-          api_key: os.environ/OPENROUTER_API_KEY
-      - model_name: deepseek
-        litellm_params:
-          # TODO: verify current OpenRouter slug for DeepSeek's latest V3-generation model
-          model: openrouter/deepseek/deepseek-v3
-          api_key: os.environ/OPENROUTER_API_KEY
+      # TEMPORARILY disabled (CI triage): isolating whether the no-api_key
+      # anthropic/* entries (relying on forward_client_headers_to_llm_api
+      # passthrough) are causing the litellm pod's startup crash-loop.
+      # model_list:
+      # - model_name: claude-sonnet-max
+      #  litellm_params:
+      #    model: anthropic/claude-sonnet-4-5-20250929
+      #    # no api_key -- relies on general_settings.forward_client_headers_to_llm_api below
+      #    # for Max-subscription OAuth passthrough (client-side wrapper script tracked separately)
+      # - model_name: claude-sonnet-openrouter
+      #  litellm_params:
+      #    model: openrouter/anthropic/claude-sonnet-4.5
+      #    api_key: os.environ/OPENROUTER_API_KEY
+      #    input_cost_per_token: 0.000003
+      #    output_cost_per_token: 0.000015
+      # - model_name: claude-opus-max
+      #  litellm_params:
+      #    model: anthropic/claude-opus-4-1-20250805
+      # - model_name: claude-opus-openrouter
+      #  litellm_params:
+      #    model: openrouter/anthropic/claude-opus-4.1
+      #    api_key: os.environ/OPENROUTER_API_KEY
+      #    input_cost_per_token: 0.000015
+      #    output_cost_per_token: 0.000075
+      # - model_name: claude-haiku-max
+      #  litellm_params:
+      #    # TODO: verify exact dated model ID for the current Claude Haiku 4.5 release
+      #    model: anthropic/claude-haiku-4-5-20251001
+      # - model_name: claude-haiku-openrouter
+      #  litellm_params:
+      #    model: openrouter/anthropic/claude-haiku-4.5
+      #    api_key: os.environ/OPENROUTER_API_KEY
+      #    input_cost_per_token: 0.000001
+      #    output_cost_per_token: 0.000005
+      # - model_name: gpt-5
+      #  litellm_params:
+      #    model: openrouter/openai/gpt-5
+      #    api_key: os.environ/OPENROUTER_API_KEY
+      # - model_name: gemini
+      #  litellm_params:
+      #    # TODO: verify current flagship Gemini slug on OpenRouter (plain text-completion
+      #    # "gemini-3-pro" could not be confirmed at time of writing)
+      #    model: openrouter/google/gemini-3-pro
+      #    api_key: os.environ/OPENROUTER_API_KEY
+      # - model_name: kimi
+      #  litellm_params:
+      #    model: openrouter/moonshotai/kimi-k2
+      #    api_key: os.environ/OPENROUTER_API_KEY
+      # - model_name: deepseek
+      #  litellm_params:
+      #    # TODO: verify current OpenRouter slug for DeepSeek's latest V3-generation model
+      #    model: openrouter/deepseek/deepseek-v3
+      #    api_key: os.environ/OPENROUTER_API_KEY
 
       general_settings:
         master_key: os.environ/PROXY_MASTER_KEY
@@ -154,10 +157,12 @@ spec:
         allowed_fails: 3
         cooldown_time: 60
         health_check_interval: 300
-        fallbacks:
-        - claude-sonnet-max: ["claude-sonnet-openrouter"]
-        - claude-opus-max: ["claude-opus-openrouter"]
-        - claude-haiku-max: ["claude-haiku-openrouter"]
+        # TEMPORARILY disabled (CI triage): see model_list note above -- these
+        # fallbacks reference the commented-out claude-*-max model names.
+        # fallbacks:
+        # - claude-sonnet-max: ["claude-sonnet-openrouter"]
+        # - claude-opus-max: ["claude-opus-openrouter"]
+        # - claude-haiku-max: ["claude-haiku-openrouter"]
 
       litellm_settings:
         callbacks: ["prometheus", "detect_prompt_injection"]
