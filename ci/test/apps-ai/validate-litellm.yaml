@@ -44,6 +44,15 @@ spec:
       # + the proxy pod itself passing its startup probe -- longer than the
       # default 1m assert timeout.
       timeout: 8m
+  - description: Assert deployment/litellm
+    assert:
+      bindings:
+      - name: name
+        value: litellm
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 1m
   catch:
   - describe:
       apiVersion: helm.toolkit.fluxcd.io/v2
