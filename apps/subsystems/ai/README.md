@@ -132,3 +132,9 @@ This module also depends on a PostgreSQL and Redis-compatible cache, provisioned
    | db_replicas | PostgreSQL instance count | LiteLLM |
    | db_storage_size | PostgreSQL volume size | LiteLLM |
    | db_storage_class | PostgreSQL volume storage class | LiteLLM |
+
+4. Optional Configuration
+
+   | ConfigMap Name | Namespace | Key | Purpose |
+   | --------------- | --------- | ---- | ------- |
+   | litellm-model-config | ai | model-config.yaml | Model catalog and routing tuning (`proxy_config.model_list`, `router_settings.fallbacks`/`routing_strategy`/`allowed_fails`/`cooldown_time`) for the LiteLLM gateway. Not provided by this module — merged in via the HelmRelease's `spec.valuesFrom` (optional). Without it, LiteLLM falls back to the chart's own built-in placeholder models. |
