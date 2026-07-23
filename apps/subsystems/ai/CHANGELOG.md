@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.2...apps-ai-v0.6.3) (2026-07-23)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** allow in-cluster host for mcp-playwright and drop litellm prompt-injection callback ([#3367](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3367)) ([9558153](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/95581539a20962744f3b5fdcc72494232dadc83f))
+
 ## [0.6.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.1...apps-ai-v0.6.2) (2026-07-22)
 
 
