@@ -117,7 +117,7 @@ spec:
         enable_pre_call_checks: true
 
       litellm_settings:
-        callbacks: ["prometheus", "detect_prompt_injection"]
+        callbacks: ["prometheus"]
         cache: true
         cache_params:
           # Cache is proxy-wide once enabled; scoping it OFF for Claude-Code/coding-assistant
