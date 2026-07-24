@@ -4,4 +4,3 @@ kind: Kustomization
 
 resources:
 - openwebui.yaml
-- ollama.yaml
