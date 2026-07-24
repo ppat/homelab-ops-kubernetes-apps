@@ -84,3 +84,11 @@ spec:
   - name: Validate mcp-unifi-protect
     use:
       template: ./validate-mcp-unifi-protect.yaml
+
+  - name: Validate n8n
+    use:
+      template: ./validate-n8n.yaml
+
+  - name: Validate openclaw
+    use:
+      template: ./validate-openclaw.yaml

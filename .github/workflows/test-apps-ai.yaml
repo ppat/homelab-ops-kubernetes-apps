@@ -27,3 +27,9 @@ jobs:
       test_path: ./ci/test/apps-ai
       chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
       kind_config: .github/kind-cluster-single-node.yaml
+      # Raised from the 15m default: this suite now stands up TWO CloudNativePG Postgres
+      # clusters (litellm's and n8n's), and CNPG initdb + first-boot n8n migrations are the
+      # long pole (n8n's Deployment assert alone budgets 8m and only starts ~7m in, after the
+      # other component validations). 15m cancels the job before n8n is Ready and openclaw is
+      # even reached.
+      timeout: 25

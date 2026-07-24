@@ -12,6 +12,8 @@ resources:
 - mcp-playwright/
 - mcp-unifi-network/
 - mcp-unifi-protect/
+- n8n/
+- openclaw/
 - openwebui/
 
 sortOptions:

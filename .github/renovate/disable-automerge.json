@@ -10,6 +10,19 @@
       "matchFileNames": [
         "infrastructure/bootstrap/crds/**"
       ]
+    },
+    {
+      "automerge": false,
+      "addLabels": [
+        "automerge:off"
+      ],
+      "description": "disable automerge for openclaw -- unusually high security-advisory volume, every bump gets human review",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/openclaw/openclaw"
+      ]
     }
   ]
 }

@@ -1,0 +1,154 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openclaw-config
+  namespace: openclaw
+  annotations:
+    # openclaw.json's `${VAR}` tokens are expanded by OpenClaw itself from its own
+    # container env (sourced from openclaw-secrets) at startup -- not by Flux. Without this,
+    # Flux's postBuild substitution would try (and fail, since none of these names are
+    # declared cluster postBuild vars) to resolve them before the ConfigMap is ever applied.
+    kustomize.toolkit.fluxcd.io/substitute: disabled
+data:
+  openclaw.json: |
+    {
+      // All model calls are routed through the in-cluster LiteLLM gateway -- no direct
+      // provider API keys here.
+      "models": {
+        "providers": {
+          "litellm": {
+            "baseUrl": "http://litellm.ai.svc.cluster.local:4000/v1",
+            "apiKey": "${LITELLM_KEY}",
+            "api": "openai-completions",
+            "timeoutSeconds": 120,
+            // Each catalog entry must be an object with both `id` and a display `name` --
+            // a bare string or an id-only object fails schema validation
+            // ("models.providers.<id>.models.N[.name]: Invalid input").
+            "models": [
+              { "id": "deepseek/deepseek-v4-pro", "name": "DeepSeek v4 Pro" },
+              { "id": "deepseek/deepseek-v4-flash", "name": "DeepSeek v4 Flash" },
+              { "id": "google/gemini-3.5-flash-lite", "name": "Gemini 3.5 Flash Lite" },
+              { "id": "openai/gpt-5-nano", "name": "GPT-5 Nano" }
+            ]
+          }
+        }
+      },
+
+      "agents": {
+        "defaults": {
+          "model": {
+            "primary": "litellm/deepseek/deepseek-v4-pro",
+            "fallbacks": [
+              "litellm/google/gemini-3.5-flash-lite",
+              "litellm/openai/gpt-5-nano"
+            ]
+          }
+          // No memory/dreaming block here -- `agents.defaults` has no `memory` key (an unknown
+          // key fails the whole object's validation). Dreaming lives under
+          // `plugins.entries.memory-core.config.dreaming.enabled` and defaults to off, which is
+          // what we want day-one.
+        }
+      },
+
+      // WhatsApp-only (Baileys QR-pairing) for day one; Telegram is a trivial later add.
+      "channels": {
+        "whatsapp": {
+          "enabled": true,
+          "dmPolicy": "pairing",
+          "allowFrom": ["${OWNER_WHATSAPP_NUMBER}"],
+          "groups": {
+            "requireMention": true
+          }
+        }
+      },
+
+      "mcp": {
+        "servers": {
+          // Aggregated read-only tool access via LiteLLM's own /mcp endpoint.
+          "litellm-readonly": {
+            "url": "http://litellm.ai.svc.cluster.local:4000/mcp",
+            "transport": "streamable-http",
+            // `auth` is an enum whose only value is "oauth" (for the `openclaw mcp login`
+            // flow) -- a static bearer token goes in `headers` instead.
+            "headers": {
+              "Authorization": "Bearer ${LITELLM_KEY}"
+            }
+          },
+          // Direct to Home Assistant's MCP server (bypasses LiteLLM), restricted to
+          // read/get/list tools only -- writes stay disabled until Phase 2 approvals land.
+          "home-assistant": {
+            "url": "http://mcp-home-assistant.ai.svc.cluster.local:8086/mcp",
+            "transport": "streamable-http",
+            "toolFilter": {
+              "include": ["get_*", "list_*", "read_*"]
+            }
+          }
+        }
+      },
+
+      // Inbound point for n8n / Alertmanager relays (see n8n's notify-subworkflow.json).
+      "hooks": {
+        "enabled": true,
+        "token": "${OPENCLAW_HOOKS_TOKEN}",
+        "path": "/hooks/agent"
+      },
+
+      // Jobs are not declared statically here -- `cron.jobs` isn't part of the config schema
+      // (jobs live in the gateway's own state store). The daily-digest job is created once,
+      // post-deploy, via `openclaw cron add` (same pattern as the WhatsApp QR pairing step).
+      "cron": {
+        "enabled": true
+      },
+
+      "gateway": {
+        // Headless/server deploy: gateway.mode must be set explicitly or OpenClaw refuses to
+        // start ("Gateway start blocked: existing config is missing gateway.mode").
+        "mode": "local",
+        // `bind` is a mode enum (loopback|lan|tailnet|auto|custom), NOT a host:port string --
+        // "lan" listens on 0.0.0.0 so the kubelet probes, ClusterIP Service, and Ingress can
+        // reach the gateway on the pod IP. The listen port is a separate field.
+        "bind": "lan",
+        "port": 18789,
+        "auth": {
+          "mode": "token",
+          "token": "${OPENCLAW_GATEWAY_TOKEN}"
+        }
+      },
+
+      // Lockdown: computer/browser tool, elevated/shell/exec, and third-party in-process
+      // plugins are all disabled day-one. See ai/README.md Prerequisites for the roadmap.
+      "tools": {
+        "deny": ["exec", "browser"],
+        "elevated": {
+          "enabled": false
+        }
+      },
+
+      "plugins": {
+        "allow": [
+          "@openclaw/channel-whatsapp",
+          "@openclaw/diagnostics-prometheus"
+        ]
+      },
+
+      "skills": {
+        "workshop": {
+          "autonomous": {
+            "enabled": false
+          }
+        }
+      },
+
+      "logging": {
+        "redactSensitive": "tools"
+      },
+
+      // `diagnostics` has no `prometheus` sub-key -- the diagnostics-prometheus plugin
+      // (see `plugins.allow` above) self-registers its own endpoint (GET
+      // /api/diagnostics/prometheus, gateway operator auth) once diagnostics events are
+      // enabled.
+      "diagnostics": {
+        "enabled": true
+      }
+    }

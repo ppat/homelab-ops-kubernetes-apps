@@ -45,6 +45,16 @@
       "versioning": "regex:^RELEASE\\.(?<major>\\d{4})-(?<minor>\\d{2})-(?<patch>\\d{2})T\\d{2}-\\d{2}-\\d{2}Z$"
     },
     {
+      "description": "configure calver (YYYY.M.P-slim) version scheme for the openclaw image",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/openclaw/openclaw"
+      ],
+      "versioning": "regex:^(?<major>\\d{4})\\.(?<minor>\\d{1,2})\\.(?<patch>\\d+)-slim$"
+    },
+    {
       "description": [
         "strip digests from OCIRepository tags (flux rejects digests in ref.tag field)"
       ],
