@@ -6,7 +6,12 @@ resources:
 - namespace.yaml
 - litellm/
 - mcp-context7/
+- mcp-grafana/
+- mcp-home-assistant/
+- mcp-kubernetes/
 - mcp-playwright/
+- mcp-unifi-network/
+- mcp-unifi-protect/
 - ollama/
 - openwebui/
 

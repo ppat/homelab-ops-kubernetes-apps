@@ -1,0 +1,40 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-mcp-unifi-protect
+spec:
+  try:
+  - description: Assert service/mcp-unifi-protect
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: mcp-unifi-protect
+          namespace: ai
+  - description: Assert externalsecret/mcp-unifi-protect-secrets
+    assert:
+      bindings:
+      - name: name
+        value: mcp-unifi-protect-secrets
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
+  - description: Assert deployment/mcp-unifi-protect
+    assert:
+      bindings:
+      - name: name
+        value: mcp-unifi-protect
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 5m
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: mcp-unifi-protect
+      namespace: ai
+  - events:
+      namespace: ai

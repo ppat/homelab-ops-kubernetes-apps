@@ -1,0 +1,47 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mcp-kubernetes-config
+  namespace: ai
+data:
+  config.toml: |
+    read_only = true
+    cluster_provider_strategy = "in-cluster"
+    toolsets = ["core"]
+    disabled_tools = ["pods_exec", "pods_run", "pods_delete", "resources_create_or_update", "resources_delete"]
+
+    [[denied_resources]]
+    group = ""
+    version = "v1"
+    kind = "Secret"
+
+    [[denied_resources]]
+    group = ""
+    version = "v1"
+    kind = "ServiceAccount"
+
+    [[denied_resources]]
+    group = "external-secrets.io"
+    version = "v1"
+    kind = "ExternalSecret"
+
+    [[denied_resources]]
+    group = "external-secrets.io"
+    version = "v1"
+    kind = "ClusterExternalSecret"
+
+    [[denied_resources]]
+    group = "external-secrets.io"
+    version = "v1"
+    kind = "SecretStore"
+
+    [[denied_resources]]
+    group = "external-secrets.io"
+    version = "v1"
+    kind = "ClusterSecretStore"
+
+    [[denied_resources]]
+    group = "external-secrets.io"
+    version = "v1"
+    kind = "PushSecret"

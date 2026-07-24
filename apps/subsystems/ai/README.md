@@ -26,7 +26,7 @@ The AI subsystem consists of three main capability groups:
    - Unified routing across multiple LLM providers, with automatic failover
    - Virtual key, team, and budget management for gateway consumers
    - Request caching and cost tracking
-   - Self-hosted MCP servers exposing documentation-lookup and browser-automation tools to any client behind the gateway
+   - Self-hosted MCP servers exposing documentation lookup, browser automation, observability, Kubernetes, network, and home automation tools to any client behind the gateway
 
 ## Component Architecture
 
@@ -89,9 +89,14 @@ flowchart TB
 | ----------- | ------ | -------------- | -------------- | ------------------- |
 | Ollama | Core | LLM Server | • Run large language models locally<br>• Efficient model management<br>• API-based interaction<br>• Model downloading and serving | • Direct user access via API<br>• OpenWebUI integration<br>• Persistent storage for models |
 | OpenWebUI | Core | Web Interface | • User-friendly chat interface<br>• Conversation management<br>• Model selection and configuration<br>• Optional cloud LLM integration | • Ollama API integration<br>• LiteLLM gateway integration for cloud model access<br>• Direct user access via web browser<br>• Persistent storage for settings |
-| LiteLLM | Gateway | AI Gateway | • Unified routing across multiple LLM providers with automatic failover<br>• Virtual key, team, and budget management<br>• Request caching and cost tracking<br>• Hosts MCP servers for client tool access | • OpenWebUI and other gateway consumer integration<br>• PostgreSQL for persistent configuration and spend data<br>• Redis-compatible cache for response caching<br>• mcp-context7 and mcp-playwright integration |
+| LiteLLM | Gateway | AI Gateway | • Unified routing across multiple LLM providers with automatic failover<br>• Virtual key, team, and budget management<br>• Request caching and cost tracking<br>• Hosts MCP servers for client tool access | • OpenWebUI and other gateway consumer integration<br>• PostgreSQL for persistent configuration and spend data<br>• Redis-compatible cache for response caching<br>• mcp-context7, mcp-grafana, mcp-home-assistant, mcp-kubernetes, mcp-playwright, mcp-unifi-network, and mcp-unifi-protect integration |
 | mcp-context7 | Core | Documentation MCP Server | • Self-hosted library/API documentation lookup<br>• MCP protocol interface for AI clients<br>• Stateless, lightweight process | • Hosted behind the LiteLLM gateway<br>• Provides documentation context to AI assistants |
+| mcp-grafana | Core | Observability MCP Server | • Self-hosted Grafana MCP server covering dashboards, datasources, Prometheus, Loki, and alerting<br>• Read-write access, with the admin toolset excluded<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the in-cluster Grafana instance<br>• Provides observability context and query tools to AI assistants |
+| mcp-home-assistant | Core | Home Automation MCP Server | • Self-hosted Home Assistant MCP server<br>• Read-write access for device control and automation<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the in-cluster Home Assistant instance<br>• Provides home automation control and inspection tools to AI assistants |
+| mcp-kubernetes | Core | Kubernetes Cluster MCP Server | • Self-hosted, read-only Kubernetes cluster MCP server<br>• Hardened access — blocks Secrets, ServiceAccounts, and external-secrets resources<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• In-cluster access via a dedicated ServiceAccount<br>• Provides cluster state context to AI assistants |
 | mcp-playwright | Core | Browser Automation MCP Server | • Self-hosted browser automation and web interaction<br>• MCP protocol interface for AI clients<br>• Headless browser execution | • Hosted behind the LiteLLM gateway<br>• Provides browsing/automation tools to AI assistants |
+| mcp-unifi-network | Core | UniFi Network MCP Server | • Self-hosted, read-only UniFi Network MCP server<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the UniFi Network controller<br>• Provides network state context to AI assistants |
+| mcp-unifi-protect | Core | UniFi Protect MCP Server | • Self-hosted, read-only UniFi Protect MCP server<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the UniFi Protect controller<br>• Provides camera/security system context to AI assistants |
 
 ## Prerequisites
 
@@ -119,12 +124,18 @@ This module also depends on a PostgreSQL and Redis-compatible cache, provisioned
    | apikey_openrouter_litellm | OpenRouter API key used by LiteLLM to route requests to OpenRouter-hosted models |
    | litellm_redis_password | Password for LiteLLM's Redis-compatible cache |
    | apikey_context7_mcp | context7 API key required by the self-hosted mcp-context7 server |
+   | grafana_service_account_token_mcp | Grafana service-account token (Editor role) used by the self-hosted mcp-grafana server |
+   | unifi_network_username_mcp | Username for a native UniFi Read-Only/Viewer account, used by the self-hosted mcp-unifi-network server |
+   | unifi_network_password_mcp | Password for the UniFi Network account used by the self-hosted mcp-unifi-network server |
+   | unifi_protect_username_mcp | Username for a UniFi Protect View-Only account, used by the self-hosted mcp-unifi-protect server |
+   | unifi_protect_password_mcp | Password for the UniFi Protect account used by the self-hosted mcp-unifi-protect server |
+   | homeassistant_token_mcp | Long-lived Home Assistant access token (from an admin user) used by the self-hosted mcp-home-assistant server |
 
 3. Required Variables
 
    | Variable | Purpose | Used By |
    | ---------- | --------- | --------- |
-   | domain_name | External access URL (ollama.${domain_name}, openwebui.${domain_name}) | Ollama, OpenWebUI |
+   | domain_name | External access URL (ollama.${domain_name}, openwebui.${domain_name}) and UniFi controller host (unifi.nodes.${domain_name}) | Ollama, OpenWebUI, mcp-unifi-network, mcp-unifi-protect |
    | db_name | PostgreSQL cluster name prefix | LiteLLM |
    | db_suffix_current | PostgreSQL cluster name suffix (blue/green rotation) | LiteLLM |
    | db_bootstrap_database | Initial database name created on bootstrap | LiteLLM |
@@ -138,3 +149,9 @@ This module also depends on a PostgreSQL and Redis-compatible cache, provisioned
    | ConfigMap Name | Namespace | Key | Purpose |
    | --------------- | --------- | ---- | ------- |
    | litellm-model-config | ai | model-config.yaml | Model catalog and routing tuning (`proxy_config.model_list`, `router_settings.fallbacks`/`routing_strategy`/`allowed_fails`/`cooldown_time`) for the LiteLLM gateway. Not provided by this module — merged in via the HelmRelease's `spec.valuesFrom` (optional). Without it, LiteLLM falls back to the chart's own built-in placeholder models. |
+
+5. RBAC
+
+   | Resource | Access | Purpose |
+   | -------- | ------ | ------- |
+   | ClusterRole: `view` (built-in) | Read-only, cluster-wide, excluding Secrets | Bound to a dedicated ServiceAccount for the mcp-kubernetes server |
