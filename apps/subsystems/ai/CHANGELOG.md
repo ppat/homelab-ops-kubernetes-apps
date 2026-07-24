@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.3...apps-ai-v0.6.4) (2026-07-24)
+
+
+### ✨ Features
+
+* **apps-ai:** host grafana, kubernetes, unifi and home-assistant MCP servers ([#3372](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3372)) ([656b91e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/656b91ef53d7233419443782fb662a471ee33850))
+
 ## [0.6.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.2...apps-ai-v0.6.3) (2026-07-23)
 
 
