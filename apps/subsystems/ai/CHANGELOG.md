@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.4...apps-ai-v0.6.5) (2026-07-24)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** fix incorrect unifi host in unifi mcp's ([#3379](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3379)) ([3117a97](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3117a97cc31c0e6676fd819913d8b4e41d7a44c4))
+
 ## [0.6.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.3...apps-ai-v0.6.4) (2026-07-24)
 
 
