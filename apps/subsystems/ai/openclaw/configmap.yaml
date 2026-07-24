@@ -104,6 +104,9 @@ data:
       },
 
       "gateway": {
+        // Headless/server deploy: gateway.mode must be set explicitly or OpenClaw refuses to
+        // start ("Gateway start blocked: existing config is missing gateway.mode").
+        "mode": "local",
         // `bind` is a mode enum (loopback|lan|tailnet|auto|custom), NOT a host:port string --
         // "lan" listens on 0.0.0.0 so the kubelet probes, ClusterIP Service, and Ingress can
         // reach the gateway on the pod IP. The listen port is a separate field.
