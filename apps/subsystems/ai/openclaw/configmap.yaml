@@ -22,11 +22,13 @@ data:
             "apiKey": "${LITELLM_KEY}",
             "api": "openai-completions",
             "timeoutSeconds": 120,
+            // Each catalog entry must be an object with at least `id` -- a bare model-id
+            // string fails schema validation ("models.providers.<id>.models.N: Invalid input").
             "models": [
-              "deepseek/deepseek-v4-pro",
-              "deepseek/deepseek-v4-flash",
-              "google/gemini-3.5-flash-lite",
-              "openai/gpt-5-nano"
+              { "id": "deepseek/deepseek-v4-pro" },
+              { "id": "deepseek/deepseek-v4-flash" },
+              { "id": "google/gemini-3.5-flash-lite" },
+              { "id": "openai/gpt-5-nano" }
             ]
           }
         }
@@ -40,13 +42,11 @@ data:
               "litellm/google/gemini-3.5-flash-lite",
               "litellm/openai/gpt-5-nano"
             ]
-          },
-          "memory": {
-            "enabled": true,
-            "dreaming": {
-              "enabled": false
-            }
           }
+          // No memory/dreaming block here -- `agents.defaults` has no `memory` key (an unknown
+          // key fails the whole object's validation). Dreaming lives under
+          // `plugins.entries.memory-core.config.dreaming.enabled` and defaults to off, which is
+          // what we want day-one.
         }
       },
 
@@ -68,9 +68,10 @@ data:
           "litellm-readonly": {
             "url": "http://litellm.ai.svc.cluster.local:4000/mcp",
             "transport": "streamable-http",
-            "auth": {
-              "type": "bearer",
-              "token": "${LITELLM_KEY}"
+            // `auth` is an enum whose only value is "oauth" (for the `openclaw mcp login`
+            // flow) -- a static bearer token goes in `headers` instead.
+            "headers": {
+              "Authorization": "Bearer ${LITELLM_KEY}"
             }
           },
           // Direct to Home Assistant's MCP server (bypasses LiteLLM), restricted to
@@ -92,15 +93,11 @@ data:
         "path": "/hooks/agent"
       },
 
+      // Jobs are not declared statically here -- `cron.jobs` isn't part of the config schema
+      // (jobs live in the gateway's own state store). The daily-digest job is created once,
+      // post-deploy, via `openclaw cron add` (same pattern as the WhatsApp QR pairing step).
       "cron": {
-        "jobs": [
-          {
-            "name": "daily-digest",
-            "schedule": "0 8 * * *",
-            "command": "digest --announce",
-            "mcp": "home-assistant"
-          }
-        ]
+        "enabled": true
       },
 
       "gateway": {
@@ -121,13 +118,8 @@ data:
       // Lockdown: computer/browser tool, elevated/shell/exec, and third-party in-process
       // plugins are all disabled day-one. See ai/README.md Prerequisites for the roadmap.
       "tools": {
-        "exec": {
-          "mode": "deny"
-        },
+        "deny": ["exec", "browser"],
         "elevated": {
-          "enabled": false
-        },
-        "browser": {
           "enabled": false
         }
       },
@@ -151,11 +143,11 @@ data:
         "redactSensitive": "tools"
       },
 
+      // `diagnostics` has no `prometheus` sub-key -- the diagnostics-prometheus plugin
+      // (see `plugins.allow` above) self-registers its own endpoint (GET
+      // /api/diagnostics/prometheus, gateway operator auth) once diagnostics events are
+      // enabled.
       "diagnostics": {
-        "prometheus": {
-          "enabled": true,
-          "path": "/metrics",
-          "auth": "operator"
-        }
+        "enabled": true
       }
     }
