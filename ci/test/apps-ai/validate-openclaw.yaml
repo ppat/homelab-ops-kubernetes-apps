@@ -37,15 +37,28 @@ spec:
         metadata:
           name: openclaw
           namespace: openclaw
-  - description: Assert deployment/openclaw
+  # We deliberately do NOT use the shared deployment-ready.yaml (readyReplicas == replicas)
+  # here: OpenClaw's readiness probe (/readyz) stays 503 until its messaging channels are
+  # actually connected, and the only day-one channel is WhatsApp (Baileys pairing), which
+  # cannot connect in CI (no real WhatsApp/QR pairing reachable). So the pod never becomes
+  # Ready and the Deployment never reports Available in kind. Instead we assert the gateway
+  # pod actually starts and passes its startup probe (/healthz — "server can answer HTTP"),
+  # which is what proves the manifest/config is deployable; full readiness is validated at
+  # rollout against a live WhatsApp session.
+  - description: Assert the openclaw gateway pod starts and passes its startup probe
     assert:
-      bindings:
-      - name: name
-        value: openclaw
-      - name: namespace
-        value: openclaw
-      file: ../chainsaw/assertions/deployment-ready.yaml
       timeout: 5m
+      resource:
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          namespace: openclaw
+          labels:
+            app.kubernetes.io/name: openclaw
+        status:
+          phase: Running
+          (containerStatuses[?name == 'openclaw']):
+          - started: true
   catch:
   - describe:
       apiVersion: apps/v1
