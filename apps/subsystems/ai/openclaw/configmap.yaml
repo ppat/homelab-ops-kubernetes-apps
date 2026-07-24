@@ -1,0 +1,154 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openclaw-config
+  namespace: openclaw
+  annotations:
+    # openclaw.json's `${VAR}` tokens are expanded by OpenClaw itself from its own
+    # container env (sourced from openclaw-secrets) at startup -- not by Flux. Without this,
+    # Flux's postBuild substitution would try (and fail, since none of these names are
+    # declared cluster postBuild vars) to resolve them before the ConfigMap is ever applied.
+    kustomize.toolkit.fluxcd.io/substitute: disabled
+data:
+  openclaw.json: |
+    {
+      // All model calls are routed through the in-cluster LiteLLM gateway -- no direct
+      // provider API keys here.
+      "models": {
+        "providers": {
+          "litellm": {
+            "baseUrl": "http://litellm.ai.svc.cluster.local:4000/v1",
+            "apiKey": "${LITELLM_KEY}",
+            "api": "openai-completions",
+            "timeoutSeconds": 120,
+            "models": [
+              "deepseek/deepseek-v4-pro",
+              "deepseek/deepseek-v4-flash",
+              "google/gemini-3.5-flash-lite",
+              "openai/gpt-5-nano"
+            ]
+          }
+        }
+      },
+
+      "agents": {
+        "defaults": {
+          "model": {
+            "primary": "litellm/deepseek/deepseek-v4-pro",
+            "fallbacks": [
+              "litellm/google/gemini-3.5-flash-lite",
+              "litellm/openai/gpt-5-nano"
+            ]
+          },
+          "memory": {
+            "enabled": true,
+            "dreaming": {
+              "enabled": false
+            }
+          }
+        }
+      },
+
+      // WhatsApp-only (Baileys QR-pairing) for day one; Telegram is a trivial later add.
+      "channels": {
+        "whatsapp": {
+          "enabled": true,
+          "dmPolicy": "pairing",
+          "allowFrom": ["${OWNER_WHATSAPP_NUMBER}"],
+          "groups": {
+            "requireMention": true
+          }
+        }
+      },
+
+      "mcp": {
+        "servers": {
+          // Aggregated read-only tool access via LiteLLM's own /mcp endpoint.
+          "litellm-readonly": {
+            "url": "http://litellm.ai.svc.cluster.local:4000/mcp",
+            "transport": "streamable-http",
+            "auth": {
+              "type": "bearer",
+              "token": "${LITELLM_KEY}"
+            }
+          },
+          // Direct to Home Assistant's MCP server (bypasses LiteLLM), restricted to
+          // read/get/list tools only -- writes stay disabled until Phase 2 approvals land.
+          "home-assistant": {
+            "url": "http://mcp-home-assistant.ai.svc.cluster.local:8086/mcp",
+            "transport": "streamable-http",
+            "toolFilter": {
+              "include": ["get_*", "list_*", "read_*"]
+            }
+          }
+        }
+      },
+
+      // Inbound point for n8n / Alertmanager relays (see n8n's notify-subworkflow.json).
+      "hooks": {
+        "enabled": true,
+        "token": "${OPENCLAW_HOOKS_TOKEN}",
+        "path": "/hooks/agent"
+      },
+
+      "cron": {
+        "jobs": [
+          {
+            "name": "daily-digest",
+            "schedule": "0 8 * * *",
+            "command": "digest --announce",
+            "mcp": "home-assistant"
+          }
+        ]
+      },
+
+      "gateway": {
+        "bind": "0.0.0.0:18789",
+        "auth": {
+          "type": "bearer",
+          "token": "${OPENCLAW_GATEWAY_TOKEN}"
+        }
+      },
+
+      // Lockdown: computer/browser tool, elevated/shell/exec, and third-party in-process
+      // plugins are all disabled day-one. See ai/README.md Prerequisites for the roadmap.
+      "tools": {
+        "exec": {
+          "mode": "deny"
+        },
+        "elevated": {
+          "enabled": false
+        },
+        "browser": {
+          "enabled": false
+        }
+      },
+
+      "plugins": {
+        "allow": [
+          "@openclaw/channel-whatsapp",
+          "@openclaw/diagnostics-prometheus"
+        ]
+      },
+
+      "skills": {
+        "workshop": {
+          "autonomous": {
+            "enabled": false
+          }
+        }
+      },
+
+      "logging": {
+        "redactSensitive": "tools"
+      },
+
+      "diagnostics": {
+        "prometheus": {
+          "enabled": true,
+          "path": "/metrics",
+          "auth": "operator"
+        }
+      }
+    }

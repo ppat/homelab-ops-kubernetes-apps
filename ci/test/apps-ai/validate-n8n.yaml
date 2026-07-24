@@ -1,0 +1,62 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-n8n
+spec:
+  try:
+  - description: Assert cluster.postgresql.cnpg.io/n8n-db-test
+    assert:
+      bindings:
+      - name: name
+        value: n8n-db-test
+      - name: namespace
+        value: n8n
+      file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
+      timeout: 3m
+  - description: Assert pvc/n8n-data
+    assert:
+      bindings:
+      - name: name
+        value: n8n-data
+      - name: namespace
+        value: n8n
+      file: ../chainsaw/assertions/pvc-bound.yaml
+  - description: Assert externalsecret/n8n-secrets
+    assert:
+      bindings:
+      - name: name
+        value: n8n-secrets
+      - name: namespace
+        value: n8n
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
+  - description: Assert deployment/n8n
+    assert:
+      bindings:
+      - name: name
+        value: n8n
+      - name: namespace
+        value: n8n
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      # Sequences after CNPG's Cluster + a startupProbe budget that covers n8n's own
+      # first-boot DB migrations -- longer than the default 1m assert timeout.
+      timeout: 8m
+  catch:
+  - describe:
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      name: n8n-db-test
+      namespace: n8n
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: n8n
+      namespace: n8n
+  - podLogs:
+      selector: app.kubernetes.io/name=n8n
+      namespace: n8n
+      tail: 200
+  - events:
+      namespace: cnpg-system
+  - events:
+      namespace: n8n

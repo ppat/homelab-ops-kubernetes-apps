@@ -1,0 +1,197 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: n8n
+  namespace: n8n
+  labels:
+    app.kubernetes.io/name: n8n
+  annotations:
+    secret.reloader.stakater.com/reload: n8n-secrets,${n8n_db_name:=n8n-db}-${n8n_db_suffix_current:=default}-app
+spec:
+  # main mode: single pod, no separate worker/webhook processes.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: n8n
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: n8n
+    spec:
+      automountServiceAccountToken: false
+      # User namespaces (idmapped mounts): maps container UIDs to unprivileged host UIDs.
+      # GA since k8s 1.33; requires containerd/runc userns support on the node. Drop this
+      # field if the runtime rejects it (kind's containerd build has historically lagged).
+      hostUsers: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: n8n
+        image: docker.n8n.io/n8nio/n8n:2.31.6
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 5678
+          protocol: TCP
+        env:
+        # Database
+        - name: DB_TYPE
+          value: postgresdb
+        - name: DB_POSTGRESDB_HOST
+          value: n8n-db.n8n.svc.cluster.local
+        - name: DB_POSTGRESDB_PORT
+          value: "5432"
+        - name: DB_POSTGRESDB_DATABASE
+          value: ${n8n_db_bootstrap_database:=n8n}
+        - name: DB_POSTGRESDB_USER
+          valueFrom:
+            secretKeyRef:
+              name: ${n8n_db_name:=n8n-db}-${n8n_db_suffix_current:=default}-app
+              key: username
+        - name: DB_POSTGRESDB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ${n8n_db_name:=n8n-db}-${n8n_db_suffix_current:=default}-app
+              key: password
+        # Proxy / host
+        - name: N8N_HOST
+          value: n8n.${domain_name}
+        - name: WEBHOOK_URL
+          value: https://n8n.${domain_name}/
+        - name: N8N_PROTOCOL
+          value: http
+        - name: N8N_PROXY_HOPS
+          value: "1"
+        - name: N8N_SECURE_COOKIE
+          value: "true"
+        # Crypto / owner pre-provisioning (skips the setup wizard)
+        - name: N8N_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: N8N_ENCRYPTION_KEY
+        - name: N8N_INSTANCE_OWNER_MANAGED_BY_ENV
+          value: "true"
+        - name: N8N_INSTANCE_OWNER_EMAIL
+          value: ${n8n_owner_email:=admin@example.com}
+        - name: N8N_INSTANCE_OWNER_FIRST_NAME
+          value: ${n8n_owner_first_name:=Admin}
+        - name: N8N_INSTANCE_OWNER_LAST_NAME
+          value: ${n8n_owner_last_name:=User}
+        - name: N8N_INSTANCE_OWNER_PASSWORD_HASH
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: N8N_INSTANCE_OWNER_PASSWORD_HASH
+        # Pre-seeded credentials (LiteLLM + Maddy SMTP), see workflows/README for the
+        # credential names these are matched against on import.
+        - name: N8N_CREDENTIALS_OVERWRITE_DATA
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: N8N_CREDENTIALS_OVERWRITE_DATA
+        - name: LITELLM_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: LITELLM_API_KEY
+        # Transactional email (password reset / invites) via the in-cluster Maddy relay.
+        - name: N8N_EMAIL_MODE
+          value: smtp
+        - name: N8N_SMTP_HOST
+          value: smtp.${domain_name}
+        - name: N8N_SMTP_PORT
+          value: "587"
+        - name: N8N_SMTP_SSL
+          value: "false"
+        - name: N8N_SMTP_SENDER
+          value: n8n@${domain_name}
+        - name: N8N_SMTP_USER
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: N8N_SMTP_USER
+        - name: N8N_SMTP_PASS
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: N8N_SMTP_PASS
+        # Hardening
+        - name: N8N_BLOCK_ENV_ACCESS_IN_NODE
+          value: "true"
+        - name: N8N_DIAGNOSTICS_ENABLED
+          value: "false"
+        - name: N8N_VERSION_NOTIFICATIONS_ENABLED
+          value: "false"
+        - name: N8N_TEMPLATES_ENABLED
+          value: "false"
+        - name: N8N_PUBLIC_API_DISABLED
+          value: "true"
+        - name: N8N_SSRF_PROTECTION_ENABLED
+          value: "true"
+        # In-cluster targets the HTTP Request / Webhook nodes are allowed to reach; SSRF
+        # protection blocks anything else (see ai/README.md for why each entry is here).
+        - name: N8N_SSRF_ALLOWED_HOSTNAMES
+          value: >-
+            litellm.ai.svc.cluster.local,
+            mcp-context7.ai.svc.cluster.local,
+            mcp-grafana.ai.svc.cluster.local,
+            mcp-home-assistant.ai.svc.cluster.local,
+            mcp-kubernetes.ai.svc.cluster.local,
+            mcp-playwright.ai.svc.cluster.local,
+            mcp-unifi-network.ai.svc.cluster.local,
+            mcp-unifi-protect.ai.svc.cluster.local,
+            openclaw.openclaw.svc.cluster.local,
+            smtp.${domain_name}
+        # Metrics
+        - name: N8N_METRICS
+          value: "true"
+        - name: N8N_METRICS_INCLUDE_WORKFLOW_INFO
+          value: "true"
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          failureThreshold: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 1Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: n8n-data
+          mountPath: /home/node/.n8n
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: n8n-data
+        persistentVolumeClaim:
+          claimName: n8n-data
+      - name: tmp
+        emptyDir: {}

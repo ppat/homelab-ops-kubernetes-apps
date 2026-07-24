@@ -1,0 +1,60 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-openclaw
+spec:
+  try:
+  - description: Assert pvc/openclaw-data
+    assert:
+      bindings:
+      - name: name
+        value: openclaw-data
+      - name: namespace
+        value: openclaw
+      file: ../chainsaw/assertions/pvc-bound.yaml
+  - description: Assert externalsecret/openclaw-secrets
+    assert:
+      bindings:
+      - name: name
+        value: openclaw-secrets
+      - name: namespace
+        value: openclaw
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
+  - description: Assert configmap/openclaw-config
+    assert:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: openclaw-config
+          namespace: openclaw
+  - description: Assert serviceaccount/openclaw
+    assert:
+      resource:
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: openclaw
+          namespace: openclaw
+  - description: Assert deployment/openclaw
+    assert:
+      bindings:
+      - name: name
+        value: openclaw
+      - name: namespace
+        value: openclaw
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 5m
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: openclaw
+      namespace: openclaw
+  - podLogs:
+      selector: app.kubernetes.io/name=openclaw
+      namespace: openclaw
+      tail: 200
+  - events:
+      namespace: openclaw

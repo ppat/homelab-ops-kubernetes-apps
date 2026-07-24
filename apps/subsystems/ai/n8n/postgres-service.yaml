@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: n8n-db
+  namespace: n8n
+spec:
+  type: ExternalName
+  externalName: ${n8n_db_name:=n8n-db}-${n8n_db_suffix_current:=default}-rw.n8n.svc.cluster.local

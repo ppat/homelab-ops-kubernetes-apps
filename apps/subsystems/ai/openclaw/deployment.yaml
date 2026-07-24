@@ -1,0 +1,114 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openclaw
+  namespace: openclaw
+  labels:
+    app.kubernetes.io/name: openclaw
+  annotations:
+    secret.reloader.stakater.com/reload: openclaw-secrets
+    configmap.reloader.stakater.com/reload: openclaw-config
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: openclaw
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: openclaw
+    spec:
+      serviceAccountName: openclaw
+      automountServiceAccountToken: false
+      # User namespaces (idmapped mounts): maps container UIDs to unprivileged host UIDs.
+      # GA since k8s 1.33; requires containerd/runc userns support on the node. Drop this
+      # field if the runtime rejects it (kind's containerd build has historically lagged).
+      hostUsers: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: openclaw
+        image: ghcr.io/openclaw/openclaw:2026.7.1-slim
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: OPENCLAW_CONFIG_PATH
+          value: /etc/openclaw/openclaw.json
+        - name: OPENCLAW_DATA_DIR
+          value: /home/node/.openclaw
+        - name: OPENCLAW_GATEWAY_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: openclaw-secrets
+              key: OPENCLAW_GATEWAY_TOKEN
+        - name: LITELLM_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openclaw-secrets
+              key: LITELLM_KEY
+        - name: OPENCLAW_HOOKS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: openclaw-secrets
+              key: OPENCLAW_HOOKS_TOKEN
+        - name: OWNER_WHATSAPP_NUMBER
+          valueFrom:
+            secretKeyRef:
+              name: openclaw-secrets
+              key: OWNER_WHATSAPP_NUMBER
+        ports:
+        - name: gateway
+          containerPort: 18789
+          protocol: TCP
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: gateway
+          failureThreshold: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: gateway
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: gateway
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 1Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: config
+          mountPath: /etc/openclaw
+          readOnly: true
+        - name: openclaw-data
+          mountPath: /home/node/.openclaw
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: config
+        configMap:
+          name: openclaw-config
+      - name: openclaw-data
+        persistentVolumeClaim:
+          claimName: openclaw-data
+      - name: tmp
+        emptyDir: {}
