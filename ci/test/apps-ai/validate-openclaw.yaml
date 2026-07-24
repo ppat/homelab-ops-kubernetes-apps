@@ -46,8 +46,12 @@ spec:
   # which is what proves the manifest/config is deployable; full readiness is validated at
   # rollout against a live WhatsApp session.
   - description: Assert the openclaw gateway pod starts and passes its startup probe
+    # Short timeout: this is the LAST validate step and openclaw's pod has already been
+    # running for the whole suite by the time we get here (~10m), so if it is healthy it
+    # passes immediately. Keeping it short guarantees the catch block below captures pod
+    # logs/events within the reusable workflow's overall job timeout instead of being killed.
     assert:
-      timeout: 5m
+      timeout: 2m
       resource:
         apiVersion: v1
         kind: Pod
