@@ -57,9 +57,11 @@ data:
           "enabled": true,
           "dmPolicy": "pairing",
           "allowFrom": ["${OWNER_WHATSAPP_NUMBER}"],
-          "groups": {
-            "requireMention": true
-          }
+          // Groups are locked down by default: `groupPolicy: allowlist` means no group is
+          // active until its ID is explicitly added. Per-group `requireMention` lives under
+          // `channels.whatsapp.groups.<groupId>` (a map keyed by real group ID) and is set
+          // once a group is allowlisted -- there is no channel-wide requireMention toggle.
+          "groupPolicy": "allowlist"
         }
       },
 
@@ -125,10 +127,15 @@ data:
         }
       },
 
+      // plugins.allow is keyed by plugin ID (e.g. "whatsapp"), NOT the npm package name
+      // ("@openclaw/whatsapp") -- the package name is silently treated as "not found" and the
+      // real plugin ends up omitted from the allowlist. These two are clawhub external plugins
+      // (the WhatsApp/Baileys channel + the operator Prometheus diagnostics endpoint) the
+      // gateway auto-installs from clawhub on first boot when referenced here.
       "plugins": {
         "allow": [
-          "@openclaw/channel-whatsapp",
-          "@openclaw/diagnostics-prometheus"
+          "whatsapp",
+          "diagnostics-prometheus"
         ]
       },
 
