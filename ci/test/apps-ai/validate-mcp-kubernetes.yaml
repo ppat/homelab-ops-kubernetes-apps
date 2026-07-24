@@ -1,0 +1,55 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-mcp-kubernetes
+spec:
+  try:
+  - description: Assert service/mcp-kubernetes
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: mcp-kubernetes
+          namespace: ai
+  - description: Assert configmap/mcp-kubernetes-config
+    assert:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: mcp-kubernetes-config
+          namespace: ai
+  - description: Assert serviceaccount/mcp-kubernetes
+    assert:
+      resource:
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: mcp-kubernetes
+          namespace: ai
+  - description: Assert clusterrolebinding/mcp-kubernetes-view
+    assert:
+      resource:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRoleBinding
+        metadata:
+          name: mcp-kubernetes-view
+  - description: Assert deployment/mcp-kubernetes
+    assert:
+      bindings:
+      - name: name
+        value: mcp-kubernetes
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 5m
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: mcp-kubernetes
+      namespace: ai
+  - events:
+      namespace: ai

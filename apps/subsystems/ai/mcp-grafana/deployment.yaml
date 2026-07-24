@@ -1,0 +1,77 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-grafana
+  namespace: ai
+  labels:
+    app.kubernetes.io/name: mcp-grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mcp-grafana
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mcp-grafana
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: mcp-grafana
+        image: docker.io/grafana/mcp-grafana:0.17.2@sha256:d5b51db0c8eaafc6ed3fede5bfcc8d67b2384a40cf3d493086e378855ceba882
+        imagePullPolicy: IfNotPresent
+        args:
+        - -t
+        - streamable-http
+        - --address
+        - ":8000"
+        - --endpoint-path
+        - /mcp
+        - --allowed-hosts
+        - mcp-grafana.ai.svc.cluster.local:8000
+        - --enabled-tools
+        - search,datasource,incident,prometheus,write,loki,elasticsearch,quickwit,influxdb,alerting,dashboard,oncall,asserts,sift,pyroscope,navigation,rendering,snapshot,cloudwatch,clickhouse,snowflake,runpanelquery,graphite,athena,provisioning
+        env:
+        - name: GRAFANA_URL
+          valueFrom:
+            secretKeyRef:
+              name: mcp-grafana-secrets
+              key: GRAFANA_URL
+        - name: GRAFANA_SERVICE_ACCOUNT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: mcp-grafana-secrets
+              key: GRAFANA_SERVICE_ACCOUNT_TOKEN
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        # httpGet probes trip the server's own --allowed-hosts guard (returns 400
+        # for any Host header it doesn't recognize, including the kubelet's probe
+        # request); a TCP check avoids that entirely.
+        livenessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+          runAsNonRoot: true
+          runAsUser: 1000

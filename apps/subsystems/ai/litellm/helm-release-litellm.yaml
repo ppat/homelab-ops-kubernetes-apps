@@ -130,6 +130,11 @@ spec:
         mcp_aliases:
           context7: context7_mcp
           playwright: playwright_mcp
+          grafana: grafana_mcp
+          kubernetes: kubernetes_mcp
+          unifi_network: unifi_network_mcp
+          unifi_protect: unifi_protect_mcp
+          home_assistant: home_assistant_mcp
 
       mcp_servers:
         context7_mcp:
@@ -142,3 +147,28 @@ spec:
           transport: "http"
           auth_type: "none"
           description: "Self-hosted Playwright browser automation MCP server"
+        grafana_mcp:
+          url: "http://mcp-grafana.ai.svc.cluster.local:8000/mcp"
+          transport: "http"
+          auth_type: "none"
+          description: "Self-hosted Grafana MCP server (read-write, admin toolset excluded)"
+        kubernetes_mcp:
+          url: "http://mcp-kubernetes.ai.svc.cluster.local:8080/mcp"
+          transport: "http"
+          auth_type: "none"
+          description: "Self-hosted Kubernetes MCP server (read-only; no access to secret-like resources)"
+        unifi_network_mcp:
+          url: "http://mcp-unifi-network.ai.svc.cluster.local:3000/mcp"
+          transport: "http"
+          auth_type: "none"
+          description: "Self-hosted UniFi Network MCP server (read-only)"
+        unifi_protect_mcp:
+          url: "http://mcp-unifi-protect.ai.svc.cluster.local:3001/mcp"
+          transport: "http"
+          auth_type: "none"
+          description: "Self-hosted UniFi Protect MCP server (read-only)"
+        home_assistant_mcp:
+          url: "http://mcp-home-assistant.ai.svc.cluster.local:8086/mcp"
+          transport: "http"
+          auth_type: "none"
+          description: "Self-hosted Home Assistant MCP server (read-write)"

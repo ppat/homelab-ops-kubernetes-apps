@@ -1,0 +1,40 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-mcp-home-assistant
+spec:
+  try:
+  - description: Assert service/mcp-home-assistant
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: mcp-home-assistant
+          namespace: ai
+  - description: Assert externalsecret/mcp-home-assistant-secrets
+    assert:
+      bindings:
+      - name: name
+        value: mcp-home-assistant-secrets
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
+  - description: Assert deployment/mcp-home-assistant
+    assert:
+      bindings:
+      - name: name
+        value: mcp-home-assistant
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 5m
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: mcp-home-assistant
+      namespace: ai
+  - events:
+      namespace: ai

@@ -1,0 +1,40 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-mcp-grafana
+spec:
+  try:
+  - description: Assert service/mcp-grafana
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: mcp-grafana
+          namespace: ai
+  - description: Assert externalsecret/mcp-grafana-secrets
+    assert:
+      bindings:
+      - name: name
+        value: mcp-grafana-secrets
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
+  - description: Assert deployment/mcp-grafana
+    assert:
+      bindings:
+      - name: name
+        value: mcp-grafana
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 5m
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: mcp-grafana
+      namespace: ai
+  - events:
+      namespace: ai

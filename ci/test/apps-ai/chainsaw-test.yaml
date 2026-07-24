@@ -68,3 +68,23 @@ spec:
   - name: Validate mcp-playwright
     use:
       template: ./validate-mcp-playwright.yaml
+
+  - name: Validate mcp-grafana
+    use:
+      template: ./validate-mcp-grafana.yaml
+
+  - name: Validate mcp-home-assistant
+    use:
+      template: ./validate-mcp-home-assistant.yaml
+
+  - name: Validate mcp-kubernetes
+    use:
+      template: ./validate-mcp-kubernetes.yaml
+
+  - name: Validate mcp-unifi-network
+    use:
+      template: ./validate-mcp-unifi-network.yaml
+
+  - name: Validate mcp-unifi-protect
+    use:
+      template: ./validate-mcp-unifi-protect.yaml
