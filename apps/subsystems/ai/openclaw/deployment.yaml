@@ -95,14 +95,27 @@ spec:
             drop:
             - ALL
         volumeMounts:
-        - name: config
+        # /etc/openclaw is the gateway's config dir AND where the :slim image writes at boot:
+        # it mkdirs /etc/openclaw/extensions to install the configured external plugins
+        # (whatsapp, diagnostics-prometheus -- not bundled in :slim) and drops openclaw.json.bak
+        # backups there. A read-only ConfigMap mount makes that mkdir fail
+        # ("ENOENT ... mkdir '/etc/openclaw/extensions'") and the CLI aborts before serving
+        # /healthz. So the dir is a writable emptyDir with the ConfigMap layered in read-only
+        # via subPath (reloader restarts the pod on config change, so subPath's lack of live
+        # update is fine).
+        - name: config-dir
           mountPath: /etc/openclaw
+        - name: config
+          mountPath: /etc/openclaw/openclaw.json
+          subPath: openclaw.json
           readOnly: true
         - name: openclaw-data
           mountPath: /home/node/.openclaw
         - name: tmp
           mountPath: /tmp
       volumes:
+      - name: config-dir
+        emptyDir: {}
       - name: config
         configMap:
           name: openclaw-config
