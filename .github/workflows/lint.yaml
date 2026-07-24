@@ -107,7 +107,7 @@ jobs:
 
     - name: Validate Kubernetes Manifests
       if: ${{ steps.select-files.outputs.validate_k8s_manifests == 'true' }}
-      uses: ppat/validate-kubernetes-manifests@1a74426949d4e9e56a753236d287430c06736253 # v0.1.8
+      uses: ppat/validate-kubernetes-manifests@a1ab8c1b32093d6b40bfbe23fd211a5f02d57572 # v0.1.10
       with:
         files: ${{ steps.select-files.outputs.files_json }}
         pkg-include: '["apps/*","infrastructure/*", "ci/test/*"]'
