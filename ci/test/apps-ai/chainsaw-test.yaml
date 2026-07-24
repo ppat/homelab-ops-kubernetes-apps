@@ -49,10 +49,6 @@ spec:
     - events:
         namespace: flux-system
 
-  - name: Validate ollama
-    use:
-      template: ./validate-ollama.yaml
-
   - name: Validate open-webui
     use:
       template: ./validate-open-webui.yaml
