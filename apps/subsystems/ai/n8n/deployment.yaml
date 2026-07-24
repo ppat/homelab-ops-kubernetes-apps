@@ -22,10 +22,9 @@ spec:
         app.kubernetes.io/name: n8n
     spec:
       automountServiceAccountToken: false
-      # User namespaces (idmapped mounts): maps container UIDs to unprivileged host UIDs.
-      # GA since k8s 1.33; requires containerd/runc userns support on the node. Drop this
-      # field if the runtime rejects it (kind's containerd build has historically lagged).
-      hostUsers: false
+      # hostUsers: false omitted — CI kind runtime lacks userns support (runc fails to mount
+      # sysfs into the pod's user namespace: "operation not permitted"). Evaluate enabling at
+      # rollout if the cluster's containerd/runc supports idmapped mounts (GA since k8s 1.33).
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
