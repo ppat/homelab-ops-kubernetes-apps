@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.5...apps-ai-v0.6.6) (2026-07-25)
+
+
+### ✨ Features
+
+* **apps-ai:** add n8n workflow automation ([#3383](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3383)) ([9c3ecc1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9c3ecc14ab08c03897d48bf419f9124b9f82de7e))
+
 ## [0.6.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.4...apps-ai-v0.6.5) (2026-07-24)
 
 
