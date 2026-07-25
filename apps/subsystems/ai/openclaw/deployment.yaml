@@ -42,6 +42,19 @@ spec:
           value: /etc/openclaw/openclaw.json
         - name: OPENCLAW_DATA_DIR
           value: /home/node/.openclaw
+        # No official image tag (slim/plain/browser) bundles the WhatsApp/Baileys channel or
+        # diagnostics-prometheus plugins -- both are ClawHub/npm plugins OpenClaw otherwise
+        # tries to `npm install` at gateway startup. Under readOnlyRootFilesystem (no writable
+        # $HOME/.npm) and with no cluster egress that install fails, and the gateway treats a
+        # failed *configured-channel* plugin install as a FATAL startup migration ("startup
+        # migrations did not complete cleanly; refusing to report ready") -> CrashLoopBackOff.
+        # OPENCLAW_OFFLINE=1 suppresses runtime plugin/tool fetching (we never want a locked-down
+        # gateway reaching out to npm/ClawHub at boot), so a missing channel plugin degrades to a
+        # non-fatal "no-channel-owner" warning and the gateway boots and serves /healthz. The
+        # WhatsApp + diagnostics-prometheus plugins must be provisioned out-of-band at rollout
+        # (baked into a custom image, or a one-time `openclaw plugins install` into the PVC).
+        - name: OPENCLAW_OFFLINE
+          value: "1"
         - name: OPENCLAW_GATEWAY_TOKEN
           valueFrom:
             secretKeyRef:
