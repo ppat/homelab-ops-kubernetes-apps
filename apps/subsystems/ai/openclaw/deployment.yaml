@@ -1,0 +1,135 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openclaw
+  namespace: openclaw
+  labels:
+    app.kubernetes.io/name: openclaw
+  annotations:
+    secret.reloader.stakater.com/reload: openclaw-secrets
+    configmap.reloader.stakater.com/reload: openclaw-config
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: openclaw
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: openclaw
+    spec:
+      serviceAccountName: openclaw
+      automountServiceAccountToken: false
+      # hostUsers: false omitted — CI kind runtime lacks userns support (runc fails to mount
+      # sysfs into the pod's user namespace: "operation not permitted"). Evaluate enabling at
+      # rollout if the cluster's containerd/runc supports idmapped mounts (GA since k8s 1.33).
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: openclaw
+        image: docker.io/ppatlabs/openclaw:2026.7.1@sha256:8efc9d2e7a02e137031534d82eeee94b66938d26a3013d96d42643e5ad69fedc
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: OPENCLAW_CONFIG_PATH
+          value: /etc/openclaw/openclaw.json
+        - name: OPENCLAW_DATA_DIR
+          value: /home/node/.openclaw
+        # This custom image (docker.io/ppatlabs/openclaw) bakes in the WhatsApp/Baileys channel
+        # and diagnostics-prometheus plugins at build time; its own entrypoint reseeds them from
+        # /home/node/.openclaw-seed into the PVC-mounted /home/node/.openclaw on every start --
+        # do not override command/args/entrypoint. The official :slim/:plain/:browser tags don't
+        # bundle either plugin and instead try to `npm install` them at gateway startup, which
+        # fails under readOnlyRootFilesystem + no cluster egress and is treated as a FATAL
+        # startup migration for a *configured-channel* plugin -> CrashLoopBackOff.
+        # OPENCLAW_OFFLINE=1 is kept as defense-in-depth: no runtime plugin/tool fetch is needed
+        # since the plugins are already baked in and reseeded locally.
+        - name: OPENCLAW_OFFLINE
+          value: "1"
+        - name: OPENCLAW_GATEWAY_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: openclaw-secrets
+              key: OPENCLAW_GATEWAY_TOKEN
+        - name: LITELLM_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openclaw-secrets
+              key: LITELLM_KEY
+        - name: OPENCLAW_HOOKS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: openclaw-secrets
+              key: OPENCLAW_HOOKS_TOKEN
+        - name: OWNER_WHATSAPP_NUMBER
+          valueFrom:
+            secretKeyRef:
+              name: openclaw-secrets
+              key: OWNER_WHATSAPP_NUMBER
+        ports:
+        - name: gateway
+          containerPort: 18789
+          protocol: TCP
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: gateway
+          failureThreshold: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: gateway
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: gateway
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 1Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        # /etc/openclaw is the gateway's config dir AND where the image writes at boot: it
+        # mkdirs /etc/openclaw/extensions and drops openclaw.json.bak backups there. A read-only
+        # ConfigMap mount makes that mkdir fail ("ENOENT ... mkdir '/etc/openclaw/extensions'")
+        # and the CLI aborts before serving /healthz. So the dir is a writable emptyDir with the
+        # ConfigMap layered in read-only via subPath (reloader restarts the pod on config
+        # change, so subPath's lack of live update is fine).
+        - name: config-dir
+          mountPath: /etc/openclaw
+        - name: config
+          mountPath: /etc/openclaw/openclaw.json
+          subPath: openclaw.json
+          readOnly: true
+        - name: openclaw-data
+          mountPath: /home/node/.openclaw
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: config-dir
+        emptyDir: {}
+      - name: config
+        configMap:
+          name: openclaw-config
+      - name: openclaw-data
+        persistentVolumeClaim:
+          claimName: openclaw-data
+      - name: tmp
+        emptyDir: {}

@@ -4,11 +4,11 @@ Self-hosted AI platform providing a web interface for interacting with AI models
 
 ## Quick Links
 
-<a href="https://www.litellm.ai" target="_blank"><img src="../../../.static/images/logos/litellm.svg" width="32" height="32" alt="LiteLLM"></a> <a href="https://github.com/open-webui/open-webui" target="_blank"><img src="../../../.static/images/logos/open-webui.png" width="32" height="32" alt="OpenWebUI"></a> <a href="https://n8n.io" target="_blank"><img src="../../../.static/images/logos/n8n.svg" width="32" height="32" alt="n8n"></a>
+<a href="https://www.litellm.ai" target="_blank"><img src="../../../.static/images/logos/litellm.svg" width="32" height="32" alt="LiteLLM"></a> <a href="https://github.com/open-webui/open-webui" target="_blank"><img src="../../../.static/images/logos/open-webui.png" width="32" height="32" alt="OpenWebUI"></a> <a href="https://n8n.io" target="_blank"><img src="../../../.static/images/logos/n8n.svg" width="32" height="32" alt="n8n"></a> <a href="https://github.com/openclaw/openclaw" target="_blank"><img src="../../../.static/images/logos/openclaw.svg" width="32" height="32" alt="OpenClaw"></a>
 
 ## Overview
 
-The AI subsystem consists of four main capability groups:
+The AI subsystem consists of five main capability groups:
 
 1. User Interface
    - Web-based chat interface
@@ -28,6 +28,10 @@ The AI subsystem consists of four main capability groups:
    - Self-hosted n8n instance (own namespace, own Postgres) for glue workflows between the LLM gateway, MCP servers, Alertmanager, the *arr stack, and email
    - Owner-login authenticated; not part of the shared SSO/forward-auth layer yet
 
+5. Conversational Gateway
+   - OpenClaw provides a WhatsApp-reachable conversational front door (own namespace), able to trigger n8n workflows and relay results back
+   - Locked down hard: read-only MCP access, no exec/browser/elevated tools, pairing-only DMs — see [Prerequisites](#prerequisites) for the full list of what's disabled day-one
+
 ## Component Architecture
 
 The following diagram illustrates how the AI subsystem components work together, showing the relationship between the web interface, the LLM gateway, and how users interact with the system.
@@ -44,6 +48,7 @@ flowchart TB
 
     %% External Access
     user[User]:::external
+    whatsapp[WhatsApp]:::external
     cloud[Cloud LLMs]:::external
 
     %% Core Components - Module Provided
@@ -53,6 +58,7 @@ flowchart TB
         context7[context7 MCP Server]:::core
         playwright[Playwright MCP Server]:::core
         n8n[n8n Automation<br/>ns: n8n]:::ui
+        openclaw[OpenClaw Gateway<br/>ns: openclaw]:::ui
     end
 
     %% Storage Components - Dependencies
@@ -61,23 +67,31 @@ flowchart TB
         litellm_db[("PostgreSQL<br/>Database")]:::storage
         litellm_cache[("Redis-compatible<br/>Cache")]:::storage
         n8n_db[("PostgreSQL<br/>Database (n8n)")]:::storage
+        openclaw_pvc[(PVC: openclaw-data)]:::storage
     end
 
     %% Relationships
     user --> openwebui
     user --> n8n
+    whatsapp <--> openclaw
 
     openwebui --> litellm
     n8n --> litellm
+    openclaw --> litellm
     litellm -.-> cloud
 
     litellm --> context7
     litellm --> playwright
+    openclaw -.->|read-only MCP| litellm
+
+    openclaw -->|triggers| n8n
+    n8n -->|relays via hooks| openclaw
 
     openwebui --> openwebui_pvc
     litellm --> litellm_db
     litellm --> litellm_cache
     n8n --> n8n_db
+    openclaw --> openclaw_pvc
 ```
 
 <!-- markdownlint-disable-next-line MD036 -->
@@ -96,13 +110,14 @@ flowchart TB
 | mcp-playwright | Core | Browser Automation MCP Server | • Self-hosted browser automation and web interaction<br>• MCP protocol interface for AI clients<br>• Headless browser execution | • Hosted behind the LiteLLM gateway<br>• Provides browsing/automation tools to AI assistants |
 | mcp-unifi-network | Core | UniFi Network MCP Server | • Self-hosted, read-only UniFi Network MCP server<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the UniFi Network controller<br>• Provides network state context to AI assistants |
 | mcp-unifi-protect | Core | UniFi Protect MCP Server | • Self-hosted, read-only UniFi Protect MCP server<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the UniFi Protect controller<br>• Provides camera/security system context to AI assistants |
-| n8n | Core | Workflow Automation | • Self-hosted n8n (main mode, own namespace/Postgres)<br>• Owner-login authenticated, LAN/tailnet-only ingress<br>• Alertmanager/*arr/Harbor/Coder webhook receivers<br>• Transactional and workflow email via Maddy SMTP | • Calls the LiteLLM gateway for model access and MCP tools<br>• Own CloudNativePG PostgreSQL cluster for workflow/credential storage |
+| n8n | Core | Workflow Automation | • Self-hosted n8n (main mode, own namespace/Postgres)<br>• Owner-login authenticated, LAN/tailnet-only ingress<br>• Alertmanager/*arr/Harbor/Coder webhook receivers<br>• Transactional and workflow email via Maddy SMTP | • Calls the LiteLLM gateway for model access and MCP tools<br>• Triggers OpenClaw's `/hooks/agent` to relay results to WhatsApp<br>• Own CloudNativePG PostgreSQL cluster for workflow/credential storage |
+| OpenClaw | Core | Conversational Gateway | • WhatsApp-reachable conversational front door (own namespace)<br>• Hardened: read-only MCP, no exec/browser/elevated tools, pairing-only DMs<br>• Inbound hooks for n8n/Alertmanager relays, daily cron digest | • Calls the LiteLLM gateway for model access (cheap model set)<br>• Read-only MCP via LiteLLM `/mcp` and direct Home Assistant MCP (read-only toolFilter)<br>• Triggers n8n workflows and relays their output back to WhatsApp |
 
 ## Prerequisites
 
 This module also depends on a PostgreSQL and Redis-compatible cache, provisioned via the cluster's database operators, for the LiteLLM gateway's configuration, spend tracking, and response caching. n8n has its own dedicated PostgreSQL cluster (own namespace, own postBuild variables — see below).
 
-n8n runs in its own isolated namespace (`n8n`) rather than the shared `ai` namespace. Its ingress is not behind SSO forward-auth yet (deferred — requires coordinated Terraform-repo changes); it relies on its own owner login. It is LAN/tailnet-only, same as the rest of this module.
+n8n and OpenClaw each run in their own isolated namespace (`n8n`, `openclaw`) rather than the shared `ai` namespace. Neither ingress is behind SSO forward-auth yet (deferred — requires coordinated Terraform-repo changes); n8n relies on its own owner login, OpenClaw on its gateway auth token. Both are LAN/tailnet-only, same as the rest of this module.
 
 1. Persistent Storage
 
@@ -111,12 +126,15 @@ n8n runs in its own isolated namespace (`n8n`) rather than the shared `ai` names
    | openwebui | User settings and conversation history | RWX |
    | n8n-data | n8n configuration, workflow static data | RWO |
 
+   OpenClaw provisions its own 10Gi RWO PVC (`openclaw-data`, config/workspace/memory SQLite/WhatsApp session) as part of this module — it isn't an external prerequisite.
+
 2. Required Secrets
 
    | Secret Name | Purpose | Required Keys |
    | ----------- | ------- | -------------- |
    | litellm-openwebui-key | OpenWebUI's virtual key for authenticating to the LiteLLM gateway — sourced from the `apikey_litellm_openwebui` secret-store key, which is populated by a separate Terraform-managed workspace, not manually | apikey |
    | n8n-secrets | n8n's encryption key, pre-provisioned owner login, pre-seeded LiteLLM/SMTP credential overwrite blob, and its LiteLLM virtual key | N8N_ENCRYPTION_KEY, N8N_INSTANCE_OWNER_PASSWORD_HASH, N8N_CREDENTIALS_OVERWRITE_DATA, LITELLM_API_KEY, N8N_SMTP_USER, N8N_SMTP_PASS |
+   | openclaw-secrets | OpenClaw's gateway auth token, LiteLLM virtual key, inbound hooks bearer token, and owner WhatsApp number (used by `channels.whatsapp.allowFrom`) | OPENCLAW_GATEWAY_TOKEN, LITELLM_KEY, OPENCLAW_HOOKS_TOKEN, OWNER_WHATSAPP_NUMBER |
 
    The following secret-store keys are also required by the LiteLLM gateway and its self-hosted MCP servers:
 
@@ -139,6 +157,10 @@ n8n runs in its own isolated namespace (`n8n`) rather than the shared `ai` names
    | apikey_litellm_n8n | n8n's virtual key for authenticating to the LiteLLM gateway |
    | n8n_smtp_user | Username n8n authenticates with against the Maddy SMTP relay |
    | n8n_smtp_password | Password n8n authenticates with against the Maddy SMTP relay |
+   | openclaw_gateway_token | Bearer token required to reach OpenClaw's control UI/gateway |
+   | apikey_litellm_openclaw | OpenClaw's virtual key for authenticating to the LiteLLM gateway |
+   | openclaw_hooks_token | Bearer token n8n/Alertmanager present when calling OpenClaw's inbound `/hooks/agent` endpoint |
+   | openclaw_owner_whatsapp_number | Owner's E.164 WhatsApp number, the only sender OpenClaw's `pairing` DM policy admits without a pairing code |
 
 3. Required Variables
 
