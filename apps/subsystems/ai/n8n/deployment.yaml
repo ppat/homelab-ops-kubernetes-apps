@@ -90,8 +90,9 @@ spec:
             secretKeyRef:
               name: n8n-secrets
               key: N8N_INSTANCE_OWNER_PASSWORD_HASH
-        # Pre-seeded credentials (LiteLLM + Maddy SMTP), see workflows/README for the
-        # credential names these are matched against on import.
+        # Pre-seeded credentials (LiteLLM + Maddy SMTP) matched by name against example
+        # workflows supplied at the cluster level and imported at rollout (not shipped
+        # in this module).
         - name: N8N_CREDENTIALS_OVERWRITE_DATA
           valueFrom:
             secretKeyRef:
@@ -148,7 +149,6 @@ spec:
             mcp-playwright.ai.svc.cluster.local,
             mcp-unifi-network.ai.svc.cluster.local,
             mcp-unifi-protect.ai.svc.cluster.local,
-            openclaw.openclaw.svc.cluster.local,
             smtp.${domain_name}
         # Metrics
         - name: N8N_METRICS

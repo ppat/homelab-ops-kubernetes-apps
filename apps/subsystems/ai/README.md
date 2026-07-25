@@ -135,7 +135,7 @@ n8n runs in its own isolated namespace (`n8n`) rather than the shared `ai` names
    | homeassistant_token_mcp | Long-lived Home Assistant access token (from an admin user) used by the self-hosted mcp-home-assistant server |
    | n8n_encryption_key | n8n's data-at-rest encryption key (credentials, etc.) — must not change after first boot |
    | n8n_owner_password_hash | bcrypt hash of the n8n owner account password, used to pre-provision the owner login and skip the setup wizard |
-   | n8n_credentials_overwrite | JSON blob n8n loads via `N8N_CREDENTIALS_OVERWRITE_DATA` to pre-seed the LiteLLM (OpenAI-compatible) and Maddy SMTP credentials used by the seeded workflows |
+   | n8n_credentials_overwrite | JSON blob n8n loads via `N8N_CREDENTIALS_OVERWRITE_DATA` to pre-seed the LiteLLM (OpenAI-compatible) and Maddy SMTP credentials matched by name against example workflows supplied at the cluster level and imported at rollout (not shipped in this module) |
    | apikey_litellm_n8n | n8n's virtual key for authenticating to the LiteLLM gateway |
    | n8n_smtp_user | Username n8n authenticates with against the Maddy SMTP relay |
    | n8n_smtp_password | Password n8n authenticates with against the Maddy SMTP relay |
