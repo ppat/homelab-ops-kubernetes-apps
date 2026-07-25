@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.6...apps-ai-v0.6.7) (2026-07-25)
+
+
+### ✨ Features
+
+* **apps-ai:** add openclaw assistant gateway ([#3386](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3386)) ([ab58a43](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ab58a434bba9b729d3d50beabcb28417d67b85fa))
+
 ## [0.6.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.5...apps-ai-v0.6.6) (2026-07-25)
 
 
