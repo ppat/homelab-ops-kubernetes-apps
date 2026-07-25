@@ -4,11 +4,11 @@ Self-hosted AI platform providing a web interface for interacting with AI models
 
 ## Quick Links
 
-<a href="https://www.litellm.ai" target="_blank"><img src="../../../.static/images/logos/litellm.svg" width="32" height="32" alt="LiteLLM"></a> <a href="https://github.com/open-webui/open-webui" target="_blank"><img src="../../../.static/images/logos/open-webui.png" width="32" height="32" alt="OpenWebUI"></a>
+<a href="https://www.litellm.ai" target="_blank"><img src="../../../.static/images/logos/litellm.svg" width="32" height="32" alt="LiteLLM"></a> <a href="https://github.com/open-webui/open-webui" target="_blank"><img src="../../../.static/images/logos/open-webui.png" width="32" height="32" alt="OpenWebUI"></a> <a href="https://n8n.io" target="_blank"><img src="../../../.static/images/logos/n8n.svg" width="32" height="32" alt="n8n"></a>
 
 ## Overview
 
-The AI subsystem consists of three main capability groups:
+The AI subsystem consists of four main capability groups:
 
 1. User Interface
    - Web-based chat interface
@@ -23,6 +23,10 @@ The AI subsystem consists of three main capability groups:
 
 3. MCP Tooling
    - Self-hosted MCP servers exposing documentation lookup, browser automation, observability, Kubernetes, network, and home automation tools to any client behind the gateway
+
+4. Workflow Automation
+   - Self-hosted n8n instance (own namespace, own Postgres) for glue workflows between the LLM gateway, MCP servers, Alertmanager, the *arr stack, and email
+   - Owner-login authenticated; not part of the shared SSO/forward-auth layer yet
 
 ## Component Architecture
 
@@ -48,6 +52,7 @@ flowchart TB
         litellm[LiteLLM Gateway]:::gateway
         context7[context7 MCP Server]:::core
         playwright[Playwright MCP Server]:::core
+        n8n[n8n Automation<br/>ns: n8n]:::ui
     end
 
     %% Storage Components - Dependencies
@@ -55,12 +60,15 @@ flowchart TB
         openwebui_pvc[(PVC: openwebui)]:::storage
         litellm_db[("PostgreSQL<br/>Database")]:::storage
         litellm_cache[("Redis-compatible<br/>Cache")]:::storage
+        n8n_db[("PostgreSQL<br/>Database (n8n)")]:::storage
     end
 
     %% Relationships
     user --> openwebui
+    user --> n8n
 
     openwebui --> litellm
+    n8n --> litellm
     litellm -.-> cloud
 
     litellm --> context7
@@ -69,6 +77,7 @@ flowchart TB
     openwebui --> openwebui_pvc
     litellm --> litellm_db
     litellm --> litellm_cache
+    n8n --> n8n_db
 ```
 
 <!-- markdownlint-disable-next-line MD036 -->
@@ -87,22 +96,27 @@ flowchart TB
 | mcp-playwright | Core | Browser Automation MCP Server | • Self-hosted browser automation and web interaction<br>• MCP protocol interface for AI clients<br>• Headless browser execution | • Hosted behind the LiteLLM gateway<br>• Provides browsing/automation tools to AI assistants |
 | mcp-unifi-network | Core | UniFi Network MCP Server | • Self-hosted, read-only UniFi Network MCP server<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the UniFi Network controller<br>• Provides network state context to AI assistants |
 | mcp-unifi-protect | Core | UniFi Protect MCP Server | • Self-hosted, read-only UniFi Protect MCP server<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the UniFi Protect controller<br>• Provides camera/security system context to AI assistants |
+| n8n | Core | Workflow Automation | • Self-hosted n8n (main mode, own namespace/Postgres)<br>• Owner-login authenticated, LAN/tailnet-only ingress<br>• Alertmanager/*arr/Harbor/Coder webhook receivers<br>• Transactional and workflow email via Maddy SMTP | • Calls the LiteLLM gateway for model access and MCP tools<br>• Own CloudNativePG PostgreSQL cluster for workflow/credential storage |
 
 ## Prerequisites
 
-This module also depends on a PostgreSQL and Redis-compatible cache, provisioned via the cluster's database operators, for the LiteLLM gateway's configuration, spend tracking, and response caching.
+This module also depends on a PostgreSQL and Redis-compatible cache, provisioned via the cluster's database operators, for the LiteLLM gateway's configuration, spend tracking, and response caching. n8n has its own dedicated PostgreSQL cluster (own namespace, own postBuild variables — see below).
+
+n8n runs in its own isolated namespace (`n8n`) rather than the shared `ai` namespace. Its ingress is not behind SSO forward-auth yet (deferred — requires coordinated Terraform-repo changes); it relies on its own owner login. It is LAN/tailnet-only, same as the rest of this module.
 
 1. Persistent Storage
 
    | PVC Name | Purpose | Access Mode |
    | -------- | ------- | ----------- |
    | openwebui | User settings and conversation history | RWX |
+   | n8n-data | n8n configuration, workflow static data | RWO |
 
 2. Required Secrets
 
    | Secret Name | Purpose | Required Keys |
    | ----------- | ------- | -------------- |
    | litellm-openwebui-key | OpenWebUI's virtual key for authenticating to the LiteLLM gateway — sourced from the `apikey_litellm_openwebui` secret-store key, which is populated by a separate Terraform-managed workspace, not manually | apikey |
+   | n8n-secrets | n8n's encryption key, pre-provisioned owner login, pre-seeded LiteLLM/SMTP credential overwrite blob, and its LiteLLM virtual key | N8N_ENCRYPTION_KEY, N8N_INSTANCE_OWNER_PASSWORD_HASH, N8N_CREDENTIALS_OVERWRITE_DATA, LITELLM_API_KEY, N8N_SMTP_USER, N8N_SMTP_PASS |
 
    The following secret-store keys are also required by the LiteLLM gateway and its self-hosted MCP servers:
 
@@ -119,6 +133,12 @@ This module also depends on a PostgreSQL and Redis-compatible cache, provisioned
    | unifi_protect_username_mcp | Username for a UniFi Protect View-Only account, used by the self-hosted mcp-unifi-protect server |
    | unifi_protect_password_mcp | Password for the UniFi Protect account used by the self-hosted mcp-unifi-protect server |
    | homeassistant_token_mcp | Long-lived Home Assistant access token (from an admin user) used by the self-hosted mcp-home-assistant server |
+   | n8n_encryption_key | n8n's data-at-rest encryption key (credentials, etc.) — must not change after first boot |
+   | n8n_owner_password_hash | bcrypt hash of the n8n owner account password, used to pre-provision the owner login and skip the setup wizard |
+   | n8n_credentials_overwrite | JSON blob n8n loads via `N8N_CREDENTIALS_OVERWRITE_DATA` to pre-seed the LiteLLM (OpenAI-compatible) and Maddy SMTP credentials matched by name against example workflows supplied at the cluster level and imported at rollout (not shipped in this module) |
+   | apikey_litellm_n8n | n8n's virtual key for authenticating to the LiteLLM gateway |
+   | n8n_smtp_user | Username n8n authenticates with against the Maddy SMTP relay |
+   | n8n_smtp_password | Password n8n authenticates with against the Maddy SMTP relay |
 
 3. Required Variables
 
@@ -132,6 +152,16 @@ This module also depends on a PostgreSQL and Redis-compatible cache, provisioned
    | db_replicas | PostgreSQL instance count | LiteLLM |
    | db_storage_size | PostgreSQL volume size | LiteLLM |
    | db_storage_class | PostgreSQL volume storage class | LiteLLM |
+   | n8n_db_name | n8n's PostgreSQL cluster name prefix (own var — kept separate from `db_name` so the two clusters in this shared module never collide) | n8n |
+   | n8n_db_suffix_current | n8n's PostgreSQL cluster name suffix (blue/green rotation) | n8n |
+   | n8n_db_bootstrap_database | Initial database name created on bootstrap (default `n8n`) | n8n |
+   | n8n_db_bootstrap_owner | Initial database owner role created on bootstrap (default `n8n`) | n8n |
+   | n8n_db_replicas | n8n PostgreSQL instance count | n8n |
+   | n8n_db_storage_size | n8n PostgreSQL volume size | n8n |
+   | n8n_db_storage_class | n8n PostgreSQL volume storage class | n8n |
+   | n8n_owner_email | Email address of the pre-provisioned n8n owner account (default `admin@example.com`) | n8n |
+   | n8n_owner_first_name | First name of the pre-provisioned n8n owner account (default `Admin`) | n8n |
+   | n8n_owner_last_name | Last name of the pre-provisioned n8n owner account (default `User`) | n8n |
 
 4. Optional Configuration
 
