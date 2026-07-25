@@ -88,3 +88,7 @@ spec:
   - name: Validate n8n
     use:
       template: ./validate-n8n.yaml
+
+  - name: Validate openclaw
+    use:
+      template: ./validate-openclaw.yaml

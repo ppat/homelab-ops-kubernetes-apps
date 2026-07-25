@@ -22,6 +22,11 @@ spec:
         app.kubernetes.io/name: n8n
     spec:
       automountServiceAccountToken: false
+      # Kubernetes injects service-link env vars (e.g. N8N_PORT=tcp://<clusterIP>:5678 from a
+      # Service named "n8n") that collide with n8n's own N8N_PORT config, making it read the
+      # tcp:// URL as a port number ("Invalid number value for N8N_PORT: tcp://…"). Disable the
+      # legacy service-link injection so n8n's own env config is authoritative.
+      enableServiceLinks: false
       # hostUsers: false omitted — CI kind runtime lacks userns support (runc fails to mount
       # sysfs into the pod's user namespace: "operation not permitted"). Evaluate enabling at
       # rollout if the cluster's containerd/runc supports idmapped mounts (GA since k8s 1.33).
@@ -186,11 +191,19 @@ spec:
         volumeMounts:
         - name: n8n-data
           mountPath: /home/node/.n8n
+        # n8n mkdirs ~/.cache at boot (task-runner / node module cache); under
+        # readOnlyRootFilesystem that write fails with ENOENT ("mkdir '/home/node/.cache'")
+        # and the process exits before serving /healthz. Give it a dedicated writable dir --
+        # ephemeral cache, so an emptyDir rather than the PVC.
+        - name: cache
+          mountPath: /home/node/.cache
         - name: tmp
           mountPath: /tmp
       volumes:
       - name: n8n-data
         persistentVolumeClaim:
           claimName: n8n-data
+      - name: cache
+        emptyDir: {}
       - name: tmp
         emptyDir: {}

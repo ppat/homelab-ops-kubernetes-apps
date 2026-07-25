@@ -1,0 +1,77 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-openclaw
+spec:
+  try:
+  - description: Assert pvc/openclaw-data
+    assert:
+      bindings:
+      - name: name
+        value: openclaw-data
+      - name: namespace
+        value: openclaw
+      file: ../chainsaw/assertions/pvc-bound.yaml
+  - description: Assert externalsecret/openclaw-secrets
+    assert:
+      bindings:
+      - name: name
+        value: openclaw-secrets
+      - name: namespace
+        value: openclaw
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
+  - description: Assert configmap/openclaw-config
+    assert:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: openclaw-config
+          namespace: openclaw
+  - description: Assert serviceaccount/openclaw
+    assert:
+      resource:
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: openclaw
+          namespace: openclaw
+  # We deliberately do NOT use the shared deployment-ready.yaml (readyReplicas == replicas)
+  # here: OpenClaw's readiness probe (/readyz) stays 503 until its messaging channels are
+  # actually connected, and the only day-one channel is WhatsApp (Baileys pairing), which
+  # cannot connect in CI (no real WhatsApp/QR pairing reachable). So the pod never becomes
+  # Ready and the Deployment never reports Available in kind. Instead we assert the gateway
+  # pod actually starts and passes its startup probe (/healthz — "server can answer HTTP"),
+  # which is what proves the manifest/config is deployable; full readiness is validated at
+  # rollout against a live WhatsApp session.
+  - description: Assert the openclaw gateway pod starts and passes its startup probe
+    # Short timeout: this is the LAST validate step and openclaw's pod has already been
+    # running for the whole suite by the time we get here (~10m), so if it is healthy it
+    # passes immediately. Keeping it short guarantees the catch block below captures pod
+    # logs/events within the reusable workflow's overall job timeout instead of being killed.
+    assert:
+      timeout: 2m
+      resource:
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          namespace: openclaw
+          labels:
+            app.kubernetes.io/name: openclaw
+        status:
+          phase: Running
+          (containerStatuses[?name == 'openclaw']):
+          - started: true
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: openclaw
+      namespace: openclaw
+  - podLogs:
+      selector: app.kubernetes.io/name=openclaw
+      namespace: openclaw
+      tail: 200
+  - events:
+      namespace: openclaw
