@@ -1,0 +1,113 @@
+{
+  "name": "Media Downloaded Notify",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "media-downloaded",
+        "authentication": "headerAuth",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "5f6a1e10-1a2b-4c3d-9e0f-000000000201",
+      "name": "Webhook - Radarr/Sonarr",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "media-downloaded",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "arr-webhook-auth",
+          "name": "Radarr/Sonarr Webhook Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5f6a1e10-1a2b-4c3d-9e0f-000000000202",
+              "name": "subject",
+              "type": "string",
+              "value": "={{ 'Downloaded: ' + ($json.body.movie ? $json.body.movie.title : $json.body.series.title) }}"
+            },
+            {
+              "id": "5f6a1e10-1a2b-4c3d-9e0f-000000000203",
+              "name": "message",
+              "type": "string",
+              "value": "={{ JSON.stringify($json.body.episodeFile || $json.body.movieFile) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5f6a1e10-1a2b-4c3d-9e0f-000000000204",
+      "name": "Set - Notify Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "notify",
+          "mode": "list",
+          "cachedResultName": "Notify"
+        },
+        "workflowInputs": {
+          "value": {
+            "subject": "={{ $json.subject }}",
+            "message": "={{ $json.message }}"
+          },
+          "matchingColumns": [
+            "subject",
+            "message"
+          ]
+        }
+      },
+      "id": "5f6a1e10-1a2b-4c3d-9e0f-000000000205",
+      "name": "Execute Workflow - Notify",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Radarr/Sonarr": {
+      "main": [
+        [
+          {
+            "node": "Set - Notify Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Notify Payload": {
+      "main": [
+        [
+          {
+            "node": "Execute Workflow - Notify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    "media",
+    "example"
+  ]
+}

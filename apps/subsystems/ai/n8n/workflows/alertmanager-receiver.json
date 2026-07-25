@@ -1,0 +1,140 @@
+{
+  "name": "Alertmanager Receiver",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "alertmanager",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "5f6a1e10-1a2b-4c3d-9e0f-000000000001",
+      "name": "Webhook - Alertmanager",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "alertmanager-receiver"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "9f2c1e10-0000-4c3d-9e0f-000000000002",
+              "leftValue": "={{ $json.body.status }}",
+              "rightValue": "firing",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5f6a1e10-1a2b-4c3d-9e0f-000000000002",
+      "name": "IF - Firing",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://litellm.ai.svc.cluster.local:4000/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"model\": \"openai/gpt-5-nano\",\n  \"messages\": [\n    { \"role\": \"system\", \"content\": \"Summarize this Prometheus alert in one short sentence for a WhatsApp notification.\" },\n    { \"role\": \"user\", \"content\": JSON.stringify($json.body) }\n  ]\n}) }}",
+        "options": {}
+      },
+      "id": "5f6a1e10-1a2b-4c3d-9e0f-000000000003",
+      "name": "LiteLLM - Summarize",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 220],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "litellm-header-auth",
+          "name": "LiteLLM Bearer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://openclaw.openclaw.svc.cluster.local:18789/hooks/agent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"source\": \"alertmanager\",\n  \"message\": $json.choices[0].message.content\n}) }}",
+        "options": {}
+      },
+      "id": "5f6a1e10-1a2b-4c3d-9e0f-000000000004",
+      "name": "OpenClaw - Relay to WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 220],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "openclaw-hooks-auth",
+          "name": "OpenClaw Hooks Token"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook - Alertmanager": {
+      "main": [
+        [
+          {
+            "node": "IF - Firing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Firing": {
+      "main": [
+        [
+          {
+            "node": "LiteLLM - Summarize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LiteLLM - Summarize": {
+      "main": [
+        [
+          {
+            "node": "OpenClaw - Relay to WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    "observability",
+    "alertmanager"
+  ]
+}
