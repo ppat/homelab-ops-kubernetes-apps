@@ -85,7 +85,10 @@ spec:
         - name: N8N_INSTANCE_OWNER_MANAGED_BY_ENV
           value: "true"
         - name: N8N_INSTANCE_OWNER_EMAIL
-          value: ${n8n_owner_email:=admin@example.com}
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: N8N_INSTANCE_OWNER_EMAIL
         - name: N8N_INSTANCE_OWNER_FIRST_NAME
           value: ${n8n_owner_first_name:=Admin}
         - name: N8N_INSTANCE_OWNER_LAST_NAME
@@ -118,7 +121,10 @@ spec:
         - name: N8N_SMTP_SSL
           value: "false"
         - name: N8N_SMTP_SENDER
-          value: n8n@${domain_name}
+          valueFrom:
+            secretKeyRef:
+              name: n8n-secrets
+              key: N8N_SMTP_SENDER
         - name: N8N_SMTP_USER
           valueFrom:
             secretKeyRef:
