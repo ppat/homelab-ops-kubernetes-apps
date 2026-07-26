@@ -31,11 +31,21 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
+        # Default (Always) makes the kubelet recursively re-apply fsGroup perms to the whole PVC
+        # on every mount -- re-loosening the state perms the entrypoint just tightened, and
+        # recursively chmod'ing the (large, lancedb/npm-bearing) volume on every restart.
+        # OnRootMismatch skips that recursion once the volume root already matches, so mounts are
+        # faster and it stops fighting the entrypoint's re-tighten. It doesn't retroactively fix
+        # already-loosened files -- the image entrypoint's chmod (see image comment above) handles
+        # that on each boot.
+        fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
       containers:
       - name: openclaw
-        image: docker.io/ppatlabs/openclaw:2026.7.1@sha256:718a0883ed998ee8a4428029f1aa78eb538f66c5c2f778576853627c84693ffa
+        # This build's entrypoint adds a per-boot chmod that re-tightens the fsGroup-loosened
+        # state perms: credentials dir -> 700, auth SQLite + sessions.json -> 600 (ppat/images#533).
+        image: docker.io/ppatlabs/openclaw:2026.7.1@sha256:fad0268bfda48dfde860123e23972d523fc7e5bc0e276df7cabc48a7f31c57af
         imagePullPolicy: IfNotPresent
         env:
         - name: OPENCLAW_CONFIG_PATH
