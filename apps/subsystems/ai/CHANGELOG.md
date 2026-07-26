@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.8...apps-ai-v0.6.9) (2026-07-26)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** openclaw fsGroup state perms + litellm reload-on-secret-rotation ([#3406](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3406)) ([fbe8dd7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fbe8dd711e229fbc05d5e21f9e6675473aa3114e))
+
 ## [0.6.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.7...apps-ai-v0.6.8) (2026-07-26)
 
 
