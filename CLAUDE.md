@@ -10,7 +10,7 @@ Ignore `.prompts/`, `.analysis/`, and `.archive/` — these are not part of the 
 - [DESIGN.md](./DESIGN.md) — architecture: module types, core/extra pattern, dependency rules, configuration methods, bootstrap/CRDs, and how it all fits together end-to-end
 - [TESTING.md](./TESTING.md) — how modules are tested and validated (each module tested as a full unit on kind via chainsaw; kubeconform manifest validation)
 - [OPERATIONS.md](./OPERATIONS.md) — development workflow: quality gates, Renovate dependency automation, and independent per-module versioning/releases via release-please
-- `.guides/` — documentation authoring guides (structure/content rules per doc type, and the review process for writing them). Only relevant when creating or updating a README.md/DESIGN.md in this repo; otherwise ignore.
+- `.claude/skills/make-docs/` — the skill that governs creating, updating, or auditing this repo's README docs (per-type structure rules + an implementation-first review process). It triggers automatically for README authoring; consult it before writing or refreshing any module, component, module-type, or root `README.md`.
 - Every subsystem under `infrastructure/subsystems/*/README.md` and `apps/subsystems/*/README.md` has module-specific details: components, prerequisites, required secrets/variables, and its own Dependencies section (Required By / Depends On). Read the relevant one before touching a module.
 
 This is a GitOps repo (FluxCD) of Kustomize/Helm manifests — there is no application code to build. "Development" here means authoring/editing YAML and validating it.
