@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.7...apps-ai-v0.6.8) (2026-07-26)
+
+
+### ✨ Features
+
+* **apps-ai:** upstream cluster-prototyped openclaw/mcp-unifi/n8n patches ([#3402](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3402)) ([8a40ec3](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8a40ec358b1944cc62097a65adbd775ebe30bc6b))
+
 ## [0.6.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.6...apps-ai-v0.6.7) (2026-07-25)
 
 
