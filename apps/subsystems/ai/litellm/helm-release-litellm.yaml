@@ -43,6 +43,15 @@ spec:
     environmentSecrets:
     - litellm-secrets
 
+    # Stakater Reloader: roll the proxy Deployment when its secrets rotate -- litellm-secrets
+    # (master/salt/OpenRouter/Redis keys) and the CNPG DB credential. Config changes already
+    # roll the pod via the chart's own checksum/config pod annotation (it hashes the rendered
+    # proxy_config, which includes the litellm-model-config valuesFrom), so only secrets, which
+    # the chart does not checksum, need Reloader here. deploymentAnnotations lands on the
+    # Deployment's own metadata (where Reloader reads), not the pod template.
+    deploymentAnnotations:
+      secret.reloader.stakater.com/reload: "litellm-secrets,${db_name:=litellm-db}-${db_suffix_current:=default}-app"
+
     db:
       useExisting: true
       deployStandalone: false
