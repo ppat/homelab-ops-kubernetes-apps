@@ -28,8 +28,10 @@ spec:
           value: "0.0.0.0"
         - name: UNIFI_MCP_PORT
           value: "3001"
+        # The MCP Python SDK's transport-security host check rejects requests (HTTP 421
+        # "Invalid Host header") unless the Host (service:port) is allowlisted.
         - name: UNIFI_MCP_ALLOWED_HOSTS
-          value: mcp-unifi-protect.ai.svc.cluster.local,localhost,127.0.0.1
+          value: mcp-unifi-protect.ai.svc.cluster.local:3001,localhost,127.0.0.1
         - name: UNIFI_TOOL_REGISTRATION_MODE
           value: eager
         - name: UNIFI_POLICY_PROTECT_CREATE
