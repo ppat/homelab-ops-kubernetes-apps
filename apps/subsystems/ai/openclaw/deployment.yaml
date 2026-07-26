@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: openclaw
   annotations:
-    secret.reloader.stakater.com/reload: openclaw-secrets
+    secret.reloader.stakater.com/reload: openclaw-secrets,openclaw-config-secrets
     configmap.reloader.stakater.com/reload: openclaw-config
 spec:
   replicas: 1
@@ -35,13 +35,17 @@ spec:
           type: RuntimeDefault
       containers:
       - name: openclaw
-        image: docker.io/ppatlabs/openclaw:2026.7.1@sha256:8efc9d2e7a02e137031534d82eeee94b66938d26a3013d96d42643e5ad69fedc
+        image: docker.io/ppatlabs/openclaw:2026.7.1@sha256:718a0883ed998ee8a4428029f1aa78eb538f66c5c2f778576853627c84693ffa
         imagePullPolicy: IfNotPresent
         env:
         - name: OPENCLAW_CONFIG_PATH
           value: /etc/openclaw/openclaw.json
-        - name: OPENCLAW_DATA_DIR
+        - name: OPENCLAW_CONFIG_SEED
+          value: /etc/openclaw-seed/openclaw.json
+        - name: OPENCLAW_STATE_DIR
           value: /home/node/.openclaw
+        - name: OPENCLAW_CONTROL_UI_ORIGIN
+          value: https://openclaw.${domain_name}
         # This custom image (docker.io/ppatlabs/openclaw) bakes in the WhatsApp/Baileys channel
         # and diagnostics-prometheus plugins at build time; its own entrypoint reseeds them from
         # /home/node/.openclaw-seed into the PVC-mounted /home/node/.openclaw on every start --
@@ -51,6 +55,9 @@ spec:
         # startup migration for a *configured-channel* plugin -> CrashLoopBackOff.
         # OPENCLAW_OFFLINE=1 is kept as defense-in-depth: no runtime plugin/tool fetch is needed
         # since the plugins are already baked in and reseeded locally.
+        # The entrypoint wrapper also seeds OPENCLAW_CONFIG_PATH from OPENCLAW_CONFIG_SEED
+        # (copy-if-absent + chmod 600) and sets umask 077 before starting the gateway -- still
+        # do not override command/args/entrypoint.
         - name: OPENCLAW_OFFLINE
           value: "1"
         - name: OPENCLAW_GATEWAY_TOKEN
@@ -66,12 +73,12 @@ spec:
         - name: OPENCLAW_HOOKS_TOKEN
           valueFrom:
             secretKeyRef:
-              name: openclaw-secrets
+              name: openclaw-config-secrets
               key: OPENCLAW_HOOKS_TOKEN
         - name: OWNER_WHATSAPP_NUMBER
           valueFrom:
             secretKeyRef:
-              name: openclaw-secrets
+              name: openclaw-config-secrets
               key: OWNER_WHATSAPP_NUMBER
         ports:
         - name: gateway
@@ -90,7 +97,7 @@ spec:
           periodSeconds: 20
         readinessProbe:
           httpGet:
-            path: /readyz
+            path: /healthz
             port: gateway
           periodSeconds: 10
         resources:
@@ -109,14 +116,14 @@ spec:
         # /etc/openclaw is the gateway's config dir AND where the image writes at boot: it
         # mkdirs /etc/openclaw/extensions and drops openclaw.json.bak backups there. A read-only
         # ConfigMap mount makes that mkdir fail ("ENOENT ... mkdir '/etc/openclaw/extensions'")
-        # and the CLI aborts before serving /healthz. So the dir is a writable emptyDir with the
-        # ConfigMap layered in read-only via subPath (reloader restarts the pod on config
-        # change, so subPath's lack of live update is fine).
+        # and the CLI aborts before serving /healthz. So the dir is a writable emptyDir; the
+        # entrypoint wrapper seeds OPENCLAW_CONFIG_PATH into it from the read-only
+        # OPENCLAW_CONFIG_SEED mount below (copy-if-absent, chmod 600), so reloader still
+        # restarts the pod to pick up config changes.
         - name: config-dir
           mountPath: /etc/openclaw
         - name: config
-          mountPath: /etc/openclaw/openclaw.json
-          subPath: openclaw.json
+          mountPath: /etc/openclaw-seed
           readOnly: true
         - name: openclaw-data
           mountPath: /home/node/.openclaw
@@ -125,9 +132,13 @@ spec:
       volumes:
       - name: config-dir
         emptyDir: {}
+      # openclaw.json is cluster-owned (feature config: WhatsApp allowlist, MCP servers, model
+      # routing, etc.) -- this ConfigMap is supplied externally by the consuming cluster; this
+      # module's own CI supplies a fixture (ci/test/apps-ai/pre-requisites/openclaw-config.yaml).
       - name: config
         configMap:
           name: openclaw-config
+      # Cluster-provided (CI: a fixture PVC) -- see the ConfigMap comment above.
       - name: openclaw-data
         persistentVolumeClaim:
           claimName: openclaw-data

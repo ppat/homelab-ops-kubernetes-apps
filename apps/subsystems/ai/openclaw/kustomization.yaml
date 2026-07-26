@@ -5,9 +5,7 @@ kind: Kustomization
 resources:
 - namespace-openclaw.yaml
 - serviceaccount.yaml
-- pvc.yaml
 - secret.yaml
-- configmap.yaml
 - deployment.yaml
 - service.yaml
 - ingress.yaml

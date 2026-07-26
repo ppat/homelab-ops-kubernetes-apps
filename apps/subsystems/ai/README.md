@@ -119,22 +119,26 @@ This module also depends on a PostgreSQL and Redis-compatible cache, provisioned
 
 n8n and OpenClaw each run in their own isolated namespace (`n8n`, `openclaw`) rather than the shared `ai` namespace. Neither ingress is behind SSO forward-auth yet (deferred — requires coordinated Terraform-repo changes); n8n relies on its own owner login, OpenClaw on its gateway auth token. Both are LAN/tailnet-only, same as the rest of this module.
 
+OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` ConfigMap in the `openclaw` namespace), its `openclaw-config-secrets` Secret, and its `openclaw-data` PVC are all cluster-provided — like `litellm-model-config`, this module mounts them but does not ship them. The image's entrypoint wrapper seeds `openclaw.json` into a writable path (`chmod 600`) at startup, so the module carries no `openclaw.json` of its own.
+
 1. Persistent Storage
 
    | PVC Name | Purpose | Access Mode |
    | -------- | ------- | ----------- |
    | openwebui | User settings and conversation history | RWX |
    | n8n-data | n8n configuration, workflow static data | RWO |
+   | openclaw-data | OpenClaw config, workspace, memory SQLite, and WhatsApp Baileys session | RWO |
 
-   OpenClaw provisions its own 10Gi RWO PVC (`openclaw-data`, config/workspace/memory SQLite/WhatsApp session) as part of this module — it isn't an external prerequisite.
+   All three PVCs are provisioned externally (by the cluster), not defined by this module.
 
 2. Required Secrets
 
    | Secret Name | Purpose | Required Keys |
    | ----------- | ------- | -------------- |
    | litellm-openwebui-key | OpenWebUI's virtual key for authenticating to the LiteLLM gateway — sourced from the `apikey_litellm_openwebui` secret-store key, which is populated by a separate Terraform-managed workspace, not manually | apikey |
-   | n8n-secrets | n8n's encryption key, pre-provisioned owner login, pre-seeded LiteLLM/SMTP credential overwrite blob, and its LiteLLM virtual key | N8N_ENCRYPTION_KEY, N8N_INSTANCE_OWNER_PASSWORD_HASH, N8N_CREDENTIALS_OVERWRITE_DATA, LITELLM_API_KEY, N8N_SMTP_USER, N8N_SMTP_PASS |
-   | openclaw-secrets | OpenClaw's gateway auth token, LiteLLM virtual key, inbound hooks bearer token, and owner WhatsApp number (used by `channels.whatsapp.allowFrom`) | OPENCLAW_GATEWAY_TOKEN, LITELLM_KEY, OPENCLAW_HOOKS_TOKEN, OWNER_WHATSAPP_NUMBER |
+   | n8n-secrets | n8n's encryption key, pre-provisioned owner login (email + password hash), pre-seeded LiteLLM/SMTP credential-overwrite blob, its LiteLLM virtual key, and SMTP relay credentials + sender | N8N_ENCRYPTION_KEY, N8N_INSTANCE_OWNER_EMAIL, N8N_INSTANCE_OWNER_PASSWORD_HASH, N8N_CREDENTIALS_OVERWRITE_DATA, LITELLM_API_KEY, N8N_SMTP_USER, N8N_SMTP_PASS, N8N_SMTP_SENDER |
+   | openclaw-secrets | OpenClaw's universal secrets — gateway auth token and LiteLLM virtual key | OPENCLAW_GATEWAY_TOKEN, LITELLM_KEY |
+   | openclaw-config-secrets | Feature-coupled OpenClaw secrets — inbound hooks bearer token and owner WhatsApp number (used by `channels.whatsapp.allowFrom`). Provided by the cluster, co-located with the cluster-owned `openclaw.json`; not shipped by this module | OPENCLAW_HOOKS_TOKEN, OWNER_WHATSAPP_NUMBER |
 
    The following secret-store keys are also required by the LiteLLM gateway and its self-hosted MCP servers:
 
@@ -157,6 +161,8 @@ n8n and OpenClaw each run in their own isolated namespace (`n8n`, `openclaw`) ra
    | apikey_litellm_n8n | n8n's virtual key for authenticating to the LiteLLM gateway |
    | n8n_smtp_user | Username n8n authenticates with against the Maddy SMTP relay |
    | n8n_smtp_password | Password n8n authenticates with against the Maddy SMTP relay |
+   | n8n_owner_email | Email address of the pre-provisioned n8n owner account (sourced into `N8N_INSTANCE_OWNER_EMAIL`) |
+   | n8n_smtp_sender | From/sender address n8n sets on outbound mail — must be an address the SMTP account is authorized to send as (sourced into `N8N_SMTP_SENDER`) |
    | openclaw_gateway_token | Bearer token required to reach OpenClaw's control UI/gateway |
    | apikey_litellm_openclaw | OpenClaw's virtual key for authenticating to the LiteLLM gateway |
    | openclaw_hooks_token | Bearer token n8n/Alertmanager present when calling OpenClaw's inbound `/hooks/agent` endpoint |
@@ -181,7 +187,6 @@ n8n and OpenClaw each run in their own isolated namespace (`n8n`, `openclaw`) ra
    | n8n_db_replicas | n8n PostgreSQL instance count | n8n |
    | n8n_db_storage_size | n8n PostgreSQL volume size | n8n |
    | n8n_db_storage_class | n8n PostgreSQL volume storage class | n8n |
-   | n8n_owner_email | Email address of the pre-provisioned n8n owner account (default `admin@example.com`) | n8n |
    | n8n_owner_first_name | First name of the pre-provisioned n8n owner account (default `Admin`) | n8n |
    | n8n_owner_last_name | Last name of the pre-provisioned n8n owner account (default `User`) | n8n |
 
