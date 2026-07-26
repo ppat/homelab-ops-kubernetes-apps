@@ -7,11 +7,23 @@ Ignore `.prompts/`, `.analysis/`, and `.archive/` — these are not part of the 
 ## Start here
 
 - [README.md](./README.md) — module catalog (what's deployed, by category) and "Finding Your Way" table
-- [projectBrief.md](./projectBrief.md) — architecture: module types, core/extra pattern, dependency rules, configuration methods, testing/release pipeline
-- `.guides/` — documentation authoring guides (structure/content rules per doc type, and the review process for writing them). Only relevant when creating or updating a README.md/projectBrief.md in this repo; otherwise ignore.
+- [DESIGN.md](./DESIGN.md) — architecture: module types, core/extra pattern, dependency rules, configuration methods, bootstrap/CRDs, and how it all fits together end-to-end
+- [TESTING.md](./TESTING.md) — how modules are tested and validated (each module tested as a full unit on kind via chainsaw; kubeconform manifest validation)
+- [OPERATIONS.md](./OPERATIONS.md) — development workflow: quality gates, Renovate dependency automation, and independent per-module versioning/releases via release-please
+- `.guides/` — documentation authoring guides (structure/content rules per doc type, and the review process for writing them). Only relevant when creating or updating a README.md/DESIGN.md in this repo; otherwise ignore.
 - Every subsystem under `infrastructure/subsystems/*/README.md` and `apps/subsystems/*/README.md` has module-specific details: components, prerequisites, required secrets/variables, and its own Dependencies section (Required By / Depends On). Read the relevant one before touching a module.
 
 This is a GitOps repo (FluxCD) of Kustomize/Helm manifests — there is no application code to build. "Development" here means authoring/editing YAML and validating it.
+
+## The operating model
+
+The mechanics below matter, but they only pay off if you approach a change with the right mental model. Five invariants govern almost every decision here:
+
+- **This repo is a library of modules, not a running cluster.** You are editing a reusable, independently-versioned module that the sibling `homelab-ops-kubernetes-clusters` repo composes into real clusters — and several clusters may consume the same module at different versions with different components/patches/variables. So the first question for any change is its **blast radius**: is it backwards-compatible for every existing consumer? Something that works in isolation can still break a cluster that patches or substitutes into what you moved. Confirm against `../homelab-ops-kubernetes-clusters/clusters/*/kustomizations/` before assuming compatibility.
+- **Module independence is the cardinal invariant.** Nothing cluster- or environment-specific belongs *inside* a module — secret-store names, storage classes, domains, replica counts. Those are injected from the outside at point of use (patches, post-build variables, component overlays). Hardcoding an environment detail into a module is the smell that you're solving it in the wrong place; that discipline is exactly what lets one module serve many clusters.
+- **Coupling lives at the edge, not in the module.** Hard dependencies are declared where a module is consumed (`Kustomization.spec.dependsOn`), never inside it. Core/Extra is not a feature tier — it exists only to break dependency cycles so a deterministic deploy order exists (`X-core → Y → X-extra`).
+- **The manifests are the desired state; Flux reconciles it.** There are no imperative steps and nothing to "run" — "does it work" means "does Flux converge on a healthy state," which is why a module is tested as a whole unit on kind rather than per-component (see [TESTING.md](./TESTING.md)).
+- **Work it in order (measure twice, cut once):** read the module's own `README.md` and the relevant [DESIGN.md](./DESIGN.md) concept → make the change staying inside module boundaries → check cross-repo consumption for compatibility → validate and test the module as a unit.
 
 ## Repository layout
 
@@ -40,13 +52,12 @@ For each module a cluster wants, that repo defines:
 
 The same module can be referenced by multiple clusters at different versions with different components/patches/variables — that's how one module serves many clusters. When changing a module here, check `../homelab-ops-kubernetes-clusters/clusters/*/kustomizations/` (if available) to see how it's actually being consumed before assuming a change is backwards-compatible.
 
-## Architecture essentials (details in projectBrief.md)
+## Architecture essentials (details in DESIGN.md)
 
-- **Module types**: Infrastructure (platform capabilities) / Application (end-user) / Component (cross-cutting Kustomize patches). See [projectBrief.md#module-types-and-organization](./projectBrief.md#module-types-and-organization).
-- **Core/Extra pattern**: used to break circular dependencies between subsystems — deploy order is `X-core → Y → X-extra`. See [projectBrief.md#core-vs-extra-pattern](./projectBrief.md#core-vs-extra-pattern).
-- **Dependencies**: hard dependencies are declared only at the point of use via Flux `Kustomization.spec.dependsOn` (never inside the module itself); soft dependencies rely on eventual consistency and are monitored via `ServiceMonitor`/`PrometheusRule`. See [projectBrief.md#dependencies](./projectBrief.md#dependencies) and each module's own README `## Dependencies` section for its specific Required By / Depends On.
-- **Configuration**: three mechanisms — Kustomize patches (module-specific), Flux post-build substitution variables (cluster-wide settings), Kustomize component overlays (cross-cutting, e.g. `components/sso`). See [projectBrief.md#configuration](./projectBrief.md#configuration).
-- **Module independence**: cluster/environment-specific details (secret store name, storage class, etc.) are never hardcoded in a module — they're injected externally so the same module works across clusters/environments.
+- **Module types**: Infrastructure (platform capabilities) / Application (end-user) / Component (cross-cutting Kustomize patches). See [DESIGN.md#module-types-and-organization](./DESIGN.md#module-types-and-organization).
+- **Core/Extra pattern**: used to break circular dependencies between subsystems — deploy order is `X-core → Y → X-extra`. See [DESIGN.md#core-vs-extra-pattern](./DESIGN.md#core-vs-extra-pattern).
+- **Dependencies**: hard dependencies are declared only at the point of use via Flux `Kustomization.spec.dependsOn` (never inside the module itself); soft dependencies rely on eventual consistency and are monitored via `ServiceMonitor`/`PrometheusRule`. See [DESIGN.md#dependencies](./DESIGN.md#dependencies) and each module's own README `## Dependencies` section for its specific Required By / Depends On.
+- **Configuration**: three mechanisms — Kustomize patches (module-specific), Flux post-build substitution variables (cluster-wide settings), Kustomize component overlays (cross-cutting, e.g. `components/sso`). See [DESIGN.md#configuration](./DESIGN.md#configuration).
 
 ## Commands
 
@@ -62,7 +73,7 @@ Kubernetes manifest validation (kubeconform via the `validate-kubernetes-manifes
 
 ### Module tests (chainsaw + kind)
 
-Each module is tested as a full unit in CI, even for single-component changes — see [projectBrief.md#testing-and-validation](./projectBrief.md#testing-and-validation) for the full flow (kind cluster → install Flux → deploy hard deps → apply module → validate resources).
+Each module is tested as a full unit in CI, even for single-component changes — see [TESTING.md](./TESTING.md) for the full flow (kind cluster → install Flux → deploy hard deps → apply module → validate resources).
 
 To run a module's suite locally:
 
@@ -81,7 +92,7 @@ A comment must earn its place by telling a future maintainer something the manif
 
 - **Do comment**: non-obvious behavior and gotchas that cost real effort to discover (e.g. Flux applies `spec.patches` before `postBuild.substitute`; a trailing-dot endpoint breaking SigV4 signing) — especially workarounds a maintainer would otherwise "clean up" and re-break. Cite an issue link when there is one.
 - **Do use** section/grouping headers when they improve readability of a long file, and follow the header style already in that file (match the surrounding convention rather than inventing one).
-- **Don't** restate what the line does (`# set replicas to 3`), narrate the flow already given by a `name:`/`description:` field, or explain a well-established repo pattern — if a pattern needs documenting, it goes in the module `README.md` or `projectBrief.md`, not inline.
+- **Don't** restate what the line does (`# set replicas to 3`), narrate the flow already given by a `name:`/`description:` field, or explain a well-established repo pattern — if a pattern needs documenting, it goes in the module `README.md` or `DESIGN.md`, not inline.
 
 ## Commit conventions
 

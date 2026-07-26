@@ -2,6 +2,8 @@
 
 This repository contains modules for deploying applications and infrastructure on Kubernetes clusters using FluxCD. Each module is a self-contained unit that can be composed to build complete cluster configurations.
 
+This document describes the architecture and design of those modules. Related docs: [README.md](./README.md) (module catalog and navigation), [TESTING.md](./TESTING.md) (how modules are tested and validated), [OPERATIONS.md](./OPERATIONS.md) (development workflow, versioning, and releases), and [CLAUDE.md](./CLAUDE.md) (working conventions and commands).
+
 ```mermaid
 flowchart TB
     %% Color scheme with better contrast
@@ -345,79 +347,10 @@ flowchart TB
 
 ## Testing and Validation
 
-### Module Testing Strategy
-
-Each module is tested as a complete unit in CI, even when only one component changes. This ensures:
-
-- All components within a module work together
-- Dependencies are properly satisfied
-- Configuration is valid
-
-### Test Process
-
-```mermaid
-flowchart TD
-    A[Start] --> B[Create Kind Cluster]
-    B --> C[Install FluxCD]
-    C --> D[Deploy Hard Dependencies]
-    D --> E[Apply Test Configuration]
-    E --> F[Deploy Module]
-    F --> G[Validate Resources]
-
-    subgraph validation [Resource Validation]
-        G --> H[Check Hard Dependencies]
-        H --> I[Check Internal Soft Dependencies]
-        I --> J[Check Helm Releases]
-        J --> K[Check K8s Resources]
-    end
-```
-
-### Test Components
-
-1. Environment Setup
-   - Kind cluster creation
-   - FluxCD installation
-   - Test configuration and secrets
-
-2. Dependency Deployment
-   - Deploy hard dependencies first
-   - Configure test mode settings
-   - Apply necessary patches
-
-3. Resource Validation
-
-   ```yaml
-   # Example validation checks
-   - kubectl wait --for=condition=Ready pod -l app=dependency-app
-   - kubectl wait --for=condition=Ready helmrelease/app-release
-   - kubectl get deploy app-deployment -o jsonpath='{.status.readyReplicas}'
-   ```
-
-### Test Data
-
-- Located in `ci/test-data/`
-- Contains test configurations and secrets
-- No production data or credentials
-- Example:
-
-  ```yaml
-  apiVersion: v1
-  kind: Secret
-  metadata:
-    name: test-credentials
-  type: Opaque
-  stringData:
-    username: test-user
-    password: example
-  ```
-
-### Resource Validation
-
-- Uses `kubeconform` to validate all Kubernetes manifests
-- Validates against:
-  - Native Kubernetes resource specs
-  - Custom Resource Definition (CRD) specs
-- Runs on all pull requests
+Each module is tested as a complete unit in CI, even when only one component
+changes, and all manifests are validated with `kubeconform` on every pull
+request. The full test flow, test components, and validation strategy are
+documented in [TESTING.md](./TESTING.md).
 
 ## Bootstrap and CRDs
 
@@ -501,125 +434,11 @@ flowchart TD
 
 ## Development Workflow
 
-### Quality Controls
-
-```mermaid
-flowchart LR
-    A[Code Change] --> B[Local Validation]
-    B --> C[PR Validation]
-    C --> D[Module Tests]
-    D --> M[Land on Main]
-
-    subgraph local [Local Checks]
-        direction TB
-        L1[Pre-commit Hooks]
-    end
-
-    subgraph static [Static Analysis]
-        direction TB
-        subgraph resource [Resource Validation]
-            R1[Kubeconform]
-        end
-
-        subgraph workflow [Workflow Validation]
-            W1[GitHub Actions]
-        end
-
-        subgraph config [Config Validation]
-            C1[Renovate Config]
-        end
-
-        subgraph syntax [Syntax & Style]
-            S1[YAML Lint]
-            S2[ShellCheck]
-            S3[Commit Messages]
-        end
-    end
-
-    B --> L1
-    C --> resource
-    C --> workflow
-    C --> config
-    C --> syntax
-    static --> M
-
-    note[Release process handled separately
-    via release-please]
-```
-
-### Version Management
-
-```mermaid
-flowchart TB
-    subgraph updates [Version Updates]
-        direction LR
-        R[Renovate Bot] --> PR1[Version Upgrade PR]
-        DEV[Developer] --> PR2[Feature PR]
-    end
-
-    subgraph validation [Validation]
-        direction LR
-        T1[Module Tests]
-        T2[Pre-commit Checks]
-        T3[CI Validation]
-    end
-
-    subgraph release [Release Process]
-        direction LR
-        RP[Release-please PR]
-        RM[Land Release PR]
-        CL[Changelog Update]
-        TAG[Git Tag]
-    end
-
-    PR1 --> T3
-    PR2 --> T2 --> T3 --> T1
-
-    T1 --> |Tests Pass| PRTYPE{Feature or Version Upgrade?}
-    PRTYPE --> |Version Upgrade| AM{Auto-merge?}
-    PRTYPE --> |Feature| M[Merge]
-    AM --> |Patch/Minor| M
-    AM --> |Major| HR[Human Review] --> M
-
-    M --> RP --> RM
-    RM --> CL --> TAG
-
-```
-
-#### Automated Updates
-
-- Renovate bot manages version updates for applications
-- Automated merging rules:
-  - Patch versions: Auto-merge if tests pass
-  - Minor versions: Auto-merge if tests pass (with exceptions for critical infrastructure)
-  - Major versions: Require human approval
-
-#### Release Process
-
-Each module is versioned and released independently.
-
-1. Changes land in main branch (via Renovate or manual PRs)
-2. Release-please creates release PR with:
-   - Version bump
-   - Changelog updates
-3. When release PR merges:
-   - CHANGELOG.md is updated
-   - Module gets versioned (git tag)
-
-### Maintenance Practices
-
-1. Module Archival
-   - Unused modules moved to `.archive`
-   - Preserves historical context
-   - Maintains deployment history
-
-2. Repository Organization
-   - Helm repositories split by purpose (infra vs apps)
-   - Clear module categorization
-   - Consistent structure
-
-3. Documentation
-   - CHANGELOG.md per module
+Changes flow through local pre-commit checks, PR validation, and per-module CI
+tests before landing on main; modules are then versioned and released
+independently via release-please, with dependency bumps automated by Renovate.
+The quality controls, version management, release process, and maintenance
+practices are documented in [OPERATIONS.md](./OPERATIONS.md).
 
 ## End-to-End Infrastructure Automation: How Everything Comes Together
 
