@@ -16,7 +16,7 @@ description: >
 ## Required Procedure — Execute Every Step, In Order
 
 Before anything else: read [`README.md`](../../../README.md) and
-[`projectBrief.md`](../../../projectBrief.md) for the module catalog, the three
+[`DESIGN.md`](../../../DESIGN.md) for the module catalog, the three
 configuration mechanisms, and the core/extra dependency rules, plus the target
 module's own `README.md` (`infrastructure/subsystems/<module>/README.md` or
 `apps/subsystems/<module>/README.md`) for its Dependencies section (Required By
@@ -313,7 +313,7 @@ Before folding a learning in, check it against these:
   that made that specific change (per this repo's own comment-authoring
   convention), not here.
 - **Don't restate what already lives elsewhere.** If it's already covered by
-  `projectBrief.md`/`README.md`/this repo's `CLAUDE.md`, link to it, don't
+  `DESIGN.md`/`README.md`/this repo's `CLAUDE.md`, link to it, don't
   duplicate it — this file already does that for the configuration mechanisms,
   the bootstrap-CRDs purpose, and the comment-authoring rules. A skill that
   re-explains what CLAUDE.md already says just gives the same instruction two

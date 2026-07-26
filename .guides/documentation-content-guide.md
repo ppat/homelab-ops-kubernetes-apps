@@ -164,7 +164,7 @@ Purpose: Document capabilities and patterns across a collection of related modul
 4. Configuration
    Format: Single paragraph with link
    Required Content:
-   - Link to projectBrief.md#configuration-methods
+   - Link to DESIGN.md#configuration-methods
    - Brief mention of available methods
    Content Constraints:
    - NO configuration details

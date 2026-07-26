@@ -1,6 +1,6 @@
 # Finding every place a module is configured
 
-`projectBrief.md#configuration` documents the three mechanisms (Kustomize
+`DESIGN.md#configuration` documents the three mechanisms (Kustomize
 patches, Flux post-build variables, component overlays) — read that for what each
 mechanism is *for*. This file is about the practical problem specific to an
 upgrade: a value the old chart version read might now live somewhere else, or a

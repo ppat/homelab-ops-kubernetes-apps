@@ -66,4 +66,4 @@ flowchart BT
 
 ## Configuration
 
-For detailed information about configuration methods used across all modules, including Kustomize patches, FluxCD post-build variables, and component overlays, refer to the [Configuration Methods](../projectBrief.md#configuration-methods) section in the project brief.
+For detailed information about configuration methods used across all modules, including Kustomize patches, FluxCD post-build variables, and component overlays, refer to the [Configuration Methods](../DESIGN.md#configuration-methods) section in the design doc.

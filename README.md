@@ -94,12 +94,12 @@ classDiagram
 
 | Category | When you need to... | Look in... | To find... | For example... |
 | --- | --- | --- | --- | --- |
-| Project Understanding | Understand the project structure | [Project Brief - Organization](./projectBrief.md#module-types-and-organization) | Module types and relationships | • Infrastructure/Apps/Components<br/>• Core/Extra pattern<br/>• Module boundaries |
-| | Learn about design decisions | [Project Brief - Design](./projectBrief.md#design-principles) | Architecture principles and patterns | • Module independence<br/>• Configuration flexibility<br/>• Dependency management |
-| | See how changes are managed | [Project Brief - Development](./projectBrief.md#development-workflow) | Quality controls and workflows | • Version management<br/>• Automated updates<br/>• Release process |
+| Project Understanding | Understand the project structure | [DESIGN - Organization](./DESIGN.md#module-types-and-organization) | Module types and relationships | • Infrastructure/Apps/Components<br/>• Core/Extra pattern<br/>• Module boundaries |
+| | Learn about design decisions | [DESIGN - Design Principles](./DESIGN.md#design-principles) | Architecture principles and patterns | • Module independence<br/>• Configuration flexibility<br/>• Dependency management |
+| | See how modules are tested | [TESTING.md](./TESTING.md) | Test flow and validation | • Kind + chainsaw per module<br/>• Kubeconform manifests<br/>• Full-unit CI testing |
+| | See how changes are versioned & released | [OPERATIONS.md](./OPERATIONS.md) | Quality controls and release workflow | • Version management<br/>• Automated updates<br/>• Release process |
 | Module Usage | Find infrastructure capabilities | [Infrastructure Modules](./infrastructure) | Platform services by category | • Security (cert-manager, secrets)<br/>• Storage (Longhorn, MinIO)<br/>• Networking (MetalLB, Traefik) |
 | | Set up end-user applications | [Application Modules](./apps) | User-facing services | • Password management (Bitwarden)<br/>• Development environments (Coder)<br/>• Media streaming (Plex) |
 | | Configure cross-cutting features | [Component Modules](./components) | Reusable configurations | • Single sign-on setup<br/>• Backup configurations<br/>• Monitoring templates |
-| Configuration | Configure modules | [Project Brief - Configuration](./projectBrief.md#configuration) | Configuration methods | • Kustomize patches<br/>• Post-build variables<br/>• Component overlays |
-| | Handle dependencies | [Project Brief - Dependencies](./projectBrief.md#dependencies) | Dependency management | • Hard vs soft dependencies<br/>• Core/Extra pattern<br/>• Dependency cycles |
-| | Set up integrations | [Project Brief - Integration](./projectBrief.md#integration-patterns) | Integration patterns | • Certificate management<br/>• Secret handling<br/>• Monitoring setup |
+| Configuration | Configure modules | [DESIGN - Configuration](./DESIGN.md#configuration) | Configuration methods | • Kustomize patches<br/>• Post-build variables<br/>• Component overlays |
+| | Handle dependencies | [DESIGN - Dependencies](./DESIGN.md#dependencies) | Dependency management | • Hard vs soft dependencies<br/>• Core/Extra pattern<br/>• Dependency cycles |

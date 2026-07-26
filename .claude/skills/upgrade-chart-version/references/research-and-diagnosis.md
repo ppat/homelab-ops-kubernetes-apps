@@ -190,7 +190,7 @@ restructured, or deprecated.
 
 **If the CRD did change and this repo does use it, the bootstrap CRDs bundle
 almost certainly needs the matching version bump too.**
-[`projectBrief.md#bootstrap-and-crds`](../../../../projectBrief.md#bootstrap-and-crds)
+[`DESIGN.md#bootstrap-and-crds`](../../../../DESIGN.md#bootstrap-and-crds)
 covers what `infrastructure/bootstrap/crds/` is for and when it's engaged
 (first-time cluster setup, disaster recovery) — this skill adds one more
 scenario to that list: chainsaw test prerequisites, since a fresh kind cluster in
@@ -207,4 +207,4 @@ docs (TLS, a database, a message queue) for the target version, and diff that
 against what this repo's module already declares as a prerequisite in its own
 `README.md`. A new dependency the module doesn't yet satisfy is a structural gap,
 not a config typo — it changes the module's own `dependsOn` story
-(`projectBrief.md#dependencies`) and needs a decision, not just a manifest edit.
+(`DESIGN.md#dependencies`) and needs a decision, not just a manifest edit.
