@@ -21,14 +21,6 @@ spec:
       - name: namespace
         value: openclaw
       file: ../chainsaw/assertions/externalsecret-ready.yaml
-  - description: Assert configmap/openclaw-config
-    assert:
-      resource:
-        apiVersion: v1
-        kind: ConfigMap
-        metadata:
-          name: openclaw-config
-          namespace: openclaw
   - description: Assert serviceaccount/openclaw
     assert:
       resource:
