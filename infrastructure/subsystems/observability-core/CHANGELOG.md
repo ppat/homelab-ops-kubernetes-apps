@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.24.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.24.1...infra-observability-core-v0.24.2) (2026-07-26)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** update kube-prometheus-stack (87.19.0 -&gt; 87.19.1) ([#3391](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3391)) ([1fb77b6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1fb77b6fc200f301a570e62462f785ae5c036099))
+* **infra-observability-core:** update loki (18.5.2 -&gt; 18.5.4) ([#3389](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3389)) ([53d5b06](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/53d5b0648e04ae5d2defbe83c13abaf69b527a14))
+
 ## [0.24.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.24.0...infra-observability-core-v0.24.1) (2026-07-24)
 
 
