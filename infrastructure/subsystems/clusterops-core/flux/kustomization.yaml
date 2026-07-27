@@ -20,12 +20,21 @@ patches:
 - path: patches/namespace-metadata.yaml
   target:
     kind: Namespace
-# fail post-build substitutions if a variable without a default value is missing from the input vars
 # yamllint disable-line rule:indentation
 - patch: |
+    # fail post-build substitutions if a variable without a default value is missing from the input
+    # vars. Default-true since kustomize-controller v1.9.0, so this is a no-op now; kept as an
+    # explicit pin rather than removed.
     - op: add
       path: /spec/template/spec/containers/0/args/-
       value: --feature-gates=StrictPostBuildSubstitutions=true
+    # cancel an in-progress Kustomization health check when a newer source revision arrives, instead
+    # of waiting out the current check first. Opt-in/false by default at our pinned version, so it
+    # must be set explicitly. Safe to append as a separate arg: repeated --feature-gates= flags merge
+    # into one map rather than overwriting each other.
+    - op: add
+      path: /spec/template/spec/containers/0/args/-
+      value: --feature-gates=CancelHealthCheckOnNewRevision=true
   target:
     kind: Deployment
     name: kustomize-controller
