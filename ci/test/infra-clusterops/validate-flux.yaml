@@ -37,6 +37,35 @@ spec:
       - name: namespace
         value: flux-system
       file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/kustomize-controller feature gates
+    assert:
+      resource:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: kustomize-controller
+          namespace: flux-system
+        spec:
+          template:
+            spec:
+              (containers[?name == 'manager'] | [0].args):
+                (contains(@, '--feature-gates=StrictPostBuildSubstitutions=true')): true
+                (contains(@, '--feature-gates=CancelHealthCheckOnNewRevision=true')): true
+  - description: Assert deployment/helm-controller feature gates are unchanged
+    assert:
+      resource:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: helm-controller
+          namespace: flux-system
+        spec:
+          template:
+            spec:
+              (containers[?name == 'manager'] | [0].args):
+                (contains(@, '--feature-gates=OOMWatch=true')): true
+                (contains(@, 'CancelHealthCheckOnNewRevision')): false
+                (contains(@, 'DefaultToRetryOnFailure')): false
   catch:
   - describe:
       apiVersion: apps/v1
