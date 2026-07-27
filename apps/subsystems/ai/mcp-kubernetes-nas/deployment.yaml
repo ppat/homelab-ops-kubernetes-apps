@@ -1,0 +1,106 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-kubernetes-nas
+  namespace: ai
+  labels:
+    app.kubernetes.io/name: mcp-kubernetes-nas
+  annotations:
+    # kubernetes-mcp-server loads the kubeconfig once at startup and never re-reads it
+    # (no fsnotify watcher, no per-request reload), so a rotated kubeconfig_nas_mcp is
+    # otherwise picked up only on the next unrelated restart. Contrast mcp-grafana, which
+    # re-reads its token file per request and needs no such annotation.
+    secret.reloader.stakater.com/reload: mcp-kubernetes-nas-secrets
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mcp-kubernetes-nas
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mcp-kubernetes-nas
+        app.kubernetes.io/component: mcp-server
+    spec:
+      # No serviceAccountName: this instance talks to a remote cluster via the mounted
+      # kubeconfig (below), so it must not inherit this pod's homelab identity.
+      automountServiceAccountToken: false
+      # Required for the kubeconfig secret volume's defaultMode: 0400 (below) to actually
+      # be readable: without fsGroup the file stays root-owned and this non-root container
+      # (runAsUser 65532) gets denied outright, since Kubernetes only shifts owner
+      # permission bits into the group bits when fsGroup is set.
+      securityContext:
+        fsGroup: 65532
+      containers:
+      - name: mcp-kubernetes-nas
+        image: ghcr.io/containers/kubernetes-mcp-server:v0.0.65@sha256:5df586e2c7ced2a3125f6e78923388d80b69de0a2ad1470325b05318f12725bd
+        imagePullPolicy: IfNotPresent
+        args:
+        - --port
+        - "8080"
+        - --config
+        - /etc/kubernetes-mcp-server/config.toml
+        env:
+        - name: HOME
+          value: /tmp
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        volumeMounts:
+        - name: config
+          mountPath: /etc/kubernetes-mcp-server
+          readOnly: true
+        # Deliberately its own directory rather than a subPath file under the config
+        # mount above: bind-mounting a subPath beneath another volume's mount root fails
+        # container init outright ("not a directory"), and subPath mounts never receive
+        # updates when the Secret changes, so a rotated kubeconfig would go unnoticed.
+        - name: kubeconfig
+          mountPath: /etc/mcp-kubernetes-nas
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+        # The target (nas) cluster's API is reachable at the kubeconfig's endpoint, so
+        # /healthz reflects real readiness rather than falling back to a TCP-only check.
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            memory: 256Mi
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65532
+          runAsGroup: 65532
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+      volumes:
+      - name: config
+        configMap:
+          name: mcp-kubernetes-nas-config
+      - name: kubeconfig
+        secret:
+          secretName: mcp-kubernetes-nas-secrets
+          # Default 0644 leaves the kubeconfig (bearer token included) world-readable
+          # inside the container; restrict it (paired with fsGroup above).
+          defaultMode: 0400
+      - name: tmp
+        emptyDir: {}

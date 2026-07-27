@@ -27,3 +27,55 @@ spec:
     namespace: flux-system
   timeout: 2m0s
   wait: false
+  patches:
+  # PROBLEM: mcp-grafana/secrets.yaml's ExternalSecret normally sources its token from a
+  # `Grafana` generator, which makes a live HTTP call to Grafana's admin API
+  # (http://grafana.monitoring.svc.cluster.local) to mint a service-account token. CI's
+  # kind cluster has no Grafana, so that ExternalSecret would never sync and
+  # mcp-grafana's Deployment (volume mount + GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE) would
+  # never become Ready. Swap it for a plain secret-store-backed ExternalSecret instead,
+  # keeping the same target Secret name/key so the Deployment is still genuinely
+  # exercised. The Grafana generator CR and mcp-grafana-admin-credentials ExternalSecret
+  # are left in place unpatched: unreferenced (nothing points at the generator once this
+  # patch lands) and harmless (the admin-credentials ExternalSecret just syncs a fake
+  # value from the secret store below).
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      - op: replace
+        path: /spec
+        value:
+          secretStoreRef:
+            name: ${secret_store}
+            kind: ClusterSecretStore
+          refreshInterval: 24h
+          target:
+            name: mcp-grafana-secrets
+          data:
+          - secretKey: token
+            remoteRef:
+              key: grafana_service_account_token_mcp
+    target:
+      kind: ExternalSecret
+      name: mcp-grafana-secrets
+      namespace: ai
+  # PROBLEM: mcp-kubernetes-nas/secrets.yaml's ExternalSecret would otherwise pull
+  # "kubeconfig_nas_mcp" from the secret store, but a static dummy kubeconfig has no
+  # reachable API server behind it -- the server crash-loops parsing it and /healthz
+  # never succeeds. CI instead builds a real, working kubeconfig (see
+  # scripts/build-nas-kubeconfig.sh, run by the "Build NAS kubeconfig secret" chainsaw
+  # step) and creates the target Secret directly, so this ExternalSecret is deleted here
+  # to stop it fighting that script for ownership of the Secret. "kubeconfig_nas_mcp" is
+  # deliberately absent from pre-requisites/fake-secret-store.yaml as a result --
+  # nothing in CI reads it.
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      $patch: delete
+      apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      metadata:
+        name: mcp-kubernetes-nas-secrets
+        namespace: ai
+    target:
+      kind: ExternalSecret
+      name: mcp-kubernetes-nas-secrets
+      namespace: ai

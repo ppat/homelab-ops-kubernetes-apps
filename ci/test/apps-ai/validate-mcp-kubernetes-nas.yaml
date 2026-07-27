@@ -1,0 +1,52 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-mcp-kubernetes-nas
+spec:
+  try:
+  - description: Assert service/mcp-kubernetes-nas
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: mcp-kubernetes-nas
+          namespace: ai
+  - description: Assert configmap/mcp-kubernetes-nas-config
+    assert:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: mcp-kubernetes-nas-config
+          namespace: ai
+  # mcp-kubernetes-nas-secrets is asserted as a plain Secret, not via the
+  # externalsecret-ready assertion: the "Build NAS kubeconfig secret" chainsaw
+  # step creates it directly (see apps-ai.yaml's spec.patches for why the
+  # module's own ExternalSecret is deleted for CI).
+  - description: Assert secret/mcp-kubernetes-nas-secrets
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: mcp-kubernetes-nas-secrets
+          namespace: ai
+  - description: Assert deployment/mcp-kubernetes-nas
+    assert:
+      bindings:
+      - name: name
+        value: mcp-kubernetes-nas
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 5m
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: mcp-kubernetes-nas
+      namespace: ai
+  - events:
+      namespace: ai

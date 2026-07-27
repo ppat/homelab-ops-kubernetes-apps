@@ -4,6 +4,13 @@ kind: Namespace
 metadata:
   name: ai
 ---
+# Home of the simulated remote-cluster identity in mcp-kubernetes-rbac.yaml, mirroring
+# the dedicated namespace the real nas cluster uses for it.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mcp-access
+---
 apiVersion: v1
 kind: Namespace
 metadata:

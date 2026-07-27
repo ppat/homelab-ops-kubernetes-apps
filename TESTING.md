@@ -78,3 +78,12 @@ flowchart TD
   - Native Kubernetes resource specs
   - Custom Resource Definition (CRD) specs
 - Runs on all pull requests
+
+## Known Limitations
+
+- **NetworkPolicy enforcement**: the kind-based chainsaw suites cannot validate that a
+  `NetworkPolicy` actually filters traffic — kind's default CNI (kindnetd) does not implement
+  NetworkPolicy enforcement, so any policy applies as an object but has no effect on the
+  cluster's data plane. Chainsaw assertions for these resources are therefore structural only
+  (the object exists and is shaped as expected); real enforcement must be verified on a
+  cluster whose CNI implements NetworkPolicy (e.g. k3s's bundled controller).

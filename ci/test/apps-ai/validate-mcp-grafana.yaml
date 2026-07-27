@@ -13,6 +13,18 @@ spec:
         metadata:
           name: mcp-grafana
           namespace: ai
+  - description: Assert externalsecret/mcp-grafana-admin-credentials
+    assert:
+      bindings:
+      - name: name
+        value: mcp-grafana-admin-credentials
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
+  # apps-ai.yaml's spec.patches swaps this ExternalSecret's spec for a plain
+  # secret-store-backed one in CI (the real one needs a live Grafana admin API to mint a
+  # token via the Grafana generator) -- see that file for why. Same name/namespace, so
+  # this assertion is unchanged either way.
   - description: Assert externalsecret/mcp-grafana-secrets
     assert:
       bindings:

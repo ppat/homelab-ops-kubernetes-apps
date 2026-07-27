@@ -345,6 +345,40 @@ flowchart TB
     - ../../../components/db-backups
   ```
 
+## Credentials, Secrets, and RBAC
+
+Module-scoped lessons only — cluster-wide RBAC policy (what a given
+cluster-scoped role should actually contain) is the consuming clusters
+repo's concern, documented in its own DESIGN.md, not here.
+
+- **Cluster-wide grants are a prerequisite, not something a module ships.** A
+  module ships only its own namespaced ServiceAccount(s); any
+  ClusterRole/ClusterRoleBinding it needs is a documented prerequisite the
+  consuming cluster must provide (see [Hard Dependencies](#hard-dependencies)
+  and each module's own README `## Dependencies`/`## Prerequisites` section)
+  — never shipped by the module and never implied as something the module
+  itself grants.
+- **Prefer a file-mounted secret over an env var for a credential to
+  something outside the cluster.** An env var is fixed for the life of the
+  process; a mounted file can be re-read on rotation — but only if the
+  consuming process actually re-reads it. Verify that per application: where
+  a process only loads the file at startup, a restart trigger (e.g. a
+  Reloader annotation) is required for rotation to mean anything.
+- **Never mount a secret via `subPath` if its value can rotate.** `subPath`
+  mounts are resolved once at pod start and never updated, silently
+  defeating any external rotation mechanism. Relatedly, never mount anything
+  — `subPath` or otherwise — at a path nested inside another volume's own
+  mount root; container init fails outright.
+- **An application's own allowlist is not a network boundary.** An
+  app-level egress/SSRF allowlist constrains only that application's own
+  outbound calls; it says nothing about, and does not restrict, any other
+  workload in the cluster.
+- **Unauthenticated in-cluster access needs a named trust boundary.** Where a
+  service is reached without its own authentication, identify what actually
+  enforces access control (a gateway doing key/token scoping, a
+  NetworkPolicy, etc.) and confirm it's real, rather than assuming
+  in-cluster proximity is a boundary by itself.
+
 ## Testing and Validation
 
 Each module is tested as a complete unit in CI, even when only one component

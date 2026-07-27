@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-kubernetes-homelab
+  namespace: ai
+  labels:
+    app.kubernetes.io/name: mcp-kubernetes-homelab
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: mcp-kubernetes-homelab
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+    protocol: TCP

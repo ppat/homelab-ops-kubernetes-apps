@@ -1,0 +1,432 @@
+---
+# Test fixture, not deployed by any module: cluster-wide RBAC for the MCP
+# kubernetes-mcp-server instances was moved out of apps-ai and into the clusters
+# repo (see apps/subsystems/ai/mcp-kubernetes-homelab/rbac.yaml), so CI has to
+# supply it itself to keep the read-only posture exercised. Canonical copy:
+# homelab-ops-kubernetes-clusters/clusters/homelab/cluster/rbac/mcp-kubernetes-readonly.yaml
+# -- keep the ClusterRole below in sync with that file by hand.
+#
+# Structural limit: CI runs one kind cluster and binds both the homelab and nas
+# identities to this single role, so it cannot represent the real divergence
+# between clusters/homelab/.../mcp-kubernetes-readonly.yaml and
+# clusters/nas/.../mcp-kubernetes-readonly.yaml (nas drops longhorn.io,
+# tailscale.com, and the Intel device-plugin groups from the group-wide "*"
+# rule, since nas structurally doesn't run those operators). That
+# homelab-is-a-superset-of-nas invariant is guarded in the clusters repo
+# instead (diffed by hand there — Kyverno can't express a cross-file subset
+# check).
+#
+# Replaces apps-ai's mcp-kubernetes-homelab ClusterRoleBinding to the stock "view"
+# ClusterRole: "view" excludes all cluster-scoped resources outright and only
+# picks up namespaced CRDs whose operator opted in via the
+# rbac.authorization.k8s.io/aggregate-to-view label — inadequate on a cluster
+# running ~160 CRDs, most of which never set that label. Read-only by
+# construction (verbs never exceed get/list/watch, except one narrow,
+# individually-justified exception below); core Secrets are deliberately
+# absent from every rule.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: mcp-kubernetes-readonly
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - endpoints
+  - events
+  - limitranges
+  - namespaces
+  # nodes/proxy deliberately absent: the API server maps HTTP method to RBAC
+  # verb for proxy subresources, and the kubelet registers GET routes (not
+  # only POST) for /exec/, /attach/ and /portForward/, so "get" on that
+  # subresource is exec-equivalent, not read-only. Trade-off: the nodes_log
+  # and nodes_stats_summary MCP tools 403 at call time; nodes_top is
+  # unaffected (needs only nodes:list + metrics.k8s.io).
+  - nodes
+  - nodes/status
+  - persistentvolumeclaims
+  - persistentvolumes
+  - pods
+  - pods/log
+  - pods/status
+  - podtemplates
+  - replicationcontrollers
+  - resourcequotas
+  # secrets deliberately absent
+  - serviceaccounts
+  - services
+  - services/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - controllerrevisions
+  - daemonsets
+  - daemonsets/status
+  - deployments
+  - deployments/scale
+  - deployments/status
+  - replicasets
+  - replicasets/scale
+  - replicasets/status
+  - statefulsets
+  - statefulsets/scale
+  - statefulsets/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - cronjobs
+  - cronjobs/status
+  - jobs
+  - jobs/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - discovery.k8s.io
+  resources:
+  - endpointslices
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - events.k8s.io
+  resources:
+  - events
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  - ingressclasses
+  - networkpolicies
+  - ipaddresses
+  - servicecidrs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - csidrivers
+  - csinodes
+  - csistoragecapacities
+  - storageclasses
+  - volumeattachments
+  - volumeattributesclasses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - scheduling.k8s.io
+  resources:
+  - priorityclasses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - node.k8s.io
+  resources:
+  - runtimeclasses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apiregistration.k8s.io
+  resources:
+  - apiservices
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - mutatingwebhookconfigurations
+  - validatingwebhookconfigurations
+  - mutatingadmissionpolicies
+  - mutatingadmissionpolicybindings
+  - validatingadmissionpolicies
+  - validatingadmissionpolicybindings
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - certificates.k8s.io
+  resources:
+  - certificatesigningrequests
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - flowcontrol.apiserver.k8s.io
+  resources:
+  - flowschemas
+  - prioritylevelconfigurations
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - resource.k8s.io
+  resources:
+  - deviceclasses
+  - resourceclaims
+  - resourceclaimtemplates
+  - resourceslices
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  # read-only visibility into the permission graph aids debugging and
+  # confers no escalation
+  - roles
+  - rolebindings
+  - clusterroles
+  - clusterrolebindings
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - metrics.k8s.io
+  resources:
+  - nodes
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  # required by the resources_list tool for namespace defaulting (upstream
+  # pkg/kubernetes/resources.go). Deliberately excludes
+  # subjectaccessreviews/localsubjectaccessreviews and all of
+  # authentication.k8s.io, which are RBAC and token-validation oracles.
+  - selfsubjectaccessreviews
+  verbs:
+  - create
+- apiGroups:
+  # deliberately absent from this group-wide "*" grant:
+  # - helm.cattle.io: HelmChart.spec.valuesContent is inline plaintext Helm
+  #   values that can carry credentials
+  # - hub.traefik.io: Traefik Hub, unlicensed/unused; APIAuth/AccessControlPolicy
+  #   hold auth config
+  # - monitoring.grafana.com: Grafana Agent Operator, unused
+  # - generators.external-secrets.io: granted separately below, by explicit
+  #   resource list rather than "*" (some generator kinds carry plaintext)
+  - acme.cert-manager.io
+  - cert-manager.io
+  - trust.cert-manager.io
+  - external-secrets.io
+  - externaldns.k8s.io
+  - source.toolkit.fluxcd.io
+  - kustomize.toolkit.fluxcd.io
+  - helm.toolkit.fluxcd.io
+  - notification.toolkit.fluxcd.io
+  - postgresql.cnpg.io
+  - barmancloud.cnpg.io
+  - longhorn.io
+  - dragonflydb.io
+  - monitoring.coreos.com
+  - kyverno.io
+  - policies.kyverno.io
+  - reports.kyverno.io
+  - wgpolicyk8s.io
+  # Middleware.spec.headers.customRequestHeaders can carry an inline
+  # "Authorization: Bearer ..." header, and spec.plugin config is free-form —
+  # both are residual read-only exposure. spec.basicAuth takes only a secret
+  # reference, not inline credentials.
+  - traefik.io
+  - frrk8s.metallb.io
+  - gateway.networking.k8s.io
+  # ProxyClass.spec.statefulSet.pod.tailscaleContainer.env accepts inline
+  # env vars (e.g. TS_AUTHKEY) — residual read-only exposure.
+  - tailscale.com
+  - autoscaling.k8s.io
+  - deviceplugin.intel.com
+  - fpga.intel.com
+  - nfd.k8s-sigs.io
+  - upgrade.cattle.io
+  - k3s.cattle.io
+  resources:
+  - "*"
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - generators.external-secrets.io
+  resources:
+  # explicit allow-list instead of "*": fakes.spec.data is literal plaintext
+  # key/value pairs, and webhooks.spec.headers are free-form strings that can
+  # carry an inline API key — both excluded. grafanas is granted: it exposes
+  # only a plaintext admin username (spec.auth.basic.username), never the
+  # password, which stays in an unreadable Secret.
+  #
+  # clustergenerators and generatorstates are ALSO excluded, not just
+  # fakes/webhooks, because RBAC allows and denies by kind, never by content:
+  # any kind that can embed another kind's content defeats a kind-level
+  # exclusion.
+  # - ClusterGenerator.spec is {kind, generator}, where generator
+  #   (GeneratorSpec) inlines fakeSpec/webhookSpec as struct fields (upstream
+  #   apis/generators/v1alpha1/types_cluster.go) — a ClusterGenerator with
+  #   kind: Fake carries the identical plaintext spec.data in a different
+  #   envelope, so denying fakes while allowing clustergenerators achieves
+  #   nothing. Field-level conditioning ("allow ClusterGenerator unless
+  #   spec.kind is Fake") isn't an option either — RBAC has no concept of it.
+  # - GeneratorState.spec.resource is a snapshot of the generator manifest at
+  #   the time the state was produced, and spec.state is the generator's
+  #   output (per the external-secrets v2.8.0 CRD bundle this repo pins) —
+  #   for vaultdynamicsecrets, which this role does grant, that output is
+  #   lease material. GeneratorStates are written by the controller, not a
+  #   person, so they appear without anyone choosing to create one.
+  - acraccesstokens
+  - beyondtrustworkloadcredentialsdynamicsecrets
+  - cloudsmithaccesstokens
+  - ecrauthorizationtokens
+  - gcraccesstokens
+  - githubaccesstokens
+  - grafanas
+  - mfas
+  - passwords
+  - quayaccesstokens
+  - sshkeys
+  - stssessiontokens
+  - uuids
+  - vaultdynamicsecrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - metallb.io
+  resources:
+  # bgppeers deliberately excluded: BGPPeer.spec.password is a plaintext BGP
+  # password; MetalLB here runs L2-only so nothing is lost
+  - bfdprofiles
+  - bgpadvertisements
+  - communities
+  - configurationstates
+  - ipaddresspools
+  - l2advertisements
+  - servicebgpstatuses
+  - servicel2statuses
+  verbs:
+  - get
+  - list
+  - watch
+---
+# Binds the in-cluster mcp-kubernetes-homelab ServiceAccount (apps-ai module,
+# ns ai) -- mirrors clusters/homelab/cluster/rbac/mcp-kubernetes-readonly.yaml
+# exactly, including this binding's name.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: mcp-kubernetes-readonly
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: mcp-kubernetes-readonly
+subjects:
+- kind: ServiceAccount
+  name: mcp-kubernetes-homelab
+  namespace: ai
+---
+# Stand-in for the real nas cluster's mcp-kubernetes-nas ServiceAccount
+# (homelab-ops-kubernetes-clusters/clusters/nas/cluster/rbac/mcp-kubernetes-readonly.yaml):
+# in production this identity lives on a separate, physically remote cluster and
+# is reached over a kubeconfig stored as the "kubeconfig_nas_mcp" secret. CI has
+# only the one kind cluster, so this SA + binding + token secret simulate that
+# remote identity here, and the "Build NAS kubeconfig secret" chainsaw step
+# assembles the kubeconfig from its minted token, the same way it's done by hand
+# for the real nas cluster.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mcp-kubernetes-nas
+  namespace: mcp-access
+---
+# Named differently from the "mcp-kubernetes-readonly" binding above (which prod
+# also uses on the real nas cluster) purely to avoid a name collision: prod
+# splits these two identities across two separate clusters, CI puts both on one.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: mcp-kubernetes-nas-test-readonly
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: mcp-kubernetes-readonly
+subjects:
+- kind: ServiceAccount
+  name: mcp-kubernetes-nas
+  namespace: mcp-access
+---
+# Kubernetes 1.24+ no longer auto-creates a ServiceAccount token Secret, so this
+# is minted explicitly, exactly as done for the real nas cluster. Populated
+# asynchronously by the token controller; the "Build NAS kubeconfig secret" step
+# polls for .data.token/.data.ca\.crt before reading it.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mcp-kubernetes-nas-token
+  namespace: mcp-access
+  annotations:
+    kubernetes.io/service-account.name: mcp-kubernetes-nas
+type: kubernetes.io/service-account-token

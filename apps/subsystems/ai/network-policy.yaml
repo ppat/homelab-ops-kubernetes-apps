@@ -1,0 +1,48 @@
+---
+# The MCP servers are ClusterIP-only and authenticate no caller of their own
+# (auth_type: none in litellm's registry), so without this any pod in the cluster could
+# reach their full tool surface with the gateway bypassed entirely. LiteLLM is the access
+# boundary -- virtual-key scoping is enforced there -- and this is what makes that a
+# boundary rather than a convention.
+#
+# Selects on app.kubernetes.io/component rather than listing each server by name: a name
+# list leaves any server added later matched by no policy at all, and a pod no policy
+# selects is unisolated, so that failure is silent and open.
+#
+# Kubelet probes are unaffected. Every pod firewall chain begins with an unconditional
+# accept for node-local source addresses, and "traffic to and from the node where a Pod is
+# running is always allowed" is a NetworkPolicy conformance requirement, not an
+# implementation detail -- so restricting ingress here cannot break liveness/readiness.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mcp-servers-ingress
+  namespace: ai
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: mcp-server
+  # Ingress only: egress stays unisolated, which the MCP servers depend on to reach the
+  # Kubernetes API, Grafana, Home Assistant and the UniFi controllers.
+  policyTypes:
+  - Ingress
+  ingress:
+  # No namespaceSelector, so this is scoped to this policy's own namespace. These are the
+  # labels the live litellm pod carries and the litellm Service selects on; note the chart
+  # names itself litellm-helm, so deriving them from the chart rather than the cluster
+  # yields a selector that matches nothing and denies the gateway.
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: litellm
+          app.kubernetes.io/instance: litellm
+  # Nothing scrapes these pods yet. Included so that adding a ServiceMonitor later works
+  # rather than failing silently against a policy nobody thinks to revisit.
+  # kubernetes.io/metadata.name is applied to every namespace by the control plane.
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: prometheus

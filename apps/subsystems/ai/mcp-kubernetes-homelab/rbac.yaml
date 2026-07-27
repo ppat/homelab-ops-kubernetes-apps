@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mcp-kubernetes-homelab
+  namespace: ai
+# The ClusterRole/ClusterRoleBinding granting this ServiceAccount API access live in
+# the clusters repo (clusters/<cluster>/cluster/rbac/), alongside the
+# kubernetes-api-admin/kubernetes-api-readonly bindings -- cluster-wide RBAC is
+# cluster policy, not module behaviour, and belongs at the point of use per this
+# repo's dependency-placement rule (see CLAUDE.md).

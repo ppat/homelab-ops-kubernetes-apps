@@ -35,6 +35,33 @@ spec:
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=dragonfly-operator-release --namespace=dragonfly-system --timeout=4m
         timeout: 4m
 
+  - name: Verify mcp-kubernetes RBAC posture
+    try:
+    - description: Assert mcp-kubernetes-homelab / mcp-kubernetes-nas can-i checks
+      script:
+        content: ./scripts/check-mcp-kubernetes-rbac.sh
+        timeout: 1m
+    catch:
+    - describe:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRoleBinding
+        name: mcp-kubernetes-readonly
+
+  - name: Build NAS kubeconfig secret
+    try:
+    - description: Assemble mcp-kubernetes-nas-secrets from the minted mcp-kubernetes-nas token
+      script:
+        content: ./scripts/build-nas-kubeconfig.sh
+        timeout: 2m
+    catch:
+    - describe:
+        apiVersion: v1
+        kind: Secret
+        name: mcp-kubernetes-nas-token
+        namespace: mcp-access
+    - events:
+        namespace: mcp-access
+
   - name: Apply apps-ai module
     try:
     - description: Apply apps-ai
@@ -57,6 +84,10 @@ spec:
     use:
       template: ./validate-litellm.yaml
 
+  - name: Validate network policy
+    use:
+      template: ./validate-network-policy.yaml
+
   - name: Validate mcp-context7
     use:
       template: ./validate-mcp-context7.yaml
@@ -73,9 +104,13 @@ spec:
     use:
       template: ./validate-mcp-home-assistant.yaml
 
-  - name: Validate mcp-kubernetes
+  - name: Validate mcp-kubernetes-homelab
     use:
-      template: ./validate-mcp-kubernetes.yaml
+      template: ./validate-mcp-kubernetes-homelab.yaml
+
+  - name: Validate mcp-kubernetes-nas
+    use:
+      template: ./validate-mcp-kubernetes-nas.yaml
 
   - name: Validate mcp-unifi-network
     use:

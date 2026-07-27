@@ -1,0 +1,45 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-network-policy
+spec:
+  try:
+  # kind's default CNI (kindnetd) does not implement NetworkPolicy enforcement, so this can
+  # only assert the object exists and is shaped as expected -- it cannot prove ingress is
+  # actually filtered. Enforcement must be verified on a real cluster; see TESTING.md.
+  - description: Assert networkpolicy/mcp-servers-ingress
+    assert:
+      resource:
+        apiVersion: networking.k8s.io/v1
+        kind: NetworkPolicy
+        metadata:
+          name: mcp-servers-ingress
+          namespace: ai
+        spec:
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/component: mcp-server
+          policyTypes:
+          - Ingress
+          ingress:
+          - from:
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/name: litellm
+                  app.kubernetes.io/instance: litellm
+          - from:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: monitoring
+              podSelector:
+                matchLabels:
+                  app.kubernetes.io/name: prometheus
+  catch:
+  - describe:
+      apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      name: mcp-servers-ingress
+      namespace: ai
+  - events:
+      namespace: ai
