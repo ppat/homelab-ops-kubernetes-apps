@@ -23,7 +23,7 @@ spec:
       - name: syslog
         env:
         - name: LOKI_URL
-          value: ${syslogng_loki_url:=loki-write.logging.svc.cluster.local:9095}
+          value: ${syslogng_loki_url:=loki.logging.svc.cluster.local:9095}
         image: balabit/syslog-ng:4.12.0@sha256:641130c792319d4629da355ba153c35a4b6900bfeeaf7575b68c5adf35bf1e30
         imagePullPolicy: IfNotPresent
         livenessProbe:

@@ -53,7 +53,7 @@ spec:
         - name: UP_LOKI_DISABLE
           value: "true"
         - name: UP_LOKI_URL
-          value: "http://loki-gateway.logging.svc.cluster.local."
+          value: "http://loki.logging.svc.cluster.local.:3100"
         - name: UP_PROMETHEUS_DISABLE
           value: "false"
         image: ghcr.io/unpoller/unpoller:v3.3.1@sha256:9dcccdc931a6830735f6978caf8cd67699b0dc33e37cf9ef4638611791c4df62
