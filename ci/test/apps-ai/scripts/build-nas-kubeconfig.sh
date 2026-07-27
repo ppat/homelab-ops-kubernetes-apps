@@ -21,7 +21,7 @@ set -euo pipefail
 # otherwise fight with this script for ownership of the Secret), so this
 # creates the target Secret directly instead of going through ESO.
 
-NAMESPACE="kube-system"
+NAMESPACE="mcp-access"
 TARGET_NAMESPACE="ai"
 SA_SECRET="mcp-kubernetes-nas-token"
 TARGET_SECRET="mcp-kubernetes-nas-secrets"
@@ -42,6 +42,17 @@ if [ -z "$TOKEN" ] || [ -z "$CA" ]; then
   exit 1
 fi
 
+# Decoded into a variable (and checked) up front rather than inline in the heredoc below:
+# a command substitution inside a heredoc doesn't propagate its exit status to the
+# enclosing "VAR=$(cat <<EOF ...)" assignment, which takes cat's exit status instead --
+# so set -e would not catch a base64 decode failure there, silently producing a
+# kubeconfig with an empty token.
+DECODED_TOKEN=$(echo "$TOKEN" | base64 -d)
+if [ -z "$DECODED_TOKEN" ]; then
+  echo "base64 decode of the token from secret/$SA_SECRET (-n $NAMESPACE) produced an empty result" >&2
+  exit 1
+fi
+
 KUBECONFIG_CONTENT=$(cat <<EOF
 apiVersion: v1
 kind: Config
@@ -59,7 +70,7 @@ current-context: nas
 users:
 - name: nas
   user:
-    token: $(echo "$TOKEN" | base64 -d)
+    token: ${DECODED_TOKEN}
 EOF
 )
 

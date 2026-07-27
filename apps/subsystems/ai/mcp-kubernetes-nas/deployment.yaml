@@ -19,6 +19,12 @@ spec:
       # No serviceAccountName: this instance talks to a remote cluster via the mounted
       # kubeconfig (below), so it must not inherit this pod's homelab identity.
       automountServiceAccountToken: false
+      # Required for the kubeconfig secret volume's defaultMode: 0400 (below) to actually
+      # be readable: without fsGroup the file stays root-owned and this non-root container
+      # (runAsUser 65532) gets denied outright, since Kubernetes only shifts owner
+      # permission bits into the group bits when fsGroup is set.
+      securityContext:
+        fsGroup: 65532
       containers:
       - name: mcp-kubernetes-nas
         image: ghcr.io/containers/kubernetes-mcp-server:v0.0.65@sha256:5df586e2c7ced2a3125f6e78923388d80b69de0a2ad1470325b05318f12725bd
@@ -86,5 +92,8 @@ spec:
       - name: kubeconfig
         secret:
           secretName: mcp-kubernetes-nas-secrets
+          # Default 0644 leaves the kubeconfig (bearer token included) world-readable
+          # inside the container; restrict it (paired with fsGroup above).
+          defaultMode: 0400
       - name: tmp
         emptyDir: {}

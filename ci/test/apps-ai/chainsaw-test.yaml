@@ -35,6 +35,18 @@ spec:
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=dragonfly-operator-release --namespace=dragonfly-system --timeout=4m
         timeout: 4m
 
+  - name: Verify mcp-kubernetes RBAC posture
+    try:
+    - description: Assert mcp-kubernetes-homelab / mcp-kubernetes-nas can-i checks
+      script:
+        content: ./scripts/check-mcp-kubernetes-rbac.sh
+        timeout: 1m
+    catch:
+    - describe:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRoleBinding
+        name: mcp-kubernetes-readonly
+
   - name: Build NAS kubeconfig secret
     try:
     - description: Assemble mcp-kubernetes-nas-secrets from the minted mcp-kubernetes-nas token
@@ -46,9 +58,9 @@ spec:
         apiVersion: v1
         kind: Secret
         name: mcp-kubernetes-nas-token
-        namespace: kube-system
+        namespace: mcp-access
     - events:
-        namespace: kube-system
+        namespace: mcp-access
 
   - name: Apply apps-ai module
     try:
