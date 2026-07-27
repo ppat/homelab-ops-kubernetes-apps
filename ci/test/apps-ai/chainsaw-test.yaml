@@ -84,6 +84,10 @@ spec:
     use:
       template: ./validate-litellm.yaml
 
+  - name: Validate network policy
+    use:
+      template: ./validate-network-policy.yaml
+
   - name: Validate mcp-context7
     use:
       template: ./validate-mcp-context7.yaml

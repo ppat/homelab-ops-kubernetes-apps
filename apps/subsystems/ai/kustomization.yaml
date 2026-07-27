@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
 - namespace.yaml
+- network-policy.yaml
 - litellm/
 - mcp-context7/
 - mcp-grafana/
