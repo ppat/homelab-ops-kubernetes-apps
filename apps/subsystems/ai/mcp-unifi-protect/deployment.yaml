@@ -15,6 +15,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: mcp-unifi-protect
+        app.kubernetes.io/component: mcp-server
     spec:
       automountServiceAccountToken: false
       containers:

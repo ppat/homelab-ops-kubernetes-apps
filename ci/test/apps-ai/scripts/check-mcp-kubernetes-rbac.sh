@@ -53,6 +53,12 @@ check_identity() {
   # would silently re-grant both, so assert them individually.
   check "$identity" get fakes.generators.external-secrets.io no --all-namespaces
   check "$identity" get webhooks.generators.external-secrets.io no --all-namespaces
+  # Excluded for the same reason, one level removed: ClusterGenerator.spec inlines
+  # fakeSpec/webhookSpec, and GeneratorState.spec.resource/state snapshot a generator
+  # manifest and its output -- both can carry the same plaintext a kind-level fakes/
+  # webhooks deny is meant to block, just wrapped in a different kind.
+  check "$identity" get clustergenerators.generators.external-secrets.io no --all-namespaces
+  check "$identity" get generatorstates.generators.external-secrets.io no --all-namespaces
 
   # Must be allowed: the read-only surface the MCP tools actually rely on.
   check "$identity" list nodes yes
