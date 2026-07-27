@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.9...apps-ai-v0.6.10) (2026-07-27)
+
+
+### ✨ Features
+
+* **apps-ai:** fix mcp-grafana auth, broaden mcp-kubernetes RBAC, add nas MCP ([#3414](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3414)) ([80129c9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/80129c9202f1cbbcce0809e50226b81f6c5ab47e))
+
 ## [0.6.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.8...apps-ai-v0.6.9) (2026-07-26)
 
 
