@@ -8,7 +8,7 @@ data:
   config.toml: |
     read_only = true
     cluster_provider_strategy = "kubeconfig"
-    kubeconfig = "/etc/kubernetes-mcp-server/kubeconfig"
+    kubeconfig = "/etc/mcp-kubernetes-nas/kubeconfig"
     toolsets = ["core"]
 
     # Both kubeconfig and cluster_provider_strategy are required -- setting the

@@ -39,10 +39,13 @@ spec:
         - name: config
           mountPath: /etc/kubernetes-mcp-server
           readOnly: true
+        # Deliberately its own directory rather than a subPath file under the config
+        # mount above: bind-mounting a subPath beneath another volume's mount root fails
+        # container init outright ("not a directory"), and subPath mounts never receive
+        # updates when the Secret changes, so a rotated kubeconfig would go unnoticed.
         - name: kubeconfig
-          mountPath: /etc/kubernetes-mcp-server/kubeconfig
+          mountPath: /etc/mcp-kubernetes-nas
           readOnly: true
-          subPath: kubeconfig
         - name: tmp
           mountPath: /tmp
         # The target (nas) cluster's API is reachable at the kubeconfig's endpoint, so
