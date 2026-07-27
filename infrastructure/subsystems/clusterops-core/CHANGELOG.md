@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-core-v0.3.0...infra-clusterops-core-v0.3.1) (2026-07-27)
+
+
+### ✨ Features
+
+* **infra-clusterops-core:** adopt CancelHealthCheckOnNewRevision on kustomize-controller ([#3409](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3409)) ([60ecd10](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/60ecd102ea0637cd9c5c561328743434642ce6ac))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-clusterops-core:** update fluxcd/flux2 (v2.9.2 -&gt; v2.9.3) ([#3388](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3388)) ([7cdb395](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7cdb395f10fafb36f7c06c94c2b59951f8230296))
+
 ## [0.3.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-core-v0.2.3...infra-clusterops-core-v0.3.0) (2026-07-17)
 
 
