@@ -10,6 +10,11 @@ set -euo pipefail
 
 FAILED=0
 
+# Subresources MUST be passed as --subresource=x, never as "resource/x": kubectl splits
+# that shorthand into resource + resource NAME, so "get nodes/proxy" asks whether the
+# identity can get a Node object literally named "proxy" -- which the blanket nodes grant
+# allows, making the check silently pass or fail for reasons unrelated to the subresource.
+#
 # check <identity> <verb> <resource> <expected: yes|no> [extra kubectl-auth-can-i args...]
 check() {
   local identity="$1" verb="$2" resource="$3" expected="$4"
@@ -36,12 +41,12 @@ check_identity() {
   # -- GET routes it exposes include /exec, /attach, /portForward).
   check "$identity" get secrets no --all-namespaces
   check "$identity" list secrets no -n ai
-  check "$identity" create pods/exec no --all-namespaces
+  check "$identity" create pods no --subresource=exec --all-namespaces
   check "$identity" delete pods no --all-namespaces
   check "$identity" create subjectaccessreviews no
   check "$identity" create tokenreviews no
   check "$identity" patch deployments no --all-namespaces
-  check "$identity" get nodes/proxy no
+  check "$identity" get nodes no --subresource=proxy
   # generators.external-secrets.io is granted as an explicit kind list rather than "*"
   # precisely to keep these two out: fakes.spec.data is literal plaintext key/value
   # pairs and webhooks.spec.headers can carry an inline API key. A regression to "*"
@@ -51,7 +56,7 @@ check_identity() {
 
   # Must be allowed: the read-only surface the MCP tools actually rely on.
   check "$identity" list nodes yes
-  check "$identity" get pods/log yes --all-namespaces
+  check "$identity" get pods yes --subresource=log --all-namespaces
   check "$identity" list customresourcedefinitions yes
   check "$identity" list persistentvolumes yes
   check "$identity" list storageclasses yes
