@@ -35,6 +35,21 @@ spec:
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=dragonfly-operator-release --namespace=dragonfly-system --timeout=4m
         timeout: 4m
 
+  - name: Build NAS kubeconfig secret
+    try:
+    - description: Assemble mcp-kubernetes-nas-secrets from the minted mcp-kubernetes-nas token
+      script:
+        content: ./scripts/build-nas-kubeconfig.sh
+        timeout: 2m
+    catch:
+    - describe:
+        apiVersion: v1
+        kind: Secret
+        name: mcp-kubernetes-nas-token
+        namespace: kube-system
+    - events:
+        namespace: kube-system
+
   - name: Apply apps-ai module
     try:
     - description: Apply apps-ai
@@ -73,9 +88,13 @@ spec:
     use:
       template: ./validate-mcp-home-assistant.yaml
 
-  - name: Validate mcp-kubernetes
+  - name: Validate mcp-kubernetes-homelab
     use:
-      template: ./validate-mcp-kubernetes.yaml
+      template: ./validate-mcp-kubernetes-homelab.yaml
+
+  - name: Validate mcp-kubernetes-nas
+    use:
+      template: ./validate-mcp-kubernetes-nas.yaml
 
   - name: Validate mcp-unifi-network
     use:

@@ -9,6 +9,7 @@ resources:
 - ../../infra-database/infra-database-core.yaml
 - ../../infra-security/infra-security-core.yaml
 - fake-secret-store.yaml
+- mcp-kubernetes-rbac.yaml
 - openclaw-config.yaml
 - openclaw-config-secrets.yaml
 

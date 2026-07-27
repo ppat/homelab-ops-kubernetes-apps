@@ -57,6 +57,12 @@ flowchart TB
         litellm[LiteLLM Gateway]:::gateway
         context7[context7 MCP Server]:::core
         playwright[Playwright MCP Server]:::core
+        grafana[Grafana MCP Server]:::core
+        kubehomelab[Kubernetes MCP Server<br/>homelab cluster]:::core
+        kubenas[Kubernetes MCP Server<br/>nas cluster]:::core
+        homeassistant[Home Assistant MCP Server]:::core
+        unifinetwork[UniFi Network MCP Server]:::core
+        unifiprotect[UniFi Protect MCP Server]:::core
         n8n[n8n Automation<br/>ns: n8n]:::ui
         openclaw[OpenClaw Gateway<br/>ns: openclaw]:::ui
     end
@@ -82,6 +88,12 @@ flowchart TB
 
     litellm --> context7
     litellm --> playwright
+    litellm --> grafana
+    litellm --> kubehomelab
+    litellm --> kubenas
+    litellm --> homeassistant
+    litellm --> unifinetwork
+    litellm --> unifiprotect
     openclaw -.->|read-only MCP| litellm
 
     openclaw -->|triggers| n8n
@@ -102,11 +114,12 @@ flowchart TB
 | Component | Type | Primary Role | Key Features | Integration Points |
 | ----------- | ------ | -------------- | -------------- | ------------------- |
 | OpenWebUI | Core | Web Interface | • User-friendly chat interface<br>• Conversation management<br>• Model selection and configuration<br>• Cloud LLM integration via the LiteLLM gateway | • LiteLLM gateway integration for cloud model access<br>• Direct user access via web browser<br>• Persistent storage for settings |
-| LiteLLM | Gateway | AI Gateway | • Unified routing across multiple LLM providers with automatic failover<br>• Virtual key, team, and budget management<br>• Request caching and cost tracking<br>• Hosts MCP servers for client tool access | • OpenWebUI and other gateway consumer integration<br>• PostgreSQL for persistent configuration and spend data<br>• Redis-compatible cache for response caching<br>• mcp-context7, mcp-grafana, mcp-home-assistant, mcp-kubernetes, mcp-playwright, mcp-unifi-network, and mcp-unifi-protect integration |
+| LiteLLM | Gateway | AI Gateway | • Unified routing across multiple LLM providers with automatic failover<br>• Virtual key, team, and budget management<br>• Request caching and cost tracking<br>• Hosts MCP servers for client tool access | • OpenWebUI and other gateway consumer integration<br>• PostgreSQL for persistent configuration and spend data<br>• Redis-compatible cache for response caching<br>• mcp-context7, mcp-grafana, mcp-home-assistant, mcp-kubernetes-homelab, mcp-kubernetes-nas, mcp-playwright, mcp-unifi-network, and mcp-unifi-protect integration |
 | mcp-context7 | Core | Documentation MCP Server | • Self-hosted library/API documentation lookup<br>• MCP protocol interface for AI clients<br>• Stateless, lightweight process | • Hosted behind the LiteLLM gateway<br>• Provides documentation context to AI assistants |
-| mcp-grafana | Core | Observability MCP Server | • Self-hosted Grafana MCP server covering dashboards, datasources, Prometheus, Loki, and alerting<br>• Read-write access, with the admin toolset excluded<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the in-cluster Grafana instance<br>• Provides observability context and query tools to AI assistants |
+| mcp-grafana | Core | Observability MCP Server | • Self-hosted Grafana MCP server covering search, dashboards, datasources, Prometheus, Loki, alerting, navigation, and panel queries, plus write access<br>• Admin toolset excluded<br>• Service-account token self-provisioned and rotated via an ESO `Grafana` generator authenticating with Grafana admin basic auth, so it survives a Grafana DB wipe with no manual re-pasting<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the in-cluster Grafana instance, both for its API calls and to mint its own service-account token<br>• Provides observability context and query tools to AI assistants |
 | mcp-home-assistant | Core | Home Automation MCP Server | • Self-hosted Home Assistant MCP server<br>• Read-write access for device control and automation<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the in-cluster Home Assistant instance<br>• Provides home automation control and inspection tools to AI assistants |
-| mcp-kubernetes | Core | Kubernetes Cluster MCP Server | • Self-hosted, read-only Kubernetes cluster MCP server<br>• Hardened access — blocks Secrets, ServiceAccounts, and external-secrets resources<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• In-cluster access via a dedicated ServiceAccount<br>• Provides cluster state context to AI assistants |
+| mcp-kubernetes-homelab | Core | Kubernetes Cluster MCP Server (homelab) | • Self-hosted, read-only Kubernetes cluster MCP server for the homelab cluster<br>• Explicit read-only allow-list, plus a `denied_resources` entry blocking Secrets as defence-in-depth<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• In-cluster access via a dedicated ServiceAccount, bound (outside this module) to a purpose-built read-only ClusterRole the consuming cluster provides<br>• Provides cluster state context to AI assistants |
+| mcp-kubernetes-nas | Core | Kubernetes Cluster MCP Server (nas) | • Self-hosted, read-only Kubernetes cluster MCP server for the separate `nas` cluster<br>• Reaches that cluster via a mounted kubeconfig (`cluster_provider_strategy = "kubeconfig"`) rather than in-cluster credentials<br>• Same read-only allow-list and Secrets-denial posture as the homelab server<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway on the homelab cluster (kept behind the gateway even though its target cluster is remote)<br>• Kubeconfig sourced from the `kubeconfig_nas_mcp` secret-store key<br>• Provides nas cluster state context to AI assistants |
 | mcp-playwright | Core | Browser Automation MCP Server | • Self-hosted browser automation and web interaction<br>• MCP protocol interface for AI clients<br>• Headless browser execution | • Hosted behind the LiteLLM gateway<br>• Provides browsing/automation tools to AI assistants |
 | mcp-unifi-network | Core | UniFi Network MCP Server | • Self-hosted, read-only UniFi Network MCP server<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the UniFi Network controller<br>• Provides network state context to AI assistants |
 | mcp-unifi-protect | Core | UniFi Protect MCP Server | • Self-hosted, read-only UniFi Protect MCP server<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the UniFi Protect controller<br>• Provides camera/security system context to AI assistants |
@@ -149,12 +162,13 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | apikey_openrouter_litellm | OpenRouter API key used by LiteLLM to route requests to OpenRouter-hosted models |
    | litellm_redis_password | Password for LiteLLM's Redis-compatible cache |
    | apikey_context7_mcp | context7 API key required by the self-hosted mcp-context7 server |
-   | grafana_service_account_token_mcp | Grafana service-account token (Editor role) used by the self-hosted mcp-grafana server |
+   | cluster_homelab_grafana_admin_password | Grafana admin-user password (the same one observability-core provisions for `grafana-admin-credentials`), used by mcp-grafana's ESO `Grafana` generator to authenticate via admin basic auth and self-provision its own Editor-role service-account token |
    | unifi_network_username_mcp | Username for a native UniFi Read-Only/Viewer account, used by the self-hosted mcp-unifi-network server |
    | unifi_network_password_mcp | Password for the UniFi Network account used by the self-hosted mcp-unifi-network server |
    | unifi_protect_username_mcp | Username for a UniFi Protect View-Only account, used by the self-hosted mcp-unifi-protect server |
    | unifi_protect_password_mcp | Password for the UniFi Protect account used by the self-hosted mcp-unifi-protect server |
    | homeassistant_token_mcp | Long-lived Home Assistant access token (from an admin user) used by the self-hosted mcp-home-assistant server |
+   | kubeconfig_nas_mcp | Kubeconfig for the remote `nas` cluster, mounted into the self-hosted mcp-kubernetes-nas server so it can reach that cluster's API |
    | n8n_encryption_key | n8n's data-at-rest encryption key (credentials, etc.) — must not change after first boot |
    | n8n_owner_password_hash | bcrypt hash of the n8n owner account password, used to pre-provision the owner login and skip the setup wizard |
    | n8n_credentials_overwrite | JSON blob n8n loads via `N8N_CREDENTIALS_OVERWRITE_DATA` to pre-seed the LiteLLM (OpenAI-compatible) and Maddy SMTP credentials matched by name against example workflows supplied at the cluster level and imported at rollout (not shipped in this module) |
@@ -173,6 +187,7 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | Variable | Purpose | Used By |
    | ---------- | --------- | --------- |
    | domain_name | External access URL (openwebui.${domain_name}) and UniFi controller host (unifi.nodes.${domain_name}) | OpenWebUI, mcp-unifi-network, mcp-unifi-protect |
+   | grafana_admin_username | Grafana admin username mcp-grafana's ESO generator authenticates with to self-provision its service-account token. Optional, defaults to `admin` | mcp-grafana |
    | db_name | PostgreSQL cluster name prefix | LiteLLM |
    | db_suffix_current | PostgreSQL cluster name suffix (blue/green rotation) | LiteLLM |
    | db_bootstrap_database | Initial database name created on bootstrap | LiteLLM |
@@ -200,4 +215,9 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
 
    | Resource | Access | Purpose |
    | -------- | ------ | ------- |
-   | ClusterRole: `view` (built-in) | Read-only, cluster-wide, excluding Secrets | Bound to a dedicated ServiceAccount for the mcp-kubernetes server |
+   | ClusterRole: `mcp-kubernetes-readonly` — homelab cluster (**not shipped by this module**; a prerequisite the consuming cluster must provide, e.g. `clusters/<cluster>/cluster/rbac/mcp-kubernetes-readonly.yaml` in the clusters repo) | Purpose-built, explicit read-only allow-list, cluster-wide, excluding Secrets | Bound (in the consuming cluster's own manifests) to the `mcp-kubernetes-homelab` ServiceAccount this module ships |
+   | ClusterRole: `mcp-kubernetes-readonly` — nas cluster (**not shipped by this module**; must exist on the remote `nas` cluster itself) | Purpose-built, explicit read-only allow-list, cluster-wide, excluding Secrets | Bound to the identity presented by mcp-kubernetes-nas's mounted kubeconfig |
+
+## Notes
+
+- **mcp-kubernetes-homelab / mcp-kubernetes-nas access posture**: both run against an explicit read-only allow-list ClusterRole (`mcp-kubernetes-readonly`), not the built-in `view` role, and that ClusterRole is cluster policy, not module behaviour — this module ships only the `mcp-kubernetes-homelab` ServiceAccount that role gets bound to on the homelab cluster. mcp-kubernetes-nas has no ServiceAccount of its own (`automountServiceAccountToken: false`); it authenticates entirely via its mounted kubeconfig, so the same ClusterRole must be bound to that kubeconfig's identity on the remote `nas` cluster. Secrets are excluded twice over on both servers: by the ClusterRole itself, and again by a `denied_resources` entry in each server's `config.toml` as defence-in-depth. external-secrets kinds (e.g. `ExternalSecret`, `ClusterSecretStore`) are readable under this allow-list — their specs reference secret-store keys by name and never contain secret values.

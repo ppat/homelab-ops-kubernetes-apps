@@ -30,22 +30,32 @@ spec:
         - /mcp
         - --allowed-hosts
         - mcp-grafana.ai.svc.cluster.local:8000
+        # This stack is Prometheus + Alertmanager + Loki: datasource-specific toolsets
+        # for elasticsearch/quickwit/influxdb/cloudwatch/clickhouse/snowflake/graphite/
+        # athena, the Grafana-Cloud-only toolsets (incident/oncall/asserts/sift),
+        # pyroscope, rendering (needs the Image Renderer plugin, not installed), and
+        # provisioning/snapshot are all omitted as inapplicable. admin stays excluded.
         - --enabled-tools
-        - search,datasource,incident,prometheus,write,loki,elasticsearch,quickwit,influxdb,alerting,dashboard,oncall,asserts,sift,pyroscope,navigation,rendering,snapshot,cloudwatch,clickhouse,snowflake,runpanelquery,graphite,athena,provisioning
+        - search,datasource,dashboard,prometheus,loki,alerting,navigation,runpanelquery,write
         env:
         # In-cluster Grafana Service (default chart Service port; no service.port override
         # in the HelmRelease).
         - name: GRAFANA_URL
           value: http://grafana.monitoring.svc.cluster.local
-        - name: GRAFANA_SERVICE_ACCOUNT_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: mcp-grafana-secrets
-              key: GRAFANA_SERVICE_ACCOUNT_TOKEN
+        # _FILE (not the inline var) because the ESO Grafana generator (secrets.yaml)
+        # mints a new SA token on every refresh; upstream mcp-grafana re-reads this file
+        # per request (v0.16.0+), so rotation needs no pod restart. It also TrimSpace's
+        # the file content, which the inline env var does not.
+        - name: GRAFANA_SERVICE_ACCOUNT_TOKEN_FILE
+          value: /etc/mcp-grafana/token
         ports:
         - name: http
           containerPort: 8000
           protocol: TCP
+        volumeMounts:
+        - name: secrets
+          mountPath: /etc/mcp-grafana
+          readOnly: true
         # httpGet probes trip the server's own --allowed-hosts guard (returns 400
         # for any Host header it doesn't recognize, including the kubelet's probe
         # request); a TCP check avoids that entirely.
@@ -74,3 +84,7 @@ spec:
             type: RuntimeDefault
           runAsNonRoot: true
           runAsUser: 1000
+      volumes:
+      - name: secrets
+        secret:
+          secretName: mcp-grafana-secrets

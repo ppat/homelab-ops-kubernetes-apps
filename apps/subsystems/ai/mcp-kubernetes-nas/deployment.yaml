@@ -2,24 +2,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mcp-kubernetes
+  name: mcp-kubernetes-nas
   namespace: ai
   labels:
-    app.kubernetes.io/name: mcp-kubernetes
+    app.kubernetes.io/name: mcp-kubernetes-nas
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: mcp-kubernetes
+      app.kubernetes.io/name: mcp-kubernetes-nas
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: mcp-kubernetes
+        app.kubernetes.io/name: mcp-kubernetes-nas
     spec:
-      serviceAccountName: mcp-kubernetes
-      automountServiceAccountToken: true
+      # No serviceAccountName: this instance talks to a remote cluster via the mounted
+      # kubeconfig (below), so it must not inherit this pod's homelab identity.
+      automountServiceAccountToken: false
       containers:
-      - name: mcp-kubernetes
+      - name: mcp-kubernetes-nas
         image: ghcr.io/containers/kubernetes-mcp-server:v0.0.65@sha256:5df586e2c7ced2a3125f6e78923388d80b69de0a2ad1470325b05318f12725bd
         imagePullPolicy: IfNotPresent
         args:
@@ -38,10 +39,14 @@ spec:
         - name: config
           mountPath: /etc/kubernetes-mcp-server
           readOnly: true
+        - name: kubeconfig
+          mountPath: /etc/kubernetes-mcp-server/kubeconfig
+          readOnly: true
+          subPath: kubeconfig
         - name: tmp
           mountPath: /tmp
-        # This server runs in-cluster (cluster API is reachable), so /healthz
-        # reflects real readiness rather than falling back to a TCP-only check.
+        # The target (nas) cluster's API is reachable at the kubeconfig's endpoint, so
+        # /healthz reflects real readiness rather than falling back to a TCP-only check.
         livenessProbe:
           httpGet:
             path: /healthz
@@ -74,6 +79,9 @@ spec:
       volumes:
       - name: config
         configMap:
-          name: mcp-kubernetes-config
+          name: mcp-kubernetes-nas-config
+      - name: kubeconfig
+        secret:
+          secretName: mcp-kubernetes-nas-secrets
       - name: tmp
         emptyDir: {}

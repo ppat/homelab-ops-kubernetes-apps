@@ -8,7 +8,8 @@ resources:
 - mcp-context7/
 - mcp-grafana/
 - mcp-home-assistant/
-- mcp-kubernetes/
+- mcp-kubernetes-homelab/
+- mcp-kubernetes-nas/
 - mcp-playwright/
 - mcp-unifi-network/
 - mcp-unifi-protect/

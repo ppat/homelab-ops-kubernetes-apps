@@ -1,0 +1,374 @@
+---
+# Test fixture, not deployed by any module: cluster-wide RBAC for the MCP
+# kubernetes-mcp-server instances was moved out of apps-ai and into the clusters
+# repo (see apps/subsystems/ai/mcp-kubernetes-homelab/rbac.yaml), so CI has to
+# supply it itself to keep the read-only posture exercised. Canonical copy:
+# homelab-ops-kubernetes-clusters/clusters/homelab/cluster/rbac/mcp-kubernetes-readonly.yaml
+# -- keep the ClusterRole below in sync with that file by hand.
+#
+# Replaces apps-ai's mcp-kubernetes-homelab ClusterRoleBinding to the stock "view"
+# ClusterRole: "view" excludes all cluster-scoped resources outright and only
+# picks up namespaced CRDs whose operator opted in via the
+# rbac.authorization.k8s.io/aggregate-to-view label — inadequate on a cluster
+# running ~160 CRDs, most of which never set that label. Read-only by
+# construction (verbs never exceed get/list/watch, except two narrow,
+# individually-justified exceptions below); core Secrets are deliberately
+# absent from every rule.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: mcp-kubernetes-readonly
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - endpoints
+  - events
+  - limitranges
+  - namespaces
+  - nodes
+  - nodes/status
+  - persistentvolumeclaims
+  - persistentvolumes
+  - pods
+  - pods/log
+  - pods/status
+  - podtemplates
+  - replicationcontrollers
+  - resourcequotas
+  # secrets deliberately absent
+  - serviceaccounts
+  - services
+  - services/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  # required by the nodes_log and nodes_stats_summary tools, which hit the
+  # kubelet via /api/v1/nodes/{name}/proxy/. Accepted trade-off — kubelet GET
+  # can reach host log files; scoped to "get" and revocable.
+  - nodes/proxy
+  verbs:
+  - get
+- apiGroups:
+  - apps
+  resources:
+  - controllerrevisions
+  - daemonsets
+  - daemonsets/status
+  - deployments
+  - deployments/scale
+  - deployments/status
+  - replicasets
+  - replicasets/scale
+  - replicasets/status
+  - statefulsets
+  - statefulsets/scale
+  - statefulsets/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - cronjobs
+  - cronjobs/status
+  - jobs
+  - jobs/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - discovery.k8s.io
+  resources:
+  - endpointslices
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - events.k8s.io
+  resources:
+  - events
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  - ingressclasses
+  - networkpolicies
+  - ipaddresses
+  - servicecidrs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - csidrivers
+  - csinodes
+  - csistoragecapacities
+  - storageclasses
+  - volumeattachments
+  - volumeattributesclasses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - scheduling.k8s.io
+  resources:
+  - priorityclasses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - node.k8s.io
+  resources:
+  - runtimeclasses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apiregistration.k8s.io
+  resources:
+  - apiservices
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - mutatingwebhookconfigurations
+  - validatingwebhookconfigurations
+  - mutatingadmissionpolicies
+  - mutatingadmissionpolicybindings
+  - validatingadmissionpolicies
+  - validatingadmissionpolicybindings
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - certificates.k8s.io
+  resources:
+  - certificatesigningrequests
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - flowcontrol.apiserver.k8s.io
+  resources:
+  - flowschemas
+  - prioritylevelconfigurations
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - resource.k8s.io
+  resources:
+  - deviceclasses
+  - resourceclaims
+  - resourceclaimtemplates
+  - resourceslices
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  # read-only visibility into the permission graph aids debugging and
+  # confers no escalation
+  - roles
+  - rolebindings
+  - clusterroles
+  - clusterrolebindings
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - metrics.k8s.io
+  resources:
+  - nodes
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  # required by the resources_list tool for namespace defaulting (upstream
+  # pkg/kubernetes/resources.go). Deliberately excludes
+  # subjectaccessreviews/localsubjectaccessreviews and all of
+  # authentication.k8s.io, which are RBAC and token-validation oracles.
+  - selfsubjectaccessreviews
+  verbs:
+  - create
+- apiGroups:
+  # deliberately absent from this group-wide "*" grant:
+  # - helm.cattle.io: HelmChart.spec.valuesContent is inline plaintext Helm
+  #   values that can carry credentials
+  # - hub.traefik.io: Traefik Hub, unlicensed/unused; APIAuth/AccessControlPolicy
+  #   hold auth config
+  # - monitoring.grafana.com: Grafana Agent Operator, unused
+  - acme.cert-manager.io
+  - cert-manager.io
+  - trust.cert-manager.io
+  - external-secrets.io
+  - generators.external-secrets.io
+  - externaldns.k8s.io
+  - source.toolkit.fluxcd.io
+  - kustomize.toolkit.fluxcd.io
+  - helm.toolkit.fluxcd.io
+  - notification.toolkit.fluxcd.io
+  - postgresql.cnpg.io
+  - barmancloud.cnpg.io
+  - longhorn.io
+  - dragonflydb.io
+  - monitoring.coreos.com
+  - kyverno.io
+  - policies.kyverno.io
+  - reports.kyverno.io
+  - wgpolicyk8s.io
+  - traefik.io
+  - frrk8s.metallb.io
+  - gateway.networking.k8s.io
+  - tailscale.com
+  - autoscaling.k8s.io
+  - deviceplugin.intel.com
+  - fpga.intel.com
+  - nfd.k8s-sigs.io
+  - upgrade.cattle.io
+  - k3s.cattle.io
+  resources:
+  - "*"
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - metallb.io
+  resources:
+  # bgppeers deliberately excluded: BGPPeer.spec.password is a plaintext BGP
+  # password; MetalLB here runs L2-only so nothing is lost
+  - bfdprofiles
+  - bgpadvertisements
+  - communities
+  - configurationstates
+  - ipaddresspools
+  - l2advertisements
+  - servicebgpstatuses
+  - servicel2statuses
+  verbs:
+  - get
+  - list
+  - watch
+---
+# Binds the in-cluster mcp-kubernetes-homelab ServiceAccount (apps-ai module,
+# ns ai) -- mirrors clusters/homelab/cluster/rbac/mcp-kubernetes-readonly.yaml
+# exactly, including this binding's name.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: mcp-kubernetes-readonly
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: mcp-kubernetes-readonly
+subjects:
+- kind: ServiceAccount
+  name: mcp-kubernetes-homelab
+  namespace: ai
+---
+# Stand-in for the real nas cluster's mcp-kubernetes-nas ServiceAccount
+# (homelab-ops-kubernetes-clusters/clusters/nas/cluster/rbac/mcp-kubernetes-readonly.yaml):
+# in production this identity lives on a separate, physically remote cluster and
+# is reached over a kubeconfig stored as the "kubeconfig_nas_mcp" secret. CI has
+# only the one kind cluster, so this SA + binding + token secret simulate that
+# remote identity here, and the "Build NAS kubeconfig secret" chainsaw step
+# assembles the kubeconfig from its minted token, the same way it's done by hand
+# for the real nas cluster.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mcp-kubernetes-nas
+  namespace: kube-system
+---
+# Named differently from the "mcp-kubernetes-readonly" binding above (which prod
+# also uses on the real nas cluster) purely to avoid a name collision: prod
+# splits these two identities across two separate clusters, CI puts both on one.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: mcp-kubernetes-nas-test-readonly
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: mcp-kubernetes-readonly
+subjects:
+- kind: ServiceAccount
+  name: mcp-kubernetes-nas
+  namespace: kube-system
+---
+# Kubernetes 1.24+ no longer auto-creates a ServiceAccount token Secret, so this
+# is minted explicitly, exactly as done for the real nas cluster. Populated
+# asynchronously by the token controller; the "Build NAS kubeconfig secret" step
+# polls for .data.token/.data.ca\.crt before reading it.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mcp-kubernetes-nas-token
+  namespace: kube-system
+  annotations:
+    kubernetes.io/service-account.name: mcp-kubernetes-nas
+type: kubernetes.io/service-account-token

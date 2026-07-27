@@ -140,7 +140,8 @@ spec:
           context7: context7_mcp
           playwright: playwright_mcp
           grafana: grafana_mcp
-          kubernetes: kubernetes_mcp
+          kubernetes_homelab: kubernetes_homelab_mcp
+          kubernetes_nas: kubernetes_nas_mcp
           unifi_network: unifi_network_mcp
           unifi_protect: unifi_protect_mcp
           home_assistant: home_assistant_mcp
@@ -161,11 +162,16 @@ spec:
           transport: "http"
           auth_type: "none"
           description: "Self-hosted Grafana MCP server (read-write, admin toolset excluded)"
-        kubernetes_mcp:
-          url: "http://mcp-kubernetes.ai.svc.cluster.local:8080/mcp"
+        kubernetes_homelab_mcp:
+          url: "http://mcp-kubernetes-homelab.ai.svc.cluster.local:8080/mcp"
           transport: "http"
           auth_type: "none"
-          description: "Self-hosted Kubernetes MCP server (read-only; no access to secret-like resources)"
+          description: "Self-hosted Kubernetes MCP server for the homelab cluster (read-only; no secret-like resources)"
+        kubernetes_nas_mcp:
+          url: "http://mcp-kubernetes-nas.ai.svc.cluster.local:8080/mcp"
+          transport: "http"
+          auth_type: "none"
+          description: "Self-hosted Kubernetes MCP server for the nas cluster (read-only; no secret-like resources)"
         unifi_network_mcp:
           url: "http://mcp-unifi-network.ai.svc.cluster.local:3000/mcp"
           transport: "http"

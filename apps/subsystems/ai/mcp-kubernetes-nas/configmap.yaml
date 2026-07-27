@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mcp-kubernetes-nas-config
+  namespace: ai
+data:
+  config.toml: |
+    read_only = true
+    cluster_provider_strategy = "kubeconfig"
+    kubeconfig = "/etc/kubernetes-mcp-server/kubeconfig"
+    toolsets = ["core"]
+
+    # Both kubeconfig and cluster_provider_strategy are required -- setting the
+    # strategy alone still loses to in-cluster detection (upstream
+    # docs/configuration.md "Cross-Cluster Access from a Pod").
+    [[denied_resources]]
+    group = ""
+    version = "v1"
+    kind = "Secret"
