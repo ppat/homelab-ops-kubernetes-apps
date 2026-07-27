@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.24.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.24.2...infra-observability-core-v0.24.3) (2026-07-27)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **observability:** point all loki references at the monolithic service ([#3420](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3420)) ([b9a554b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b9a554b8b30cd1932c4adc0295588e90bd896cea)), closes [#3326](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3326)
+
 ## [0.24.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.24.1...infra-observability-core-v0.24.2) (2026-07-26)
 
 
