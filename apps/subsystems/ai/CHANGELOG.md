@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.10...apps-ai-v0.6.11) (2026-07-28)
+
+
+### ✨ Features
+
+* **apps-ai:** add self-hosted GitHub MCP server behind litellm ([#3424](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3424)) ([fe39951](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fe3995124aa36aa5768da671e20af88ae2d997ee)), closes [#3423](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3423)
+
 ## [0.6.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.9...apps-ai-v0.6.10) (2026-07-27)
 
 
