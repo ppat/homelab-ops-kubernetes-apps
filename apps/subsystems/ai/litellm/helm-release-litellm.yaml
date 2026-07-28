@@ -138,6 +138,7 @@ spec:
           password: os.environ/REDIS_PASSWORD
         mcp_aliases:
           context7: context7_mcp
+          github: github_mcp
           playwright: playwright_mcp
           grafana: grafana_mcp
           kubernetes_homelab: kubernetes_homelab_mcp
@@ -152,6 +153,17 @@ spec:
           transport: "http"
           auth_type: "none"
           description: "Self-hosted context7 documentation lookup MCP server"
+        github_mcp:                                          # NOT "github-mcp-server": LiteLLM rejects
+                                                               # server names containing its "-" prefix separator
+          url: "http://mcp-github.ai.svc.cluster.local:8082"  # NO /mcp suffix: this server mounts the MCP
+                                                               # handler at root, unlike every sibling here
+          transport: "http"
+          # The only entry with a non-"none" auth_type: the mcp-github pod holds no
+          # credential of its own (see apps/subsystems/ai/mcp-github/deployment.yaml), so
+          # LiteLLM injects the PAT as a bearer token on every call instead.
+          auth_type: "bearer_token"
+          authentication_token: os.environ/GITHUB_MCP_PAT
+          description: "Self-hosted GitHub MCP server (read-broad; writes limited to issues, PR comments, gists)"
         playwright_mcp:
           url: "http://mcp-playwright.ai.svc.cluster.local:8931/mcp"
           transport: "http"

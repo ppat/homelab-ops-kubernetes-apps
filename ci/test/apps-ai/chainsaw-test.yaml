@@ -92,6 +92,10 @@ spec:
     use:
       template: ./validate-mcp-context7.yaml
 
+  - name: Validate mcp-github
+    use:
+      template: ./validate-mcp-github.yaml
+
   - name: Validate mcp-playwright
     use:
       template: ./validate-mcp-playwright.yaml
