@@ -1,0 +1,99 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-github
+  namespace: ai
+  labels:
+    app.kubernetes.io/name: mcp-github
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mcp-github
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mcp-github
+        app.kubernetes.io/component: mcp-server
+    spec:
+      # No secrets.yaml/ExternalSecret in this component, unlike every sibling MCP server:
+      # in http mode github-mcp-server has no server-side-token option at all, so auth is
+      # strictly bearer pass-through and LiteLLM injects the PAT (see litellm/helm-release-
+      # litellm.yaml, github_mcp). This pod holds no GitHub credential of its own.
+      automountServiceAccountToken: false
+      containers:
+      - name: mcp-github
+        image: ghcr.io/github/github-mcp-server:v1.7.0@sha256:c491ffdf6f4c85cb5397021bc655edb8ab825c6f5f568e7597d77a1bd7c4d308
+        imagePullPolicy: IfNotPresent
+        # Overrides the image's default CMD (["stdio"]) to run as a persistent HTTP
+        # service instead.
+        args:
+        - http
+        - --port
+        - "8082"
+        # Redundant today -- ResolvedEnabledToolsets already returns an empty toolset
+        # list whenever --tools is set without --toolsets. Kept as the fail-closed
+        # spelling in case upstream ever changes that resolution behavior.
+        - --toolsets=
+        # --read-only strips write tools even when explicitly named in --tools, so it
+        # cannot express "read broadly, write narrowly" -- this allowlist is what
+        # actually enforces the write boundary. Per-request X-MCP-Tools headers and
+        # /x/{toolset} paths can only narrow within this set (filterRequestTools), never
+        # add to it.
+        #
+        # issue_write is broader than title/body: it also accepts state, labels,
+        # assignees, milestone, type -- and since GitHub PRs are issues, it can edit or
+        # close a PR by number. No narrower tool exists in v1.7.0; accepted.
+        #
+        # pull_request_read{method:get_check_runs} will 403: the Checks API rejects
+        # fine-grained PATs. CI status instead comes from actions_get/actions_list/
+        # get_job_logs and pull_request_read{method:get_status}.
+        - --tools=get_me,get_label,list_label,issue_read,issue_write,list_issue_fields,list_issue_types,list_issues,search_issues,add_issue_comment,sub_issue_write,list_pull_requests,pull_request_read,search_pull_requests,add_reply_to_pull_request_comment,get_commit,get_file_contents,get_latest_release,get_release_by_tag,get_repository_tree,get_tag,list_branches,list_commits,list_releases,list_repository_collaborators,search_code,search_commits,search_repositories,actions_get,actions_list,get_job_logs,get_code_scanning_alert,list_code_scanning_alerts,get_dependabot_alert,list_dependabot_alerts,get_secret_scanning_alert,list_secret_scanning_alerts,get_global_security_advisory,list_global_security_advisories,list_org_repository_security_advisories,list_repository_security_advisories,get_code_quality_finding,get_gist,list_gists,create_gist,list_starred_repositories,search_users,search_orgs
+        ports:
+        - name: http
+          containerPort: 8082
+          protocol: TCP
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        # No /healthz on this image. httpGet / is unusable: unauthenticated requests get
+        # a permanent 401 and the kubelet only accepts 200-399. This route is registered
+        # outside the auth middleware group and returns a static 200 for the default
+        # github.com host with no egress of its own.
+        livenessProbe:
+          httpGet:
+            path: /.well-known/oauth-protected-resource
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /.well-known/oauth-protected-resource
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            memory: 256Mi
+        # The image declares no USER (distroless, image config User: "0"), so the UID is
+        # pinned explicitly here rather than inherited.
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+          runAsNonRoot: true
+          runAsUser: 65532
+          runAsGroup: 65532
+          readOnlyRootFilesystem: true
+      volumes:
+      # Defensive, given readOnlyRootFilesystem above -- github-mcp-server's own docs
+      # don't call out a runtime write path, but nothing rules one out either.
+      - name: tmp
+        emptyDir: {}

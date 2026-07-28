@@ -22,7 +22,7 @@ The AI subsystem consists of five main capability groups:
    - Request caching and cost tracking
 
 3. MCP Tooling
-   - Self-hosted MCP servers exposing documentation lookup, browser automation, observability, Kubernetes, network, and home automation tools to any client behind the gateway
+   - Self-hosted MCP servers exposing documentation lookup, browser automation, observability, Kubernetes, network, home automation, and GitHub tools to any client behind the gateway
 
 4. Workflow Automation
    - Self-hosted n8n instance (own namespace, own Postgres) for glue workflows between the LLM gateway, MCP servers, Alertmanager, the *arr stack, and email
@@ -56,6 +56,7 @@ flowchart TB
         openwebui[OpenWebUI Interface]:::ui
         litellm[LiteLLM Gateway]:::gateway
         context7[context7 MCP Server]:::core
+        github[GitHub MCP Server]:::core
         playwright[Playwright MCP Server]:::core
         grafana[Grafana MCP Server]:::core
         kubehomelab[Kubernetes MCP Server<br/>homelab cluster]:::core
@@ -87,6 +88,7 @@ flowchart TB
     litellm -.-> cloud
 
     litellm --> context7
+    litellm --> github
     litellm --> playwright
     litellm --> grafana
     litellm --> kubehomelab
@@ -114,8 +116,9 @@ flowchart TB
 | Component | Type | Primary Role | Key Features | Integration Points |
 | ----------- | ------ | -------------- | -------------- | ------------------- |
 | OpenWebUI | Core | Web Interface | • User-friendly chat interface<br>• Conversation management<br>• Model selection and configuration<br>• Cloud LLM integration via the LiteLLM gateway | • LiteLLM gateway integration for cloud model access<br>• Direct user access via web browser<br>• Persistent storage for settings |
-| LiteLLM | Gateway | AI Gateway | • Unified routing across multiple LLM providers with automatic failover<br>• Virtual key, team, and budget management<br>• Request caching and cost tracking<br>• Hosts MCP servers for client tool access | • OpenWebUI and other gateway consumer integration<br>• PostgreSQL for persistent configuration and spend data<br>• Redis-compatible cache for response caching<br>• mcp-context7, mcp-grafana, mcp-home-assistant, mcp-kubernetes-homelab, mcp-kubernetes-nas, mcp-playwright, mcp-unifi-network, and mcp-unifi-protect integration |
+| LiteLLM | Gateway | AI Gateway | • Unified routing across multiple LLM providers with automatic failover<br>• Virtual key, team, and budget management<br>• Request caching and cost tracking<br>• Hosts MCP servers for client tool access | • OpenWebUI and other gateway consumer integration<br>• PostgreSQL for persistent configuration and spend data<br>• Redis-compatible cache for response caching<br>• mcp-context7, mcp-github, mcp-grafana, mcp-home-assistant, mcp-kubernetes-homelab, mcp-kubernetes-nas, mcp-playwright, mcp-unifi-network, and mcp-unifi-protect integration |
 | mcp-context7 | Core | Documentation MCP Server | • Self-hosted library/API documentation lookup<br>• MCP protocol interface for AI clients<br>• Stateless, lightweight process | • Hosted behind the LiteLLM gateway<br>• Provides documentation context to AI assistants |
+| mcp-github | Core | GitHub MCP Server | • Self-hosted `github/github-mcp-server`, read-broad with a narrow, explicit `--tools` allowlist for writes<br>• Writes limited to issue create/update, issue and PR comments, sub-issue linking, PR review-thread replies, and gist creation<br>• Holds no GitHub credential of its own — LiteLLM injects the PAT as a bearer token on every call<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway, which supplies the bearer-token PAT<br>• Provides GitHub issue/PR/repository/search/security-alert context and limited write tools to AI assistants |
 | mcp-grafana | Core | Observability MCP Server | • Self-hosted Grafana MCP server covering search, dashboards, datasources, Prometheus, Loki, alerting, navigation, and panel queries, plus write access<br>• Admin toolset excluded<br>• Service-account token self-provisioned and rotated via an ESO `Grafana` generator authenticating with Grafana admin basic auth, so it survives a Grafana DB wipe with no manual re-pasting<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the in-cluster Grafana instance, both for its API calls and to mint its own service-account token<br>• Provides observability context and query tools to AI assistants |
 | mcp-home-assistant | Core | Home Automation MCP Server | • Self-hosted Home Assistant MCP server<br>• Read-write access for device control and automation<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the in-cluster Home Assistant instance<br>• Provides home automation control and inspection tools to AI assistants |
 | mcp-kubernetes-homelab | Core | Kubernetes Cluster MCP Server (homelab) | • Self-hosted, read-only Kubernetes cluster MCP server for the homelab cluster<br>• Explicit read-only allow-list, plus a `denied_resources` entry blocking Secrets as defence-in-depth<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• In-cluster access via a dedicated ServiceAccount, bound (outside this module) to a purpose-built read-only ClusterRole the consuming cluster provides<br>• Provides cluster state context to AI assistants |
@@ -162,6 +165,7 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | apikey_openrouter_litellm | OpenRouter API key used by LiteLLM to route requests to OpenRouter-hosted models |
    | litellm_redis_password | Password for LiteLLM's Redis-compatible cache |
    | apikey_context7_mcp | context7 API key required by the self-hosted mcp-context7 server |
+   | github_pat_mcp | Fine-grained GitHub PAT that LiteLLM injects as a bearer token when calling mcp-github; the server itself holds no credential |
    | cluster_homelab_grafana_admin_password | Grafana admin-user password (the same one observability-core provisions for `grafana-admin-credentials`), used by mcp-grafana's ESO `Grafana` generator to authenticate via admin basic auth and self-provision its own Editor-role service-account token |
    | unifi_network_username_mcp | Username for a native UniFi Read-Only/Viewer account, used by the self-hosted mcp-unifi-network server |
    | unifi_network_password_mcp | Password for the UniFi Network account used by the self-hosted mcp-unifi-network server |
@@ -220,6 +224,7 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
 
 ## Notes
 
+- **mcp-github credential and write boundary**: mcp-github is the only MCP component in this module with no `secrets.yaml`/ExternalSecret of its own — in `http` mode, `github-mcp-server` has no server-side-token option, so auth is strictly bearer pass-through and the PAT lives only in `litellm-secrets`, injected by LiteLLM as `Authorization: Bearer` on every call; the mcp-github pod holds no GitHub credential. Correspondingly, `github_mcp` is the only `mcp_servers` entry in the LiteLLM config with a non-`none` `auth_type`. The write boundary is enforced by the `--tools` allowlist on the mcp-github Deployment, not by LiteLLM config: the server is read-broad, with writes limited to issue create/update, issue and PR comments, sub-issue linking, PR review-thread replies, and gist creation. This allowlist is deliberately not mirrored into LiteLLM's `allowed_tools`, to avoid two sources of truth for the same boundary.
 - **mcp-kubernetes-homelab / mcp-kubernetes-nas access posture**: both run against an explicit read-only allow-list ClusterRole (`mcp-kubernetes-readonly`), not the built-in `view` role, and that ClusterRole is cluster policy, not module behaviour — this module ships only the `mcp-kubernetes-homelab` ServiceAccount that role gets bound to on the homelab cluster. mcp-kubernetes-nas has no ServiceAccount of its own (`automountServiceAccountToken: false`); it authenticates entirely via its mounted kubeconfig, so the same ClusterRole must be bound to that kubeconfig's identity on the remote `nas` cluster. Secrets are excluded twice over on both servers: by the ClusterRole itself, and again by a `denied_resources` entry in each server's `config.toml` as defence-in-depth. external-secrets kinds (e.g. `ExternalSecret`, `ClusterSecretStore`) are readable under this allow-list — their specs reference secret-store keys by name and never contain secret values.
 - **MCP tool access control and boundary**: access control for MCP tools is enforced by **LiteLLM virtual-key scoping**, configured out-of-band in the LiteLLM UI (eventually Terraform) and therefore not visible in this repo. Registering a new MCP server does not, by itself, grant existing keys access to it — each virtual key that should reach the new server must be deliberately updated to include it. At the network level, the `mcp-servers-ingress` NetworkPolicy (`network-policy.yaml`) restricts ingress to the MCP Services to the LiteLLM pod (plus Prometheus in `monitoring`, for future scraping) by selecting on the `app.kubernetes.io/component: mcp-server` label — this is what makes the LiteLLM gateway an enforced access boundary for the MCP Services rather than just a convention, and is also why n8n reaches MCP servers through LiteLLM rather than allowlisting them directly (see `N8N_SSRF_ALLOWED_HOSTNAMES` in `n8n/deployment.yaml`). Enforcement depends on the cluster's CNI implementing NetworkPolicy — k3s does, via its bundled network policy controller, unless the cluster runs with `--disable-network-policy`.
 - **`app.kubernetes.io/component: mcp-server` pod label**: every MCP server Deployment's pod template (not its immutable `spec.selector`) carries this label, giving every MCP server a single stable selector the `mcp-servers-ingress` NetworkPolicy targets regardless of `app.kubernetes.io/name`. It exists so a server added later by copying an existing module directory is covered by that policy by default rather than silently unprotected.

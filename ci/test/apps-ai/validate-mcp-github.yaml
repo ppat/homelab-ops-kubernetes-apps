@@ -1,0 +1,24 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-mcp-github
+spec:
+  try:
+  - description: Assert deployment/mcp-github
+    assert:
+      bindings:
+      - name: name
+        value: mcp-github
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 5m
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: mcp-github
+      namespace: ai
+  - events:
+      namespace: ai
