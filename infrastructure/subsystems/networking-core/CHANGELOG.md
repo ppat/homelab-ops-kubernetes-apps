@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.12.0...infra-networking-core-v0.12.1) (2026-07-29)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** update digest traefik/whoami (2006897 -&gt; c4717a8) ([#3450](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3450)) ([cc5b270](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/cc5b270291057814c6827065c1787014957ee936))
+
 ## [0.12.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.11.5...infra-networking-core-v0.12.0) (2026-07-19)
 
 
