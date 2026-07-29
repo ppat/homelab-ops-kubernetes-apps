@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.13](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.12...apps-ai-v0.6.13) (2026-07-29)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** rename obsidian-brain namespace to obsidian-vault ([#3457](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3457)) ([329e853](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/329e85304f0d12609df16488e8997d5dd5602660))
+
 ## [0.6.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.11...apps-ai-v0.6.12) (2026-07-29)
 
 
