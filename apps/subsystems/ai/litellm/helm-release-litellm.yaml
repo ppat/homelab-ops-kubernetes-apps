@@ -202,7 +202,7 @@ spec:
           auth_type: "none"
           description: "Self-hosted Home Assistant MCP server (read-write)"
         # The two BRAIN vault entries below are the same server image registered twice,
-        # against two separate instances in the `obsidian-brain` namespace -- not two handles onto
+        # against two separate instances in the `obsidian-vault` namespace -- not two handles onto
         # one. The instance decides where a write may land (OBSIDIAN_WRITE_PATHS); the
         # handle decides who may call. Two handles onto a single instance would each see
         # that instance's entire write scope, so the wider promotion scope would leak to
@@ -215,14 +215,14 @@ spec:
         # are pre-minted JWTs signed with each instance's own MCP_AUTH_SECRET_KEY.
         obsidian_agent_mcp:                                  # NOT "obsidian-agent-mcp": LiteLLM rejects
                                                                # server names containing its "-" prefix separator
-          url: "http://mcp-obsidian-agent.obsidian-brain.svc.cluster.local:3010/mcp"
+          url: "http://mcp-obsidian-agent.obsidian-vault.svc.cluster.local:3010/mcp"
           transport: "http"
           auth_type: "bearer_token"
           authentication_token: os.environ/OBSIDIAN_AGENT_MCP_JWT
           # yamllint disable-line rule:line-length
           description: "BRAIN vault MCP server, agent-scoped (writes confined to 00-inbox/, 40-journal/, _ops/agent/, log.md)"
         obsidian_ingestor_mcp:
-          url: "http://mcp-obsidian-ingestor.obsidian-brain.svc.cluster.local:3010/mcp"
+          url: "http://mcp-obsidian-ingestor.obsidian-vault.svc.cluster.local:3010/mcp"
           transport: "http"
           auth_type: "bearer_token"
           authentication_token: os.environ/OBSIDIAN_INGESTOR_MCP_JWT

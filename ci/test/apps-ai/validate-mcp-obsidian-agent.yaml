@@ -14,7 +14,7 @@ spec:
       - name: name
         value: mcp-obsidian-agent
       - name: namespace
-        value: obsidian-brain
+        value: obsidian-vault
       file: ../chainsaw/assertions/deployment-ready.yaml
       timeout: 5m
   catch:
@@ -22,6 +22,6 @@ spec:
       apiVersion: apps/v1
       kind: Deployment
       name: mcp-obsidian-agent
-      namespace: obsidian-brain
+      namespace: obsidian-vault
   - events:
-      namespace: obsidian-brain
+      namespace: obsidian-vault

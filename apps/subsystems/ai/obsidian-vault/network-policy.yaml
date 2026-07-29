@@ -21,7 +21,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: default-deny-ingress
-  namespace: obsidian-brain
+  namespace: obsidian-vault
 spec:
   podSelector: {}
   policyTypes:
@@ -29,7 +29,7 @@ spec:
 ---
 # Only LiteLLM may speak MCP. Cross-namespace (LiteLLM runs in `ai`), so this needs a
 # namespaceSelector *and* a podSelector -- a bare podSelector would be scoped to
-# `obsidian-brain` and match nothing.
+# `obsidian-vault` and match nothing.
 #
 # The pod labels below are the ones the live litellm pod actually carries and the litellm
 # Service selects on. The chart names itself litellm-helm, so deriving these from the
@@ -43,7 +43,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: mcp-obsidian-ingress
-  namespace: obsidian-brain
+  namespace: obsidian-vault
 spec:
   podSelector:
     matchLabels:
@@ -88,7 +88,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: obsidian-ingress
-  namespace: obsidian-brain
+  namespace: obsidian-vault
 spec:
   podSelector:
     matchLabels:
@@ -96,7 +96,7 @@ spec:
   policyTypes:
   - Ingress
   ingress:
-  # Same-namespace, so no namespaceSelector: nothing outside `obsidian-brain` may reach Obsidian
+  # Same-namespace, so no namespaceSelector: nothing outside `obsidian-vault` may reach Obsidian
   # at all. The operator's GUI/port-forward path (P8) does not transit the pod network and
   # is unaffected -- kubectl port-forward is served by the kubelet into the pod's netns.
   - from:
