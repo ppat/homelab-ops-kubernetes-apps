@@ -1,0 +1,144 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: obsidian
+  namespace: obsidian-brain
+  labels:
+    app.kubernetes.io/name: obsidian
+spec:
+  replicas: 1
+  # Recreate, not RollingUpdate. Exactly one process ever writes this vault's files, and a
+  # rolling update would run two Obsidian instances against the same ReadWriteMany volume
+  # for the duration of the rollout. That is the one invariant the whole design rests on,
+  # so it is enforced structurally here rather than assumed.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: obsidian
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: obsidian
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        # Default (Always) makes the kubelet recursively re-apply fsGroup perms across the
+        # whole vault on every mount. OnRootMismatch skips that recursion once the volume
+        # root already matches. The image re-tightens the plugin's data.json (0600) on
+        # every boot for exactly this reason -- an fsGroup mount re-adds group rw to every
+        # existing file before the container starts, so a one-off chmod would not survive.
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: obsidian
+        # Pinned to a digest, not a bare tag: the upstream image is rebuilt and its tags
+        # reused, so a bare tag would silently change what runs here -- and this container
+        # is the single writer to the authoritative vault.
+        image: docker.io/ppatlabs/obsidian:1.12.7@sha256:316eb2525dff63fe59d77fd4df6de0b320ec9b172e2857502d2503aebf0c70a1
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: OBSIDIAN_VAULT_DIR
+          value: /vault
+        - name: XDG_CONFIG_HOME
+          value: /config
+        # Pins the Local REST API plugin's bearer token instead of letting the plugin
+        # generate a random one that could only be recovered by exec'ing into the running
+        # container. This is what makes the MCP servers' OBSIDIAN_API_KEY wiring
+        # declarative; the same secret-store key backs both sides.
+        - name: OBSIDIAN_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: obsidian-secrets
+              key: OBSIDIAN_API_KEY
+        ports:
+        # HTTPS only. The plugin generates its own self-signed certificate; the plaintext
+        # listener on 27123 is left at the plugin's default (disabled) and nothing here
+        # needs it. Deliberately no containerPort for the VNC path: x11vnc is installed but
+        # never started, is attached on demand against the display the running Obsidian
+        # process already owns, and binds loopback only -- kubectl port-forward reaches it
+        # without a declared port (P8, GUI access; see this module's README).
+        - name: rest-api
+          containerPort: 27124
+          protocol: TCP
+        # The REST API answering is a far better readiness signal than the process
+        # existing: that listener only binds once the vault is open *and* trusted *and*
+        # the plugin has loaded, so it proves the whole chain. Its root endpoint answers
+        # unauthenticated, and httpGet with scheme: HTTPS does not verify the certificate,
+        # so the self-signed cert is fine.
+        #
+        # The startupProbe budget is generous because the boot chain is long: Xvfb, then
+        # Electron, then a Chrome-DevTools-Protocol attach that turns Restricted Mode off,
+        # then the plugin loading.
+        startupProbe:
+          httpGet:
+            scheme: HTTPS
+            path: /
+            port: rest-api
+          periodSeconds: 10
+          failureThreshold: 30
+        livenessProbe:
+          httpGet:
+            scheme: HTTPS
+            path: /
+            port: rest-api
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            scheme: HTTPS
+            path: /
+            port: rest-api
+          periodSeconds: 10
+        # Electron/Chromium sits at roughly 300-500Mi at rest; the limit leaves headroom
+        # for indexing a growing vault rather than being a measured ceiling.
+        resources:
+          requests:
+            cpu: 200m
+            memory: 768Mi
+          limits:
+            memory: 2Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        # The authoritative bytes, and the only read-write mount of them anywhere. Two
+        # later workloads (the vault worker and the git committer) mount this same claim,
+        # both read-only on content -- see this module's README.
+        - name: vault
+          mountPath: /vault
+        - name: config
+          mountPath: /config
+        - name: home
+          mountPath: /home/obsidian
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      # Cluster-provided, like every other PVC this module mounts. ReadWriteMany, because
+      # the two later read-only consumers must be able to mount it without being
+      # co-scheduled onto this pod's node.
+      - name: vault
+        persistentVolumeClaim:
+          claimName: brain-vault
+      # Electron userData: the vault registration (obsidian.json) and the localStorage
+      # LevelDB holding the Restricted Mode flag. Deliberately ephemeral rather than a
+      # second PVC: the image's entrypoint re-registers the vault and re-runs auto-trust
+      # on every start, and the settings that are genuinely painful to lose -- property
+      # types, new-note location, attachment folder, daily-note format, template folder --
+      # are vault settings living in /vault/.obsidian, not here.
+      - name: config
+        emptyDir: {}
+      # Electron cache, and the X11 socket plus Chromium shared memory. Both must be
+      # writable under readOnlyRootFilesystem.
+      - name: home
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}

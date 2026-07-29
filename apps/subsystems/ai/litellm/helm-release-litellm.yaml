@@ -146,6 +146,8 @@ spec:
           unifi_network: unifi_network_mcp
           unifi_protect: unifi_protect_mcp
           home_assistant: home_assistant_mcp
+          obsidian_agent: obsidian_agent_mcp
+          obsidian_ingestor: obsidian_ingestor_mcp
 
       mcp_servers:
         context7_mcp:
@@ -199,3 +201,30 @@ spec:
           transport: "http"
           auth_type: "none"
           description: "Self-hosted Home Assistant MCP server (read-write)"
+        # The two BRAIN vault entries below are the same server image registered twice,
+        # against two separate instances in the `obsidian-brain` namespace -- not two handles onto
+        # one. The instance decides where a write may land (OBSIDIAN_WRITE_PATHS); the
+        # handle decides who may call. Two handles onto a single instance would each see
+        # that instance's entire write scope, so the wider promotion scope would leak to
+        # whoever held the narrower handle.
+        #
+        # Both carry a non-"none" auth_type, unlike every entry above except github_mcp.
+        # That is deliberate, not an inconsistency: these listeners bind 0.0.0.0 in front
+        # of a REST API with no path permissions of its own, so an unauthenticated caller
+        # reaching one would have the vault's bearer token spent on its behalf. The tokens
+        # are pre-minted JWTs signed with each instance's own MCP_AUTH_SECRET_KEY.
+        obsidian_agent_mcp:                                  # NOT "obsidian-agent-mcp": LiteLLM rejects
+                                                               # server names containing its "-" prefix separator
+          url: "http://mcp-obsidian-agent.obsidian-brain.svc.cluster.local:3010/mcp"
+          transport: "http"
+          auth_type: "bearer_token"
+          authentication_token: os.environ/OBSIDIAN_AGENT_MCP_JWT
+          # yamllint disable-line rule:line-length
+          description: "BRAIN vault MCP server, agent-scoped (writes confined to 00-inbox/, 40-journal/, _ops/agent/, log.md)"
+        obsidian_ingestor_mcp:
+          url: "http://mcp-obsidian-ingestor.obsidian-brain.svc.cluster.local:3010/mcp"
+          transport: "http"
+          auth_type: "bearer_token"
+          authentication_token: os.environ/OBSIDIAN_INGESTOR_MCP_JWT
+          # yamllint disable-line rule:line-length
+          description: "BRAIN vault MCP server, ingestor-scoped (promotion/lint/batch write paths; not for agent keys)"

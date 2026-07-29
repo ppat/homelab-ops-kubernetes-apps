@@ -1,0 +1,18 @@
+---
+# Nests one level deeper than this module's otherwise-flat per-component layout
+# (litellm/, mcp-*/, n8n/, openclaw/). Deliberate: everything under here shares one
+# namespace and one network posture, and the module already carries a dozen top-level
+# entries. The extra level is what makes that namespace boundary visible in the tree --
+# please don't flatten it back.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- namespace.yaml
+- network-policy.yaml
+- obsidian/
+- mcp-obsidian-agent/
+- mcp-obsidian-ingestor/
+
+sortOptions:
+  order: fifo

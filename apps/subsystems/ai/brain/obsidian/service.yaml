@@ -1,0 +1,20 @@
+---
+# ClusterIP only, and deliberately no Ingress. The GUI is reached solely by
+# `kubectl port-forward` (P8); giving this Service an Ingress would put an unscoped,
+# path-permissionless write surface onto the network.
+apiVersion: v1
+kind: Service
+metadata:
+  name: obsidian
+  namespace: obsidian-brain
+  labels:
+    app.kubernetes.io/name: obsidian
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: obsidian
+  ports:
+  - name: rest-api
+    port: 27124
+    targetPort: rest-api
+    protocol: TCP

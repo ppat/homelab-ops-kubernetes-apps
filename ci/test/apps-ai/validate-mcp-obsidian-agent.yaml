@@ -1,0 +1,27 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-mcp-obsidian-agent
+spec:
+  try:
+  # Readiness here proves the server booted and its unauthenticated /healthz answers --
+  # not that it can reach Obsidian, which CI has no image for (see chainsaw-test.yaml and
+  # ppat/homelab-ops-kubernetes-apps#3440).
+  - description: Assert deployment/mcp-obsidian-agent
+    assert:
+      bindings:
+      - name: name
+        value: mcp-obsidian-agent
+      - name: namespace
+        value: obsidian-brain
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 5m
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: mcp-obsidian-agent
+      namespace: obsidian-brain
+  - events:
+      namespace: obsidian-brain

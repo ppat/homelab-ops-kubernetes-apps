@@ -1,14 +1,14 @@
 # AI Subsystem
 
-Self-hosted AI platform providing a web interface for interacting with AI models routed through a self-hosted LLM gateway, plus self-hosted MCP tooling.
+Self-hosted AI platform providing a web interface for interacting with AI models routed through a self-hosted LLM gateway, self-hosted MCP tooling, and a shared knowledge vault that both the operator and every AI client can read and contribute to.
 
 ## Quick Links
 
-<a href="https://www.litellm.ai" target="_blank"><img src="../../../.static/images/logos/litellm.svg" width="32" height="32" alt="LiteLLM"></a> <a href="https://github.com/open-webui/open-webui" target="_blank"><img src="../../../.static/images/logos/open-webui.png" width="32" height="32" alt="OpenWebUI"></a> <a href="https://n8n.io" target="_blank"><img src="../../../.static/images/logos/n8n.svg" width="32" height="32" alt="n8n"></a> <a href="https://github.com/openclaw/openclaw" target="_blank"><img src="../../../.static/images/logos/openclaw.svg" width="32" height="32" alt="OpenClaw"></a>
+<a href="https://www.litellm.ai" target="_blank"><img src="../../../.static/images/logos/litellm.svg" width="32" height="32" alt="LiteLLM"></a> <a href="https://n8n.io" target="_blank"><img src="../../../.static/images/logos/n8n.svg" width="32" height="32" alt="n8n"></a> <a href="https://obsidian.md" target="_blank"><img src="../../../.static/images/logos/obsidian.svg" width="32" height="32" alt="Obsidian"></a> <a href="https://github.com/openclaw/openclaw" target="_blank"><img src="../../../.static/images/logos/openclaw.svg" width="32" height="32" alt="OpenClaw"></a> <a href="https://github.com/open-webui/open-webui" target="_blank"><img src="../../../.static/images/logos/open-webui.png" width="32" height="32" alt="OpenWebUI"></a>
 
 ## Overview
 
-The AI subsystem consists of five main capability groups:
+The AI subsystem consists of six main capability groups:
 
 1. User Interface
    - Web-based chat interface
@@ -31,6 +31,13 @@ The AI subsystem consists of five main capability groups:
 5. Conversational Gateway
    - OpenClaw provides a WhatsApp-reachable conversational front door (own namespace), able to trigger n8n workflows and relay results back
    - Locked down hard: read-only MCP access, no exec/browser/elevated tools, pairing-only DMs — see [Prerequisites](#prerequisites) for the full list of what's disabled day-one
+
+6. Knowledge Vault
+   - A git-backed markdown vault (own namespace, `obsidian-brain`) that AI clients write to and the operator reads, backed by a headless in-cluster Obsidian instance
+   - Headless Obsidian is the only process that mounts vault content read-write and the only one that ever mutates a markdown file
+   - Two separately-scoped MCP server instances of the same image are the only network door to it — one confined to the agent capture zones, one carrying the wider scope promotion requires
+   - Isolated by a default-deny-ingress namespace where only the gateway may reach the MCP servers and only the MCP servers may reach Obsidian
+   - No ingress at all: the Obsidian GUI is reachable solely by `kubectl port-forward` — see [Notes](#notes)
 
 ## Component Architecture
 
@@ -66,6 +73,11 @@ flowchart TB
         unifiprotect[UniFi Protect MCP Server]:::core
         n8n[n8n Automation<br/>ns: n8n]:::ui
         openclaw[OpenClaw Gateway<br/>ns: openclaw]:::ui
+        subgraph brain[Knowledge Vault — ns: obsidian-brain]
+            mcpagent[Obsidian MCP Server<br/>agent-scoped]:::core
+            mcpingestor[Obsidian MCP Server<br/>ingestor-scoped]:::core
+            obsidian[Headless Obsidian<br/>+ Local REST API]:::ui
+        end
     end
 
     %% Storage Components - Dependencies
@@ -75,6 +87,7 @@ flowchart TB
         litellm_cache[("Redis-compatible<br/>Cache")]:::storage
         n8n_db[("PostgreSQL<br/>Database (n8n)")]:::storage
         openclaw_pvc[(PVC: openclaw-data)]:::storage
+        brain_pvc[(PVC: brain-vault)]:::storage
     end
 
     %% Relationships
@@ -96,6 +109,10 @@ flowchart TB
     litellm --> homeassistant
     litellm --> unifinetwork
     litellm --> unifiprotect
+    litellm -->|agent handle| mcpagent
+    litellm -->|ingestor handle| mcpingestor
+    mcpagent --> obsidian
+    mcpingestor --> obsidian
     openclaw -.->|read-only MCP| litellm
 
     openclaw -->|triggers| n8n
@@ -106,6 +123,8 @@ flowchart TB
     litellm --> litellm_cache
     n8n --> n8n_db
     openclaw --> openclaw_pvc
+    obsidian --> brain_pvc
+    user -.->|port-forward, GUI only| obsidian
 ```
 
 <!-- markdownlint-disable-next-line MD036 -->
@@ -116,24 +135,27 @@ flowchart TB
 | Component | Type | Primary Role | Key Features | Integration Points |
 | ----------- | ------ | -------------- | -------------- | ------------------- |
 | OpenWebUI | Core | Web Interface | • User-friendly chat interface<br>• Conversation management<br>• Model selection and configuration<br>• Cloud LLM integration via the LiteLLM gateway | • LiteLLM gateway integration for cloud model access<br>• Direct user access via web browser<br>• Persistent storage for settings |
-| LiteLLM | Gateway | AI Gateway | • Unified routing across multiple LLM providers with automatic failover<br>• Virtual key, team, and budget management<br>• Request caching and cost tracking<br>• Hosts MCP servers for client tool access | • OpenWebUI and other gateway consumer integration<br>• PostgreSQL for persistent configuration and spend data<br>• Redis-compatible cache for response caching<br>• mcp-context7, mcp-github, mcp-grafana, mcp-home-assistant, mcp-kubernetes-homelab, mcp-kubernetes-nas, mcp-playwright, mcp-unifi-network, and mcp-unifi-protect integration |
+| LiteLLM | Gateway | AI Gateway | • Unified routing across multiple LLM providers with automatic failover<br>• Virtual key, team, and budget management<br>• Request caching and cost tracking<br>• Hosts MCP servers for client tool access | • OpenWebUI and other gateway consumer integration<br>• PostgreSQL for persistent configuration and spend data<br>• Redis-compatible cache for response caching<br>• mcp-context7, mcp-github, mcp-grafana, mcp-home-assistant, mcp-kubernetes-homelab, mcp-kubernetes-nas, mcp-obsidian-agent, mcp-obsidian-ingestor, mcp-playwright, mcp-unifi-network, and mcp-unifi-protect integration |
 | mcp-context7 | Core | Documentation MCP Server | • Self-hosted library/API documentation lookup<br>• MCP protocol interface for AI clients<br>• Stateless, lightweight process | • Hosted behind the LiteLLM gateway<br>• Provides documentation context to AI assistants |
 | mcp-github | Core | GitHub MCP Server | • Self-hosted `github/github-mcp-server`, read-broad with a narrow, explicit `--tools` allowlist for writes<br>• Writes limited to issue create/update, issue and PR comments, sub-issue linking, PR review-thread replies, and gist creation<br>• Holds no GitHub credential of its own — LiteLLM injects the PAT as a bearer token on every call<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway, which supplies the bearer-token PAT<br>• Provides GitHub issue/PR/repository/search/security-alert context and limited write tools to AI assistants |
 | mcp-grafana | Core | Observability MCP Server | • Self-hosted Grafana MCP server covering search, dashboards, datasources, Prometheus, Loki, alerting, navigation, and panel queries, plus write access<br>• Admin toolset excluded<br>• Service-account token self-provisioned and rotated via an ESO `Grafana` generator authenticating with Grafana admin basic auth, so it survives a Grafana DB wipe with no manual re-pasting<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the in-cluster Grafana instance, both for its API calls and to mint its own service-account token<br>• Provides observability context and query tools to AI assistants |
 | mcp-home-assistant | Core | Home Automation MCP Server | • Self-hosted Home Assistant MCP server<br>• Read-write access for device control and automation<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the in-cluster Home Assistant instance<br>• Provides home automation control and inspection tools to AI assistants |
 | mcp-kubernetes-homelab | Core | Kubernetes Cluster MCP Server (homelab) | • Self-hosted, read-only Kubernetes cluster MCP server for the homelab cluster<br>• Explicit read-only allow-list, plus a `denied_resources` entry blocking Secrets as defence-in-depth<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• In-cluster access via a dedicated ServiceAccount, bound (outside this module) to a purpose-built read-only ClusterRole the consuming cluster provides<br>• Provides cluster state context to AI assistants |
 | mcp-kubernetes-nas | Core | Kubernetes Cluster MCP Server (nas) | • Self-hosted, read-only Kubernetes cluster MCP server for the separate `nas` cluster<br>• Reaches that cluster via a mounted kubeconfig (`cluster_provider_strategy = "kubeconfig"`) rather than in-cluster credentials<br>• Same read-only allow-list and Secrets-denial posture as the homelab server<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway on the homelab cluster (kept behind the gateway even though its target cluster is remote)<br>• Kubeconfig sourced from the `kubeconfig_nas_mcp` secret-store key<br>• Provides nas cluster state context to AI assistants |
+| mcp-obsidian-agent | Core | Knowledge Vault MCP Server (agent scope) | • Self-hosted `cyanheads/obsidian-mcp-server` in the `obsidian-brain` namespace, fronting the headless Obsidian REST API<br>• Writes confined to the agent capture zones (`00-inbox/`, `40-journal/`, `_ops/agent/`) plus the root `log.md`; reads span the whole vault<br>• Path matching is prefix-based with implicit recursion and applies across every tool, note deletion included<br>• Command-palette tools disabled at the server, not merely withheld at the gateway<br>• Authenticates callers with a JWT, unlike the `auth_type: none` posture of every other MCP server here | • Hosted behind the LiteLLM gateway as the `obsidian_agent_mcp` server; only the LiteLLM pod may reach it<br>• Calls the in-cluster `obsidian` Service over HTTPS with the Local REST API bearer token<br>• The write door for OpenClaw, n8n, Claude Code, and the drift-reconciliation channel |
+| mcp-obsidian-ingestor | Core | Knowledge Vault MCP Server (ingestor scope) | • Second instance of the same image, carrying the wider write scope promotion, lint, and bulk ingest require<br>• Curated areas, the raw layer, the archive, and the `_ops` records are writable here and nowhere else<br>• The schema file, the hand-curated index, templates, and `.obsidian/` stay outside every write scope<br>• A separate instance rather than a second gateway handle onto the agent instance — a shared instance would leak this scope to the narrower handle | • Hosted behind the LiteLLM gateway as the `obsidian_ingestor_mcp` server; only the LiteLLM pod may reach it<br>• Calls the same in-cluster `obsidian` Service<br>• Reserved for the vault worker and batch processor, never agent-facing keys |
 | mcp-playwright | Core | Browser Automation MCP Server | • Self-hosted browser automation and web interaction<br>• MCP protocol interface for AI clients<br>• Headless browser execution | • Hosted behind the LiteLLM gateway<br>• Provides browsing/automation tools to AI assistants |
 | mcp-unifi-network | Core | UniFi Network MCP Server | • Self-hosted, read-only UniFi Network MCP server<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the UniFi Network controller<br>• Provides network state context to AI assistants |
 | mcp-unifi-protect | Core | UniFi Protect MCP Server | • Self-hosted, read-only UniFi Protect MCP server<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the UniFi Protect controller<br>• Provides camera/security system context to AI assistants |
 | n8n | Core | Workflow Automation | • Self-hosted n8n (main mode, own namespace/Postgres)<br>• Owner-login authenticated, LAN/tailnet-only ingress<br>• Alertmanager/*arr/Harbor/Coder webhook receivers<br>• Transactional and workflow email via Maddy SMTP | • Calls the LiteLLM gateway for model access and MCP tools<br>• Triggers OpenClaw's `/hooks/agent` to relay results to WhatsApp<br>• Own CloudNativePG PostgreSQL cluster for workflow/credential storage |
+| Obsidian | Core | Knowledge Vault Engine | • Headless Obsidian with the Local REST API plugin baked in and auto-trusted (own namespace, `obsidian-brain`)<br>• The only workload mounting vault content read-write, and the only process that ever mutates a markdown file<br>• Non-root, read-only root filesystem, `Recreate` rollout so two instances never hold the vault at once<br>• ClusterIP only, no ingress; readiness is the REST API answering, which proves the vault is open, trusted, and the plugin loaded<br>• GUI reachable on demand by `kubectl port-forward` against the same running process | • Reached only by the two Obsidian MCP servers, enforced by NetworkPolicy<br>• Mounts the externally-provisioned `brain-vault` PVC<br>• Bearer token for its REST API is pinned from the secret store so the MCP servers can be wired declaratively |
 | OpenClaw | Core | Conversational Gateway | • WhatsApp-reachable conversational front door (own namespace)<br>• Hardened: read-only MCP, no exec/browser/elevated tools, pairing-only DMs<br>• Inbound hooks for n8n/Alertmanager relays, daily cron digest | • Calls the LiteLLM gateway for model access (cheap model set)<br>• Read-only MCP via LiteLLM `/mcp` and direct Home Assistant MCP (read-only toolFilter)<br>• Triggers n8n workflows and relays their output back to WhatsApp |
 
 ## Prerequisites
 
 This module also depends on a PostgreSQL and Redis-compatible cache, provisioned via the cluster's database operators, for the LiteLLM gateway's configuration, spend tracking, and response caching. n8n has its own dedicated PostgreSQL cluster (own namespace, own postBuild variables — see below).
 
-n8n and OpenClaw each run in their own isolated namespace (`n8n`, `openclaw`) rather than the shared `ai` namespace. Neither ingress is behind SSO forward-auth yet (deferred — requires coordinated Terraform-repo changes); n8n relies on its own owner login, OpenClaw on its gateway auth token. Both are LAN/tailnet-only, same as the rest of this module.
+n8n, OpenClaw, and the knowledge vault each run in their own isolated namespace (`n8n`, `openclaw`, `obsidian-brain`) rather than the shared `ai` namespace. Neither ingress is behind SSO forward-auth yet (deferred — requires coordinated Terraform-repo changes); n8n relies on its own owner login, OpenClaw on its gateway auth token. Both are LAN/tailnet-only, same as the rest of this module.
 
 OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` ConfigMap in the `openclaw` namespace), its `openclaw-config-secrets` Secret, and its `openclaw-data` PVC are all cluster-provided — like `litellm-model-config`, this module mounts them but does not ship them. The image's entrypoint wrapper seeds `openclaw.json` into a writable path (`chmod 600`) at startup, so the module carries no `openclaw.json` of its own.
 
@@ -141,11 +163,12 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
 
    | PVC Name | Purpose | Access Mode |
    | -------- | ------- | ----------- |
+   | brain-vault | Authoritative knowledge-vault content — the markdown files themselves | RWX |
    | openwebui | User settings and conversation history | RWX |
    | n8n-data | n8n configuration, workflow static data | RWO |
    | openclaw-data | OpenClaw config, workspace, memory SQLite, and WhatsApp Baileys session | RWO |
 
-   All three PVCs are provisioned externally (by the cluster), not defined by this module.
+   All four PVCs are provisioned externally (by the cluster), not defined by this module. `brain-vault` is RWX because later phases of the vault platform add two read-only consumers (a maintenance worker and a git committer) that must mount it without being co-scheduled onto the Obsidian pod's node.
 
 2. Required Secrets
 
@@ -155,6 +178,9 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | n8n-secrets | n8n's encryption key, pre-provisioned owner login (email + password hash), pre-seeded LiteLLM/SMTP credential-overwrite blob, its LiteLLM virtual key, and SMTP relay credentials + sender | N8N_ENCRYPTION_KEY, N8N_INSTANCE_OWNER_EMAIL, N8N_INSTANCE_OWNER_PASSWORD_HASH, N8N_CREDENTIALS_OVERWRITE_DATA, LITELLM_API_KEY, N8N_SMTP_USER, N8N_SMTP_PASS, N8N_SMTP_SENDER |
    | openclaw-secrets | OpenClaw's universal secrets — gateway auth token and LiteLLM virtual key | OPENCLAW_GATEWAY_TOKEN, LITELLM_KEY |
    | openclaw-config-secrets | Feature-coupled OpenClaw secrets — inbound hooks bearer token and owner WhatsApp number (used by `channels.whatsapp.allowFrom`). Provided by the cluster, co-located with the cluster-owned `openclaw.json`; not shipped by this module | OPENCLAW_HOOKS_TOKEN, OWNER_WHATSAPP_NUMBER |
+   | obsidian-secrets | Pins the Local REST API plugin's bearer token, so it is a known value rather than one generated inside the running container | OBSIDIAN_API_KEY |
+   | mcp-obsidian-agent-secrets | The same REST API bearer token the agent-scoped MCP server spends on callers' behalf, plus the signing secret it verifies inbound JWTs against | OBSIDIAN_API_KEY, MCP_AUTH_SECRET_KEY |
+   | mcp-obsidian-ingestor-secrets | The same, for the ingestor-scoped MCP server; its signing secret is deliberately distinct from the agent instance's | OBSIDIAN_API_KEY, MCP_AUTH_SECRET_KEY |
 
    The following secret-store keys are also required by the LiteLLM gateway and its self-hosted MCP servers:
 
@@ -185,6 +211,11 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | apikey_litellm_openclaw | OpenClaw's virtual key for authenticating to the LiteLLM gateway |
    | openclaw_hooks_token | Bearer token n8n/Alertmanager present when calling OpenClaw's inbound `/hooks/agent` endpoint |
    | openclaw_owner_whatsapp_number | Owner's E.164 WhatsApp number, the only sender OpenClaw's `pairing` DM policy admits without a pairing code |
+   | obsidian_rest_api_key | Bearer token for the Local REST API plugin inside headless Obsidian. Pinned into the Obsidian pod and held by both Obsidian MCP servers; a caller holding it can write anywhere in the vault, since the REST layer has no path-scoped permissions of its own |
+   | obsidian_agent_mcp_auth_secret | Shared secret (minimum 32 characters) the agent-scoped MCP server verifies inbound JWTs against |
+   | obsidian_ingestor_mcp_auth_secret | The same for the ingestor-scoped MCP server. Deliberately a different value, so an agent token cannot be replayed against the wider-scoped instance |
+   | obsidian_agent_mcp_jwt | Pre-minted JWT signed with `obsidian_agent_mcp_auth_secret`, which LiteLLM presents as a bearer token when calling the agent-scoped server |
+   | obsidian_ingestor_mcp_jwt | Pre-minted JWT signed with `obsidian_ingestor_mcp_auth_secret`, for the ingestor-scoped server |
 
 3. Required Variables
 
@@ -227,4 +258,31 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
 - **mcp-github credential and write boundary**: mcp-github is the only MCP component in this module with no `secrets.yaml`/ExternalSecret of its own — in `http` mode, `github-mcp-server` has no server-side-token option, so auth is strictly bearer pass-through and the PAT lives only in `litellm-secrets`, injected by LiteLLM as `Authorization: Bearer` on every call; the mcp-github pod holds no GitHub credential. Correspondingly, `github_mcp` is the only `mcp_servers` entry in the LiteLLM config with a non-`none` `auth_type`. The write boundary is enforced by the `--tools` allowlist on the mcp-github Deployment, not by LiteLLM config: the server is read-broad, with writes limited to issue create/update, issue and PR comments, sub-issue linking, PR review-thread replies, and gist creation. This allowlist is deliberately not mirrored into LiteLLM's `allowed_tools`, to avoid two sources of truth for the same boundary.
 - **mcp-kubernetes-homelab / mcp-kubernetes-nas access posture**: both run against an explicit read-only allow-list ClusterRole (`mcp-kubernetes-readonly`), not the built-in `view` role, and that ClusterRole is cluster policy, not module behaviour — this module ships only the `mcp-kubernetes-homelab` ServiceAccount that role gets bound to on the homelab cluster. mcp-kubernetes-nas has no ServiceAccount of its own (`automountServiceAccountToken: false`); it authenticates entirely via its mounted kubeconfig, so the same ClusterRole must be bound to that kubeconfig's identity on the remote `nas` cluster. Secrets are excluded twice over on both servers: by the ClusterRole itself, and again by a `denied_resources` entry in each server's `config.toml` as defence-in-depth. external-secrets kinds (e.g. `ExternalSecret`, `ClusterSecretStore`) are readable under this allow-list — their specs reference secret-store keys by name and never contain secret values.
 - **MCP tool access control and boundary**: access control for MCP tools is enforced by **LiteLLM virtual-key scoping**, configured out-of-band in the LiteLLM UI (eventually Terraform) and therefore not visible in this repo. Registering a new MCP server does not, by itself, grant existing keys access to it — each virtual key that should reach the new server must be deliberately updated to include it. At the network level, the `mcp-servers-ingress` NetworkPolicy (`network-policy.yaml`) restricts ingress to the MCP Services to the LiteLLM pod (plus Prometheus in `monitoring`, for future scraping) by selecting on the `app.kubernetes.io/component: mcp-server` label — this is what makes the LiteLLM gateway an enforced access boundary for the MCP Services rather than just a convention, and is also why n8n reaches MCP servers through LiteLLM rather than allowlisting them directly (see `N8N_SSRF_ALLOWED_HOSTNAMES` in `n8n/deployment.yaml`). Enforcement depends on the cluster's CNI implementing NetworkPolicy — k3s does, via its bundled network policy controller, unless the cluster runs with `--disable-network-policy`.
-- **`app.kubernetes.io/component: mcp-server` pod label**: every MCP server Deployment's pod template (not its immutable `spec.selector`) carries this label, giving every MCP server a single stable selector the `mcp-servers-ingress` NetworkPolicy targets regardless of `app.kubernetes.io/name`. It exists so a server added later by copying an existing module directory is covered by that policy by default rather than silently unprotected.
+- **`app.kubernetes.io/component: mcp-server` pod label**: every MCP server Deployment's pod template (not its immutable `spec.selector`) carries this label, giving every MCP server a single stable selector the `mcp-servers-ingress` NetworkPolicy targets regardless of `app.kubernetes.io/name`. It exists so a server added later by copying an existing module directory is covered by that policy by default rather than silently unprotected. The two Obsidian MCP servers carry the same label in the `obsidian-brain` namespace, where it selects both the policy admitting LiteLLM inbound and the policy admitting them onward to Obsidian.
+
+- **`brain/` nests one level deeper than the rest of this module**: every other component sits directly under the module root (`litellm/`, `mcp-*/`, `n8n/`, `openclaw/`), while the vault components sit under `brain/`. That is deliberate — everything under it shares one namespace and one network posture, and the module already carries a dozen top-level entries. The extra level is what makes the namespace boundary visible in the directory tree; flattening it back would hide it.
+
+- **Single-writer invariant**: exactly one process ever writes the vault's files — headless Obsidian. Every writer in the system (OpenClaw over WhatsApp, scheduled n8n jobs, Claude Code, later a batch processor, a maintenance worker, and a drift-reconciliation channel) is a client of that one door, never a second filesystem writer. Two things in the manifests enforce it structurally rather than by convention: the Obsidian Deployment uses `Recreate` (a rolling update would run two Obsidian processes against the same volume mid-rollout), and it is the only workload that mounts `brain-vault` read-write. Later phases add exactly two more mounts of that claim, both read-only on content.
+
+- **Network isolation in `obsidian-brain` is the sole control, not defence in depth**: the `obsidian-brain` namespace runs default-deny ingress, which the `ai` namespace deliberately does not. The reason is specific to what sits behind it. The Local REST API in front of Obsidian offers no path-scoped permissions of its own — any caller reaching it can write anywhere in the vault — and it additionally exposes a second, unscoped MCP endpoint at `/mcp/` that upstream provides no way to disable: no such setting exists, it registers unconditionally whenever the REST server is enabled, and the upstream request to split it into a separate plugin was closed the same day with no change. The `obsidian-ingress` NetworkPolicy is therefore the *only* thing standing in front of that endpoint. Its failure is an open door onto the whole vault, not a hardening regression — which is also why it carries no Prometheus exception, unlike `mcp-obsidian-ingress` and the `ai` namespace's policy. As elsewhere, enforcement depends on the cluster's CNI implementing NetworkPolicy, and `kind` does not — so CI can only assert the policies' shape, never that they bite.
+
+- **Two MCP instances, not two gateway handles**: a LiteLLM virtual key decides *who* may call; an MCP server instance's `OBSIDIAN_WRITE_PATHS` decides *where* a write may land. These are separate axes, and the module runs two instances of the same image rather than pointing two gateway handles at one. An instance does not know which handle called it, so two handles onto a shared instance would each see that instance's entire write scope — whoever held the narrow handle would get the wide one's reach for free. Separate instances make the wider scope physically unreachable through the narrower handle, independent of gateway configuration. The two also hold separate JWT signing secrets, so a leaked agent token cannot be replayed against the ingestor.
+
+- **Obsidian MCP auth diverges from the rest of this module**: every other MCP server here is registered with `auth_type: none` and relies on the ingress NetworkPolicy alone. Both Obsidian servers run `MCP_AUTH_MODE=jwt` and are registered with `auth_type: bearer_token` (the same non-`none` shape `github_mcp` uses, for a different reason). The difference is what sits behind them: the listener binds `0.0.0.0`, and an unauthenticated caller reaching it would have the vault's REST API bearer token spent on its behalf. Per-tool scope checks are switched off on both servers, which upstream documents as the supported posture when the caller cannot inject per-request claims — LiteLLM sends one static token per server, so a scope claim in it could not distinguish one client from another anyway. That distinction is made by per-client virtual-key tool filtering at the gateway; authorisation at the server is `OBSIDIAN_WRITE_PATHS`, which no token can widen. Signature, audience, issuer and expiry validation are unaffected.
+
+- **Per-client vault access scope**: as with every other MCP server here, virtual keys are managed out-of-band at runtime and appear in no repository, so no code review can catch an over-scoped key. This table is therefore the durable record of the intended scoping, and folder-level path scoping at the server is the backstop that makes an out-of-band key tolerable — a key broader than intended still cannot write outside the paths its instance permits. Destructive and command-execution tools (note deletion, command-palette execution) are absent from every agent-facing key entirely, not merely scoped away from curated folders; the command-palette pair is additionally disabled at both servers.
+
+  | Client | Handle | Tools |
+  | ------ | ------ | ----- |
+  | n8n | agent | Read/search, narrow frontmatter status updates, and appends to `log.md` only |
+  | OpenClaw | agent | Read/search, create-in-inbox, append, patch, frontmatter, tags |
+  | Claude Code | agent | As OpenClaw, plus section and structural edits |
+  | Open WebUI | agent | Read/search only — human-facing chat, and the human is not a writer |
+  | Vault worker | ingestor | Read/search, patch, frontmatter, append, move/promote |
+  | Batch processor | ingestor | The same as the vault worker |
+
+  Write paths follow the instance, not the key: the agent handle can only ever land a write in `00-inbox/`, `40-journal/`, `_ops/agent/`, or `log.md`; the ingestor handle additionally reaches `05-raw/`, `10-areas/`, `20-projects/`, `90-archive/`, and the rest of `_ops/`. Matching is prefix-based with implicit recursion rather than glob, so `00-inbox/` covers everything beneath it, and a bare filename such as `log.md` is a valid degenerate prefix matching only itself. Batch runs disable the agent handle and leave the ingestor handle live.
+
+- **The Obsidian GUI is deliberately reachable, and deliberately ungated**: configuring Obsidian itself — property types, default location for new notes, attachment folder, daily-note format, template folder — requires its GUI, and the only alternative is hand-crafting undocumented application config. So the GUI stays available: a VNC server ships in the image but is never started, and is attached on demand to the display the already-running Obsidian process owns, reached by `kubectl port-forward`. There is no ingress and no second GUI-bearing deployment, because two Obsidian processes against one volume would break the single-writer invariant. A human writing at that GUI carries none of the MCP path's controls — no validation, no provenance stamping, and no record that a write happened until a later maintenance pass notices it. Tolerable for occasional configuration and repair, corrosive as a habit.
+
+- **Obsidian image is pinned by digest, not exercised by CI**: the Obsidian Deployment points at a published, digest-pinned `docker.io/ppatlabs/obsidian` reference rather than a bare tag, because the upstream image is rebuilt and its tags reused — a bare tag would silently change what runs, and this container is the single writer to the authoritative vault. CI does not exercise this container beyond applying and server-side-validating it: the boot chain (Xvfb, Electron, a DevTools attach that disables Restricted Mode) is untested against `kind`'s resource envelope, and how it should be validated there is an open question, tracked in #3440.

@@ -88,6 +88,25 @@ spec:
     use:
       template: ./validate-network-policy.yaml
 
+  - name: Validate brain network policies
+    use:
+      template: ./validate-brain-network-policy.yaml
+
+  # No validate step for the `obsidian` Deployment yet. Its image now resolves to a
+  # public, digest-pinned reference, but the readiness chain (Xvfb, Electron, a
+  # DevTools attach that disables Restricted Mode) is untested against `kind`'s resource
+  # envelope, so a readiness assertion is deliberately withheld rather than shipped
+  # unverified. The manifest is still applied and server-side-validated by the Flux
+  # Kustomization above; how a desktop-application container should be exercised in CI
+  # is an open decision tracked in ppat/homelab-ops-kubernetes-apps#3440.
+  - name: Validate mcp-obsidian-agent
+    use:
+      template: ./validate-mcp-obsidian-agent.yaml
+
+  - name: Validate mcp-obsidian-ingestor
+    use:
+      template: ./validate-mcp-obsidian-ingestor.yaml
+
   - name: Validate mcp-context7
     use:
       template: ./validate-mcp-context7.yaml

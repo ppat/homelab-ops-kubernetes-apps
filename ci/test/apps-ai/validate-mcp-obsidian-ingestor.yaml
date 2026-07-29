@@ -1,0 +1,24 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-mcp-obsidian-ingestor
+spec:
+  try:
+  - description: Assert deployment/mcp-obsidian-ingestor
+    assert:
+      bindings:
+      - name: name
+        value: mcp-obsidian-ingestor
+      - name: namespace
+        value: obsidian-brain
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 5m
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: mcp-obsidian-ingestor
+      namespace: obsidian-brain
+  - events:
+      namespace: obsidian-brain
