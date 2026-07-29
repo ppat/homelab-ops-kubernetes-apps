@@ -1,0 +1,20 @@
+---
+# The real vault claim is ReadWriteMany 5Gi on Longhorn: headless Obsidian mounts it
+# read-write, and two later workloads mount it read-only without being co-scheduled onto
+# the same node. kind's local-path provisioner has no RWX mode, so this fixture is RWO --
+# the module references the claim by name only, so the access mode is a cluster-side
+# concern and nothing in the module changes with it.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: brain-vault
+  namespace: obsidian-brain
+  labels:
+    app.kubernetes.io/name: obsidian
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeMode: Filesystem

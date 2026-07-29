@@ -1,0 +1,148 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-obsidian-agent
+  namespace: obsidian-brain
+  labels:
+    app.kubernetes.io/name: mcp-obsidian-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mcp-obsidian-agent
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mcp-obsidian-agent
+        # Stable selector for the ingress NetworkPolicies in ../network-policy.yaml: this
+        # label is what admits LiteLLM inbound, and what admits this pod outbound-inbound
+        # to Obsidian. A server added later without it is matched by no allow rule and
+        # falls under the namespace default-deny.
+        app.kubernetes.io/component: mcp-server
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        # The image runs as its own non-root `bun` user, but declares it by name; the
+        # kubelet cannot verify a non-numeric user against runAsNonRoot, so the UID/GID
+        # (1000, from the oven/bun base) is pinned explicitly here.
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: mcp-obsidian-agent
+        image: ghcr.io/cyanheads/obsidian-mcp-server:3.2.9@sha256:ae313e9812f7becdfea6f9b4249efa25540b8dac6d4f8e12743f30a34d25cb34
+        imagePullPolicy: IfNotPresent
+        env:
+        # Transport and bind are set explicitly rather than inherited from the image's own
+        # ENV defaults: the listener binding 0.0.0.0 is what makes MCP_AUTH_MODE below
+        # load-bearing, and that is too security-relevant to depend on an upstream default.
+        - name: MCP_TRANSPORT_TYPE
+          value: http
+        - name: MCP_HTTP_HOST
+          value: 0.0.0.0
+        - name: MCP_HTTP_PORT
+          value: "3010"
+        # Stricter than every other MCP server in this module, which run auth_type: none
+        # and rely on the ingress NetworkPolicy alone. The difference is what sits behind
+        # this one: an unauthenticated caller that reached this listener would have the
+        # vault's REST API bearer token spent on its behalf. LiteLLM presents a
+        # pre-minted JWT signed with MCP_AUTH_SECRET_KEY (see litellm's mcp_servers entry,
+        # obsidian_agent_mcp).
+        - name: MCP_AUTH_MODE
+          value: jwt
+        - name: MCP_AUTH_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mcp-obsidian-agent-secrets
+              key: MCP_AUTH_SECRET_KEY
+        # Per-tool scope enforcement reads granted scopes from the token's scp/scope/
+        # mcp_tool_scopes claims. It is bypassed here, which upstream documents as the
+        # supported posture when a caller cannot inject per-request claims: LiteLLM sends
+        # one static token per server, so a scope claim in it could not distinguish
+        # OpenClaw from Claude Code from n8n anyway -- that distinction is made by
+        # per-client virtual-key tool filtering at the gateway. Signature, audience,
+        # issuer and expiry validation are unaffected, and authorisation at this layer is
+        # OBSIDIAN_WRITE_PATHS below, which is not something a token can widen.
+        - name: MCP_AUTH_DISABLE_SCOPE_CHECKS
+          value: "true"
+        - name: OBSIDIAN_BASE_URL
+          value: https://obsidian.obsidian-brain.svc.cluster.local:27124
+        # The plugin generates its own self-signed certificate at runtime, so there is
+        # nothing to trust ahead of time. Left at the upstream default and stated
+        # explicitly because it reads like an oversight otherwise.
+        - name: OBSIDIAN_VERIFY_SSL
+          value: "false"
+        - name: OBSIDIAN_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mcp-obsidian-agent-secrets
+              key: OBSIDIAN_API_KEY
+        # This is the whole reason there are two instances rather than two gateway handles
+        # onto one. The instance itself doesn't know which handle called it, so two
+        # handles onto one instance would each see that instance's entire write scope --
+        # whoever held the narrow handle would get the wide one's reach for free.
+        #
+        # Matching is prefix-based with implicit recursion, not glob: `00-inbox/` matches
+        # `00-inbox/a.md` and `00-inbox/sub/b.md`. A bare filename is a valid degenerate
+        # prefix matching only itself, which is how `log.md` is expressed -- n8n's grant
+        # is append-to-log.md-only and n8n is on the agent handle, so without this entry
+        # that grant could not be exercised at all.
+        #
+        # The policy applies across all 14 tools including obsidian_delete_note. Curated
+        # areas (10-areas/, 20-projects/, 90-archive/, 05-raw/) are deliberately absent:
+        # content reaches them only through promotion on the ingestor instance.
+        - name: OBSIDIAN_WRITE_PATHS
+          value: 00-inbox/,40-journal/,_ops/agent/,log.md
+        # OBSIDIAN_READ_PATHS is deliberately unset: agents read the whole vault, and only
+        # writes are folder-scoped. Write paths are implicitly readable regardless.
+        #
+        # Commands are opaque and can delete files or close the vault.
+        # obsidian_execute_command is on no agent key by design; this keeps it and its
+        # discovery partner out of tools/list entirely rather than relying on that.
+        - name: OBSIDIAN_ENABLE_COMMANDS
+          value: "false"
+        ports:
+        - name: http
+          containerPort: 3010
+          protocol: TCP
+        # /healthz is registered ahead of the auth middleware and returns a static 200,
+        # so it works under MCP_AUTH_MODE=jwt without the kubelet holding a token.
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        # The image sets LOGS_DIR here and creates it at build time; console logging is
+        # already forced on, but the directory is still opened at startup.
+        - name: logs
+          mountPath: /var/log/obsidian-mcp-server
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: logs
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}

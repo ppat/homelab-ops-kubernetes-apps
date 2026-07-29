@@ -1,0 +1,105 @@
+---
+# Default-deny ingress for the whole namespace. An empty podSelector selects every pod
+# here, and an Ingress policyType with no ingress rules denies everything not explicitly
+# re-admitted by the policies below -- without this, every allow rule further down is
+# decoration, because a pod that no policy selects is unisolated.
+#
+# This is a stronger posture than the `ai` namespace next door, which is deliberately
+# ingress-only-on-the-MCP-pods with no default-deny (see ../../network-policy.yaml). The
+# difference is not tidiness: the workloads here front a REST interface with no
+# path-scoped permissions of its own, so anything that reaches it can write anywhere in
+# the vault.
+#
+# Egress stays unisolated, same as the `ai` namespace: the MCP servers must reach the
+# Obsidian Service and cluster DNS, and headless Obsidian itself reaches nothing.
+#
+# Kubelet probes are unaffected. Every pod firewall chain begins with an unconditional
+# accept for node-local source addresses, and "traffic to and from the node where a Pod is
+# running is always allowed" is a NetworkPolicy conformance requirement, not an
+# implementation detail -- so restricting ingress here cannot break liveness/readiness.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: obsidian-brain
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+---
+# Only LiteLLM may speak MCP. Cross-namespace (LiteLLM runs in `ai`), so this needs a
+# namespaceSelector *and* a podSelector -- a bare podSelector would be scoped to
+# `obsidian-brain` and match nothing.
+#
+# The pod labels below are the ones the live litellm pod actually carries and the litellm
+# Service selects on. The chart names itself litellm-helm, so deriving these from the
+# chart rather than from the cluster yields a selector that matches nothing and silently
+# denies the gateway; the same warning is recorded in ../../network-policy.yaml.
+#
+# Selects on app.kubernetes.io/component rather than naming each server: a name list
+# leaves a third instance added later matched by no policy at all -- and under the
+# default-deny above that fails closed rather than open, but silently.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mcp-obsidian-ingress
+  namespace: obsidian-brain
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: mcp-server
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ai
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: litellm
+          app.kubernetes.io/instance: litellm
+  # Nothing scrapes these pods yet. Included so that adding a ServiceMonitor later works
+  # rather than failing silently against a policy nobody thinks to revisit.
+  # kubernetes.io/metadata.name is applied to every namespace by the control plane.
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: prometheus
+---
+# Only the MCP servers may reach headless Obsidian. This rule is load-bearing, not
+# defence in depth, and it is the reason the default-deny above exists.
+#
+# The Local REST API plugin exposes a second, unscoped MCP endpoint at /mcp/ that has no
+# path-scoped write permissions and that upstream provides no way to disable: no such
+# setting exists, it registers unconditionally whenever the REST server is enabled, and
+# the upstream request to split it into a separate plugin was closed the same day with no
+# change. This NetworkPolicy is therefore the *sole* control on that endpoint -- its
+# failure is an open door onto the whole vault, not a hardening regression.
+#
+# Deliberately no Prometheus exception here, unlike the MCP policy above. Obsidian
+# exposes exactly one port and it is the port being protected; admitting a second
+# namespace to it to enable a ServiceMonitor that could never exist (there are no metrics
+# behind that listener) would widen the sole control for nothing.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: obsidian-ingress
+  namespace: obsidian-brain
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: obsidian
+  policyTypes:
+  - Ingress
+  ingress:
+  # Same-namespace, so no namespaceSelector: nothing outside `obsidian-brain` may reach Obsidian
+  # at all. The operator's GUI/port-forward path (P8) does not transit the pod network and
+  # is unaffected -- kubectl port-forward is served by the kubelet into the pod's netns.
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/component: mcp-server
