@@ -2,7 +2,7 @@
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: StepTemplate
 metadata:
-  name: validate-brain-network-policy
+  name: validate-vault-network-policy
 spec:
   try:
   # kind's default CNI (kindnetd) does not implement NetworkPolicy enforcement, so these
@@ -18,7 +18,7 @@ spec:
         kind: NetworkPolicy
         metadata:
           name: default-deny-ingress
-          namespace: obsidian-brain
+          namespace: obsidian-vault
         spec:
           podSelector: {}
           policyTypes:
@@ -30,7 +30,7 @@ spec:
         kind: NetworkPolicy
         metadata:
           name: mcp-obsidian-ingress
-          namespace: obsidian-brain
+          namespace: obsidian-vault
         spec:
           podSelector:
             matchLabels:
@@ -60,7 +60,7 @@ spec:
         kind: NetworkPolicy
         metadata:
           name: obsidian-ingress
-          namespace: obsidian-brain
+          namespace: obsidian-vault
         spec:
           podSelector:
             matchLabels:
@@ -74,4 +74,4 @@ spec:
                   app.kubernetes.io/component: mcp-server
   catch:
   - events:
-      namespace: obsidian-brain
+      namespace: obsidian-vault

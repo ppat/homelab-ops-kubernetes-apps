@@ -7,7 +7,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mcp-obsidian-ingestor
-  namespace: obsidian-brain
+  namespace: obsidian-vault
   labels:
     app.kubernetes.io/name: mcp-obsidian-ingestor
 spec:
@@ -49,7 +49,7 @@ spec:
         - name: MCP_AUTH_DISABLE_SCOPE_CHECKS
           value: "true"
         - name: OBSIDIAN_BASE_URL
-          value: https://obsidian.obsidian-brain.svc.cluster.local:27124
+          value: https://obsidian.obsidian-vault.svc.cluster.local:27124
         - name: OBSIDIAN_VERIFY_SSL
           value: "false"
         - name: OBSIDIAN_API_KEY

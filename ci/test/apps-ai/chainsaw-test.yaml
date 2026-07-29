@@ -88,9 +88,9 @@ spec:
     use:
       template: ./validate-network-policy.yaml
 
-  - name: Validate brain network policies
+  - name: Validate vault network policies
     use:
-      template: ./validate-brain-network-policy.yaml
+      template: ./validate-vault-network-policy.yaml
 
   # No validate step for the `obsidian` Deployment yet. Its image now resolves to a
   # public, digest-pinned reference, but the readiness chain (Xvfb, Electron, a

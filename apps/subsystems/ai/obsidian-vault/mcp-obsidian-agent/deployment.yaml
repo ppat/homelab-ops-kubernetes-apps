@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mcp-obsidian-agent
-  namespace: obsidian-brain
+  namespace: obsidian-vault
   labels:
     app.kubernetes.io/name: mcp-obsidian-agent
 spec:
@@ -69,7 +69,7 @@ spec:
         - name: MCP_AUTH_DISABLE_SCOPE_CHECKS
           value: "true"
         - name: OBSIDIAN_BASE_URL
-          value: https://obsidian.obsidian-brain.svc.cluster.local:27124
+          value: https://obsidian.obsidian-vault.svc.cluster.local:27124
         # The plugin generates its own self-signed certificate at runtime, so there is
         # nothing to trust ahead of time. Left at the upstream default and stated
         # explicitly because it reads like an oversight otherwise.

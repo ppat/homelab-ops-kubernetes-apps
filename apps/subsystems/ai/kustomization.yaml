@@ -5,7 +5,6 @@ kind: Kustomization
 resources:
 - namespace.yaml
 - network-policy.yaml
-- brain/
 - litellm/
 - mcp-context7/
 - mcp-github/
@@ -17,6 +16,7 @@ resources:
 - mcp-unifi-network/
 - mcp-unifi-protect/
 - n8n/
+- obsidian-vault/
 - openclaw/
 - openwebui/
 
