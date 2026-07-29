@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.11...apps-ai-v0.6.12) (2026-07-29)
+
+
+### ✨ Features
+
+* **apps-ai:** add BRAIN vault substrate - namespace, isolation, headless Obsidian and scoped MCP instances ([#3449](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3449)) ([d18af1a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d18af1ad4b2e2960ba1e6c4449ba1e1a65409141)), closes [#3441](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3441) [#3442](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3442)
+
 ## [0.6.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.10...apps-ai-v0.6.11) (2026-07-28)
 
 
