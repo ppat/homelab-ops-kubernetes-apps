@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.16](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.15...apps-ai-v0.6.16) (2026-07-30)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** withhold the delete tool from the obsidian agent handle ([#3469](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3469)) ([d18a2e7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d18a2e76c6509d0f069f339e4df9204d98fba42b))
+
 ## [0.6.15](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.14...apps-ai-v0.6.15) (2026-07-30)
 
 
