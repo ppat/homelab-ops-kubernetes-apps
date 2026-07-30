@@ -43,7 +43,7 @@ spec:
         # reused across rebuilds of this image -- the digest, not the tag, is what actually
         # identifies which build runs. This container is the single writer to the
         # authoritative vault, so floating onto whatever was last pushed is not tolerable.
-        image: docker.io/ppatlabs/obsidian:1.12.7@sha256:7b6de4dc16a4389b003cc62fb74521bd6913d706fa6563b1b1d70d021c7c91da
+        image: docker.io/ppatlabs/obsidian:1.12.7@sha256:81bbdf129b65c0787ba4b0d25b4d4e8d0688f7dfad3bd1b24bacaa73e7341266
         imagePullPolicy: IfNotPresent
         env:
         - name: OBSIDIAN_VAULT_DIR
