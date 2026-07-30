@@ -45,7 +45,7 @@ spec:
       - name: openclaw
         # This build's entrypoint adds a per-boot chmod that re-tightens the fsGroup-loosened
         # state perms: credentials dir -> 700, auth SQLite + sessions.json -> 600 (ppat/images#533).
-        image: docker.io/ppatlabs/openclaw:2026.7.1@sha256:fad0268bfda48dfde860123e23972d523fc7e5bc0e276df7cabc48a7f31c57af
+        image: docker.io/ppatlabs/openclaw:2026.7.1@sha256:c43e1c99897bb7880c397cc9f261d3f41699876c60c38053c1c611f066028b41
         imagePullPolicy: IfNotPresent
         env:
         - name: OPENCLAW_CONFIG_PATH
