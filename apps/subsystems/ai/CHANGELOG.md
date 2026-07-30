@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.18](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.17...apps-ai-v0.6.18) (2026-07-30)
+
+
+### ✨ Features
+
+* **apps-ai:** scrape litellm's prometheus metrics ([#3478](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3478)) ([2e32851](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2e3285198041d8cee404533c63ff6109c2e0ceca))
+
 ## [0.6.17](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.16...apps-ai-v0.6.17) (2026-07-30)
 
 
