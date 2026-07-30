@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.17](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.16...apps-ai-v0.6.17) (2026-07-30)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** harden the obsidian pod — vault subdirectory and descheduler exemption ([#3476](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3476)) ([7530f2e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7530f2eacc4011aa06e210accf7218674aa502ab))
+
 ## [0.6.16](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.15...apps-ai-v0.6.16) (2026-07-30)
 
 
