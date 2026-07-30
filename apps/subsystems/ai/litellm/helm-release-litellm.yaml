@@ -219,8 +219,19 @@ spec:
           transport: "http"
           auth_type: "bearer_token"
           authentication_token: os.environ/OBSIDIAN_AGENT_MCP_JWT
+          # OBSIDIAN_WRITE_PATHS gates *where* a call may write, never *what kind* of write it
+          # is, so the agent instance otherwise advertises delete over its own scope. Nothing
+          # in the design deletes on an agent's behalf -- promotion moves notes, the validator
+          # quarantines, lint never removes content -- while the ingestor genuinely needs it,
+          # because the server exposes no move or rename tool and relocating a note is
+          # therefore write-to-new-path plus delete-at-old-path. Withheld here and not there.
+          #
+          # Done at the gateway because it is the only place that can: the server bundles
+          # delete with six other write tools behind a single OBSIDIAN_READ_ONLY flag, so
+          # withholding it there would take append/patch/replace with it.
+          disallowed_tools: ["obsidian_delete_note"]
           # yamllint disable-line rule:line-length
-          description: "BRAIN vault MCP server, agent-scoped (writes confined to 00-inbox/, 40-journal/, _ops/agent/, log.md)"
+          description: "BRAIN vault MCP server, agent-scoped (writes confined to 00-inbox/, 40-journal/, _ops/agent/, log.md; delete withheld)"
         obsidian_ingestor_mcp:
           url: "http://mcp-obsidian-ingestor.obsidian-vault.svc.cluster.local:3010/mcp"
           transport: "http"
