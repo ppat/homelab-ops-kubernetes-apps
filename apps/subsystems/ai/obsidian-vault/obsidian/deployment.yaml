@@ -52,8 +52,23 @@ spec:
         image: docker.io/ppatlabs/obsidian:1.12.7@sha256:81bbdf129b65c0787ba4b0d25b4d4e8d0688f7dfad3bd1b24bacaa73e7341266
         imagePullPolicy: IfNotPresent
         env:
+        # A subdirectory of the volume, never the volume's mount root. The PVC is Longhorn
+        # RWX, which is NFS-exported from a share-manager pod over an ext4 filesystem, so the
+        # mount root carries that filesystem's `lost+found` -- root-owned, mode 0700, and
+        # therefore unreadable by this unprivileged container. Obsidian establishes a file
+        # watcher on every directory in its vault, so with the vault at the mount root it
+        # fails outright with `EACCES: permission denied, watch '/vault/lost+found'` and
+        # never opens the vault at all.
+        #
+        # Deleting `lost+found` is not a fix: e2fsck recreates it, and the CSI mounter runs
+        # fsck on attach. Nor is it worth changing the storage class's filesystem, which is
+        # shared with other consumers. Keeping the vault one level down means anything the
+        # mount root ever grows -- this or a future artefact -- lands beside the vault
+        # instead of inside it.
+        #
+        # The mountPath below deliberately stays `/vault`. Only this value moves.
         - name: OBSIDIAN_VAULT_DIR
-          value: /vault
+          value: /vault/brain
         - name: XDG_CONFIG_HOME
           value: /config
         # Pins the Local REST API plugin's bearer token instead of letting the plugin
