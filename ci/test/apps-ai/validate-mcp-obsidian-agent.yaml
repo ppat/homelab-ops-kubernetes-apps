@@ -6,8 +6,9 @@ metadata:
 spec:
   try:
   # Readiness here proves the server booted and its unauthenticated /healthz answers --
-  # not that it can reach Obsidian, which CI has no image for (see chainsaw-test.yaml and
-  # ppat/homelab-ops-kubernetes-apps#3440).
+  # not that it can reach Obsidian. This server connects to the REST API lazily rather
+  # than at startup, so its own readiness says nothing about that path; obsidian's own
+  # readiness is asserted separately (see "Validate obsidian" in chainsaw-test.yaml).
   - description: Assert deployment/mcp-obsidian-agent
     assert:
       bindings:

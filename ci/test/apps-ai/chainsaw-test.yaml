@@ -92,13 +92,6 @@ spec:
     use:
       template: ./validate-vault-network-policy.yaml
 
-  # No validate step for the `obsidian` Deployment yet. Its image now resolves to a
-  # public, digest-pinned reference, but the readiness chain (Xvfb, Electron, a
-  # DevTools attach that disables Restricted Mode) is untested against `kind`'s resource
-  # envelope, so a readiness assertion is deliberately withheld rather than shipped
-  # unverified. The manifest is still applied and server-side-validated by the Flux
-  # Kustomization above; how a desktop-application container should be exercised in CI
-  # is an open decision tracked in ppat/homelab-ops-kubernetes-apps#3440.
   - name: Validate mcp-obsidian-agent
     use:
       template: ./validate-mcp-obsidian-agent.yaml
@@ -150,3 +143,23 @@ spec:
   - name: Validate openclaw
     use:
       template: ./validate-openclaw.yaml
+
+  # This assertion was deliberately withheld (see ppat/homelab-ops-kubernetes-apps#3440)
+  # over an untested readiness chain (Xvfb, Electron, a DevTools attach that disables
+  # Restricted Mode) and a registry `kind` couldn't pull from. Both reasons are gone: the
+  # image is public and digest-pinned, and the chain is proven fast on real hardware --
+  # Electron loaded, then the REST API answered about a second later. What forced the
+  # issue: a real defect shipped that this assertion would have caught on its first PR.
+  # The bundled Local REST API plugin defaults its listener to 127.0.0.1, so the
+  # kubelet's probes -- which hit the pod IP, not loopback -- failed every attempt, the
+  # startupProbe exhausted its budget, and the container restart-looped in production
+  # (`dial tcp <pod-ip>:27124: connect: connection refused`). That is a plain probe
+  # failure, not a NetworkPolicy-enforcement gap, so `kind` reproduces it exactly; the
+  # blind spot this step closes is what let it through. Placed last: it pulls the
+  # heaviest image and has the longest boot chain in the suite, so it should validate
+  # after everything else has given its pull the most wall-clock head start for free
+  # (see ppat/homelab-ops-kubernetes-apps#3415 on ordering by cost) -- not first, where
+  # this suite's known flake source (a slow HelmRelease install) would compound with it.
+  - name: Validate obsidian
+    use:
+      template: ./validate-obsidian.yaml
