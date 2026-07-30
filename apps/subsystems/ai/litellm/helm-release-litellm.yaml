@@ -105,6 +105,26 @@ spec:
         - path: /
           pathType: Prefix
 
+    # `callbacks: ["prometheus"]` below has been exporting metrics on /metrics all along with
+    # nothing scraping them. This is the only place in the stack that records MCP tool calls,
+    # request outcomes and per-key usage: the two obsidian MCP servers expose no Prometheus
+    # endpoint at all (their library speaks OTLP push, which would need a collector that this
+    # cluster does not run), so gateway-side metrics are the only visibility into what agents
+    # actually do with the vault.
+    #
+    # Using the chart's own ServiceMonitor rather than a hand-rolled manifest, unlike n8n and
+    # openclaw, because those are raw Deployments while this is Helm: the chart renders the
+    # selector from labels it controls, so the two cannot drift apart. The path carries a
+    # trailing slash because the metrics app is mounted rather than routed, and the bare form
+    # 307-redirects.
+    #
+    # Interval overrides the chart's 15s default to match the 30s used everywhere else here.
+    # Worth watching cardinality on litellm_proxy_total_requests_metric, which carries
+    # client_ip and user_agent labels -- bounded in a homelab, not inherently so.
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+
     proxy_config:
       # model_list and the model-dependent router_settings (fallbacks, routing_strategy,
       # allowed_fails, cooldown_time) are intentionally absent here -- they're supplied by
