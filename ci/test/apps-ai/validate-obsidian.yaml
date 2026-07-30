@@ -1,0 +1,36 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-obsidian
+spec:
+  try:
+  - description: Assert deployment/obsidian
+    assert:
+      bindings:
+      - name: name
+        value: obsidian
+      - name: namespace
+        value: obsidian-vault
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      # The startupProbe below allows 30 failures at a 10s period (5m) before the kubelet
+      # gives up and restarts the container, so the budget here has to clear that in the
+      # worst case. This step runs last in the suite (see chainsaw-test.yaml), so most of
+      # the image pull is already amortized against the wall-clock time every earlier step
+      # spent waiting -- real start-to-ready on hardware is seconds, not minutes. 6m gives
+      # one full startupProbe cycle plus pull/scheduling margin without letting a
+      # structurally broken probe (see the catch block) drag the suite out for multiple
+      # restart cycles before reporting.
+      timeout: 6m
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: obsidian
+      namespace: obsidian-vault
+  - podLogs:
+      selector: app.kubernetes.io/name=obsidian
+      namespace: obsidian-vault
+      tail: 200
+  - events:
+      namespace: obsidian-vault
