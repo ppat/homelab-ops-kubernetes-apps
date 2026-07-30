@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.14](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.13...apps-ai-v0.6.14) (2026-07-30)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** bind Obsidian Local REST API plugin to 0.0.0.0 ([#3459](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3459)) ([4063797](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4063797499a7309f9adbbe3278868fece92f8fe1))
+
 ## [0.6.13](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.12...apps-ai-v0.6.13) (2026-07-29)
 
 
