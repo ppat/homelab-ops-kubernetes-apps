@@ -21,6 +21,24 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: obsidian
+      annotations:
+        # Exempt from descheduler rebalancing. This pod carries emptyDir volumes, and the
+        # cluster's DefaultEvictor disables the PodsWithLocalStorage protection, so it is
+        # otherwise an ordinary eviction candidate -- and was observed being evicted for
+        # LowNodeUtilization, which killed an in-progress operator session.
+        #
+        # The reason to exempt it is not the interrupted session. This container is the
+        # single writer of the authoritative vault; Obsidian's writes are not transactional,
+        # so an eviction landing mid-write is a corruption window, and the pod churn also
+        # reopens the multi-attach window that `strategy: Recreate` above only narrows.
+        # Everything else in the system reaches the vault through this one process, so it is
+        # the wrong pod to move for load-balancing when the cluster has fungible ones.
+        #
+        # Key presence is what matters, not the value -- descheduler only tests that the
+        # annotation exists. This is a HARD exclusion rather than a preference only because
+        # the cluster's descheduler sets `noEvictionPolicy: Mandatory`; under the default
+        # `Preferred` it would merely sort this pod later in the eviction order.
+        descheduler.alpha.kubernetes.io/prefer-no-eviction: "true"
     spec:
       automountServiceAccountToken: false
       securityContext:
