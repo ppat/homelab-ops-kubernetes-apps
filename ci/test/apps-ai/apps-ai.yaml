@@ -21,6 +21,11 @@ spec:
       secret_store: fake
       dns_zone: example.com
       domain_name: cluster.example.com
+      # Deliberately unreachable -- this suite only asserts the CronJob's shape (see
+      # validate-git-committer.yaml), never a triggered run, so these just need to be
+      # valid-looking values the ExternalSecret/env substitution can render.
+      git_committer_remote_origin_url: git@example.com:example/unreachable-in-ci.git
+      git_committer_remote_nas_url: ssh://git@nas.example.com/unreachable-in-ci.git
   sourceRef:
     kind: GitRepository
     name: test-source

@@ -1,0 +1,19 @@
+---
+# The committer's own git-dir, cluster-provisioned like vault-data next to it -- the
+# module only references this claim by name. RWO is sufficient here (unlike vault-data):
+# concurrencyPolicy: Forbid means at most one git-committer pod ever holds it at a time,
+# and nothing else in the module mounts it.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vault-git-cache
+  namespace: obsidian-vault
+  labels:
+    app.kubernetes.io/name: git-committer
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeMode: Filesystem

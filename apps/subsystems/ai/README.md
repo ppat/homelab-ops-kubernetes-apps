@@ -57,6 +57,8 @@ flowchart TB
     user[User]:::external
     whatsapp[WhatsApp]:::external
     cloud[Cloud LLMs]:::external
+    githubremote[GitHub<br/>ppat/obsidian-vault]:::external
+    nasremote[NAS<br/>bare repo mirror]:::external
 
     %% Core Components - Module Provided
     subgraph module[AI Module]
@@ -77,6 +79,7 @@ flowchart TB
             mcpagent[Obsidian MCP Server<br/>agent-scoped]:::core
             mcpingestor[Obsidian MCP Server<br/>ingestor-scoped]:::core
             obsidian[Headless Obsidian<br/>+ Local REST API]:::ui
+            gitcommitter[Git Committer<br/>CronJob]:::core
         end
     end
 
@@ -88,6 +91,7 @@ flowchart TB
         n8n_db[("PostgreSQL<br/>Database (n8n)")]:::storage
         openclaw_pvc[(PVC: openclaw-data)]:::storage
         vault_pvc[(PVC: vault-data)]:::storage
+        vault_git_pvc[(PVC: vault-git-cache)]:::storage
     end
 
     %% Relationships
@@ -125,6 +129,11 @@ flowchart TB
     openclaw --> openclaw_pvc
     obsidian --> vault_pvc
     user -.->|port-forward, GUI only| obsidian
+
+    gitcommitter -.->|read-only, scheduled| vault_pvc
+    gitcommitter --> vault_git_pvc
+    gitcommitter -.->|push, scheduled| githubremote
+    gitcommitter -.->|push, scheduled| nasremote
 ```
 
 <!-- markdownlint-disable-next-line MD036 -->
@@ -149,6 +158,7 @@ flowchart TB
 | mcp-unifi-protect | Core | UniFi Protect MCP Server | • Self-hosted, read-only UniFi Protect MCP server<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway<br>• Connects to the UniFi Protect controller<br>• Provides camera/security system context to AI assistants |
 | n8n | Core | Workflow Automation | • Self-hosted n8n (main mode, own namespace/Postgres)<br>• Owner-login authenticated, LAN/tailnet-only ingress<br>• Alertmanager/*arr/Harbor/Coder webhook receivers<br>• Transactional and workflow email via Maddy SMTP | • Calls the LiteLLM gateway for model access and MCP tools<br>• Triggers OpenClaw's `/hooks/agent` to relay results to WhatsApp<br>• Own CloudNativePG PostgreSQL cluster for workflow/credential storage |
 | Obsidian | Core | Knowledge Vault Engine | • Headless Obsidian with the Local REST API plugin baked in and auto-trusted (own namespace, `obsidian-vault`)<br>• The only workload mounting vault content read-write, and the only process that ever mutates a markdown file<br>• Non-root, read-only root filesystem, `Recreate` rollout so two instances never hold the vault at once<br>• ClusterIP only, no ingress; readiness is the REST API answering, which proves the vault is open, trusted, and the plugin loaded<br>• GUI reachable on demand by `kubectl port-forward` against the same running process | • Reached only by the two Obsidian MCP servers, enforced by NetworkPolicy<br>• Mounts the externally-provisioned `vault-data` PVC, holding only the vault's markdown content — Obsidian's own app state (vault registration, plugin-trust flag) lives on an ephemeral emptyDir, not this claim<br>• Bearer token for its REST API is pinned from the secret store so the MCP servers can be wired declaratively |
+| git-committer | Core | Vault Git Committer | • Scheduled `CronJob`, not a long-lived Deployment — takes a commit and exits, so it holds a mount on `vault-data` only while a commit is actually being taken rather than adding a third permanent attachment<br>• Mounts `vault-data` read-only and writes only to its own git-dir PVC, never vault content<br>• Pushes the same derived history to a GitHub remote and a NAS bare-repo mirror over SSH, with host-key verification pinned rather than disabled<br>• `concurrencyPolicy: Forbid`, so an in-flight `git push` is never killed mid-run by the next scheduled tick | • Reads the `vault-data` PVC read-only; Obsidian is the only other mounter, and its mount is read-write — the two MCP servers never touch this PVC, they reach Obsidian over its REST API<br>• Own `vault-git-cache` PVC for git's own metadata, kept off the vault volume entirely<br>• SSH deploy key (`git-committer-secrets`) authorized as a write key on the GitHub remote and in the NAS's `authorized_keys` |
 | OpenClaw | Core | Conversational Gateway | • WhatsApp-reachable conversational front door (own namespace)<br>• Hardened: read-only MCP, no exec/browser/elevated tools, pairing-only DMs<br>• Inbound hooks for n8n/Alertmanager relays, daily cron digest | • Calls the LiteLLM gateway for model access (cheap model set)<br>• Read-only MCP via LiteLLM `/mcp` and direct Home Assistant MCP (read-only toolFilter)<br>• Triggers n8n workflows and relays their output back to WhatsApp |
 
 ## Prerequisites
@@ -164,11 +174,12 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | PVC Name | Purpose | Access Mode |
    | -------- | ------- | ----------- |
    | vault-data | Authoritative knowledge-vault content — the markdown files themselves, not Obsidian's own app state | RWX |
+   | vault-git-cache | The git committer's own repository metadata (its `--git-dir`) — never vault content, and never mounted by any other workload | RWO |
    | openwebui | User settings and conversation history | RWX |
    | n8n-data | n8n configuration, workflow static data | RWO |
    | openclaw-data | OpenClaw config, workspace, memory SQLite, and WhatsApp Baileys session | RWO |
 
-   All four PVCs are provisioned externally (by the cluster), not defined by this module. `vault-data` is RWX because later phases of the vault platform add two read-only consumers (a maintenance worker and a git committer) that must mount it without being co-scheduled onto the Obsidian pod's node.
+   All five PVCs are provisioned externally (by the cluster), not defined by this module. `vault-data` is RWX because it has two read-only consumers beyond Obsidian itself: the git committer delivered by this phase, and a still-pending maintenance worker from a later phase, both of which must mount it without being co-scheduled onto the Obsidian pod's node. `vault-git-cache` is RWO — `concurrencyPolicy: Forbid` on the git committer's CronJob means at most one pod ever holds it at a time, and nothing else in this module mounts it.
 
 2. Required Secrets
 
@@ -181,6 +192,7 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | obsidian-secrets | Pins the Local REST API plugin's bearer token, so it is a known value rather than one generated inside the running container | OBSIDIAN_API_KEY |
    | mcp-obsidian-agent-secrets | The same REST API bearer token the agent-scoped MCP server spends on callers' behalf, plus the signing secret it verifies inbound JWTs against | OBSIDIAN_API_KEY, MCP_AUTH_SECRET_KEY |
    | mcp-obsidian-ingestor-secrets | The same, for the ingestor-scoped MCP server; its signing secret is deliberately distinct from the agent instance's | OBSIDIAN_API_KEY, MCP_AUTH_SECRET_KEY |
+   | git-committer-secrets | One SSH keypair's private key, used for both push remotes, plus the pinned host keys the committer verifies against instead of trusting either remote on first connection. The public half must be registered as a write deploy key on the GitHub remote and dropped into the NAS's `authorized_keys` — both out of band, not by this module | ssh-privatekey, known_hosts |
 
    The following secret-store keys are also required by the LiteLLM gateway and its self-hosted MCP servers:
 
@@ -216,12 +228,16 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | obsidian_ingestor_mcp_auth_secret | The same for the ingestor-scoped MCP server. Deliberately a different value, so an agent token cannot be replayed against the wider-scoped instance |
    | obsidian_agent_mcp_jwt | Pre-minted JWT signed with `obsidian_agent_mcp_auth_secret`, which LiteLLM presents as a bearer token when calling the agent-scoped server |
    | obsidian_ingestor_mcp_jwt | Pre-minted JWT signed with `obsidian_ingestor_mcp_auth_secret`, for the ingestor-scoped server |
+   | obsidian_git_committer_ssh_private_key | The git committer's SSH private key. One key, used for both the GitHub and NAS push remotes — not a per-remote credential pair |
+   | obsidian_git_committer_known_hosts | Pinned host keys for both push remotes, so the committer can keep strict host-key checking on instead of trusting either host on first connection |
 
 3. Required Variables
 
    | Variable | Purpose | Used By |
    | ---------- | --------- | --------- |
    | domain_name | External access URL (openwebui.${domain_name}) and UniFi controller host (unifi.nodes.${domain_name}) | OpenWebUI, mcp-unifi-network, mcp-unifi-protect |
+   | git_committer_remote_origin_url | SSH URL of the GitHub remote the committer pushes derived history to | git-committer |
+   | git_committer_remote_nas_url | SSH URL of the NAS bare-repository mirror the committer pushes the same history to | git-committer |
    | grafana_admin_username | Grafana admin username mcp-grafana's ESO generator authenticates with to self-provision its service-account token. Optional, defaults to `admin` | mcp-grafana |
    | db_name | PostgreSQL cluster name prefix | LiteLLM |
    | db_suffix_current | PostgreSQL cluster name suffix (blue/green rotation) | LiteLLM |
@@ -262,7 +278,11 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
 
 - **`obsidian-vault/` nests one level deeper than the rest of this module**: every other component sits directly under the module root (`litellm/`, `mcp-*/`, `n8n/`, `openclaw/`), while the three vault services (`obsidian/`, `mcp-obsidian-agent/`, `mcp-obsidian-ingestor/`) sit under `obsidian-vault/`. That is deliberate — everything under it shares one namespace and one network posture, and the module already carries a dozen top-level entries. The extra level is what makes the namespace boundary visible in the directory tree; flattening it back would hide it.
 
-- **Single-writer invariant**: exactly one process ever writes the vault's files — headless Obsidian. Every writer in the system (OpenClaw over WhatsApp, scheduled n8n jobs, Claude Code, later a batch processor, a maintenance worker, and a drift-reconciliation channel) is a client of that one door, never a second filesystem writer. Two things in the manifests enforce it structurally rather than by convention: the Obsidian Deployment uses `Recreate` (a rolling update would run two Obsidian processes against the same volume mid-rollout), and it is the only workload that mounts `vault-data` read-write. Later phases add exactly two more mounts of that claim, both read-only on content.
+- **Single-writer invariant**: exactly one process ever writes the vault's files — headless Obsidian. Every writer in the system (OpenClaw over WhatsApp, scheduled n8n jobs, Claude Code, later a batch processor, a maintenance worker, and a drift-reconciliation channel) is a client of that one door, never a second filesystem writer. Two things in the manifests enforce it structurally rather than by convention: the Obsidian Deployment uses `Recreate` (a rolling update would run two Obsidian processes against the same volume mid-rollout), and it is the only workload that mounts `vault-data` read-write. This phase adds the first of two planned read-only mounts of that claim — the git committer — with a still-pending maintenance worker to follow in a later phase.
+
+- **git-committer is a CronJob, not a Deployment** — deliberately, not by default. A long-lived committer would leave two questions open that a Deployment can't answer for itself: what rollout strategy it should use, and whether it needs the descheduler `prefer-no-eviction` annotation the Obsidian Deployment carries. Both questions presuppose a pod that outlives a single unit of work; a CronJob has neither a rollout nor anything to evict between runs, so it doesn't answer those questions, it removes them. It also *narrows* the multi-attach exposure noted above rather than adding to it: `clusters#799` observed `AttachVolume.Attach` succeed for a second Obsidian pod two seconds after that pod was already marked for deletion during a pod-template flap, meaning the single-writer invariant currently holds by timing more than by enforcement. A long-lived committer would be a third permanent attachment on `vault-data` and a second pod template capable of flapping; a CronJob holds a mount on that PVC only while a commit is actually being taken. See `ppat/homelab-ops-kubernetes-apps#3443` and `ppat/obsidian-tools#3`.
+
+- **git-committer's `concurrencyPolicy` diverges from this repo's only other CronJob.** `apps/subsystems/downloaders/recyclarr/cronjob.yaml` uses `Replace`, which is correct for an idempotent Recyclarr sync but wrong here: `Replace` kills the currently-running Job outright to start the next tick's, and the running Job could be mid `git push`. git-committer uses `Forbid` instead, which skips a tick that would overlap a still-running one rather than killing it.
 
 - **Network isolation in `obsidian-vault` is the sole control, not defence in depth**: the `obsidian-vault` namespace runs default-deny ingress, which the `ai` namespace deliberately does not. The reason is specific to what sits behind it. The Local REST API in front of Obsidian offers no path-scoped permissions of its own — any caller reaching it can write anywhere in the vault — and it additionally exposes a second, unscoped MCP endpoint at `/mcp/` that upstream provides no way to disable: no such setting exists, it registers unconditionally whenever the REST server is enabled, and the upstream request to split it into a separate plugin was closed the same day with no change. The `obsidian-ingress` NetworkPolicy is therefore the *only* thing standing in front of that endpoint. Its failure is an open door onto the whole vault, not a hardening regression — which is also why it carries no Prometheus exception, unlike `mcp-obsidian-ingress` and the `ai` namespace's policy. As elsewhere, enforcement depends on the cluster's CNI implementing NetworkPolicy, and `kind` does not — so CI can only assert the policies' shape, never that they bite.
 
