@@ -81,28 +81,27 @@ spec:
               type: RuntimeDefault
           containers:
           - name: git-committer
-            # Verified against the obsidian-tools workflow, not assumed: it sets
-            # private_registry_repository: ${{ vars.CONTAINER_REGISTRY_PATH }}/obsidian-tools,
-            # CONTAINER_REGISTRY_PATH is Terraform-provisioned as "library", and
+            # Docker Hub, not the private registry, and that is load-bearing for CI rather
+            # than a style choice: the private registry is only reachable over Tailscale,
+            # which GitHub-hosted runners do not have, and the shared chainsaw-test workflow
+            # exposes no way to add it (six inputs, no secrets block). A Harbor reference here
+            # would make this CronJob unpullable in the kind suite, so nothing could ever
+            # exercise it before merge. obsidian-tools therefore publishes to Docker Hub on
+            # every build, branch pushes included (ppat/obsidian-tools#22).
+            #
+            # Tag derivation verified against the shared workflow rather than assumed:
             # build-docker-image.yaml derives a branch push's tag as branch-<VERSION_RAW>,
             # where VERSION_RAW is the git ref's last path segment with non-alphanumerics
-            # collapsed to "-". This tracks ppat/obsidian-tools#22, branch
-            # feat/git-committer -> branch-git-committer. This is the only image this
-            # reference can point at *today* -- do not read the intent below as "already
-            # migrating". obsidian-tools' build-image.yaml only triggers on pull_request,
-            # push-to-main, and workflow_dispatch; it has no tag-push trigger, so
-            # release-please cutting a version there currently publishes no image at all.
-            # A digest-pinned release tag (matching every other image in this module,
-            # e.g. ../obsidian/deployment.yaml) becomes reachable only once that trigger
-            # is added on the tools side -- tracked there, not landed as of this comment.
+            # collapsed to "-". So feat/git-committer -> branch-git-committer.
             #
-            # Also worth being explicit about: branch-git-committer stops being rebuilt
-            # the moment ppat/obsidian-tools#22 merges and its branch is deleted. With
-            # imagePullPolicy: Always below, this CronJob would then be silently pinned to
-            # that last, abandoned build -- picking up no further fixes -- rather than
-            # failing loudly. Re-point this at whatever branch/tag is live before or
-            # immediately after that merge.
-            image: harbor.nas.${dns_zone}/library/obsidian-tools:branch-git-committer
+            # This is a development reference and must not survive as one. A digest-pinned
+            # release tag -- matching every other image in this module, e.g.
+            # ../obsidian/deployment.yaml -- is what belongs here once obsidian-tools cuts a
+            # version. Concretely: branch-git-committer stops being rebuilt the moment
+            # ppat/obsidian-tools#22 merges and its branch is deleted, and with
+            # imagePullPolicy: Always this CronJob would then sit silently on that last,
+            # abandoned build, picking up no further fixes, rather than failing loudly.
+            image: docker.io/ppatlabs/obsidian-tools:branch-git-committer
             # The tag above is a moving branch tag: pull whatever it currently points at
             # on every run rather than trusting a node's cached layer from an earlier
             # tick. Revert to IfNotPresent (this module's default) once pinned to a digest.

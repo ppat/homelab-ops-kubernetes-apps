@@ -236,7 +236,6 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | Variable | Purpose | Used By |
    | ---------- | --------- | --------- |
    | domain_name | External access URL (openwebui.${domain_name}) and UniFi controller host (unifi.nodes.${domain_name}) | OpenWebUI, mcp-unifi-network, mcp-unifi-protect |
-   | dns_zone | Private-registry domain the git committer's image is pulled from (`harbor.nas.${dns_zone}`) | git-committer |
    | git_committer_remote_origin_url | SSH URL of the GitHub remote the committer pushes derived history to | git-committer |
    | git_committer_remote_nas_url | SSH URL of the NAS bare-repository mirror the committer pushes the same history to | git-committer |
    | grafana_admin_username | Grafana admin username mcp-grafana's ESO generator authenticates with to self-provision its service-account token. Optional, defaults to `admin` | mcp-grafana |
