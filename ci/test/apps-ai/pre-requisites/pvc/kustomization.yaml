@@ -7,3 +7,4 @@ resources:
 - openclaw-data.yaml
 - openwebui.yaml
 - vault-data.yaml
+- vault-git-cache.yaml

@@ -100,6 +100,10 @@ spec:
     use:
       template: ./validate-mcp-obsidian-ingestor.yaml
 
+  - name: Validate git-committer
+    use:
+      template: ./validate-git-committer.yaml
+
   - name: Validate mcp-context7
     use:
       template: ./validate-mcp-context7.yaml
