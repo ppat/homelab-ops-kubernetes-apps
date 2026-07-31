@@ -65,10 +65,13 @@ spec:
             # Must match the Obsidian Deployment's fsGroup (../obsidian/deployment.yaml).
             # Vault files are 0640/0750 by design -- group-read, never group-write -- which
             # is how the single-writer invariant is enforced at the filesystem level: this
-            # pod can read and commit content but is never *able* to author it, regardless
-            # of what its own code does. A different fsGroup either locks this workload out
-            # of the vault or, worse, could land it group-write. See
-            # ppat/homelab-ops-kubernetes-apps#3443 and ppat/obsidian-tools#3.
+            # pod can read content only because its supplementary group already matches
+            # what Obsidian's own fsGroup application set as the group owner; a mismatched
+            # fsGroup would simply lock this workload out of the vault. (It cannot instead
+            # land the vault group-write: kubelet skips fsGroup ownership management
+            # entirely on a volume mounted readOnly: true, as vault-data is below, so this
+            # pod's fsGroup never triggers a chown/chmod pass over vault content at all.)
+            # See ppat/homelab-ops-kubernetes-apps#3443 and ppat/obsidian-tools#3.
             fsGroup: 1000
             # OnRootMismatch, not the default Always -- same reasoning as the Obsidian
             # Deployment: a full recursive fsGroup pass on every run would re-loosen modes
@@ -84,20 +87,41 @@ spec:
             # build-docker-image.yaml derives a branch push's tag as branch-<VERSION_RAW>,
             # where VERSION_RAW is the git ref's last path segment with non-alphanumerics
             # collapsed to "-". This tracks ppat/obsidian-tools#22, branch
-            # feat/git-committer -> branch-git-committer. Still not a released,
-            # digest-pinned tag (matching every other image in this module, e.g.
-            # ../obsidian/deployment.yaml) -- move to one once obsidian-tools cuts a
-            # release, rather than letting a branch tag linger here.
+            # feat/git-committer -> branch-git-committer. This is the only image this
+            # reference can point at *today* -- do not read the intent below as "already
+            # migrating". obsidian-tools' build-image.yaml only triggers on pull_request,
+            # push-to-main, and workflow_dispatch; it has no tag-push trigger, so
+            # release-please cutting a version there currently publishes no image at all.
+            # A digest-pinned release tag (matching every other image in this module,
+            # e.g. ../obsidian/deployment.yaml) becomes reachable only once that trigger
+            # is added on the tools side -- tracked there, not landed as of this comment.
+            #
+            # Also worth being explicit about: branch-git-committer stops being rebuilt
+            # the moment ppat/obsidian-tools#22 merges and its branch is deleted. With
+            # imagePullPolicy: Always below, this CronJob would then be silently pinned to
+            # that last, abandoned build -- picking up no further fixes -- rather than
+            # failing loudly. Re-point this at whatever branch/tag is live before or
+            # immediately after that merge.
             image: harbor.nas.${dns_zone}/library/obsidian-tools:branch-git-committer
             # The tag above is a moving branch tag: pull whatever it currently points at
             # on every run rather than trusting a node's cached layer from an earlier
             # tick. Revert to IfNotPresent (this module's default) once pinned to a digest.
             imagePullPolicy: Always
-            # Overrides whatever the image's own ENTRYPOINT/CMD is -- this is the fixed
-            # contract ppat/obsidian-tools#22 (branch feat/git-committer) implements, so
-            # pin it explicitly rather than relying on image defaults.
-            command:
-            - obsidian-tools
+            # args, not command -- k8s command maps to Docker ENTRYPOINT, not CMD. The
+            # image sets ENTRYPOINT ["/usr/bin/tini", "--", ".../obsidian-tools"] with no
+            # CMD, specifically so tini stays PID 1 and can forward signals to a process
+            # that may be terminated mid-run (activeDeadlineSeconds, eviction, node
+            # drain, Job deletion). Using `command:` here would replace that ENTRYPOINT
+            # outright, making CPython PID 1 instead; CPython only handles SIGINT, so
+            # SIGTERM would sit at its default disposition, which the kernel never
+            # delivers to PID 1 -- every termination would then escalate straight to
+            # SIGKILL after the grace period, with no chance to clean up. A SIGKILL
+            # mid-`git add` leaves a stale index.lock that wedges every later run. `args`
+            # supplies just the subcommand and leaves the image's own ENTRYPOINT (and
+            # therefore tini) as PID 1. Neither this file nor the Dockerfile is wrong in
+            # isolation -- they're only wrong together, which is why this looks like the
+            # more "explicit" choice and is actually the regression.
+            args:
             - commit
             # Deliberately minimal: obsidian_tools/config.py (ppat/obsidian-tools#22,
             # feat/git-committer) already defaults OBSIDIAN_VAULT_DIR=/vault/brain,
