@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.19](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.18...apps-ai-v0.6.19) (2026-07-31)
+
+
+### ✨ Features
+
+* **apps-ai:** add git-committer CronJob for vault durability ([#3485](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3485)) ([b86fbae](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b86fbaeb40abab9bf2b8dad283f0dd5506fa142f))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** update open-webui (15.2.0 -&gt; 15.2.1) ([#3487](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3487)) ([4ed2f1b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4ed2f1bd22cd859516f5874aaa2e7ecb6fe31f65))
+
 ## [0.6.18](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.17...apps-ai-v0.6.18) (2026-07-30)
 
 
