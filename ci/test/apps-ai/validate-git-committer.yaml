@@ -59,11 +59,16 @@ spec:
                   (volumes[?name == 'vault'] | [0].persistentVolumeClaim.claimName): vault-data
                   (volumes[?name == 'vault'] | [0].persistentVolumeClaim.readOnly): true
                   (volumes[?name == 'git-dir'] | [0].persistentVolumeClaim.claimName): vault-git-cache
-    catch:
-    - describe:
-        apiVersion: batch/v1
-        kind: CronJob
-        name: git-committer
-        namespace: obsidian-vault
-    - events:
-        namespace: obsidian-vault
+  # `catch` is a sibling of `try` on the StepTemplate spec, not a key inside a try
+  # entry -- see validate-obsidian.yaml. Nesting it one level deeper fails the whole
+  # suite at load time with "spec.try[0].catch: Invalid value: value provided for
+  # unknown field", so a single malformed file stops every other test in this
+  # directory from running at all, not just this one.
+  catch:
+  - describe:
+      apiVersion: batch/v1
+      kind: CronJob
+      name: git-committer
+      namespace: obsidian-vault
+  - events:
+      namespace: obsidian-vault
