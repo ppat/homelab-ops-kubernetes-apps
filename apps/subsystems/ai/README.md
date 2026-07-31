@@ -192,7 +192,7 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | obsidian-secrets | Pins the Local REST API plugin's bearer token, so it is a known value rather than one generated inside the running container | OBSIDIAN_API_KEY |
    | mcp-obsidian-agent-secrets | The same REST API bearer token the agent-scoped MCP server spends on callers' behalf, plus the signing secret it verifies inbound JWTs against | OBSIDIAN_API_KEY, MCP_AUTH_SECRET_KEY |
    | mcp-obsidian-ingestor-secrets | The same, for the ingestor-scoped MCP server; its signing secret is deliberately distinct from the agent instance's | OBSIDIAN_API_KEY, MCP_AUTH_SECRET_KEY |
-   | git-committer-secrets | One SSH keypair's private key, used for both push remotes, plus the pinned host keys the committer's `GIT_SSH_COMMAND` verifies against instead of trusting on first use. The public half must be registered as a write deploy key on the GitHub remote and dropped into the NAS's `authorized_keys` — both out of band, not by this module | ssh-privatekey, known_hosts |
+   | git-committer-secrets | One SSH keypair's private key, used for both push remotes, plus the pinned host keys the committer verifies against instead of trusting either remote on first connection. The public half must be registered as a write deploy key on the GitHub remote and dropped into the NAS's `authorized_keys` — both out of band, not by this module | ssh-privatekey, known_hosts |
 
    The following secret-store keys are also required by the LiteLLM gateway and its self-hosted MCP servers:
 
@@ -229,7 +229,7 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | obsidian_agent_mcp_jwt | Pre-minted JWT signed with `obsidian_agent_mcp_auth_secret`, which LiteLLM presents as a bearer token when calling the agent-scoped server |
    | obsidian_ingestor_mcp_jwt | Pre-minted JWT signed with `obsidian_ingestor_mcp_auth_secret`, for the ingestor-scoped server |
    | obsidian_git_committer_ssh_private_key | The git committer's SSH private key. One key, used for both the GitHub and NAS push remotes — not a per-remote credential pair |
-   | obsidian_git_committer_known_hosts | Pinned host keys for both push remotes, so the committer's `GIT_SSH_COMMAND` can keep strict host-key checking on instead of trusting either host on first connection |
+   | obsidian_git_committer_known_hosts | Pinned host keys for both push remotes, so the committer can keep strict host-key checking on instead of trusting either host on first connection |
 
 3. Required Variables
 

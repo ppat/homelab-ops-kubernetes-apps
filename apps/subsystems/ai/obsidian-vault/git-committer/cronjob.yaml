@@ -78,63 +78,51 @@ spec:
               type: RuntimeDefault
           containers:
           - name: git-committer
-            # PROVISIONAL, not a released tag: ppat/obsidian-tools has no docker-image
-            # workflow yet, and the PR that adds one is blocked on a Terraform change
-            # provisioning its private-registry publish credentials (see this PR's
-            # description). This points at the branch-tag format this org's shared
-            # build-docker-image.yaml would publish once that lands -- `branch-<ref>`,
-            # derived from the git branch obsidian-tools#3's implementation PR is expected
-            # to use. Replace with a released, digest-pinned tag (matching every other
-            # image in this module, e.g. ../obsidian/deployment.yaml) as soon as one
-            # exists -- do not let a branch tag linger here.
+            # Verified against the obsidian-tools workflow, not assumed: it sets
+            # private_registry_repository: ${{ vars.CONTAINER_REGISTRY_PATH }}/obsidian-tools,
+            # CONTAINER_REGISTRY_PATH is Terraform-provisioned as "library", and
+            # build-docker-image.yaml derives a branch push's tag as branch-<VERSION_RAW>,
+            # where VERSION_RAW is the git ref's last path segment with non-alphanumerics
+            # collapsed to "-". This tracks ppat/obsidian-tools#22, branch
+            # feat/git-committer -> branch-git-committer. Still not a released,
+            # digest-pinned tag (matching every other image in this module, e.g.
+            # ../obsidian/deployment.yaml) -- move to one once obsidian-tools cuts a
+            # release, rather than letting a branch tag linger here.
             image: harbor.nas.${dns_zone}/library/obsidian-tools:branch-git-committer
             # The tag above is a moving branch tag: pull whatever it currently points at
             # on every run rather than trusting a node's cached layer from an earlier
             # tick. Revert to IfNotPresent (this module's default) once pinned to a digest.
             imagePullPolicy: Always
-            # Overrides whatever the image's own ENTRYPOINT/CMD turns out to be, since
-            # that isn't settled yet either (see the image comment above) -- this is the
-            # fixed contract ppat/obsidian-tools#3's implementation is being built
-            # against, so pin it explicitly rather than relying on image defaults.
+            # Overrides whatever the image's own ENTRYPOINT/CMD is -- this is the fixed
+            # contract ppat/obsidian-tools#22 (branch feat/git-committer) implements, so
+            # pin it explicitly rather than relying on image defaults.
             command:
             - obsidian-tools
             - commit
+            # Deliberately minimal: obsidian_tools/config.py (ppat/obsidian-tools#22,
+            # feat/git-committer) already defaults OBSIDIAN_VAULT_DIR=/vault/brain,
+            # OBSIDIAN_GIT_DIR=/git/vault.git, GIT_SSH_KEY_PATH=/etc/obsidian-tools/git-ssh/id_ed25519
+            # and GIT_SSH_KNOWN_HOSTS_PATH=/etc/obsidian-tools/git-ssh/known_hosts, which
+            # is exactly what the volumeMounts/volumes below provide -- restating them
+            # here would just be a second source of truth that can drift from the mounts.
+            # Same reason GIT_SSH_COMMAND isn't set: the tool builds it itself from the
+            # two GIT_SSH_*_PATH values above (with StrictHostKeyChecking enforced in
+            # code, not here), so an explicit value here would either be ignored or fight
+            # what the code constructs. Only the two variables with no default are set.
             env:
-            # A subdirectory of the mount, never the mount root -- same reason as the
-            # Obsidian Deployment: the PVC's root carries an ext4 lost+found (root-owned,
-            # mode 0700) this uid cannot read. Don't simplify this back to /vault; see
-            # ../obsidian/deployment.yaml and ppat/obsidian-tools#3.
-            - name: OBSIDIAN_VAULT_DIR
-              value: /vault/brain
-            # A detached git-dir on this workload's own PVC, never a `.git` inside the
-            # vault volume. ppat/obsidian-tools#3 found the obvious reading -- "read-only
-            # vault mount plus a narrower write mount at .git/" -- doesn't work as stated:
-            # a mount point must already exist in the underlying filesystem, and it can't
-            # be created on a volume this workload cannot write to. `--git-dir`, which
-            # this env var feeds, is how git separates "where history lives" from "what
-            # tree it's reading" without needing that provisioning step.
-            - name: OBSIDIAN_GIT_DIR
-              value: /git/vault.git
             # Cluster-provided, like every other environment-specific value this module
             # takes externally (DESIGN.md#configuration): which GitHub repository and
             # which NAS host this pushes to is not something module independence permits
             # hardcoding here -- a second cluster running this module, or CI, needs
-            # different (or unreachable-by-design) remotes. See ci/test/apps-ai/apps-ai.yaml
-            # and this module's README for the dummy values CI substitutes.
+            # different (or unreachable-by-design) remotes. Both are required with no
+            # default (obsidian_tools/config.py) -- a missing one fails the run at
+            # startup rather than silently defaulting to something wrong. See
+            # ci/test/apps-ai/apps-ai.yaml and this module's README for the dummy values
+            # CI substitutes.
             - name: GIT_REMOTE_ORIGIN_URL
               value: ${git_committer_remote_origin_url}
             - name: GIT_REMOTE_NAS_URL
               value: ${git_committer_remote_nas_url}
-            # -i and an explicit UserKnownHostsFile rather than the ssh default
-            # ~/.ssh/{id_*,known_hosts}, since HOME below is a fresh, empty emptyDir on
-            # every run. StrictHostKeyChecking stays at its secure default (yes) -- do
-            # not add `-o StrictHostKeyChecking=no` or point UserKnownHostsFile at
-            # /dev/null to silence a first-connection prompt; that disables host
-            # authentication entirely. Pin the real host keys into the known_hosts
-            # secret key instead (see secrets.yaml).
-            - name: GIT_SSH_COMMAND
-              # yamllint disable-line rule:line-length
-              value: ssh -i /run/secrets/git-ssh/ssh-privatekey -o UserKnownHostsFile=/run/secrets/git-ssh/known_hosts -o StrictHostKeyChecking=yes -o IdentitiesOnly=yes
             - name: HOME
               value: /home/git-committer
             volumeMounts:
@@ -146,12 +134,23 @@ spec:
             # itself, so a bug in this workload's own code cannot make it a second
             # writer even if it tried. See this module's README ("Single-writer
             # invariant") and ppat/homelab-ops-kubernetes-apps#3443.
+            #
+            # /vault, not /vault/brain: mountPath is the volume root, and
+            # OBSIDIAN_VAULT_DIR (left at its default -- see the env comment above)
+            # points one level down at /vault/brain. The PVC root carries an ext4
+            # lost+found (root-owned, mode 0700) this uid cannot read; the actual vault
+            # content lives one directory down for the same reason the Obsidian
+            # Deployment's mountPath also stays /vault while its OBSIDIAN_VAULT_DIR moves
+            # -- see ../obsidian/deployment.yaml and ppat/obsidian-tools#3. Don't
+            # "simplify" this by pointing mountPath itself at /vault/brain.
             - name: vault
               mountPath: /vault
               readOnly: true
             # Committer-owned PVC holding only git's own metadata -- provisioned by the
             # clusters repo, not this module (see this module's README, Persistent
             # Storage). The vault volume above never grows a .git of its own as a result.
+            # mountPath is /git, matching OBSIDIAN_GIT_DIR's default of /git/vault.git
+            # (left unset above -- see the env comment).
             - name: git-dir
               mountPath: /git
             # Mounted as a whole Secret volume, not via subPath: a subPath mount is
@@ -161,9 +160,12 @@ spec:
             # also avoids the outright container-init failure subPath risks when nested
             # under another volume's own mount root -- see DESIGN.md and
             # ../../downloaders/recyclarr/cronjob.yaml, which uses subPath for its config
-            # file and is the pattern not to copy here.
+            # file and is the pattern not to copy here. The path and the two filenames
+            # below match GIT_SSH_KEY_PATH/GIT_SSH_KNOWN_HOSTS_PATH's defaults exactly
+            # (obsidian_tools/config.py) -- that's why they're this specific and not,
+            # say, /run/secrets/git-ssh.
             - name: git-ssh
-              mountPath: /run/secrets/git-ssh
+              mountPath: /etc/obsidian-tools/git-ssh
               readOnly: true
             - name: home
               mountPath: /home/git-committer
@@ -201,8 +203,12 @@ spec:
               secretName: git-committer-secrets
               defaultMode: 0400
               items:
+              # path: id_ed25519, not the ssh-privatekey secret key name above -- this is
+              # the filename GIT_SSH_KEY_PATH's default (/etc/obsidian-tools/git-ssh/id_ed25519)
+              # expects. The ExternalSecret's own key name (secrets.yaml) is unrelated to
+              # this on-disk filename; only this items[].path controls it.
               - key: ssh-privatekey
-                path: ssh-privatekey
+                path: id_ed25519
               - key: known_hosts
                 path: known_hosts
           # Electron isn't in play here, unlike ../obsidian/deployment.yaml -- these
