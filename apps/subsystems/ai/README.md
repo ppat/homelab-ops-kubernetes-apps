@@ -192,7 +192,7 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | obsidian-secrets | Pins the Local REST API plugin's bearer token, so it is a known value rather than one generated inside the running container | OBSIDIAN_API_KEY |
    | mcp-obsidian-agent-secrets | The same REST API bearer token the agent-scoped MCP server spends on callers' behalf, plus the signing secret it verifies inbound JWTs against | OBSIDIAN_API_KEY, MCP_AUTH_SECRET_KEY |
    | mcp-obsidian-ingestor-secrets | The same, for the ingestor-scoped MCP server; its signing secret is deliberately distinct from the agent instance's | OBSIDIAN_API_KEY, MCP_AUTH_SECRET_KEY |
-   | git-committer-secrets | One SSH keypair's private key, used for both push remotes, plus the pinned host keys the committer verifies against instead of trusting either remote on first connection. The public half must be registered as a write deploy key on the GitHub remote and dropped into the NAS's `authorized_keys` — both out of band, not by this module | ssh-privatekey, known_hosts |
+   | git-committer-secrets | The git committer's SSH private key. Its public half must be registered as a deploy key **with write access** on the GitHub remote — out of band, not by this module. Host keys are not a secret and are not here: the committer fetches GitHub's from `api.github.com/meta` at the start of every run | ssh-privatekey |
 
    The following secret-store keys are also required by the LiteLLM gateway and its self-hosted MCP servers:
 
@@ -228,8 +228,7 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | obsidian_ingestor_mcp_auth_secret | The same for the ingestor-scoped MCP server. Deliberately a different value, so an agent token cannot be replayed against the wider-scoped instance |
    | obsidian_agent_mcp_jwt | Pre-minted JWT signed with `obsidian_agent_mcp_auth_secret`, which LiteLLM presents as a bearer token when calling the agent-scoped server |
    | obsidian_ingestor_mcp_jwt | Pre-minted JWT signed with `obsidian_ingestor_mcp_auth_secret`, for the ingestor-scoped server |
-   | obsidian_git_committer_ssh_private_key | The git committer's SSH private key. One key, used for both the GitHub and NAS push remotes — not a per-remote credential pair |
-   | obsidian_git_committer_known_hosts | Pinned host keys for both push remotes, so the committer can keep strict host-key checking on instead of trusting either host on first connection |
+   | obsidian_git_committer_ssh_private_key | The git committer's SSH private key. Its public half is a write-enabled deploy key on the GitHub remote, so it is scoped to that one repository by construction |
 
 3. Required Variables
 
@@ -237,7 +236,6 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | ---------- | --------- | --------- |
    | domain_name | External access URL (openwebui.${domain_name}) and UniFi controller host (unifi.nodes.${domain_name}) | OpenWebUI, mcp-unifi-network, mcp-unifi-protect |
    | git_committer_remote_origin_url | SSH URL of the GitHub remote the committer pushes derived history to | git-committer |
-   | git_committer_remote_nas_url | SSH URL of the NAS bare-repository mirror the committer pushes the same history to | git-committer |
    | grafana_admin_username | Grafana admin username mcp-grafana's ESO generator authenticates with to self-provision its service-account token. Optional, defaults to `admin` | mcp-grafana |
    | db_name | PostgreSQL cluster name prefix | LiteLLM |
    | db_suffix_current | PostgreSQL cluster name suffix (blue/green rotation) | LiteLLM |
