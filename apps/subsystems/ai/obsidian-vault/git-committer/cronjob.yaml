@@ -95,7 +95,7 @@ spec:
             # that tag stopped being rebuilt the moment ppat/obsidian-tools#22 merged and its
             # branch was deleted, which is exactly the silent-staleness this pin avoids --
             # a moving tag pointing at an abandoned build fails by going quiet, not loudly.
-            image: docker.io/ppatlabs/obsidian-tools:0.2.1@sha256:df28ea9fbf8ed7ba9b9f00a5d679a7b888bf130fcd1f09cd7bacfe4ca9823fe3
+            image: docker.io/ppatlabs/obsidian-tools:0.3.0@sha256:b4043aa3c7101f2d2b4603e729ea1b018c9ab9e9ba68b7b0e955ab31091aef39
             # A digest is immutable, so there is nothing to re-pull: IfNotPresent is both
             # correct and this module's default. The previous `Always` existed only because
             # the reference was a moving branch tag.
@@ -116,30 +116,47 @@ spec:
             # more "explicit" choice and is actually the regression.
             args:
             - commit
-            # Deliberately minimal: obsidian_tools/config.py (ppat/obsidian-tools#22,
-            # feat/git-committer) already defaults OBSIDIAN_VAULT_DIR=/vault/brain,
-            # OBSIDIAN_GIT_DIR=/git/vault.git, GIT_SSH_KEY_PATH=/etc/obsidian-tools/git-ssh/id_ed25519
-            # and GIT_SSH_KNOWN_HOSTS_PATH=/etc/obsidian-tools/git-ssh/known_hosts, which
-            # is exactly what the volumeMounts/volumes below provide -- restating them
-            # here would just be a second source of truth that can drift from the mounts.
-            # Same reason GIT_SSH_COMMAND isn't set: the tool builds it itself from the
-            # two GIT_SSH_*_PATH values above (with StrictHostKeyChecking enforced in
-            # code, not here), so an explicit value here would either be ignored or fight
-            # what the code constructs. Only the two variables with no default are set.
+            # Deliberately minimal: obsidian_tools/config.py already defaults
+            # OBSIDIAN_VAULT_DIR=/vault/brain, OBSIDIAN_GIT_DIR=/git/vault.git and
+            # GIT_SSH_KEY_PATH=/etc/obsidian-tools/git-ssh/id_ed25519, which is exactly what
+            # the volumeMounts/volumes below provide -- restating them here would just be a
+            # second source of truth that can drift from the mounts.
+            #
+            # GIT_SSH_KNOWN_HOSTS_PATH is also left at its default, but note it means
+            # something different since ppat/obsidian-tools#30: it is now where the tool
+            # *writes* an assembled known_hosts (default ~/.ssh/known_hosts, inside the HOME
+            # emptyDir below), not a path a secret is mounted at. GitHub's host keys are
+            # fetched from api.github.com/meta over TLS at the start of every run, so there
+            # is no pinned value for an operator to maintain and no silent failure when
+            # GitHub rotates a key. StrictHostKeyChecking stays at yes; a fetch failure
+            # fails the run rather than falling back to an unverified connection.
+            #
+            # Same reason GIT_SSH_COMMAND isn't set: the tool builds it itself, so an
+            # explicit value here would either be ignored or fight what the code constructs.
             env:
-            # Cluster-provided, like every other environment-specific value this module
-            # takes externally (DESIGN.md#configuration): which GitHub repository and
-            # which NAS host this pushes to is not something module independence permits
-            # hardcoding here -- a second cluster running this module, or CI, needs
-            # different (or unreachable-by-design) remotes. Both are required with no
-            # default (obsidian_tools/config.py) -- a missing one fails the run at
-            # startup rather than silently defaulting to something wrong. See
-            # ci/test/apps-ai/apps-ai.yaml and this module's README for the dummy values
-            # CI substitutes.
+            # Cluster-provided, like every other environment-specific value this module takes
+            # externally (DESIGN.md#configuration): which repository this pushes to is not
+            # something module independence permits hardcoding -- a second cluster running
+            # this module, or CI, needs a different (or unreachable-by-design) remote. It has
+            # no default; a missing value fails the run at startup rather than silently
+            # defaulting to something wrong. See ci/test/apps-ai/apps-ai.yaml and this
+            # module's README for the dummy value CI substitutes.
             - name: GIT_REMOTE_ORIGIN_URL
               value: ${git_committer_remote_origin_url}
-            - name: GIT_REMOTE_NAS_URL
-              value: ${git_committer_remote_nas_url}
+            # GIT_REMOTE_NAS_URL is deliberately NOT set -- absent, not forgotten.
+            #
+            # The NAS bare repository is a second push target for independence insurance: a
+            # plain-markdown copy readable with grep and nothing else, so no single service is
+            # load-bearing for recovery (docs/DESIGN.md, the git committer component). Real
+            # value, but not needed for the committer's primary job, and it carries the bulk
+            # of the operator setup -- SSH access to the NAS, an authorized_keys entry, a bare
+            # repository created by hand, and a host key published nowhere so it would have to
+            # be supplied via GIT_SSH_KNOWN_HOSTS_EXTRA. Requiring all of that before this can
+            # run once is disproportionate; insurance can be added later without redeploying
+            # anything else.
+            #
+            # Setting it is the whole change: obsidian-tools treats it as optional and pushes
+            # to whichever remotes are configured, logging which ones on every run.
             - name: HOME
               value: /home/git-committer
             volumeMounts:
@@ -226,8 +243,6 @@ spec:
               # this on-disk filename; only this items[].path controls it.
               - key: ssh-privatekey
                 path: id_ed25519
-              - key: known_hosts
-                path: known_hosts
           # Electron isn't in play here, unlike ../obsidian/deployment.yaml -- these
           # exist purely because readOnlyRootFilesystem is set and git (index, objects,
           # HOME's .gitconfig/.ssh scratch) needs somewhere writable.
