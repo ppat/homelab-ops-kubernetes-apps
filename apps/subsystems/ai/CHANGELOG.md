@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.20](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.19...apps-ai-v0.6.20) (2026-08-01)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** drop the known_hosts secret and the NAS remote from the committer ([#3491](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3491)) ([8a03fc7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8a03fc7abcac4866251379dc4230e62e6c13bfc9))
+
 ## [0.6.19](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.18...apps-ai-v0.6.19) (2026-07-31)
 
 
