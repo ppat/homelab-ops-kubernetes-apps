@@ -1,0 +1,32 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-test-vmi-cirros
+spec:
+  try:
+  - description: Assert vmi/test-vmi-cirros reaches phase Running
+    assert:
+      resource:
+        apiVersion: kubevirt.io/v1
+        kind: VirtualMachineInstance
+        metadata:
+          name: test-vmi-cirros
+          namespace: default
+        status:
+          phase: Running
+      # Software-emulated (no /dev/kvm) boot is slower than KVM-accelerated boot; give
+      # the containerDisk image pull + virt-launcher startup + cirros boot room.
+      timeout: 5m
+  catch:
+  - describe:
+      apiVersion: kubevirt.io/v1
+      kind: VirtualMachineInstance
+      name: test-vmi-cirros
+      namespace: default
+  - podLogs:
+      selector: kubevirt.io=virt-launcher,vm.kubevirt.io/name=test-vmi-cirros
+      namespace: default
+      tail: 200
+  - events:
+      namespace: default

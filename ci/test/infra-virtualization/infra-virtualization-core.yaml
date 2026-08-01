@@ -1,0 +1,31 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infra-virtualization-core
+  namespace: flux-system
+spec:
+  interval: 15m0s
+  path: ./infrastructure/subsystems/virtualization-core
+  postBuild:
+    substitute:
+      # No /dev/kvm on a GitHub-runner-backed kind node -- fall back to qemu software
+      # emulation so virt-launcher can still boot a VMI.
+      kubevirt_use_emulation: "true"
+      # Matches every kind node so virt-handler/virt-api/virt-controller can schedule
+      # without needing a dedicated node label in this single-node cluster.
+      vm_node_label_key: kubernetes.io/os
+      vm_node_label_value: linux
+      # Deliberately point at a ServiceAccount/namespace that doesn't exist in this
+      # kind cluster -- this suite is checking that virt-operator skips ServiceMonitor
+      # creation gracefully (a log line, not a failure) rather than standing up
+      # kube-prometheus-stack just to exercise this path.
+      kubevirt_monitor_namespace: monitoring
+      kubevirt_monitor_account: kube-prometheus-stack
+  prune: false
+  sourceRef:
+    kind: GitRepository
+    name: test-source
+    namespace: flux-system
+  timeout: 5m0s
+  wait: false

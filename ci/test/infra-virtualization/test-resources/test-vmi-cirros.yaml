@@ -1,0 +1,25 @@
+---
+apiVersion: kubevirt.io/v1
+kind: VirtualMachineInstance
+metadata:
+  name: test-vmi-cirros
+  namespace: default
+spec:
+  domain:
+    devices:
+      disks:
+      - name: containerdisk
+        disk:
+          bus: virtio
+    resources:
+      requests:
+        memory: 128Mi
+  terminationGracePeriodSeconds: 0
+  volumes:
+  - name: containerdisk
+    containerDisk:
+      # Public KubeVirt community demo image. Booting it under qemu software emulation
+      # (see kubevirt_use_emulation in infra-virtualization-core.yaml) is what makes this
+      # an end-to-end proof of operator + CR + device-plugin + virt-launcher on a
+      # GitHub runner with no /dev/kvm -- the guest OS itself is incidental.
+      image: quay.io/kubevirt/cirros-container-disk-demo:latest@sha256:0e5ac38b20abcc7752293425b239a147868facd62cd5030dede6da6f2fc526a1

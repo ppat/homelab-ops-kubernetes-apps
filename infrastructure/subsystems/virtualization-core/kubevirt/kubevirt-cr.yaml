@@ -1,0 +1,66 @@
+---
+apiVersion: kubevirt.io/v1
+kind: KubeVirt
+metadata:
+  name: kubevirt
+  namespace: kubevirt
+spec:
+  # Deliberately unset: an unset imageTag makes virt-operator install the version of
+  # virt-api/virt-controller/virt-handler/virt-launcher that matches its own container
+  # image, so bumping the operator image (the single version string Renovate tracks via
+  # the kubevirt-operator.yaml release asset) is the only version bump this module needs.
+  # Pinning imageTag here would create a second version to keep in sync by hand, and
+  # operator/CR version skew is a supported-but-fragile configuration upstream.
+  configuration:
+    developerConfiguration:
+      # No /dev/kvm on GitHub-runner-backed kind nodes; ${kubevirt_use_emulation:=false}
+      # keeps every other cluster on real KVM by default and lets CI opt into qemu
+      # software emulation (see ci/test/infra-virtualization).
+      useEmulation: ${kubevirt_use_emulation:=false}
+    # Live migration is deliberately not used: it requires RWX block-migratable storage
+    # this cluster doesn't have, and Longhorn's migratable-RWX path has an open
+    # write-lock bug. A drained/evicted VMI is simply stopped, never migrated.
+    evictionStrategy: None
+    # KubeVirt v1.6 flipped the default VM rollout strategy from Stage to LiveUpdate: a
+    # live-updatable field changed on a running VM (e.g. CPU/memory) now propagates into
+    # the VMI immediately instead of waiting for the next reboot. Pin back to Stage --
+    # inheriting a behaviour change like this from an unread release note is how a VM
+    # ends up hot-changed underneath a workload that assumed edits stage until reboot.
+    vmRolloutStrategy: Stage
+  # Empty on purpose (matches upstream's own default KubeVirt CR): an unset
+  # workloadUpdateStrategy already means no automated workload disruption during
+  # KubeVirt version upgrades, but writing it out avoids depending on that being the
+  # continued default and keeps it consistent with evictionStrategy: None above --
+  # nothing here ever moves or restarts a VM on its own.
+  workloadUpdateStrategy: {}
+  # virt-operator generates its own ServiceMonitor for KubeVirt's metrics, but if it
+  # can't find a ServiceAccount named monitorAccount in monitorNamespace it silently
+  # skips creating the ServiceMonitor -- no error, just a log line. The upstream default
+  # (monitorNamespace unset -> openshift-monitor, monitorAccount -> prometheus-k8s) is an
+  # OpenShift convention that doesn't exist under kube-prometheus-stack, so both must be
+  # set explicitly per cluster or metrics silently go uncollected.
+  monitorNamespace: ${kubevirt_monitor_namespace}
+  monitorAccount: ${kubevirt_monitor_account}
+  infra:
+    nodePlacement:
+      nodeSelector:
+        ${vm_node_label_key}: ${vm_node_label_value}
+      tolerations:
+      # All 4 nodes in this cluster are control-plane.
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+  workloads:
+    nodePlacement:
+      # Security control, not a scheduling hint: this restricts the privileged
+      # virt-handler DaemonSet (host networking, /dev access, elevated capabilities) to
+      # only the labelled nodes, taking it from all 4 nodes down to the ones actually
+      # meant to run VMs. Do not remove as "redundant" -- there is no other gate on
+      # which nodes run virt-handler.
+      nodeSelector:
+        ${vm_node_label_key}: ${vm_node_label_value}
+      tolerations:
+      # All 4 nodes in this cluster are control-plane.
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule

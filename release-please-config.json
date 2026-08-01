@@ -135,6 +135,12 @@
       "bump-patch-for-minor-pre-major": true,
       "component": "infra-storage-core",
       "extra-label": "pr-type:release,subsystem:infra-storage-core"
+    },
+    "infrastructure/subsystems/virtualization-core": {
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "component": "infra-virtualization-core",
+      "extra-label": "pr-type:release,subsystem:infra-virtualization-core"
     }
   },
   "prerelease": false,

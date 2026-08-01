@@ -1,0 +1,65 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-kubevirt
+spec:
+  try:
+  - description: Assert kubevirt/kubevirt reaches phase Deployed
+    assert:
+      resource:
+        apiVersion: kubevirt.io/v1
+        kind: KubeVirt
+        metadata:
+          name: kubevirt
+          namespace: kubevirt
+        status:
+          phase: Deployed
+      # virt-operator only creates virt-api/virt-controller/virt-handler once it has
+      # reconciled the KubeVirt CR, which itself has to wait on its own CRD (shipped in
+      # the same manifest) becoming Established -- longer than the default 1m.
+      timeout: 5m
+  - description: Assert deployment/virt-api
+    assert:
+      bindings:
+      - name: name
+        value: virt-api
+      - name: namespace
+        value: kubevirt
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 3m
+  - description: Assert deployment/virt-controller
+    assert:
+      bindings:
+      - name: name
+        value: virt-controller
+      - name: namespace
+        value: kubevirt
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 3m
+  - description: Assert daemonset/virt-handler
+    assert:
+      bindings:
+      - name: name
+        value: virt-handler
+      - name: namespace
+        value: kubevirt
+      file: ../chainsaw/assertions/daemonset-ready.yaml
+      timeout: 3m
+  catch:
+  - describe:
+      apiVersion: kubevirt.io/v1
+      kind: KubeVirt
+      name: kubevirt
+      namespace: kubevirt
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: virt-operator
+      namespace: kubevirt
+  - podLogs:
+      selector: kubevirt.io=virt-operator
+      namespace: kubevirt
+      tail: 200
+  - events:
+      namespace: kubevirt
