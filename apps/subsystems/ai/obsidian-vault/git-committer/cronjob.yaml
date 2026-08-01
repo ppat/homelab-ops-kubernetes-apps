@@ -95,7 +95,7 @@ spec:
             # that tag stopped being rebuilt the moment ppat/obsidian-tools#22 merged and its
             # branch was deleted, which is exactly the silent-staleness this pin avoids --
             # a moving tag pointing at an abandoned build fails by going quiet, not loudly.
-            image: docker.io/ppatlabs/obsidian-tools:0.3.1@sha256:5f0b80fe3b447363004b2a03f6910f1cd8ff34e220c73ac0a07d9b717949bcf3
+            image: docker.io/ppatlabs/obsidian-tools:0.4.0@sha256:fa9118419222c0f1570d67c82dd4f58d7d9cecf8474fd3a495808865824791df
             # A digest is immutable, so there is nothing to re-pull: IfNotPresent is both
             # correct and this module's default. The previous `Always` existed only because
             # the reference was a moving branch tag.
