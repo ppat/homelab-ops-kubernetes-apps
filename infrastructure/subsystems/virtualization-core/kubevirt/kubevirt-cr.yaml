@@ -43,8 +43,17 @@ spec:
   monitorAccount: ${kubevirt_monitor_account}
   infra:
     nodePlacement:
+      # homelab-ops.internal/virtualization is this module's own scheduling
+      # contract, not cluster-specific config -- it's a constant, not a Flux
+      # postBuild variable. "Internal" is a reserved, non-delegatable TLD
+      # (RFC 9476), chosen deliberately so this key can never collide with,
+      # or be mistaken for, a real domain a cluster operator owns. What *is*
+      # cluster-specific is which nodes carry this label -- an out-of-band
+      # `kubectl label node` operator action, documented in the consuming
+      # cluster repo's node-prep runbook, never something this module can or
+      # should set.
       nodeSelector:
-        ${vm_node_label_key}: ${vm_node_label_value}
+        homelab-ops.internal/virtualization: "enabled"
       tolerations:
       # All 4 nodes in this cluster are control-plane.
       - key: node-role.kubernetes.io/control-plane
@@ -56,9 +65,10 @@ spec:
       # virt-handler DaemonSet (host networking, /dev access, elevated capabilities) to
       # only the labelled nodes, taking it from all 4 nodes down to the ones actually
       # meant to run VMs. Do not remove as "redundant" -- there is no other gate on
-      # which nodes run virt-handler.
+      # which nodes run virt-handler. See the comment on infra.nodePlacement above for
+      # why this label is a module-owned constant rather than a substitution variable.
       nodeSelector:
-        ${vm_node_label_key}: ${vm_node_label_value}
+        homelab-ops.internal/virtualization: "enabled"
       tolerations:
       # All 4 nodes in this cluster are control-plane.
       - key: node-role.kubernetes.io/control-plane

@@ -17,6 +17,13 @@ spec:
         - name: prerequisites_path
           value: ./ci/test/infra-virtualization/pre-requisites
 
+  - name: Label kind node for KubeVirt placement
+    try:
+    - description: Apply homelab-ops.internal/virtualization=enabled to the kind node
+      script:
+        content: ./scripts/label-vm-node.sh
+        timeout: 30s
+
   - name: Apply infra-virtualization-core module
     try:
     - description: Apply infra-virtualization-core

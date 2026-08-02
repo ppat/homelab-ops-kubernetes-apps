@@ -41,8 +41,6 @@ The virtualization-core module installs the KubeVirt operator and a hand-configu
    | Variable | Purpose | Used By |
    | -------- | ------- | ------- |
    | `kubevirt_use_emulation` | Falls back to software emulation when no `/dev/kvm` is present on virtualization nodes | `KubeVirt` CR |
-   | `vm_node_label_key` | Label key identifying nodes prepared to run VMs | `KubeVirt` CR node placement |
-   | `vm_node_label_value` | Label value identifying nodes prepared to run VMs | `KubeVirt` CR node placement |
    | `kubevirt_monitor_namespace` | Namespace containing the Prometheus ServiceAccount that reads KubeVirt metrics | `KubeVirt` CR |
    | `kubevirt_monitor_account` | ServiceAccount name virt-operator grants read access to when generating its ServiceMonitor | `KubeVirt` CR |
 
@@ -58,6 +56,6 @@ The virtualization-core module installs the KubeVirt operator and a hand-configu
 
 ## Notes
 
-- **Node prerequisites are not automatable from inside the cluster.** Any node meant to carry the `${vm_node_label_key}: ${vm_node_label_value}` label must already have `/dev/kvm`, the `vhost_net` kernel module, and `/dev/net/tun` present, and the label itself must be applied out-of-band before this module is useful — nothing in this module can verify or provision either. See the node-prep runbook in the sibling clusters repo's `OPERATIONS.md` (`../homelab-ops-kubernetes-clusters/OPERATIONS.md`) for the actual steps.
+- **Node prerequisites are not automatable from inside the cluster.** The `KubeVirt` CR's node placement (`spec.infra.nodePlacement`/`spec.workloads.nodePlacement`) hardcodes `homelab-ops.internal/virtualization: "enabled"` as its `nodeSelector` — a module-owned constant, not a per-cluster configurable value, since which nodes are prepared to run VMs is an operator decision, not module config. Any node meant to carry that exact label must already have `/dev/kvm`, the `vhost_net` kernel module, and `/dev/net/tun` present, and the label itself must be applied out-of-band before this module is useful — nothing in this module can verify or provision either. See the node-prep runbook in the sibling clusters repo's `OPERATIONS.md` (`../homelab-ops-kubernetes-clusters/OPERATIONS.md`) for the actual steps.
 - **`infrastructure/bootstrap/crds/kubevirt/` is bootstrap/DR-only.** It extracts the `KubeVirt` CRD from the same upstream release asset so dependent resources can reference the type during first-time cluster setup or disaster recovery, before this module has deployed. It has no effect on an already-running cluster — see [DESIGN.md#bootstrap-and-crds](../../../DESIGN.md#bootstrap-and-crds).
 - **No `-extra` sibling exists or is planned.** Core/extra in this repo exists only to break dependency cycles; there is none here, so the `-core` suffix is kept purely for naming consistency with every other infrastructure subsystem.
