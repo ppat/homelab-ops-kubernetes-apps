@@ -1,0 +1,65 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: infra-virtualization
+spec:
+  steps:
+  - name: Bootstrap FluxCD
+    use:
+      template: ../chainsaw/steps/bootstrap-flux.yaml
+
+  - name: Bootstrap pre-requisites
+    use:
+      template: ../chainsaw/steps/bootstrap-prerequisites.yaml
+      with:
+        bindings:
+        - name: prerequisites_path
+          value: ./ci/test/infra-virtualization/pre-requisites
+
+  - name: Apply infra-virtualization-core module
+    try:
+    - description: Apply infra-virtualization-core
+      apply:
+        file: ./infra-virtualization-core.yaml
+    catch:
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: infra-virtualization-core
+        namespace: flux-system
+    - events:
+        namespace: flux-system
+
+  - name: Reconcile kustomization/infra-virtualization-core
+    try:
+    - description: Reconcile kustomization/infra-virtualization-core
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=infra-virtualization-core --timeout=5m
+        timeout: 5m
+    catch:
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: infra-virtualization-core
+        namespace: flux-system
+    - events:
+        namespace: flux-system
+
+  - name: Validate kubevirt
+    use:
+      template: ./validate-kubevirt.yaml
+
+  - name: Boot a test VMI
+    try:
+    - description: Apply test-vmi-cirros
+      apply:
+        file: ./test-resources/test-vmi-cirros.yaml
+    catch:
+    - events:
+        namespace: default
+
+  - name: Validate test-vmi-cirros
+    use:
+      template: ./validate-test-vmi-cirros.yaml

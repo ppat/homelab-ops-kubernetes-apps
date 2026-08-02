@@ -13,6 +13,7 @@ This directory contains infrastructure modules that provide foundational capabil
 | Database | PostgreSQL Operations<br/>HA Management<br/>Backup & Recovery | [database-core](./subsystems/database-core):<br/>• Installs CloudNativePG operator for automated PostgreSQL cluster management<br/>• Enables other modules to create HA PostgreSQL clusters with automated failover<br/>• Configures S3 backup storage with customizable retention policies<br/>• Provides monitoring integration with pre-configured Grafana dashboards |
 | Kubernetes | DNS Resolution<br/>API Access<br/>Hardware Management<br/>Resource Optimization | [kubernetes-core](./subsystems/kubernetes-core):<br/>• Configures CoreDNS for cluster-wide service discovery with custom zone support<br/>• Provides secure external access to Kubernetes API with load balancing<br/>• Discovers and labels node hardware capabilities through node-feature-discovery<br/>• Runs Vertical Pod Autoscaler in recommendation mode for resource optimization<br/><br/>[kubernetes-extra](./subsystems/kubernetes-extra):<br/>• Manages device plugins for hardware access with shared device support<br/>• Balances workloads through descheduler with configurable policies |
 | ClusterOps | GitOps Deployment<br/>System Upgrades<br/>Configuration Management<br/>Resource Tuning | [clusterops-core](./subsystems/clusterops-core):<br/>• Manages Flux CD for GitOps-based deployment with OOM protection<br/>• Runs system-upgrade-controller for automated component upgrades<br/>• Deploys reloader for automatic pod restarts on config changes<br/> |
+| Virtualization | VM Capability<br/>Workload Isolation | [virtualization-core](./subsystems/virtualization-core):<br/>• Installs KubeVirt to let VM workloads run alongside standard pods<br/>• Restricts privileged virtualization components to labelled nodes<br/>• Publishes VM metrics to Prometheus via a self-generated ServiceMonitor |
 
 ## Module Relationships
 
@@ -36,6 +37,7 @@ flowchart BT
     %% Layer 3 - Extended Components
     kubernetes-core[kubernetes-core]:::core
     clusterops-core[clusterops-core]:::core
+    virtualization-core[virtualization-core]:::core
     security-extra[security-extra]:::extra
     networking-extra[networking-extra]:::extra
     kubernetes-extra[kubernetes-extra]:::extra

@@ -65,7 +65,8 @@ module.exports = {
         'infra-observability-extra',
         'infra-security-core',
         'infra-security-extra',
-        'infra-storage-core'
+        'infra-storage-core',
+        'infra-virtualization-core'
       ]
     ],
 

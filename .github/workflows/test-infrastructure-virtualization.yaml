@@ -1,0 +1,29 @@
+---
+# yamllint disable rule:line-length
+name: test-infrastructure-virtualization
+
+on:
+  pull_request:
+    paths:
+    - '.github/workflows/test-infrastructure-virtualization.yaml'
+    - '.github/kind-cluster-single-node.yaml'
+    - 'ci/test/infra-virtualization/**'
+    - 'infrastructure/subsystems/virtualization-core/**'
+    - '!infrastructure/subsystems/virtualization-core/**.md'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test-infrastructure-virtualization:
+    uses: ppat/github-workflows/.github/workflows/chainsaw-test.yaml@10103e49c72fbd6d3e06d7e29f51815b9b8644a6 # v4.2.0
+    with:
+      git_ref: ${{ github.head_ref || github.ref }}
+      test_path: ./ci/test/infra-virtualization
+      chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
+      kind_config: .github/kind-cluster-single-node.yaml
