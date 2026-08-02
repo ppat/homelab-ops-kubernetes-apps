@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.21](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.20...apps-ai-v0.6.21) (2026-08-01)
+
+
+### ✨ Features
+
+* **apps-ai:** update docker.io/ppatlabs/obsidian-tools (0.3.1 -&gt; 0.4.0) ([#3502](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3502)) ([7bfb866](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7bfb866ae0a918ba6ea1328d031162a409958ce3))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** pin the git committer to obsidian-tools 0.3.1 ([#3494](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3494)) ([ff20532](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ff20532306f3e3852efdba4d20bc7418e0fcadd9))
+* **apps-ai:** update digest docker.io/ppatlabs/obsidian (81bbdf1 -&gt; a9eb80a) ([#3499](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3499)) ([6be3df0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6be3df0c6cf28427eff35ab83dc99b32a1944b5a))
+
 ## [0.6.20](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.19...apps-ai-v0.6.20) (2026-08-01)
 
 
