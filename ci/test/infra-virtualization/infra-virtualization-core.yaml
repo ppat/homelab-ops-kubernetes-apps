@@ -12,10 +12,6 @@ spec:
       # No /dev/kvm on a GitHub-runner-backed kind node -- fall back to qemu software
       # emulation so virt-launcher can still boot a VMI.
       kubevirt_use_emulation: "true"
-      # Matches every kind node so virt-handler/virt-api/virt-controller can schedule
-      # without needing a dedicated node label in this single-node cluster.
-      vm_node_label_key: kubernetes.io/os
-      vm_node_label_value: linux
       # Deliberately point at a ServiceAccount/namespace that doesn't exist in this
       # kind cluster -- this suite is checking that virt-operator skips ServiceMonitor
       # creation gracefully (a log line, not a failure) rather than standing up
