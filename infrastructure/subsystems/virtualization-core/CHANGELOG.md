@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-virtualization-core-v0.1.0...infra-virtualization-core-v0.1.1) (2026-08-02)
+
+
+### 🛠 Improvements
+
+* **infra-virtualization-core:** document how VM resource config maps to k8s semantics ([#3508](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3508)) ([c6555e2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c6555e236a787178eaec3207518058d378a5705a))
+
 ## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-virtualization-core-v0.0.1...infra-virtualization-core-v0.1.0) (2026-08-02)
 
 

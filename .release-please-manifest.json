@@ -19,5 +19,5 @@
   "infrastructure/subsystems/security-core": "0.2.10",
   "infrastructure/subsystems/security-extra": "0.2.14",
   "infrastructure/subsystems/storage-core": "0.2.3",
-  "infrastructure/subsystems/virtualization-core": "0.1.0"
+  "infrastructure/subsystems/virtualization-core": "0.1.1"
 }
