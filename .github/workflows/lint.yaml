@@ -107,7 +107,13 @@ jobs:
 
     - name: Validate Kubernetes Manifests
       if: ${{ steps.select-files.outputs.validate_k8s_manifests == 'true' }}
-      uses: ppat/validate-kubernetes-manifests@1a74426949d4e9e56a753236d287430c06736253 # v0.1.8
+      # TODO(#3416): temporarily pinned to the fix/per-document-postbuild-substitution branch
+      # tip (ppat/validate-kubernetes-manifests#100) instead of a released tag, so this repo's
+      # CI can validate the envsubst fix end-to-end before the tool has a real release. Swap
+      # back to a `vX.Y.Z` tag once that PR merges and release-please cuts it (expected
+      # ~v0.1.11) — Renovate does not track raw commit SHA pins the way it tracks tags, so this
+      # will NOT get auto-bumped and needs a manual follow-up.
+      uses: ppat/validate-kubernetes-manifests@b724dc35ad08a57e3b050e614e6df27dc22ef8fd # fix/per-document-postbuild-substitution
       with:
         files: ${{ steps.select-files.outputs.files_json }}
         pkg-include: '["apps/*","infrastructure/*", "ci/test/*"]'
