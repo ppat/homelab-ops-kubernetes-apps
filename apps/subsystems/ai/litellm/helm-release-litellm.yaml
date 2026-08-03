@@ -163,6 +163,7 @@ spec:
           grafana: grafana_mcp
           kubernetes_homelab: kubernetes_homelab_mcp
           kubernetes_nas: kubernetes_nas_mcp
+          kubernetes_sandbox: kubernetes_sandbox_mcp
           unifi_network: unifi_network_mcp
           unifi_protect: unifi_protect_mcp
           home_assistant: home_assistant_mcp
@@ -206,6 +207,17 @@ spec:
           transport: "http"
           auth_type: "none"
           description: "Self-hosted Kubernetes MCP server for the nas cluster (read-only; no secret-like resources)"
+        kubernetes_sandbox_mcp:
+          url: "http://mcp-kubernetes-sandbox.ai.svc.cluster.local:8080/mcp"
+          transport: "http"
+          # Same as every read-only sibling above: the NetworkPolicy boundary
+          # (mcp-servers-ingress, restricting ingress to this pod to LiteLLM) is what
+          # gates callers, not a token here -- see that policy's own comments, and
+          # ../mcp-kubernetes-sandbox/network-policy.yaml for this server's added
+          # egress-side boundary.
+          auth_type: "none"
+          # yamllint disable-line rule:line-length
+          description: "Self-hosted Kubernetes MCP server for the sandbox Talos cluster (write-capable, disposable/resettable target; no secret-like resources)"
         unifi_network_mcp:
           url: "http://mcp-unifi-network.ai.svc.cluster.local:3000/mcp"
           transport: "http"

@@ -1,0 +1,78 @@
+---
+# Egress NetworkPolicy scoped to this one pod, not a namespace-wide default-deny --
+# unlike ../network-policy.yaml's mcp-servers-ingress, which is deliberately
+# Ingress-only across the whole `ai` namespace, because every other MCP server here
+# depends on unisolated egress to reach the Kubernetes API, Grafana, Home Assistant and
+# the UniFi controllers. This server is the exception: it is write-capable against a
+# real Kubernetes API, and the production API server it sits beside in this same
+# namespace is one hop away over the pod network. Nothing else keeps it out of prod
+# today except its own kubeconfig and the absence of a prod credential -- configuration,
+# not structure -- and that matters more here than for the read-only siblings because
+# ppat/homelab-ops-kubernetes-clusters#770 records that the *ingress* gate restricting
+# who may call this server (LiteLLM only, via mcp-servers-ingress) has never actually
+# been verified to deny a disallowed caller. This policy is what makes "can't reach
+# prod" true independent of both of those.
+#
+# Two egress destinations only, nothing else: automountServiceAccountToken: false and no
+# serviceAccountName (deployment.yaml) already mean this pod holds no in-cluster
+# credential to use against anything else reachable here, so the allow-list below isn't
+# leaving a gap -- there's nothing else this pod has a reason, or the means, to reach.
+#
+# Cross-namespace ClusterIP-to-pod, not the LoadBalancer-VIP DNAT trap documented on
+# sandbox-talos's own allow-egress-lb-ingress-vips (clusters repo): that trap is specific
+# to a VIP fronted by an ingress controller, where kube-proxy DNATs to the *ingress*
+# pod's IP before NetworkPolicy ever evaluates the packet, so a podSelector aimed at the
+# real backend never matches it. talos-vm's Service has no ingress controller in front of
+# it -- its Endpoints/EndpointSlice point directly at the VM's own virt-launcher pod, so
+# kube-proxy's ClusterIP DNAT resolves straight to that pod's IP, and kube-router's
+# NetworkPolicy dataplane (this cluster's own controller, same one sandbox-talos runs
+# under) evaluates the real post-DNAT destination correctly -- the same mechanism
+# sandbox-talos's own allow-coder-and-mcp-ingress rule already depends on working, just
+# mirrored here as the egress half of that same path.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mcp-kubernetes-sandbox-egress
+  namespace: ai
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: mcp-kubernetes-sandbox
+  policyTypes:
+  - Egress
+  egress:
+  # Cluster DNS -- needed to resolve talos-vm.sandbox-talos.svc.cluster.local below (and
+  # nothing else; this pod makes no other outbound call). Same shape as sandbox-talos's
+  # own allow-dns-egress (clusters repo): podSelector-based, not the kube-dns ClusterIP,
+  # since CoreDNS carries no NetworkPolicy of its own to admit the ClusterIP form.
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # The sandbox Talos cluster's own Kubernetes API -- what this pod's kubeconfig
+  # (secrets.yaml) actually targets. Port 6443 only: this server speaks the Kubernetes
+  # API, never the Talos API (:50000, talosctl-only, mTLS) -- admitting that port too
+  # would be unused surface. Namespace/pod-label pair matches
+  # clusters/homelab/services/sandbox-talos/network-policy.yaml's own
+  # allow-coder-and-mcp-ingress and allow-same-namespace-ingress-to-vm exactly, by
+  # necessity: that repo owns and ships sandbox-talos's Namespace/NetworkPolicy/Service
+  # (this module doesn't and never creates them), so this rule has to name what that repo
+  # actually calls them, not what would be convenient to assume.
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: sandbox-talos
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: talos-vm
+    ports:
+    - protocol: TCP
+      port: 6443

@@ -66,11 +66,11 @@ spec:
   # "kubeconfig_nas_mcp" from the secret store, but a static dummy kubeconfig has no
   # reachable API server behind it -- the server crash-loops parsing it and /healthz
   # never succeeds. CI instead builds a real, working kubeconfig (see
-  # scripts/build-nas-kubeconfig.sh, run by the "Build NAS kubeconfig secret" chainsaw
-  # step) and creates the target Secret directly, so this ExternalSecret is deleted here
-  # to stop it fighting that script for ownership of the Secret. "kubeconfig_nas_mcp" is
-  # deliberately absent from pre-requisites/fake-secret-store.yaml as a result --
-  # nothing in CI reads it.
+  # scripts/build-remote-cluster-kubeconfig.sh, run for this module by the "Build
+  # remote-cluster kubeconfig secrets" chainsaw step) and creates the target Secret
+  # directly, so this ExternalSecret is deleted here to stop it fighting that script for
+  # ownership of the Secret. "kubeconfig_nas_mcp" is deliberately absent from
+  # pre-requisites/fake-secret-store.yaml as a result -- nothing in CI reads it.
   # yamllint disable-line rule:indentation
   - patch: |-
       $patch: delete
@@ -82,4 +82,21 @@ spec:
     target:
       kind: ExternalSecret
       name: mcp-kubernetes-nas-secrets
+      namespace: ai
+  # PROBLEM: identical to mcp-kubernetes-nas immediately above, same fix, for
+  # mcp-kubernetes-sandbox/secrets.yaml's ExternalSecret ("kubeconfig_sandbox_mcp"
+  # instead) -- see that comment for the full reasoning, not repeated here.
+  # "kubeconfig_sandbox_mcp" is deliberately absent from
+  # pre-requisites/fake-secret-store.yaml for the same reason.
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      $patch: delete
+      apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      metadata:
+        name: mcp-kubernetes-sandbox-secrets
+        namespace: ai
+    target:
+      kind: ExternalSecret
+      name: mcp-kubernetes-sandbox-secrets
       namespace: ai
