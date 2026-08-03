@@ -71,6 +71,20 @@ flowchart TD
     password: example
   ```
 
+## Sequential Test Fixtures
+
+- Some modules apply fixtures under `ci/test/<module>/test-resources/` sequentially, in
+  place, during the chainsaw run - e.g. `infra-database`'s CNPG cluster moves through
+  bare -> backups enabled -> restored as three separate files sharing one Flux
+  `Kustomization` name, mirroring how the same object mutates over separate commits in
+  production (see clusters-repo PR #735 for a real restore).
+- A static point-in-time tree scan (e.g. `flux-local`, used by the `diff-changes`
+  workflow) cannot represent "same identity, different specs over time" as anything but
+  a duplicate-name collision, so `test-resources/` is excluded from what that workflow
+  scans. It is chainsaw-only scaffolding, not part of the module's own manifest -
+  `pre-requisites/` and the module's own Flux `Kustomization` files are still diffed
+  normally.
+
 ## Resource Validation
 
 - Uses `kubeconform` to validate all Kubernetes manifests
