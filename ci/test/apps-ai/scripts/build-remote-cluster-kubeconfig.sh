@@ -4,8 +4,9 @@ set -euo pipefail
 # Both mcp-kubernetes-nas and mcp-kubernetes-sandbox (apps/subsystems/ai) authenticate to
 # a remote cluster via a mounted kubeconfig; in production each kubeconfig is assembled
 # by hand (nas) or by a CronJob running inside the target cluster (sandbox) from a minted
-# ServiceAccount token, and stored as "kubeconfig_nas_mcp" / "kubeconfig_sandbox_mcp"
-# respectively. A static dummy kubeconfig can't stand in for either here: the server
+# ServiceAccount token, and stored as "kubeconfig_nas_mcp" /
+# "sandbox_talos_vm_agent_admin_kubeconfig" respectively. A static dummy kubeconfig
+# can't stand in for either here: the server
 # parses it at startup and crash-loops on anything invalid, and its /healthz readiness
 # probe needs a reachable API server behind it. So this script does the same assembly CI
 # does for each real remote cluster, but points it at this kind cluster's own in-cluster

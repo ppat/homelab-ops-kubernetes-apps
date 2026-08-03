@@ -84,10 +84,10 @@ spec:
       name: mcp-kubernetes-nas-secrets
       namespace: ai
   # PROBLEM: identical to mcp-kubernetes-nas immediately above, same fix, for
-  # mcp-kubernetes-sandbox/secrets.yaml's ExternalSecret ("kubeconfig_sandbox_mcp"
-  # instead) -- see that comment for the full reasoning, not repeated here.
-  # "kubeconfig_sandbox_mcp" is deliberately absent from
-  # pre-requisites/fake-secret-store.yaml for the same reason.
+  # mcp-kubernetes-sandbox/secrets.yaml's ExternalSecret
+  # ("sandbox_talos_vm_agent_admin_kubeconfig" instead) -- see that comment for the full
+  # reasoning, not repeated here. "sandbox_talos_vm_agent_admin_kubeconfig" is
+  # deliberately absent from pre-requisites/fake-secret-store.yaml for the same reason.
   # yamllint disable-line rule:indentation
   - patch: |-
       $patch: delete

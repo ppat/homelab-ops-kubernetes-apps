@@ -8,8 +8,9 @@ metadata:
     app.kubernetes.io/name: mcp-kubernetes-sandbox
   annotations:
     # kubernetes-mcp-server loads the kubeconfig once at startup and never re-reads it
-    # (no fsnotify watcher, no per-request reload), so a rotated kubeconfig_sandbox_mcp
-    # is otherwise picked up only on the next unrelated restart. Contrast mcp-grafana,
+    # (no fsnotify watcher, no per-request reload), so a rotated
+    # sandbox_talos_vm_agent_admin_kubeconfig is otherwise picked up only on the next
+    # unrelated restart. Contrast mcp-grafana,
     # which re-reads its token file per request and needs no such annotation.
     secret.reloader.stakater.com/reload: mcp-kubernetes-sandbox-secrets
 spec:
