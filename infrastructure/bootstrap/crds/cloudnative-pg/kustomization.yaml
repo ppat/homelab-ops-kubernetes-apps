@@ -51,3 +51,27 @@ patches:
     version: v1
     kind: CustomResourceDefinition
     name: .*\.barmancloud\.cnpg\.io
+###########################################################
+# Some cnpg/barman-cloud CRD schema `description:` fields contain literal
+# `${...}`-shaped text (e.g. the `image_root` placeholder docs and their
+# own escaping instructions), which `flux envsubst` mis-parses as a real
+# postBuild substitution variable and fails on. These CRDs are applied
+# verbatim by Flux (never through postBuild substitution), so skip
+# substitution for them in tooling that renders+envsubsts build output
+# (see homelab-ops-kubernetes-apps#3416). Broad regex rather than the 3
+# presently-known offending CRD names so this survives a future version
+# bump moving the landmine to a different CRD.
+###########################################################
+# yamllint disable-line rule:indentation
+- patch: |-
+    apiVersion: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    metadata:
+      annotations:
+        kustomize.toolkit.fluxcd.io/substitute: disabled
+      name: irrelevant
+  target:
+    group: apiextensions.k8s.io
+    version: v1
+    kind: CustomResourceDefinition
+    name: .*\.(postgresql|barmancloud)\.cnpg\.io
