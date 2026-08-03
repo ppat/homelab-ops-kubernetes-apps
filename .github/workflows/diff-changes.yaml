@@ -9,6 +9,7 @@ on:
     - '.github/workflows/diff-changes.yaml'
     - 'apps/**/*.yaml'
     - 'ci/**/*.yaml'
+    - 'components/**/*.yaml'
     - 'infrastructure/**/*.yaml'
 
 concurrency:
@@ -20,12 +21,75 @@ permissions:
   pull-requests: write
 
 jobs:
+  detect-changes:
+    uses: ppat/github-workflows/.github/workflows/detect-changed-files.yaml@10103e49c72fbd6d3e06d7e29f51815b9b8644a6 # v4.2.0
+    with:
+      # yamllint disable-line rule:indentation
+      files: |
+        .github/workflows/diff-changes.yaml
+        apps/**/*.yaml
+        ci/**/*.yaml
+        components/**/*.yaml
+        infrastructure/**/*.yaml
+      git_ref: ${{ github.head_ref || github.ref }}
+
+  # Each ci/test/<module> directory is its own independent flux-local scan root (see
+  # the per-module `diff` job below), so figure out here which modules a given PR
+  # actually touches - either directly (ci/test/<module>/**) or indirectly, through
+  # the module's real manifests that its ci/test Kustomization renders
+  # (apps/subsystems/<x> -> apps-<x>, infrastructure/subsystems/<x>-core|-extra ->
+  # infra-<x>). Anything broader (the workflow itself, or a `components/*` consumed
+  # by an arbitrary/varying set of modules via spec.components) falls back to testing
+  # every module, since it can't be attributed to a single one cheaply/reliably.
+  affected-modules:
+    needs: [detect-changes]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    outputs:
+      modules: ${{ steps.extract-modules.outputs.modules }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+        fetch-depth: 1
+        persist-credentials: false
+
+    - name: Extract affected modules
+      id: extract-modules
+      env:
+        CHANGED_FILES: ${{ fromJSON(needs.detect-changes.outputs.results).all_changed_files }}
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        if echo "${CHANGED_FILES}" | tr ' ' '\n' | grep -qE '^(\.github/workflows/diff-changes\.yaml|components/)'; then
+          echo "Broad change detected (workflow or shared component) - testing all modules..."
+          mapfile -t modules < <(find ci/test -mindepth 1 -maxdepth 1 -type d ! -name chainsaw -printf '%f\n' | sort)
+        else
+          echo "Testing modules affected by changed files..."
+          mapfile -t modules < <(echo "${CHANGED_FILES}" | tr ' ' '\n' | awk -F/ '
+            $1 == "ci" && $2 == "test" && $3 != "chainsaw" { print $3 }
+            $1 == "apps" && $2 == "subsystems" { print "apps-" $3 }
+            $1 == "infrastructure" && $2 == "subsystems" { sub(/-core$/, "", $3); sub(/-extra$/, "", $3); print "infra-" $3 }
+          ' | sort -u)
+        fi
+
+        if [[ "${#modules[@]}" -eq 0 ]]; then
+          echo "modules=[]" >> "${GITHUB_OUTPUT}"
+        else
+          printf '%s\n' "${modules[@]}" | jq -R . | jq -s -c . > /tmp/modules.json
+          echo "modules=$(cat /tmp/modules.json)" >> "${GITHUB_OUTPUT}"
+        fi
+        cat "${GITHUB_OUTPUT}"
+
   diff:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    needs: [affected-modules]
+    if: ${{ needs.affected-modules.outputs.modules != '[]' }}
     strategy:
       fail-fast: false
       matrix:
+        module: ${{ fromJSON(needs.affected-modules.outputs.modules) }}
         resource:
         - helmrelease
         - kustomization
@@ -44,14 +108,32 @@ jobs:
         persist-credentials: false
         ref: "${{ github.event.repository.default_branch }}"
 
+    - name: Prepare module trees for diff
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        # A module added/removed entirely by this PR won't have a ci/test/<module>
+        # directory on one side; flux-local errors on a missing --path/--path-orig, but
+        # handles an empty *existing* directory fine (renders a full added/removed diff).
+        mkdir -p "after/ci/test/${{ matrix.module }}"
+        mkdir -p "before/ci/test/${{ matrix.module }}"
+
+        # test-resources/ holds chainsaw-only fixtures applied sequentially, in place,
+        # to represent one Flux object's temporal lifecycle within a single test run
+        # (e.g. infra-database's CNPG cluster: bare -> backups enabled -> restored).
+        # A static point-in-time scan can't represent that as anything but a duplicate
+        # Fluxtomization name collision, so it's excluded from what flux-local scans.
+        rm -rf "after/ci/test/${{ matrix.module }}/test-resources"
+        rm -rf "before/ci/test/${{ matrix.module }}/test-resources"
+
     - name: Flux Diff
       id: flux-diff
       uses: ppat/homelab-ops-actions/actions/flux-diff@f1ae73db4ab080b7e8dc66d078e5905d5ca526cb # v2.1.0
       with:
         log_level: DEBUG
         other_params: ${{ matrix.resource == 'helmrelease' && '--api-versions monitoring.coreos.com/v1' || '' }}
-        path_after: after/ci/test
-        path_before: before/ci/test
+        path_after: after/ci/test/${{ matrix.module }}
+        path_before: before/ci/test/${{ matrix.module }}
         resource_type: ${{ matrix.resource }}
         sources: "test-source=./"
 
@@ -64,5 +146,5 @@ jobs:
           `````diff
           ${{ steps.flux-diff.outputs.diff }}
           `````
-        message_id: "${{ github.event.pull_request.number }}/${{ matrix.resource }}"
+        message_id: "${{ github.event.pull_request.number }}/${{ matrix.module }}/${{ matrix.resource }}"
         token: ${{ secrets.GITHUB_TOKEN }}
