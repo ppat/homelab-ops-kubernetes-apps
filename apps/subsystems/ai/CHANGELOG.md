@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.22](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.21...apps-ai-v0.6.22) (2026-08-04)
+
+
+### ✨ Features
+
+* **apps-ai:** write-capable Kubernetes MCP server for the Talos sandbox cluster ([#3520](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3520)) ([a2c4e38](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a2c4e3838e141fa242bf1794669977d239ae5f99))
+
 ## [0.6.21](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.20...apps-ai-v0.6.21) (2026-08-01)
 
 
