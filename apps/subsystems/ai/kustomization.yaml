@@ -12,6 +12,7 @@ resources:
 - mcp-home-assistant/
 - mcp-kubernetes-homelab/
 - mcp-kubernetes-nas/
+- mcp-kubernetes-sandbox/
 - mcp-playwright/
 - mcp-unifi-network/
 - mcp-unifi-protect/

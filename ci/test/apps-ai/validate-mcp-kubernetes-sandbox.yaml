@@ -1,0 +1,89 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-mcp-kubernetes-sandbox
+spec:
+  try:
+  - description: Assert service/mcp-kubernetes-sandbox
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: mcp-kubernetes-sandbox
+          namespace: ai
+  - description: Assert configmap/mcp-kubernetes-sandbox-config
+    assert:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: mcp-kubernetes-sandbox-config
+          namespace: ai
+  # mcp-kubernetes-sandbox-secrets is asserted as a plain Secret, not via the
+  # externalsecret-ready assertion: the "Build remote-cluster kubeconfig secrets"
+  # chainsaw step creates it directly (see apps-ai.yaml's spec.patches for why the
+  # module's own ExternalSecret is deleted for CI).
+  - description: Assert secret/mcp-kubernetes-sandbox-secrets
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: mcp-kubernetes-sandbox-secrets
+          namespace: ai
+  - description: Assert networkpolicy/mcp-kubernetes-sandbox-egress
+    assert:
+      resource:
+        apiVersion: networking.k8s.io/v1
+        kind: NetworkPolicy
+        metadata:
+          name: mcp-kubernetes-sandbox-egress
+          namespace: ai
+        spec:
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: mcp-kubernetes-sandbox
+          policyTypes:
+          - Egress
+          egress:
+          - to:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: kube-system
+              podSelector:
+                matchLabels:
+                  k8s-app: kube-dns
+            ports:
+            - protocol: UDP
+              port: 53
+            - protocol: TCP
+              port: 53
+          - to:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: sandbox-talos
+              podSelector:
+                matchLabels:
+                  app.kubernetes.io/name: talos-vm
+            ports:
+            - protocol: TCP
+              port: 6443
+  - description: Assert deployment/mcp-kubernetes-sandbox
+    assert:
+      bindings:
+      - name: name
+        value: mcp-kubernetes-sandbox
+      - name: namespace
+        value: ai
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 5m
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: mcp-kubernetes-sandbox
+      namespace: ai
+  - events:
+      namespace: ai

@@ -1,0 +1,43 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mcp-kubernetes-sandbox-config
+  namespace: ai
+data:
+  config.toml: |
+    # read_only = false is the entire point of this server: it's the write-capable
+    # counterpart to mcp-kubernetes-homelab/mcp-kubernetes-nas (both read_only = true).
+    # denied_resources below is kept regardless -- write capability is not a reason to
+    # widen reads.
+    read_only = false
+    cluster_provider_strategy = "kubeconfig"
+    kubeconfig = "/etc/mcp-kubernetes-sandbox/kubeconfig"
+    toolsets = ["core"]
+
+    # Both kubeconfig and cluster_provider_strategy are required -- setting the
+    # strategy alone still loses to in-cluster detection (upstream
+    # docs/configuration.md "Cross-Cluster Access from a Pod").
+    #
+    # Secret is denied even though the mounted kubeconfig's credential is cluster-admin
+    # and would allow the read anyway -- defence in depth against a future kubeconfig
+    # that turns out to be less broad than assumed (a mis-scoped credential, or one this
+    # server was pointed at by mistake), so the app-level boundary holds independent of
+    # whatever RBAC the credential actually carries. See ci/test/apps-ai/scripts/
+    # check-mcp-kubernetes-rbac.sh for this held in the failing direction: RBAC allows
+    # the read, this config.toml is what actually blocks it.
+    #
+    # pods_exec is deliberately NOT denied, unlike Secret -- withholding it here would be
+    # security theatre, not a boundary: this server's credential is cluster-admin on the
+    # sandbox cluster by design (that cluster exists so agents get a real, disposable
+    # cluster to break), and anything exec can do is already reachable by creating a pod,
+    # which the same credential permits regardless of this server's tool list. The
+    # control that bounds exec's blast radius is the sandbox's own isolation (a separate
+    # cluster, on a separate VM, in a namespace whose egress denies the host API) plus
+    # this directory's own network-policy.yaml, limiting this pod's egress to DNS and
+    # the sandbox API -- not this tool list. See this module's README, "Notes", for what
+    # would make this reasoning wrong later.
+    [[denied_resources]]
+    group = ""
+    version = "v1"
+    kind = "Secret"

@@ -420,8 +420,8 @@ subjects:
 ---
 # Kubernetes 1.24+ no longer auto-creates a ServiceAccount token Secret, so this
 # is minted explicitly, exactly as done for the real nas cluster. Populated
-# asynchronously by the token controller; the "Build NAS kubeconfig secret" step
-# polls for .data.token/.data.ca\.crt before reading it.
+# asynchronously by the token controller; the "Build remote-cluster kubeconfig
+# secrets" step polls for .data.token/.data.ca\.crt before reading it.
 apiVersion: v1
 kind: Secret
 metadata:
@@ -429,4 +429,48 @@ metadata:
   namespace: mcp-access
   annotations:
     kubernetes.io/service-account.name: mcp-kubernetes-nas
+type: kubernetes.io/service-account-token
+---
+# Stand-in for the real sandbox Talos cluster's agent-admin identity
+# (homelab-ops-kubernetes-experiments, experiments/apps/sandbox-talos/provision-agent-
+# admin-cronjob.yaml): in production that ServiceAccount lives inside the sandbox
+# cluster's own guest etcd, bound to cluster-admin -- not to a scoped ClusterRole like
+# mcp-kubernetes-readonly above. CI has only the one kind cluster, so this SA + binding +
+# token secret simulate that identity here, bound to cluster-admin directly rather than
+# to a hand-maintained ClusterRole, to actually mirror what production grants rather than
+# a fiction that happens to be easier to test. check-mcp-kubernetes-rbac.sh's
+# check_sandbox_identity asserts on this directly: RBAC allows everything for this
+# identity, on purpose -- the write/deny boundary that actually matters (Secrets stay
+# unreadable despite read_only = false) is enforced by mcp-kubernetes-sandbox-config's
+# own denied_resources, checked separately, at the protocol level, against the deployed
+# pod (check_sandbox_write_boundary, run from the "Verify mcp-kubernetes-sandbox write
+# boundary" chainsaw step).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mcp-kubernetes-sandbox
+  namespace: mcp-access
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: mcp-kubernetes-sandbox-test-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: mcp-kubernetes-sandbox
+  namespace: mcp-access
+---
+# Same reasoning as mcp-kubernetes-nas-token above: explicit token Secret, populated
+# asynchronously, polled by "Build remote-cluster kubeconfig secrets".
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mcp-kubernetes-sandbox-token
+  namespace: mcp-access
+  annotations:
+    kubernetes.io/service-account.name: mcp-kubernetes-sandbox
 type: kubernetes.io/service-account-token

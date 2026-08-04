@@ -37,7 +37,7 @@ spec:
 
   - name: Verify mcp-kubernetes RBAC posture
     try:
-    - description: Assert mcp-kubernetes-homelab / mcp-kubernetes-nas can-i checks
+    - description: Assert mcp-kubernetes-homelab / mcp-kubernetes-nas / mcp-kubernetes-sandbox can-i checks
       script:
         content: ./scripts/check-mcp-kubernetes-rbac.sh
         timeout: 1m
@@ -46,18 +46,33 @@ spec:
         apiVersion: rbac.authorization.k8s.io/v1
         kind: ClusterRoleBinding
         name: mcp-kubernetes-readonly
+    - describe:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRoleBinding
+        name: mcp-kubernetes-sandbox-test-admin
 
-  - name: Build NAS kubeconfig secret
+  - name: Build remote-cluster kubeconfig secrets
     try:
     - description: Assemble mcp-kubernetes-nas-secrets from the minted mcp-kubernetes-nas token
       script:
-        content: ./scripts/build-nas-kubeconfig.sh
+        # yamllint disable-line rule:line-length
+        content: ./scripts/build-remote-cluster-kubeconfig.sh mcp-kubernetes-nas-token mcp-access mcp-kubernetes-nas-secrets ai nas
+        timeout: 2m
+    - description: Assemble mcp-kubernetes-sandbox-secrets from the minted mcp-kubernetes-sandbox token
+      script:
+        # yamllint disable-line rule:line-length
+        content: ./scripts/build-remote-cluster-kubeconfig.sh mcp-kubernetes-sandbox-token mcp-access mcp-kubernetes-sandbox-secrets ai sandbox
         timeout: 2m
     catch:
     - describe:
         apiVersion: v1
         kind: Secret
         name: mcp-kubernetes-nas-token
+        namespace: mcp-access
+    - describe:
+        apiVersion: v1
+        kind: Secret
+        name: mcp-kubernetes-sandbox-token
         namespace: mcp-access
     - events:
         namespace: mcp-access
@@ -131,6 +146,33 @@ spec:
   - name: Validate mcp-kubernetes-nas
     use:
       template: ./validate-mcp-kubernetes-nas.yaml
+
+  - name: Validate mcp-kubernetes-sandbox
+    use:
+      template: ./validate-mcp-kubernetes-sandbox.yaml
+
+  - name: Verify mcp-kubernetes-sandbox write boundary
+    try:
+    # Runs only once the Deployment above is Ready: this calls the deployed pod's own
+    # /mcp endpoint (not kubectl auth can-i, which the earlier "Verify mcp-kubernetes
+    # RBAC posture" step already showed is a "yes" to everything for this identity --
+    # see check-mcp-kubernetes-rbac.sh's check_sandbox_identity for why). This is what
+    # actually proves the write boundary: a real write through the running server, and a
+    # real, refused read of a Secret through it despite read_only = false.
+    - description: Create/delete through the pod, and confirm Secret reads stay denied
+      script:
+        content: ./scripts/check-mcp-kubernetes-rbac.sh --sandbox-write-boundary
+        timeout: 2m
+    catch:
+    - describe:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: mcp-kubernetes-sandbox
+        namespace: ai
+    - podLogs:
+        selector: app.kubernetes.io/name=mcp-kubernetes-sandbox
+        namespace: ai
+        tail: 200
 
   - name: Validate mcp-unifi-network
     use:
