@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.13](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.3.12...apps-home-automation-v0.3.13) (2026-08-07)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-home-automation:** update digest ghcr.io/home-operations/home-assistant (fc3c0b5 -&gt; 17a97c2) ([#3500](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3500)) ([2e85ada](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2e85ada6c2926c5a01f9e5ee42844c22f3c0c800))
+
 ## [0.3.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.3.11...apps-home-automation-v0.3.12) (2026-07-30)
 
 
