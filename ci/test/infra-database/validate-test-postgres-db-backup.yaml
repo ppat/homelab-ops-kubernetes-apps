@@ -5,7 +5,10 @@ metadata:
   name: validate-test-postgres-db-backup
 spec:
   try:
-  - description: Assert objectstore/test-postgres-db-backup-store exists
+  - description: >-
+      Assert objectstore/test-postgres-db-backup-store exists and its rendered
+      destinationPath has no trailing slash (see the comment on that field in
+      components/db-backups/objectstore.yaml for why that matters).
     assert:
       resource:
         apiVersion: barmancloud.cnpg.io/v1
@@ -13,6 +16,9 @@ spec:
         metadata:
           name: test-postgres-db-backup-store
           namespace: default
+        spec:
+          configuration:
+            destinationPath: s3://nas-cloudnativepg-backups/test-postgres-db
   - description: Assert cluster.postgresql.cnpg.io/test-postgres-db-v1 is ready
     assert:
       bindings:

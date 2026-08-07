@@ -85,6 +85,6 @@ flowchart LR
 
 ## Notes
 
-- Backups are written to `s3://nas-cloudnativepg-backups/${db_name}/`, scoped per database, under `serverName` `${db_suffix_current}` — so each cluster generation archives to its own server path within the shared bucket.
+- Backups are written to `s3://nas-cloudnativepg-backups/${db_name}`, scoped per database, under `serverName` `${db_suffix_current}` — so each cluster generation archives to its own server path within the shared bucket.
 - The `ScheduledBackup` name is suffixed with `${db_suffix_current}` on purpose: in CloudNativePG a `ScheduledBackup`'s `.spec.cluster` is immutable after creation, so rotating a cluster to a new generation must create a new `ScheduledBackup` (and prune the old) rather than mutate the existing one.
 - Pair with [db-restore](../db-restore) to bootstrap a new cluster generation from these backups.
