@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.19](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-harbor-v0.0.18...apps-harbor-v0.0.19) (2026-08-07)
+
+
+### ✨ Features
+
+* **apps-harbor:** add docker.io pull-through mirror Ingress ([#3555](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3555)) ([0a9a724](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0a9a724f2f0a1041691eea8d8277d8fbb6060c1b))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-harbor:** update harbor (1.19.1 -&gt; 1.19.2) ([#3526](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3526)) ([5fdeb9e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5fdeb9eb1bb576267e5d7eab24eb344ac47db8da))
+
 ## [0.0.18](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-harbor-v0.0.17...apps-harbor-v0.0.18) (2026-07-17)
 
 
