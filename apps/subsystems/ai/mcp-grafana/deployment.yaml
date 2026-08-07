@@ -6,6 +6,10 @@ metadata:
   namespace: ai
   labels:
     app.kubernetes.io/name: mcp-grafana
+  annotations:
+    # Kept despite the _FILE comment below claiming upstream re-reads per request: this pod
+    # was seen serving 401s well after its token was re-minted and the Secret synced.
+    secret.reloader.stakater.com/reload: mcp-grafana-secrets
 spec:
   replicas: 1
   selector:
