@@ -15,6 +15,7 @@ The harbor subsystem consists of three main capability groups:
    - Artifact management
    - Chart repository
    - Image scanning
+   - Docker Hub pull-through mirror for the `docker.io` proxy-cache project
 
 2. Supporting Infrastructure
    - Job processing
@@ -45,6 +46,7 @@ flowchart TB
 
     %% External Access
     client[External Client<br/>Push/Pull]:::infra
+    dockerio_client[Docker Mirror Client<br/>registry-mirrors]:::infra
 
     %% Core Services
     registry[Registry<br/>Image Storage]:::core
@@ -83,6 +85,7 @@ flowchart TB
     %% Relationships
     client --> core
     client --> registry
+    dockerio_client --> core
 
     %% Core Service dependencies
     core --> registry
@@ -132,7 +135,7 @@ flowchart TB
 ### Component Details
 
 | Component | Type | Primary Role | Key Features | Integration Points |
-|-----------|------|--------------|--------------|-------------------|
+| ----------- | ------ | -------------- | -------------- | ------------------- |
 | Registry | Core | Image Storage | • Container image management<br>• Helm chart repository<br>• Artifact versioning<br>• Storage optimization | • Direct storage volume access<br>• Core API integration<br>• Metrics collection<br>• Chart storage management |
 | Core API | Core | Service Control | • Authentication management<br>• Authorization control<br>• API request handling<br>• Resource coordination | • PostgreSQL data persistence<br>• Redis cache integration<br>• Registry coordination<br>• Security service integration |
 | Job Service | Core | Task Management | • Background task execution<br>• Replication management<br>• Scan job coordination<br>• Queue processing | • Redis queue integration<br>• Registry interaction<br>• Core API communication<br>• Job logging |
@@ -145,7 +148,7 @@ flowchart TB
 1. Persistent Storage
 
    | PVC Name | Purpose | Access Mode |
-   |----------|---------|-------------|
+   | ---------- | --------- | ------------- |
    | harbor-registry | Container images and charts | RWX |
    | harbor-jobservice | Job logs and data | RWX |
    | harbor-database | PostgreSQL data | RWX |
@@ -154,12 +157,12 @@ flowchart TB
 
 2. Required Secrets
 
-   | Secret Name | Purpose | Required Keys |
-   |-------------|---------|---------------|
-   | harbor | Admin credentials | adminPassword, secretKey |
+   | Secret Name | Purpose           | Required Keys            |
+   | ----------- | ----------------- | ------------------------ |
+   | harbor      | Admin credentials | adminPassword, secretKey |
 
 3. Required Variables
 
-   | Variable | Purpose | Used By |
-   |----------|---------|---------|
+   | Variable    | Purpose                                     | Used By      |
+   | ----------- | ------------------------------------------- | ------------ |
    | domain_name | External access URL (harbor.${domain_name}) | All services |

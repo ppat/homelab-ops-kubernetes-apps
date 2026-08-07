@@ -10,6 +10,9 @@ resources:
 - helm-repository-harbor.yaml
 - helm-release-harbor.yaml
 - secrets.yaml
+- middleware-dockerio-rewrite.yaml
+- middleware-dockerio-host.yaml
+- ingress-dockerio-harbor.yaml
 
 sortOptions:
   order: fifo

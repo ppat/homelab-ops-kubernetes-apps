@@ -1,10 +1,13 @@
 ---
-# A plain networking.k8s.io Ingress, not a Traefik IngressRoute: not every
-# consuming cluster's external-dns necessarily watches IngressRoute (the
-# `nas` cluster's is `sources: [ingress, service]` only), and this component
-# follows the same plain-Ingress-plus-Traefik-annotations shape Harbor's own
-# Ingress already uses (helm-release-harbor.yaml) rather than introducing a
-# second convention.
+# Front door for Harbor's docker.io proxy-cache project, on its own
+# hostname so a plain Docker `registry-mirrors` entry (which can only ever
+# express a bare origin, no path) still lands in the right Harbor project --
+# see middleware-dockerio-rewrite.yaml for the path-rewrite this depends on.
+#
+# A plain networking.k8s.io Ingress, not a Traefik IngressRoute, matching
+# the convention Harbor's own Ingress already uses (helm-release-harbor.yaml,
+# expose.ingress): not every consuming cluster's external-dns necessarily
+# watches IngressRoute.
 #
 # Routes directly to harbor-core (the same internal Service Harbor's own
 # Ingress targets), not back out through Harbor's own external hostname --

@@ -1,6 +1,6 @@
 ---
 # Overrides the outgoing Host header to Harbor's own canonical hostname
-# before the request reaches harbor-core, rather than leaving it as this
+# before the request reaches harbor-core, rather than leaving it as the
 # mirror's own hostname. Harbor's token-auth challenge
 # (`Www-Authenticate: Bearer realm=...`) and any Location/redirect it
 # constructs are built from its configured `externalURL`

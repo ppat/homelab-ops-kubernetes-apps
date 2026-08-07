@@ -5,7 +5,7 @@
 # makes dockerd itself request `/v2/docker.io/...` -- this Middleware makes
 # up the difference on Harbor's behalf, for a hostname dedicated to this one
 # proxy-cache project. See goharbor/harbor#21339 (closed, icebox) for the
-# upstream gap, and this component's README for the full picture.
+# upstream gap.
 #
 # The bare `/v2/` version-check ping (Docker's initial probe, and the path
 # the 401 challenge/token flow round-trips through) is deliberately excluded

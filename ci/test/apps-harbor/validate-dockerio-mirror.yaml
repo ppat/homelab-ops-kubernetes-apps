@@ -1,0 +1,66 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-dockerio-mirror
+spec:
+  try:
+  - description: Assert middleware/dockerio-rewrite
+    assert:
+      resource:
+        apiVersion: traefik.io/v1alpha1
+        kind: Middleware
+        metadata:
+          name: dockerio-rewrite
+          namespace: harbor
+        spec:
+          replacePathRegex:
+            regex: ^/v2/(.+)$
+            replacement: /v2/docker.io/$1
+  - description: Assert middleware/dockerio-host
+    assert:
+      resource:
+        apiVersion: traefik.io/v1alpha1
+        kind: Middleware
+        metadata:
+          name: dockerio-host
+          namespace: harbor
+        spec:
+          headers:
+            customRequestHeaders:
+              Host: harbor.cluster.example.com
+  - description: Assert ingress/dockerio-harbor
+    assert:
+      resource:
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: dockerio-harbor
+          namespace: harbor
+          annotations:
+            external-dns.alpha.kubernetes.io/hostname: dockerio-harbor.cluster.example.com
+            traefik.ingress.kubernetes.io/router.middlewares: harbor-dockerio-rewrite@kubernetescrd,harbor-dockerio-host@kubernetescrd
+        spec:
+          rules:
+          - host: dockerio-harbor.cluster.example.com
+            http:
+              paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: harbor-core
+                    port:
+                      number: 80
+  catch:
+  - describe:
+      apiVersion: traefik.io/v1alpha1
+      kind: Middleware
+      namespace: harbor
+  - describe:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      name: dockerio-harbor
+      namespace: harbor
+  - events:
+      namespace: harbor
