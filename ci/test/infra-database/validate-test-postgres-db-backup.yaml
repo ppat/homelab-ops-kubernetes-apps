@@ -5,7 +5,15 @@ metadata:
   name: validate-test-postgres-db-backup
 spec:
   try:
-  - description: Assert objectstore/test-postgres-db-backup-store exists
+  - description: >-
+      Assert objectstore/test-postgres-db-backup-store exists with a
+      destinationPath that has no trailing slash. A trailing slash makes the
+      barman-cloud plugin's retention-delete request double-slashed (it
+      appends serverName as its own path segment), which MinIO's
+      ListObjectsV2 rejects -- silently breaking retention pruning on every
+      cycle while backups/WAL archiving keep succeeding
+      (cloudnative-pg/cloudnative-pg#4890). This asserts the rendered value
+      exactly, so a trailing slash reintroduced here fails the match.
     assert:
       resource:
         apiVersion: barmancloud.cnpg.io/v1
@@ -13,6 +21,9 @@ spec:
         metadata:
           name: test-postgres-db-backup-store
           namespace: default
+        spec:
+          configuration:
+            destinationPath: s3://nas-cloudnativepg-backups/test-postgres-db
   - description: Assert cluster.postgresql.cnpg.io/test-postgres-db-v1 is ready
     assert:
       bindings:

@@ -85,6 +85,6 @@ flowchart LR
 
 ## Notes
 
-- Backups are written to `s3://nas-cloudnativepg-backups/${db_name}/`, scoped per database, under `serverName` `${db_suffix_current}` — so each cluster generation archives to its own server path within the shared bucket.
+- Backups are written to `s3://nas-cloudnativepg-backups/${db_name}`, scoped per database, under `serverName` `${db_suffix_current}` — so each cluster generation archives to its own server path within the shared bucket. `destinationPath` must NOT have a trailing slash: the barman-cloud plugin appends `serverName` as a separate path segment, and a trailing slash here makes the resulting prefix double-slashed, which MinIO's `ListObjectsV2` rejects — breaking retention-policy enforcement (base backups and WAL archiving are unaffected; only pruning fails) ([cloudnative-pg/cloudnative-pg#4890](https://github.com/cloudnative-pg/cloudnative-pg/issues/4890)).
 - The `ScheduledBackup` name is suffixed with `${db_suffix_current}` on purpose: in CloudNativePG a `ScheduledBackup`'s `.spec.cluster` is immutable after creation, so rotating a cluster to a new generation must create a new `ScheduledBackup` (and prune the old) rather than mutate the existing one.
 - Pair with [db-restore](../db-restore) to bootstrap a new cluster generation from these backups.
