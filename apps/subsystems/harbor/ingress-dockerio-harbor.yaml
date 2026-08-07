@@ -1,0 +1,41 @@
+---
+# Front door for Harbor's docker.io proxy-cache project, on its own
+# hostname so a plain Docker `registry-mirrors` entry (which can only ever
+# express a bare origin, no path) still lands in the right Harbor project --
+# see middleware-dockerio-rewrite.yaml for the path-rewrite this depends on.
+#
+# A plain networking.k8s.io Ingress, not a Traefik IngressRoute, matching
+# the convention Harbor's own Ingress already uses (helm-release-harbor.yaml,
+# expose.ingress): not every consuming cluster's external-dns necessarily
+# watches IngressRoute.
+#
+# Routes directly to harbor-core (the same internal Service Harbor's own
+# Ingress targets), not back out through Harbor's own external hostname --
+# no need to leave the cluster to reach it, and doing so risks routing back
+# through this same Ingress if the hostnames were ever confused.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dockerio-harbor
+  namespace: harbor
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: dockerio-harbor.${domain_name}
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: harbor-dockerio-rewrite@kubernetescrd,harbor-dockerio-host@kubernetescrd
+spec:
+  # empty tls, so the cluster's default wildcard certificate is assigned --
+  # same convention Harbor's own Ingress relies on (helm-release-harbor.yaml,
+  # expose.tls.certSource: none).
+  tls: []
+  rules:
+  - host: dockerio-harbor.${domain_name}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: harbor-core
+            port:
+              number: 80

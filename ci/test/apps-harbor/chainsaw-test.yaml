@@ -94,3 +94,7 @@ spec:
   - name: Validate harbor release
     use:
       template: ./validate-harbor-release.yaml
+
+  - name: Validate docker.io mirror
+    use:
+      template: ./validate-dockerio-mirror.yaml

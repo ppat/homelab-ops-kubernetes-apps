@@ -1,0 +1,27 @@
+---
+# Rewrites Docker's registry-mirror requests into Harbor's proxy-cache path
+# convention. Docker's `registry-mirrors` daemon.json option has no
+# equivalent of containerd's `override_path`, so there is no mirror URL that
+# makes dockerd itself request `/v2/docker.io/...` -- this Middleware makes
+# up the difference on Harbor's behalf, for a hostname dedicated to this one
+# proxy-cache project. See goharbor/harbor#21339 (closed, icebox) for the
+# upstream gap.
+#
+# The bare `/v2/` version-check ping (Docker's initial probe, and the path
+# the 401 challenge/token flow round-trips through) is deliberately excluded
+# from the rewrite: `(.+)` requires at least one character after `/v2/`, so
+# `/v2/` alone never matches this regex and passes through unprefixed.
+# Rewriting it too sends `GET /v2/docker.io/`, which is not a Harbor
+# endpoint: Harbor answers 401 with an *empty* Www-Authenticate header, so
+# Docker's probe gets no realm to authenticate against and the mirror looks
+# dead even though Harbor itself is healthy. Measured against a real Harbor;
+# see ppat/homelab-ops-kubernetes-experiments#226.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: dockerio-rewrite
+  namespace: harbor
+spec:
+  replacePathRegex:
+    regex: ^/v2/(.+)$
+    replacement: /v2/docker.io/$1
