@@ -89,6 +89,7 @@ flowchart TB
     subgraph storage[Storage]
         prometheus_pvc[(Prometheus PVC)]:::store
         alertmanager_pvc[(AlertManager PVC)]:::store
+        grafana_pvc[(Grafana PVC)]:::store
         s3_bucket[(S3 Bucket)]:::store
     end
 
@@ -107,6 +108,7 @@ flowchart TB
 
     grafana --> prometheus
     grafana --> loki
+    grafana -- "persists users, service accounts, dashboard history" --> grafana_pvc
     k3s_dashboards --> grafana
 
     %% Simple legend
@@ -129,7 +131,7 @@ flowchart TB
 ### Component Details
 
 | Component | Primary Role | Integration Points |
-|-----------|-------------|-------------------|
+| ----------- | ------------- | ------------------- |
 | Prometheus | Metrics collection and storage | • Collects metrics via ServiceMonitors and PodMonitors<br>• Stores metrics in persistent storage with configurable retention<br>• Evaluates alerting rules and sends alerts to AlertManager<br>• Provides query interface for metrics access |
 | AlertManager | Alert routing and management | • Receives alerts from Prometheus rule evaluations<br>• Receives alerts from Loki rule evaluations<br>• Routes and groups alerts based on defined rules<br>• Manages notification delivery to configured channels |
 | Promtail | Log collection agent | • Discovers and tails container log files on nodes<br>• Attaches labels to log streams based on Kubernetes metadata<br>• Ships logs to Loki for storage<br>• Supports various log formats and compression |
@@ -142,16 +144,18 @@ flowchart TB
 
 1. Required Secrets
 
-   | Secret Name | Purpose | Required Keys |
-   |-------------|---------|---------------|
-   | grafana-admin-credentials | Grafana admin access | username, password |
-   | loki-s3-credentials | S3 storage access | loki_s3_endpoint, loki_s3_accesskeyid, loki_s3_secretaccesskey |
+   | Secret Name               | Purpose              | Required Keys                                                  |
+   |---------------------------|----------------------|----------------------------------------------------------------|
+   | grafana-admin-credentials | Grafana admin access | username, password                                             |
+   | loki-s3-credentials       | S3 storage access    | loki_s3_endpoint, loki_s3_accesskeyid, loki_s3_secretaccesskey |
 
 2. Required Variables
 
    | Variable | Purpose | Required By |
-   |----------|---------|-------------|
+   | ---------- | --------- | ------------- |
    | domain_name | Domain for component ingress | All components |
+   | grafana_storage_class | Storage class for Grafana state | Grafana |
+   | grafana_storage_size | PVC size for Grafana state | Grafana |
    | prometheus_retention_period | Metric retention time | Prometheus |
    | prometheus_retention_size | Metric storage limit | Prometheus |
    | prometheus_storage_size | PVC size for metrics | Prometheus |
