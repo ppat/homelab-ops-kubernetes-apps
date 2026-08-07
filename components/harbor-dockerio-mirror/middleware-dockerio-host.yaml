@@ -1,0 +1,25 @@
+---
+# Overrides the outgoing Host header to Harbor's own canonical hostname
+# before the request reaches harbor-core, rather than leaving it as this
+# mirror's own hostname. Harbor's token-auth challenge
+# (`Www-Authenticate: Bearer realm=...`) and any Location/redirect it
+# constructs are built from its configured `externalURL`
+# (helm-release-harbor.yaml, `harbor.${domain_name}`) -- an unpinned Host
+# was never tested against a real Harbor and is not assumed to behave the
+# same.
+#
+# `customRequestHeaders` special-cases the "Host" key (traefik/traefik,
+# pkg/middlewares/headers/header.go, modifyCustomRequestHeaders: `case
+# strings.EqualFold(header, "Host"): req.Host = value`) -- it sets the
+# actual outgoing request's Host, not just an entry in the header map,
+# which is what makes this reliable rather than a no-op some Traefik
+# versions have been reported to silently ignore.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: dockerio-host
+  namespace: harbor
+spec:
+  headers:
+    customRequestHeaders:
+      Host: harbor.${domain_name}
