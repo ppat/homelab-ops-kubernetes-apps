@@ -49,6 +49,14 @@ spec:
         # in the HelmRelease).
         - name: GRAFANA_URL
           value: http://grafana.monitoring.svc.cluster.local
+        # This Grafana instance runs single-org (no multi-org config in this module or
+        # observability-core), and the ESO Grafana generator (secrets.yaml) that mints
+        # this server's token has no org selector of its own -- it always lands in
+        # Grafana's org 1 via admin basic auth. Without this, mcp-grafana falls back to
+        # that same default org but logs a WARN on every tool call to say so, burying
+        # the auth-failure signal this server's logs exist to surface.
+        - name: GRAFANA_ORG_ID
+          value: "1"
         # _FILE (not the inline var) because the ESO Grafana generator (secrets.yaml)
         # mints a new SA token on every refresh; upstream mcp-grafana re-reads this file
         # per request (v0.16.0+), so rotation needs no pod restart. It also TrimSpace's
