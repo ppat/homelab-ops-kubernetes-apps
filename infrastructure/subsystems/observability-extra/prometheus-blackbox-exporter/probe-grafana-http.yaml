@@ -1,0 +1,19 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  labels:
+    app.kubernetes.io/name: prometheus-blackbox-exporter
+  name: grafana-http
+  namespace: monitoring
+spec:
+  jobName: blackbox
+  module: http_2xx
+  prober:
+    url: prometheus-blackbox-exporter.monitoring:9115
+  targets:
+    staticConfig:
+      static:
+      - https://grafana.${domain_name}
+      labels:
+        target: grafana

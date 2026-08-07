@@ -81,6 +81,10 @@ spec:
     use:
       template: ./validate-snmp-exporter.yaml
 
+  - name: Validate Blackbox Exporter
+    use:
+      template: ./validate-blackbox-exporter.yaml
+
   - name: Validate UniFi Poller
     use:
       template: ./validate-unifi-poller.yaml
