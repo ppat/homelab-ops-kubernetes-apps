@@ -1,0 +1,19 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  labels:
+    app.kubernetes.io/name: prometheus-blackbox-exporter
+  name: coredns-resolution
+  namespace: monitoring
+spec:
+  jobName: blackbox
+  module: dns_udp
+  prober:
+    url: prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
+  targets:
+    staticConfig:
+      static:
+      - kube-dns.kube-system.svc.cluster.local:53
+      labels:
+        target: coredns

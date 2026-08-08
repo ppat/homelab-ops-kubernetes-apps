@@ -1,0 +1,81 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: prometheus-blackbox-exporter-release
+  namespace: monitoring
+spec:
+  chart:
+    spec:
+      chart: prometheus-blackbox-exporter
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community-repository
+        namespace: flux-system
+      version: 11.16.0
+  install:
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 15m0s
+  releaseName: prometheus-blackbox-exporter
+  targetNamespace: monitoring
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+
+  values:
+    resources: {}
+    tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+
+    # Self-scrape of the exporter's own /metrics (probe results themselves come from Probe
+    # resources scraping /probe, discovered separately via probeSelectorNilUsesHelmValues:
+    # false on the kube-prometheus-stack Prometheus -- see storage-core/minio's Probe
+    # resources for that convention).
+    serviceMonitor:
+      selfMonitor:
+        enabled: true
+
+    # Standard module set selected per-target via a Probe resource's spec.module.
+    # http_2xx also reports probe_ssl_earliest_cert_expiry for any https:// target, so a
+    # separate TLS module is only needed for non-HTTP TLS endpoints (tls_connect below).
+    # dns_udp's query_name is fixed per blackbox_exporter's design (the Probe's target is
+    # the nameserver to query, not the name being looked up) -- add another dns_* module
+    # for each additional name that needs resolving.
+    config:
+      modules:
+        http_2xx:
+          prober: http
+          timeout: 5s
+          http:
+            preferred_ip_protocol: "ip4"
+            valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+            follow_redirects: true
+        tls_connect:
+          prober: tcp
+          timeout: 5s
+          tcp:
+            tls: true
+            preferred_ip_protocol: "ip4"
+        tcp_connect:
+          prober: tcp
+          timeout: 5s
+          tcp:
+            preferred_ip_protocol: "ip4"
+        dns_udp:
+          prober: dns
+          timeout: 5s
+          dns:
+            preferred_ip_protocol: "ip4"
+            transport_protocol: "udp"
+            query_name: "kubernetes.default.svc.cluster.local"
+            query_type: "A"
+            valid_rcodes:
+            - NOERROR

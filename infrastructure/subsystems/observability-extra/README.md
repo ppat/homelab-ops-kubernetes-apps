@@ -4,11 +4,11 @@ This module extends the core observability stack with specialized collectors and
 
 ## Quick Links
 
-<a href="https://github.com/kubernetes/node-problem-detector" target="_blank"><img src="../../../.static/images/logos/kubernetes.svg" width="32" height="32" alt="Node Problem Detector"></a> <a href="https://github.com/prometheus/snmp_exporter" target="_blank"><img src="../../../.static/images/logos/prometheus.svg" width="32" height="32" alt="SNMP Exporter"></a> <a href="https://www.syslog-ng.com/technical-documents/doc/syslog-ng-open-source-edition/3.37/administration-guide/" target="_blank"><img src="../../../.static/images/logos/syslog-ng.png" width="32" height="32" alt="Syslog-ng"></a> <a href="https://unpoller.com/" target="_blank"><img src="../../../.static/images/logos/unifi-poller.png" width="32" height="32" alt="UniFi Poller"></a>
+<a href="https://github.com/prometheus/blackbox_exporter" target="_blank"><img src="../../../.static/images/logos/prometheus.svg" width="32" height="32" alt="Blackbox Exporter"></a> <a href="https://github.com/kubernetes/node-problem-detector" target="_blank"><img src="../../../.static/images/logos/kubernetes.svg" width="32" height="32" alt="Node Problem Detector"></a> <a href="https://github.com/prometheus/snmp_exporter" target="_blank"><img src="../../../.static/images/logos/prometheus.svg" width="32" height="32" alt="SNMP Exporter"></a> <a href="https://www.syslog-ng.com/technical-documents/doc/syslog-ng-open-source-edition/3.37/administration-guide/" target="_blank"><img src="../../../.static/images/logos/syslog-ng.png" width="32" height="32" alt="Syslog-ng"></a> <a href="https://unpoller.com/" target="_blank"><img src="../../../.static/images/logos/unifi-poller.png" width="32" height="32" alt="UniFi Poller"></a>
 
 ## Overview
 
-The observability-extra module provides five main capabilities:
+The observability-extra module provides four main capabilities:
 
 1. Event Collection
    - Node problem detection:
@@ -41,6 +41,16 @@ The observability-extra module provides five main capabilities:
      - Worker scaling
      - Buffer tuning
 
+4. Synthetic Probing
+   - Blackbox endpoint checks:
+     - HTTP/HTTPS reachability (`http_2xx`), including TLS certificate expiry for `https://` targets
+     - Bare TCP/TLS handshake checks (`tls_connect`) for non-HTTP TLS ports
+     - Plain TCP port reachability (`tcp_connect`)
+     - DNS resolution checks (`dns_udp`)
+   - Cluster-wide `Probe` discovery:
+     - No label or namespace selector required
+     - Self-monitoring of the exporter's own metrics
+
 ### Component Architecture
 
 ```mermaid
@@ -50,6 +60,7 @@ flowchart TB
     classDef network fill:#bfdbfe,stroke:#3b82f6,color:#1e3a8a
     classDef log fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef storage fill:#fde68a,stroke:#d97706,color:#92400e
+    classDef probe fill:#ddd6fe,stroke:#7c3aed,color:#4c1d95
     classDef infra fill:#e5e7eb,stroke:#6b7280,color:#374151
     classDef legend fill:none,stroke:none,color:#6b7280
 
@@ -79,6 +90,13 @@ flowchart TB
         syslog-ng["Syslog-ng<br/>Aggregator"]:::log
     end
 
+    %% Probing
+    subgraph probing["Synthetic Probing"]
+        direction TB
+        probe-targets["Probed Endpoints<br/>(HTTP/TCP/DNS)"]:::probe
+        blackbox-exporter["Blackbox Exporter"]:::probe
+    end
+
     %% Storage
     subgraph storage["Storage Layer"]
         direction TB
@@ -103,12 +121,17 @@ flowchart TB
     rfc5424 --> syslog-ng
     syslog-ng --> loki
 
+    %% Probing Flow
+    blackbox-exporter --> probe-targets
+    blackbox-exporter --> prometheus
+
     %% Legend
     subgraph Legend[" "]
         direction LR
         event-l["Events"]:::event
         network-l["Network"]:::network
         log-l["Logs"]:::log
+        probe-l["Probing"]:::probe
         storage-l["Storage"]:::storage
         style Legend fill:none,stroke:none
     end
@@ -117,7 +140,8 @@ flowchart TB
 ### Component Details
 
 | Component | Primary Role | Integration Points |
-|-----------|-------------|-------------------|
+| ----------- | ------------- | ------------------- |
+| Blackbox Exporter | Endpoint probing | • HTTP/TCP/DNS `Probe` modules<br>• Cluster-wide `Probe` discovery<br>• TLS certificate expiry<br>• Self-monitoring ServiceMonitor |
 | Problem Detector | Node monitoring | • System log analysis<br>• Kernel monitoring<br>• PrometheusRules<br>• ServiceMonitor enabled |
 | SNMP Exporter | Network metrics | • Custom scrape configs<br>• Instance relabeling<br>• Anti-affinity rules<br>• Timeout handling |
 | Syslog-ng | Log aggregation | • Dual protocol support<br>• Batch processing<br>• Worker scaling<br>• Flow control |
@@ -127,21 +151,22 @@ flowchart TB
 
 1. Required Components
 
-   | Component | Purpose | Configuration |
-   |-----------|---------|---------------|
-   | Loki | Log storage | From observability-core |
+   | Component  | Purpose         | Configuration           |
+   |------------|-----------------|-------------------------|
+   | Loki       | Log storage     | From observability-core |
    | Prometheus | Metrics storage | From observability-core |
 
 2. Required Variables
 
-   | Variable | Purpose | Example |
-   |----------|---------|---------|
-   | domain_name | UniFi URL | example.com |
+   | Variable    | Purpose                               | Example     |
+   |-------------|---------------------------------------|-------------|
+   | dns_zone    | UniFi URL                             | example.com |
+   | domain_name | Blackbox `Probe` HTTP target hostname | example.com |
 
 3. Required Secrets
 
-   | Secret Name | Purpose | Required Keys |
-   |-------------|---------|---------------|
+   | Secret Name          | Purpose      | Required Keys                        |
+   |----------------------|--------------|--------------------------------------|
    | unpoller-credentials | UniFi access | unpoller_username, unpoller_password |
 
 ## Dependencies

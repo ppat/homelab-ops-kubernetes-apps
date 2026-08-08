@@ -1,0 +1,60 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-blackbox-exporter
+spec:
+  try:
+  - description: Assert deployment/prometheus-blackbox-exporter
+    assert:
+      bindings:
+      - name: name
+        value: prometheus-blackbox-exporter
+      - name: namespace
+        value: monitoring
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert helmrelease/prometheus-blackbox-exporter-release
+    assert:
+      bindings:
+      - name: name
+        value: prometheus-blackbox-exporter-release
+      - name: namespace
+        value: monitoring
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+  - description: Assert probe/grafana-http
+    assert:
+      resource:
+        apiVersion: monitoring.coreos.com/v1
+        kind: Probe
+        metadata:
+          name: grafana-http
+          namespace: monitoring
+        spec:
+          module: http_2xx
+  - description: Assert probe/coredns-resolution
+    assert:
+      resource:
+        apiVersion: monitoring.coreos.com/v1
+        kind: Probe
+        metadata:
+          name: coredns-resolution
+          namespace: monitoring
+        spec:
+          module: dns_udp
+
+  catch:
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: prometheus-blackbox-exporter-release
+      namespace: monitoring
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: prometheus-blackbox-exporter
+      namespace: monitoring
+  - podLogs:
+      selector: app.kubernetes.io/name=prometheus-blackbox-exporter
+      namespace: monitoring
+  - events:
+      namespace: monitoring
