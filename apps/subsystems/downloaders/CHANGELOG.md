@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.5.3...apps-downloaders-v0.5.4) (2026-08-08)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-downloaders:** update digest ghcr.io/linuxserver/bazarr (ab401a0 -&gt; e464484) ([#3534](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3534)) ([9ff1c3f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9ff1c3f246419fa23643ce3ca9463c71d7cf07ab))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/lidarr (60be9a1 -&gt; bfec0ec) ([#3537](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3537)) ([6d73322](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6d73322024f64b80c45bc522b436831272d74eb9))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/lidarr (f60ee67 -&gt; 60be9a1) ([#3435](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3435)) ([78532dc](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/78532dc440eceda80a9b4f6624edffe99d26a66e))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/radarr (e350565 -&gt; a45b5ab) ([#3512](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3512)) ([1e4338f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1e4338f4f506f1ea8b6e2ee89a44995fce049cd1))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sabnzbd (302be89 -&gt; 4307a4e) ([#3544](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3544)) ([9c3012b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9c3012b101ada0c0c124f3729a4f1df00f3712d8))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sabnzbd (f12cb77 -&gt; 302be89) ([#3465](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3465)) ([380b3d2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/380b3d2f314ede22cab49643c17cc81d35061fa8))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sonarr (24acea2 -&gt; 373159b) ([#3562](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3562)) ([d6df3af](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d6df3af564ba2a8080c50be12145cdcc5a8874b8))
+* **apps-downloaders:** update qmcgaw/gluetun (v3.41.1 -&gt; v3.41.3) ([#3489](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3489)) ([831acf4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/831acf471a2e2b867f4b5e96859b7a365cc27b79))
+
 ## [0.5.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.5.2...apps-downloaders-v0.5.3) (2026-07-24)
 
 
