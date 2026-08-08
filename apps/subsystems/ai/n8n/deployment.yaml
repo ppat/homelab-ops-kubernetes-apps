@@ -39,7 +39,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: n8n
-        image: docker.n8n.io/n8nio/n8n:2.31.6@sha256:3c07c723326dd72e46a6969181c66a75260b7a204b9b77ba1ece6d594489c684
+        image: docker.n8n.io/n8nio/n8n:2.34.4@sha256:f69bad7a699300702af665b9f13fc67455b93c9fb9174bca6c37f3d4a47b8583
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
