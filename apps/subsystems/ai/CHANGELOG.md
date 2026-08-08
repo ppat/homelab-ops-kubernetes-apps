@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.7.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.22...apps-ai-v0.7.0) (2026-08-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* **apps-ai:** update docker.io/grafana/mcp-grafana (0.17.2 -> 1.0.0) ([#3575](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3575))
+* **apps-ai:** update ghcr.io/homeassistant-ai/ha-mcp (7.14.2 -> 8.1.1) ([#3576](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3576))
+
+### ✨ Features
+
+* **apps-ai:** update docker.io/grafana/mcp-grafana (0.17.2 -&gt; 1.0.0) ([#3575](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3575)) ([2352f82](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2352f820232fc531613c833703f473861cda892b))
+* **apps-ai:** update docker.n8n.io/n8nio/n8n (2.31.6 -&gt; 2.34.4) ([#3572](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3572)) ([44c3643](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/44c3643eb0bd59e0d946cd4090584ab95413ee08))
+* **apps-ai:** update ghcr.io/github/github-mcp-server (v1.7.0 -&gt; v1.8.0) ([#3573](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3573)) ([07f7bc1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/07f7bc10bb83890b2bc57966c274b954ea6a86dd))
+* **apps-ai:** update ghcr.io/homeassistant-ai/ha-mcp (7.14.2 -&gt; 8.1.1) ([#3576](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3576)) ([46300a5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/46300a5b0941eaf405d88ff1cfe63b27bbabcce1))
+* **apps-ai:** update ghcr.io/sirkirby/unifi-network-mcp (0.24.1 -&gt; 0.25.2) ([#3574](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3574)) ([fcd3ed2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fcd3ed28c631fcba0cfb5c68128fcc7a35561b14))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** update ghcr.io/containers/kubernetes-mcp-server (v0.0.65 -&gt; v0.0.66) ([#3567](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3567)) ([ca5831d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ca5831dae45c49203165a694e4cef1cf43494e65))
+* **apps-ai:** update ghcr.io/sirkirby/unifi-protect-mcp (0.7.2 -&gt; 0.7.4) ([#3568](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3568)) ([5091459](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5091459b769b231ef465a3156cf27e0c3ba95d7b))
+* **apps-ai:** update mcr.microsoft.com/playwright/mcp (v0.0.78 -&gt; v0.0.79) ([#3569](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3569)) ([5a307f0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5a307f0f61b174f5e1eefd2b1f8b84e87e01fc36))
+
 ## [0.6.22](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.21...apps-ai-v0.6.22) (2026-08-04)
 
 
