@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.25.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.24.6...infra-observability-core-v0.25.0) (2026-08-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-observability-core:** consumers must set the grafana_storage_class post-build variable. It has deliberately no default, since no StorageClass name is portable across clusters. On a cluster with no default StorageClass - which is the case for homelab - leaving it unset leaves the claim Pending and stalls the Grafana rollout, so it must be added to the Flux Kustomization's postBuild.substitute in the same commit as the ref.tag bump. grafana_storage_size is optional and defaults to 2Gi.
+
+### ✨ Features
+
+* **infra-observability-core:** persist Grafana state on a PVC ([#3559](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3559)) ([e97e669](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e97e6690c7dd2afab18636937b4fa8252dc60d61))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** update grafana (12.10.3 -&gt; 12.10.4) ([#3563](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3563)) ([2ec5073](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2ec50731ec8f3dca6cedcd7257335805f46432fc))
+
 ## [0.24.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.24.5...infra-observability-core-v0.24.6) (2026-08-07)
 
 
