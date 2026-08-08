@@ -20,8 +20,6 @@ spec:
       prometheus_storage_class: standard
       prometheus_storage_size: 1Gi
       prometheus_volume_name: deleted-by-kustomize-patch
-      grafana_storage_class: standard
-      grafana_storage_size: 1Gi
       loki_storage_class: standard
       loki_singlebinary_storage_size: 1Gi
       loki_results_cache_memory: "512"

@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
 - ../../../../infrastructure/bootstrap/crds/
 - namespaces.yaml
+- pvc/
 - minio/
 - loki/
 - promtail/

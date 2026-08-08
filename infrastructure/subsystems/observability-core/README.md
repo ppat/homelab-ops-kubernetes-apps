@@ -142,20 +142,24 @@ flowchart TB
 
 ## Prerequisites
 
-1. Required Secrets
+1. Persistent Storage
+
+   | PVC Name | Purpose | Access Mode |
+   | -------- | ------- | ----------- |
+   | grafana-data | Grafana's own state: service accounts and their tokens, users, and dashboard version history | RWO |
+
+2. Required Secrets
 
    | Secret Name               | Purpose              | Required Keys                                                  |
    |---------------------------|----------------------|----------------------------------------------------------------|
    | grafana-admin-credentials | Grafana admin access | username, password                                             |
    | loki-s3-credentials       | S3 storage access    | loki_s3_endpoint, loki_s3_accesskeyid, loki_s3_secretaccesskey |
 
-2. Required Variables
+3. Required Variables
 
    | Variable | Purpose | Required By |
    | ---------- | --------- | ------------- |
    | domain_name | Domain for component ingress | All components |
-   | grafana_storage_class | Storage class for Grafana state | Grafana |
-   | grafana_storage_size | PVC size for Grafana state | Grafana |
    | prometheus_retention_period | Metric retention time | Prometheus |
    | prometheus_retention_size | Metric storage limit | Prometheus |
    | prometheus_storage_size | PVC size for metrics | Prometheus |
@@ -167,7 +171,7 @@ flowchart TB
    | loki_results_cache_memory | Results cache size | Loki |
    | loki_chunks_cache_memory | Chunks cache size | Loki |
 
-3. Stream-Specific Log Retention
+4. Stream-Specific Log Retention
    - Configure retention per log stream using ConfigMap:
 
      ```yaml
