@@ -238,7 +238,8 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
 
    | Variable | Purpose | Used By |
    | ---------- | --------- | --------- |
-   | domain_name | External access URL (openwebui.${domain_name}) and UniFi controller host (unifi.nodes.${domain_name}) | OpenWebUI, mcp-unifi-network, mcp-unifi-protect |
+   | domain_name | External access URL (openwebui.${domain_name}) | OpenWebUI |
+   | dns_zone | UniFi controller host (unifi.nodes.${dns_zone}) | mcp-unifi-network, mcp-unifi-protect |
    | git_committer_remote_origin_url | SSH URL of the GitHub remote the committer pushes derived history to | git-committer |
    | grafana_admin_username | Grafana admin username mcp-grafana's ESO generator authenticates with to self-provision its service-account token. Optional, defaults to `admin` | mcp-grafana |
    | db_name | PostgreSQL cluster name prefix | LiteLLM |

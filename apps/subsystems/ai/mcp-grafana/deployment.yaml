@@ -49,6 +49,10 @@ spec:
         # in the HelmRelease).
         - name: GRAFANA_URL
           value: http://grafana.monitoring.svc.cluster.local
+        # Single-org install (no multi-org config here or in observability-core), so 1 is
+        # the only org the generator's token can belong to.
+        - name: GRAFANA_ORG_ID
+          value: "1"
         # _FILE (not the inline var) because the ESO Grafana generator (secrets.yaml)
         # mints a new SA token on every refresh; upstream mcp-grafana re-reads this file
         # per request (v0.16.0+), so rotation needs no pod restart. It also TrimSpace's
