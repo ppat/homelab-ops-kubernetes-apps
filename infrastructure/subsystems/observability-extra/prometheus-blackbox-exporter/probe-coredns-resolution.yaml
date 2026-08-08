@@ -10,7 +10,7 @@ spec:
   jobName: blackbox
   module: dns_udp
   prober:
-    url: prometheus-blackbox-exporter.monitoring:9115
+    url: prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115
   targets:
     staticConfig:
       static:
