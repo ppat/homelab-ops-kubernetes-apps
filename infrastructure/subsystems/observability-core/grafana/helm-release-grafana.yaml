@@ -81,22 +81,15 @@ spec:
     # and are not at risk; everything above is, and was lost on every restart before this.
     persistence:
       enabled: true
-      # sqlite must not be opened by two pods at once, so this stays single-writer. Pinned
-      # rather than left to the chart default because deploymentStrategy below depends on it.
-      accessModes:
-      - ReadWriteOnce
-      size: ${grafana_storage_size:=2Gi}
-      # Deliberately has no `:=` default: no StorageClass name is portable across clusters.
-      # A consumer that sets nothing renders this empty, the chart then omits the field, and
-      # the claim falls to the cluster's default StorageClass - which is not a safe landing
-      # on a cluster that has no default (none of ours do), where the claim instead stays
-      # Pending and the rollout stalls. Supply it alongside the tag bump, not after.
-      storageClassName: ${grafana_storage_class}
+      # Claimed, not created. A chart-owned PVC is deleted with the HelmRelease, and this
+      # volume holds the only copy of Grafana's service accounts, tokens and dashboard
+      # history. The claim is pre-provisioned per cluster and prune-disabled there.
+      existingClaim: grafana-data
 
-    # Recreate is load-bearing, not stylistic. The chart defaults to RollingUpdate, which
-    # deadlocks against the ReadWriteOnce claim above: the replacement pod cannot attach the
-    # volume until the outgoing pod releases it, and the outgoing pod is not torn down until
-    # the replacement is ready. Every upgrade would hang. Do not "restore" the chart default.
+    # Recreate is load-bearing, not stylistic. The claim is ReadWriteOnce, and the chart's
+    # RollingUpdate default deadlocks against it: the replacement pod cannot attach the volume
+    # until the outgoing pod releases it, and the outgoing pod is not torn down until the
+    # replacement is ready. Every upgrade would hang. Do not "restore" the chart default.
     deploymentStrategy:
       type: Recreate
 

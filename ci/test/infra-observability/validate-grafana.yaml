@@ -21,11 +21,11 @@ spec:
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/deployment-ready.yaml
-  - description: Assert pvc/grafana
+  - description: Assert pvc/grafana-data
     assert:
       bindings:
       - name: name
-        value: grafana
+        value: grafana-data
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/pvc-bound.yaml
@@ -47,7 +47,7 @@ spec:
             type: Recreate
           template:
             spec:
-              (volumes[?name == 'storage'] | [0].persistentVolumeClaim.claimName): grafana
+              (volumes[?name == 'storage'] | [0].persistentVolumeClaim.claimName): grafana-data
               (containers[?name == 'grafana'] | [0].volumeMounts[?name == 'storage'] | [0].mountPath): /var/lib/grafana
   - description: Assert helmrelease/grafana-release
     assert:
