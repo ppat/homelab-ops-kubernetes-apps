@@ -21,6 +21,34 @@ spec:
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert pvc/grafana
+    assert:
+      bindings:
+      - name: name
+        value: grafana
+      - name: namespace
+        value: monitoring
+      file: ../chainsaw/assertions/pvc-bound.yaml
+  # A bound PVC on its own proves nothing about durability - it only proves a claim
+  # exists. What makes Grafana's state survive a restart is that the claim is mounted
+  # at the sqlite db's location and that the rollout releases the ReadWriteOnce volume
+  # before re-attaching it. Assert both, or the suite goes green on a Grafana that
+  # still writes its state into the pod's ephemeral filesystem.
+  - description: Assert deployment/grafana mounts the claim and rolls out via Recreate
+    assert:
+      resource:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: grafana
+          namespace: monitoring
+        spec:
+          strategy:
+            type: Recreate
+          template:
+            spec:
+              (volumes[?name == 'storage'] | [0].persistentVolumeClaim.claimName): grafana
+              (containers[?name == 'grafana'] | [0].volumeMounts[?name == 'storage'] | [0].mountPath): /var/lib/grafana
   - description: Assert helmrelease/grafana-release
     assert:
       bindings:
@@ -39,6 +67,11 @@ spec:
   - describe:
       apiVersion: apps/v1
       kind: Deployment
+      name: grafana
+      namespace: monitoring
+  - describe:
+      apiVersion: v1
+      kind: PersistentVolumeClaim
       name: grafana
       namespace: monitoring
   - events:
