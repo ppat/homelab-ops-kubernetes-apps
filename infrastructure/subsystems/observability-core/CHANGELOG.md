@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.26.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.25.0...infra-observability-core-v0.26.0) (2026-08-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-observability-core:** grafana_storage_class and grafana_storage_size are removed. Consumers must instead pre-provision a ReadWriteOnce PersistentVolumeClaim named grafana-data in the Grafana namespace. Anyone who already rolled out v0.25.0 has a chart-owned PVC named grafana; its contents must be migrated to grafana-data before upgrading, or Grafana starts on an empty volume.
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** claim Grafana's PVC instead of creating it ([#3578](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3578)) ([8d072da](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8d072da7b54ed660beb9777c847db50b601f7595))
+
 ## [0.25.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.24.6...infra-observability-core-v0.25.0) (2026-08-08)
 
 
