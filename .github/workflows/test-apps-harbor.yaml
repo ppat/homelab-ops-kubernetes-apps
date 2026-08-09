@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   test-apps-harbor:
-    uses: ppat/github-workflows/.github/workflows/chainsaw-test.yaml@893637588e91e7e531e8d54f07f3ffa468b7b253 # v4.3.0
+    uses: ppat/github-workflows/.github/workflows/chainsaw-test.yaml@1e8ca1b00b6e69bdf5aef8b33111c594c051ff65 # v4.4.0
     with:
       git_ref: ${{ github.head_ref || github.ref }}
       test_path: ./ci/test/apps-harbor
