@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.7.0...apps-ai-v0.7.1) (2026-08-10)
+
+
+### ✨ Features
+
+* **apps-ai:** add code-server to openclaw ([#3585](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3585)) ([1a827dd](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1a827ddc85e8e5935e5e9b9664a89c88c475091f))
+
 ## [0.7.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.6.22...apps-ai-v0.7.0) (2026-08-08)
 
 
