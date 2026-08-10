@@ -4,7 +4,7 @@ Self-hosted AI platform providing a web interface for interacting with AI models
 
 ## Quick Links
 
-<a href="https://www.litellm.ai" target="_blank"><img src="../../../.static/images/logos/litellm.svg" width="32" height="32" alt="LiteLLM"></a> <a href="https://n8n.io" target="_blank"><img src="../../../.static/images/logos/n8n.svg" width="32" height="32" alt="n8n"></a> <a href="https://obsidian.md" target="_blank"><img src="../../../.static/images/logos/obsidian.svg" width="32" height="32" alt="Obsidian"></a> <a href="https://github.com/openclaw/openclaw" target="_blank"><img src="../../../.static/images/logos/openclaw.svg" width="32" height="32" alt="OpenClaw"></a> <a href="https://github.com/open-webui/open-webui" target="_blank"><img src="../../../.static/images/logos/open-webui.png" width="32" height="32" alt="OpenWebUI"></a>
+<a href="https://github.com/coder/code-server" target="_blank"><img src="../../../.static/images/logos/vscode.svg" width="32" height="32" alt="Code Server"></a> <a href="https://www.litellm.ai" target="_blank"><img src="../../../.static/images/logos/litellm.svg" width="32" height="32" alt="LiteLLM"></a> <a href="https://n8n.io" target="_blank"><img src="../../../.static/images/logos/n8n.svg" width="32" height="32" alt="n8n"></a> <a href="https://obsidian.md" target="_blank"><img src="../../../.static/images/logos/obsidian.svg" width="32" height="32" alt="Obsidian"></a> <a href="https://github.com/openclaw/openclaw" target="_blank"><img src="../../../.static/images/logos/openclaw.svg" width="32" height="32" alt="OpenClaw"></a> <a href="https://github.com/open-webui/open-webui" target="_blank"><img src="../../../.static/images/logos/open-webui.png" width="32" height="32" alt="OpenWebUI"></a>
 
 ## Overview
 
@@ -76,6 +76,7 @@ flowchart TB
         unifiprotect[UniFi Protect MCP Server]:::core
         n8n[n8n Automation<br/>ns: n8n]:::ui
         openclaw[OpenClaw Gateway<br/>ns: openclaw]:::ui
+        codeserver[Code Server<br/>ns: openclaw]:::core
         subgraph vault[Knowledge Vault — ns: obsidian-vault]
             mcpagent[Obsidian MCP Server<br/>agent-scoped]:::core
             mcpingestor[Obsidian MCP Server<br/>ingestor-scoped]:::core
@@ -129,6 +130,7 @@ flowchart TB
     litellm --> litellm_cache
     n8n --> n8n_db
     openclaw --> openclaw_pvc
+    codeserver --> openclaw_pvc
     obsidian --> vault_pvc
     user -.->|port-forward, GUI only| obsidian
 
@@ -163,6 +165,7 @@ flowchart TB
 | Obsidian | Core | Knowledge Vault Engine | • Headless Obsidian with the Local REST API plugin baked in and auto-trusted (own namespace, `obsidian-vault`)<br>• The only workload mounting vault content read-write, and the only process that ever mutates a markdown file<br>• Non-root, read-only root filesystem, `Recreate` rollout so two instances never hold the vault at once<br>• ClusterIP only, no ingress; readiness is the REST API answering, which proves the vault is open, trusted, and the plugin loaded<br>• GUI reachable on demand by `kubectl port-forward` against the same running process | • Reached only by the two Obsidian MCP servers, enforced by NetworkPolicy<br>• Mounts the externally-provisioned `vault-data` PVC, holding only the vault's markdown content — Obsidian's own app state (vault registration, plugin-trust flag) lives on an ephemeral emptyDir, not this claim<br>• Bearer token for its REST API is pinned from the secret store so the MCP servers can be wired declaratively |
 | git-committer | Core | Vault Git Committer | • Scheduled `CronJob`, not a long-lived Deployment — takes a commit and exits, so it holds a mount on `vault-data` only while a commit is actually being taken rather than adding a third permanent attachment<br>• Mounts `vault-data` read-only and writes only to its own git-dir PVC, never vault content<br>• Pushes the same derived history to a GitHub remote and a NAS bare-repo mirror over SSH, with host-key verification pinned rather than disabled<br>• `concurrencyPolicy: Forbid`, so an in-flight `git push` is never killed mid-run by the next scheduled tick | • Reads the `vault-data` PVC read-only; Obsidian is the only other mounter, and its mount is read-write — the two MCP servers never touch this PVC, they reach Obsidian over its REST API<br>• Own `vault-git-cache` PVC for git's own metadata, kept off the vault volume entirely<br>• SSH deploy key (`git-committer-secrets`) authorized as a write key on the GitHub remote and in the NAS's `authorized_keys` |
 | OpenClaw | Core | Conversational Gateway | • WhatsApp-reachable conversational front door (own namespace)<br>• Hardened: read-only MCP, no exec/browser/elevated tools, pairing-only DMs<br>• Inbound hooks for n8n/Alertmanager relays, daily cron digest | • Calls the LiteLLM gateway for model access (cheap model set)<br>• Read-only MCP via LiteLLM `/mcp` and direct Home Assistant MCP (read-only toolFilter)<br>• Triggers n8n workflows and relays their output back to WhatsApp |
+| Code Server | Core | OpenClaw Config/State Editor | • Real-time editing of OpenClaw's config and state<br>• Non-root, read-only root filesystem<br>• Own dedicated Ingress, separate from OpenClaw's gateway Ingress | • Direct mount of `/etc/openclaw` (OpenClaw's config dir) and `~/.openclaw` (OpenClaw's state, on the `openclaw-data` PVC)<br>• Secure internal-only access |
 
 ## Prerequisites
 
@@ -180,7 +183,7 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | vault-git-cache | The git committer's own repository metadata (its `--git-dir`) — never vault content, and never mounted by any other workload | RWO |
    | openwebui | User settings and conversation history | RWX |
    | n8n-data | n8n configuration, workflow static data | RWO |
-   | openclaw-data | OpenClaw config, workspace, memory SQLite, and WhatsApp Baileys session | RWO |
+   | openclaw-data | OpenClaw config, workspace, memory SQLite, WhatsApp Baileys session, and Code Server's own settings | RWO |
 
    All five PVCs are provisioned externally (by the cluster), not defined by this module. `vault-data` is RWX because it has two read-only consumers beyond Obsidian itself: the git committer delivered by this phase, and a still-pending maintenance worker from a later phase, both of which must mount it without being co-scheduled onto the Obsidian pod's node. `vault-git-cache` is RWO — `concurrencyPolicy: Forbid` on the git committer's CronJob means at most one pod ever holds it at a time, and nothing else in this module mounts it.
 

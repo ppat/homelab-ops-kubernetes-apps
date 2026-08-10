@@ -15,3 +15,7 @@ spec:
     port: 18789
     targetPort: gateway
     protocol: TCP
+  - name: code-server
+    port: 8080
+    targetPort: code-server
+    protocol: TCP

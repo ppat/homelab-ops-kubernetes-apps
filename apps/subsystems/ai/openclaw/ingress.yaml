@@ -22,3 +22,27 @@ spec:
             name: openclaw
             port:
               number: 18789
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: openclaw-edit
+  namespace: openclaw
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: openclaw-edit.${domain_name}
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  # setting tls to [], so that default certficate will be assigned
+  tls: []
+  rules:
+  - host: openclaw-edit.${domain_name}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: openclaw
+            port:
+              number: 8080

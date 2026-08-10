@@ -139,6 +139,53 @@ spec:
           mountPath: /home/node/.openclaw
         - name: tmp
           mountPath: /tmp
+      - name: code-server
+        args: [
+          "--auth", "none",
+          "--user-data-dir", "/home/coder/.vscode",
+          "--extensions-dir", "/home/coder/.vscode",
+          "--port", "8080",
+          "--disable-telemetry",
+          "/etc/openclaw"
+        ]
+        image: ghcr.io/coder/code-server:4.128.0@sha256:bd4a3a022ff016954bf9ae6ea0bce6c7eef96a69da4d2fe34552638f32d4820c
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+        ports:
+        - name: code-server
+          containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+        volumeMounts:
+        # code-server's own $HOME (extensions, settings) -- same subPath-on-the-app's-own-PVC
+        # convention as home-assistant's code-server sidecar.
+        - mountPath: /home/coder
+          name: openclaw-data
+          subPath: .coder
+        - mountPath: /home/node/.openclaw
+          name: openclaw-data
+        - mountPath: /etc/openclaw
+          name: config-dir
       volumes:
       - name: config-dir
         emptyDir: {}
