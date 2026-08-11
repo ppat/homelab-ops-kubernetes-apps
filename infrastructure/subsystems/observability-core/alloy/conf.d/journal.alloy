@@ -1,0 +1,43 @@
+// systemd journal collection.
+// Deliberately a standalone file: a Talos cluster has no systemd journal and
+// must be able to drop exactly this file with nothing else changing.
+
+loki.relabel "journal" {
+	forward_to = []
+
+	rule {
+		action        = "replace"
+		source_labels = ["__journal__systemd_unit"]
+		target_label  = "systemd_unit"
+	}
+
+	rule {
+		action        = "replace"
+		source_labels = ["__journal_syslog_identifier"]
+		target_label  = "syslog_identifier"
+	}
+
+	rule {
+		action        = "replace"
+		source_labels = ["__journal_priority_keyword"]
+		target_label  = "severity"
+	}
+
+	// `loki.source.journal` sets `job` to its own component ID. Whether the
+	// `labels` argument overrides that is ambiguous between source and docs, so
+	// set it here: relabel rules run last and unconditionally win.
+	rule {
+		action       = "replace"
+		replacement  = "systemd-journal"
+		target_label = "job"
+	}
+}
+
+loki.source.journal "journal" {
+	max_age       = "12h"
+	relabel_rules = loki.relabel.journal.rules
+	forward_to    = [loki.write.default.receiver]
+
+	// `path` deliberately unset: one component then reads both
+	// /var/log/journal and /run/log/journal, replacing promtail's two jobs.
+}

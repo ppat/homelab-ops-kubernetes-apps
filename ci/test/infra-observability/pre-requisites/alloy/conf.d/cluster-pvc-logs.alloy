@@ -1,0 +1,75 @@
+// Stand-in for a cluster-injected fragment. NOT module content.
+//
+// The clusters repo owns three log jobs this module deliberately does not (pihole, plex
+// and traefik, all tailing another pod's CSI-mounted PVC) and injects them as extra keys
+// in the alloy-config ConfigMap. This file is the CI equivalent of one of those, kept
+// here so it can be read and `alloy validate`d on its own; it reaches the ConfigMap via
+// the spec.patches entry in ../../infra-observability-core.yaml, which is byte-for-byte
+// the mechanism a cluster uses. scripts/check-alloy-collector.sh diffs this file against
+// the key that actually landed in the ConfigMap, so the two cannot drift apart quietly.
+//
+// It exercises every property the seam depends on:
+//   - it declares components in a file the module does not own,
+//   - with the mandatory `cluster_` name prefix,
+//   - referencing discovery.kubernetes.pods (defined in logs.alloy) and
+//     loki.write.default (defined in write.alloy), i.e. resolution in both directions
+//     across files that arrive from different sources.
+
+discovery.relabel "cluster_pvc_logs" {
+	targets = discovery.kubernetes.pods.targets
+
+	rule {
+		action        = "keep"
+		source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+		regex         = "loki-canary"
+	}
+
+	rule {
+		action        = "replace"
+		source_labels = ["__meta_kubernetes_pod_uid"]
+		replacement   = "/var/lib/kubelet/pods/$1/volumes/kubernetes.io~csi/*/mount/*.log"
+		target_label  = "__path__"
+	}
+
+	rule {
+		action        = "replace"
+		source_labels = ["__meta_kubernetes_namespace"]
+		target_label  = "namespace"
+	}
+
+	rule {
+		action        = "replace"
+		source_labels = ["__meta_kubernetes_pod_name"]
+		target_label  = "pod"
+	}
+
+	rule {
+		action        = "replace"
+		source_labels = ["__meta_kubernetes_pod_container_name"]
+		target_label  = "container"
+	}
+}
+
+loki.source.file "cluster_pvc_logs" {
+	targets    = discovery.relabel.cluster_pvc_logs.output
+	forward_to = [loki.process.cluster_pvc_logs.receiver]
+
+	file_match {
+		enabled = true
+	}
+}
+
+loki.process "cluster_pvc_logs" {
+	forward_to = [loki.write.default.receiver]
+
+	stage.regex {
+		source     = "filename"
+		expression = ".*/kubernetes.io~csi/[^/]+/mount/(?P<clean_filename>.*)"
+	}
+
+	stage.labels {
+		values = {
+			filename = "clean_filename",
+		}
+	}
+}

@@ -1,0 +1,139 @@
+// Pod logs: discovery -> relabel -> file tail -> process -> write.
+// 1:1 reproduction of the promtail `kubernetes-pods` scrape job.
+
+discovery.kubernetes "pods" {
+	role = "pod"
+}
+
+discovery.relabel "pod_logs" {
+	targets = discovery.kubernetes.pods.targets
+
+	// Strip the ReplicaSet/controller-revision hash suffix so the controller
+	// name can act as an `app` fallback.
+	rule {
+		action        = "replace"
+		source_labels = ["__meta_kubernetes_pod_controller_name"]
+		regex         = "([0-9a-z-.]+?)(-[0-9a-f]{8,10})?"
+		target_label  = "__tmp_controller_name"
+	}
+
+	rule {
+		action = "replace"
+		source_labels = [
+			"__meta_kubernetes_pod_label_app_kubernetes_io_name",
+			"__meta_kubernetes_pod_label_app",
+			"__tmp_controller_name",
+			"__meta_kubernetes_pod_name",
+		]
+		regex        = "^;*([^;]+)(;.*)?$"
+		target_label = "app"
+	}
+
+	rule {
+		action = "replace"
+		source_labels = [
+			"__meta_kubernetes_pod_label_app_kubernetes_io_instance",
+			"__meta_kubernetes_pod_label_instance",
+		]
+		regex        = "^;*([^;]+)(;.*)?$"
+		target_label = "instance"
+	}
+
+	rule {
+		action = "replace"
+		source_labels = [
+			"__meta_kubernetes_pod_label_app_kubernetes_io_component",
+			"__meta_kubernetes_pod_label_component",
+		]
+		regex        = "^;*([^;]+)(;.*)?$"
+		target_label = "component"
+	}
+
+	rule {
+		action        = "replace"
+		source_labels = ["__meta_kubernetes_pod_node_name"]
+		target_label  = "node_name"
+	}
+
+	rule {
+		action        = "replace"
+		source_labels = ["__meta_kubernetes_namespace"]
+		target_label  = "namespace"
+	}
+
+	rule {
+		action        = "replace"
+		source_labels = ["namespace", "app"]
+		separator     = "/"
+		replacement   = "$1"
+		target_label  = "job"
+	}
+
+	rule {
+		action        = "replace"
+		source_labels = ["__meta_kubernetes_pod_name"]
+		target_label  = "pod"
+	}
+
+	rule {
+		action        = "replace"
+		source_labels = ["__meta_kubernetes_pod_container_name"]
+		target_label  = "container"
+	}
+
+	rule {
+		action        = "replace"
+		source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+		separator     = "/"
+		replacement   = "/var/log/pods/*$1/*.log"
+		target_label  = "__path__"
+	}
+
+	// Static / mirror pods: the kubelet writes their directory using the
+	// `kubernetes.io/config.hash` annotation in place of the pod UID, so the
+	// UID-derived path above never matches. Dropping this rule silently loses
+	// all static-pod logs while the collector stays green.
+	rule {
+		action = "replace"
+		source_labels = [
+			"__meta_kubernetes_pod_annotationpresent_kubernetes_io_config_hash",
+			"__meta_kubernetes_pod_annotation_kubernetes_io_config_hash",
+			"__meta_kubernetes_pod_container_name",
+		]
+		separator    = "/"
+		regex        = "true/(.*)"
+		replacement  = "/var/log/pods/*$1/*.log"
+		target_label = "__path__"
+	}
+}
+
+loki.source.file "pod_logs" {
+	targets    = discovery.relabel.pod_logs.output
+	forward_to = [loki.process.pod_logs.receiver]
+
+	// `loki.source.file` os.Stat()s `__path__` literally; without this block the
+	// globs emitted by the relabel rules above match nothing and zero pod logs
+	// are collected, with no error anywhere.
+	file_match {
+		enabled = true
+	}
+}
+
+loki.process "pod_logs" {
+	forward_to = [loki.write.default.receiver]
+
+	stage.cri {}
+
+	// `loki.process` seeds the extracted map from the entry labels, so
+	// `source = "filename"` reads the label set by loki.source.file.
+	stage.regex {
+		source     = "filename"
+		expression = "/var/log/pods/[^/]+/(?P<stripped_filename>.*)"
+	}
+
+	stage.labels {
+		values = {
+			filename = "stripped_filename",
+		}
+	}
+}

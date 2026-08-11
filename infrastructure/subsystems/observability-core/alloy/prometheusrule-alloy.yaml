@@ -1,0 +1,84 @@
+---
+# ------------------------------------------------------------------------------------
+# Standalone because the alloy chart, unlike the promtail chart, has no
+# `serviceMonitor.prometheusRule` key to inline these under.
+#
+# There is deliberately no "config failed to load" alert: alloy v1.18.1 has no
+# config-load-success metric - reload errors are surfaced as component diagnostics and
+# never counted. A fragment unparseable enough to abort startup is caught by the
+# cluster-wide KubePodCrashLooping rule instead; one that only breaks a single component
+# is caught by AlloyComponentsUnhealthy below.
+# ------------------------------------------------------------------------------------
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    release: kube-prometheus-stack
+  name: alloy-rules
+  namespace: logging
+spec:
+  groups:
+  - name: alloy-logs
+    rules:
+    # The failure mode this migration can actually produce: a collector that is green,
+    # exits 0 and logs nothing, but has loaded no components at all - in which case
+    # loki.write does not exist and its metrics simply stop being exported.
+    - alert: AlloyLogShippingMetricsAbsent
+      annotations:
+        # yamllint disable-line rule:line-length
+        description: No alloy instance is exporting loki_write_sent_entries_total. Either every collector is down, or the loaded configuration contains no loki.write component.
+        summary: Alloy log shipping metrics have disappeared.
+      expr: |
+        absent(loki_write_sent_entries_total)
+      for: 15m
+      labels:
+        severity: critical
+    # loki.write has no WAL: entries that exhaust their retries are gone permanently.
+    - alert: AlloyLogEntriesDropped
+      annotations:
+        # yamllint disable-line rule:line-length
+        description: 'Alloy is dropping log entries in {{ $labels.namespace }} (reason: {{ $labels.reason }}) at {{ $value }} entries/s. These entries are lost - loki.write has no write-ahead log.'
+        summary: Alloy is permanently dropping log entries.
+      expr: |
+        sum by (namespace, reason) (
+        rate(loki_write_dropped_entries_total{reason!~"rate_limited|queue_is_full"}[5m])
+        ) > 0
+      for: 10m
+      labels:
+        severity: critical
+    # Backpressure: usually self-resolving once Loki catches up, so it is a warning and
+    # waits longer before firing.
+    - alert: AlloyLogEntriesThrottled
+      annotations:
+        # yamllint disable-line rule:line-length
+        description: 'Alloy is dropping log entries in {{ $labels.namespace }} due to backpressure (reason: {{ $labels.reason }}) at {{ $value }} entries/s. Check Loki ingestion limits and capacity.'
+        summary: Alloy is dropping log entries due to backpressure.
+      expr: |
+        sum by (namespace, reason) (
+        rate(loki_write_dropped_entries_total{reason=~"rate_limited|queue_is_full"}[5m])
+        ) > 0
+      for: 30m
+      labels:
+        severity: warning
+    # Liveness by output rather than by process: the collector can be healthy and still
+    # be shipping nothing (a config whose components never matched any target).
+    - alert: AlloyNoLogEntriesShipped
+      annotations:
+        # yamllint disable-line rule:line-length
+        description: Alloy in {{ $labels.namespace }} has shipped no log entries for 15 minutes while its metrics are still being scraped.
+        summary: Alloy is running but shipping no logs.
+      expr: |
+        sum by (namespace) (rate(loki_write_sent_entries_total[15m])) == 0
+      for: 15m
+      labels:
+        severity: critical
+    - alert: AlloyComponentsUnhealthy
+      annotations:
+        # yamllint disable-line rule:line-length
+        description: '{{ $value }} alloy component(s) on {{ $labels.instance }} are in an unhealthy state. Inspect the component health page at /-/ui on the pod.'
+        summary: Alloy has unhealthy components.
+      expr: |
+        alloy_component_controller_running_components{health_type="unhealthy"} > 0
+      for: 15m
+      labels:
+        severity: warning

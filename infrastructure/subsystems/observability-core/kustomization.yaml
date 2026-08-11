@@ -11,6 +11,7 @@ resources:
 - k3s-monitoring/
 - loki/
 - promtail/
+- alloy/
 - grafana/
 - goldilocks/
 

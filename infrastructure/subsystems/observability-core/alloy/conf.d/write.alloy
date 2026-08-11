@@ -1,0 +1,22 @@
+// The single write path. Kept in its own file so it is the stable anchor that
+// cluster-injected fragments forward into: logs.alloy and journal.alloy are
+// both individually droppable (Talos has no journal), this file is not.
+
+loki.write "default" {
+	endpoint {
+		// Trailing dot is deliberate and currently working in production:
+		// it makes the name fully qualified and skips ndots search-domain
+		// expansion. Do not "clean it up".
+		url = "http://loki.logging.svc.cluster.local.:3100/loki/api/v1/push"
+	}
+
+	external_labels = {
+		// The node name, injected by the chart from spec.nodeName.
+		// NOT constants.hostname - that is os.Hostname(), i.e. the pod name.
+		host = sys.env("K8S_NODE_NAME"),
+
+		// Temporary: distinguishes Alloy's streams from promtail's during the
+		// parallel run. Removed at cutover.
+		collector = "alloy",
+	}
+}

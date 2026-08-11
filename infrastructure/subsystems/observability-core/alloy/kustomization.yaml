@@ -1,0 +1,27 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- helm-release-alloy.yaml
+- prometheusrule-alloy.yaml
+
+configMapGenerator:
+- name: alloy-config
+  namespace: logging
+  files:
+  - conf.d/journal.alloy
+  - conf.d/logs.alloy
+  - conf.d/write.alloy
+  options:
+    # Relabel `replacement` values contain `$1`, which post-build substitution would
+    # expand to the empty string.
+    annotations:
+      kustomize.toolkit.fluxcd.io/substitute: disabled
+    # A stable name is what lets a cluster add its own *.alloy keys to this ConfigMap
+    # (see README, "Extending the collector"); a hash suffix would move the target on
+    # every edit. Nothing is lost by disabling it: the usual benefit of the hash is
+    # rolling the workload on a config change, and the chart cannot do that here anyway
+    # (`checksum/config` is only emitted when the chart creates the ConfigMap itself) -
+    # the config-reloader sidecar handles propagation instead.
+    disableNameSuffixHash: true

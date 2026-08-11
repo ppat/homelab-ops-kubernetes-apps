@@ -13,9 +13,19 @@ metadata:
 # is deliberately no default: the empty value is a real, meaningful choice (promtail),
 # so defaulting to it would make a missing binding indistinguishable from it.
 #
-#   collector_label  Value of the temporary `collector` external label that isolates this
-#                    collector's streams. "alloy" for Alloy; "" for promtail, which sets
-#                    no such label and is matched by LogQL's empty-string matcher.
+#   collector_label       Value of the temporary `collector` external label that isolates
+#                         this collector's streams. "alloy" for Alloy; "" for promtail,
+#                         which sets no such label and is matched by LogQL's empty-string
+#                         matcher.
+#   collector_name        The collector's `app.kubernetes.io/name`, which is also its
+#                         DaemonSet name. Used to prove it is actually running on the node
+#                         the fixture landed on - the one way this assertion could pass
+#                         while collecting nothing - and to scope the diagnostics below to
+#                         the collector that failed.
+#   collector_config_map  Name of the ConfigMap holding that collector's rendered config,
+#                         dumped on failure. The two charts do not agree on it (`promtail`
+#                         vs `alloy-config`) and Alloy's is kustomize-generated with no
+#                         app.kubernetes.io labels, so it cannot be found by selector.
 spec:
   try:
   - description: Assert the pod-log label contract
@@ -23,22 +33,31 @@ spec:
       env:
       - name: COLLECTOR_LABEL
         value: ($collector_label)
-      content: ./scripts/check-log-label-contract.sh --collector-label="${COLLECTOR_LABEL}"
+      - name: COLLECTOR_NAME
+        value: ($collector_name)
+      # yamllint disable-line rule:indentation
+      content: |
+        ./scripts/check-log-label-contract.sh \
+          --collector-label="${COLLECTOR_LABEL}" \
+          --collector-name="${COLLECTOR_NAME}"
       timeout: 6m
 
   catch:
   - describe:
       apiVersion: apps/v1
       kind: DaemonSet
-      name: promtail
+      name: ($collector_name)
       namespace: logging
+  # As yaml, not the default table: what a label failure needs is the relabel rules that
+  # produced the labels, and a table row of name/age answers nothing.
   - get:
       apiVersion: v1
       kind: ConfigMap
+      name: ($collector_config_map)
       namespace: logging
-      selector: app.kubernetes.io/name=promtail
+      format: yaml
   - podLogs:
-      selector: app.kubernetes.io/name=promtail
+      selector: (join('=', ['app.kubernetes.io/name', $collector_name]))
       namespace: logging
       tail: 100
   - podLogs:
