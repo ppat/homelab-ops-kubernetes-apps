@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.27.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.26.1...infra-observability-core-v0.27.0) (2026-08-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-observability-core:** promtail is gone from this module. Consuming clusters must drop their `promtail-extra-config` ConfigMap generator and any promtail-specific policy exclusions, and must delete the stranded promtail release by hand - Flux prune is disabled cluster-wide, so removing it here does not uninstall it.
+
+### ✨ Features
+
+* **infra-observability-core:** remove promtail and cut over to grafana alloy ([#3602](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3602)) ([45411bd](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/45411bd3fc7114c4f9aaa82b47034850dfa32832))
+
 ## [0.26.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.26.0...infra-observability-core-v0.26.1) (2026-08-11)
 
 
