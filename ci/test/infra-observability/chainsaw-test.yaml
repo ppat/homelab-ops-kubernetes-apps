@@ -142,3 +142,10 @@ spec:
           value: '{namespace="default"}'
         - name: loki_deadline
           value: "180"
+
+  # Runs after the retrievability check above deliberately: if nothing was collected at
+  # all, that step says so in one line, instead of this one reporting twelve simultaneous
+  # label failures for a single root cause.
+  - name: Validate log-label contract
+    use:
+      template: ./validate-log-label-contract.yaml

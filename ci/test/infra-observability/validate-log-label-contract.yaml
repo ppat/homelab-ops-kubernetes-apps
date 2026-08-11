@@ -1,0 +1,35 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-log-label-contract
+# Asserts the log-collection output contract: the exact label set arriving in Loki for
+# the logspewer fixture's pod logs, and the shape of every value. See
+# ./scripts/check-log-label-contract.sh for which labels are in scope on kind and which
+# are deliberately not.
+spec:
+  try:
+  - description: Assert the pod-log label contract
+    script:
+      content: ./scripts/check-log-label-contract.sh
+      timeout: 6m
+
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: DaemonSet
+      name: promtail
+      namespace: logging
+  - get:
+      apiVersion: v1
+      kind: ConfigMap
+      namespace: logging
+      selector: app.kubernetes.io/name=promtail
+  - podLogs:
+      selector: app.kubernetes.io/name=promtail
+      namespace: logging
+      tail: 100
+  - podLogs:
+      selector: app.kubernetes.io/name=loki
+      namespace: logging
+      tail: 100
