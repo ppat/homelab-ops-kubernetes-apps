@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.26.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.26.0...infra-observability-core-v0.26.1) (2026-08-11)
+
+
+### ✨ Features
+
+* **infra-observability-core:** add grafana alloy alongside promtail ([#3595](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3595)) ([a359fa7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a359fa751399db258f983fa0fb35697f0dc32d79))
+* **infra-observability-core:** update goldilocks (10.4.1 -&gt; 10.5.0) ([#3590](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3590)) ([7b1ccff](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7b1ccfff72ec83241438d6eb18519f8335e8a001))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** update loki (18.7.4 -&gt; 18.7.5) ([#3581](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3581)) ([83d9d64](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/83d9d64388f88ddfde085559970df138ba0a9d40))
+* **infra-observability-core:** update loki (18.7.5 -&gt; 18.7.6) ([#3586](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3586)) ([7963c61](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7963c61c3cba310938a38899351cdc2079d019bf))
+
 ## [0.26.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.25.0...infra-observability-core-v0.26.0) (2026-08-08)
 
 
