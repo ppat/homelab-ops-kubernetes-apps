@@ -48,11 +48,14 @@ spec:
       kind: DaemonSet
       name: ($collector_name)
       namespace: logging
+  # As yaml, not the default table: what a label failure needs is the relabel rules that
+  # produced the labels, and a table row of name/age answers nothing.
   - get:
       apiVersion: v1
       kind: ConfigMap
       name: ($collector_config_map)
       namespace: logging
+      format: yaml
   - podLogs:
       selector: (join('=', ['app.kubernetes.io/name', $collector_name]))
       namespace: logging
