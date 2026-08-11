@@ -1,0 +1,47 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-log-label-contract
+# Asserts the log-collection output contract: the exact label set arriving in Loki for
+# the logspewer fixture's pod logs, and the shape of every value. See
+# ./scripts/check-log-label-contract.sh for which labels are in scope on kind and which
+# are deliberately not.
+#
+# Invoked once per collector while promtail and Alloy run in parallel over the same
+# fixture; the caller must supply the binding that says which one this run is about. There
+# is deliberately no default: the empty value is a real, meaningful choice (promtail),
+# so defaulting to it would make a missing binding indistinguishable from it.
+#
+#   collector_label  Value of the temporary `collector` external label that isolates this
+#                    collector's streams. "alloy" for Alloy; "" for promtail, which sets
+#                    no such label and is matched by LogQL's empty-string matcher.
+spec:
+  try:
+  - description: Assert the pod-log label contract
+    script:
+      env:
+      - name: COLLECTOR_LABEL
+        value: ($collector_label)
+      content: ./scripts/check-log-label-contract.sh --collector-label="${COLLECTOR_LABEL}"
+      timeout: 6m
+
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: DaemonSet
+      name: promtail
+      namespace: logging
+  - get:
+      apiVersion: v1
+      kind: ConfigMap
+      namespace: logging
+      selector: app.kubernetes.io/name=promtail
+  - podLogs:
+      selector: app.kubernetes.io/name=promtail
+      namespace: logging
+      tail: 100
+  - podLogs:
+      selector: app.kubernetes.io/name=loki
+      namespace: logging
+      tail: 100

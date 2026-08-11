@@ -12,8 +12,17 @@ set -euo pipefail
 # actually working" is querying the output side.
 #
 # Contract with callers:
-#   stdout - the query's `data.result` array, as JSON, on success only. Callers that
-#            need to assert on what came back (label sets, values) consume this.
+#   stdout - on success only, one JSON array, chosen by --emit:
+#              result (default) the query's `data.result` - stream label maps plus the
+#                               matching log lines.
+#              series           `/loki/api/v1/series` for --series-match, gated on the
+#                               same query first returning data.
+#            The two are NOT interchangeable, and the difference is load-bearing:
+#            query_range's `stream` map is Loki's flattened view - indexed stream labels
+#            AND structured metadata merged together - whereas /series reports indexed
+#            stream labels only. A collector that demoted a real label to structured
+#            metadata (an easy thing to do in Alloy's loki.process) looks identical in
+#            the first view and is caught by the second.
 #   stderr - all progress and diagnostics. Never parse it.
 #   exit 1 - fewer than --min-streams streams were returned before the deadline, or
 #            Loki never became reachable. Before exiting it dumps what Loki DID have
@@ -38,10 +47,20 @@ LOOKBACK="30m"
 DEADLINE=180
 LIMIT=100
 DIAGNOSTIC_MATCH=""
+EMIT="result"
+SERIES_MATCH=""
 
 for param in "$@"
 do
   case $param in
+    --emit=*)
+      EMIT="${param#*=}"
+      shift
+      ;;
+    --series-match=*)
+      SERIES_MATCH="${param#*=}"
+      shift
+      ;;
     --query=*)
       QUERY="${param#*=}"
       shift
@@ -93,6 +112,20 @@ if [ -z "$QUERY" ]; then
   echo "--query=<logql> is required" >&2
   exit 1
 fi
+
+case "$EMIT" in
+  result) ;;
+  series)
+    if [ -z "$SERIES_MATCH" ]; then
+      echo "--emit=series requires --series-match=<stream selector>" >&2
+      exit 1
+    fi
+    ;;
+  *)
+    echo "--emit must be 'result' or 'series' (got '$EMIT')" >&2
+    exit 1
+    ;;
+esac
 
 case "$LOOKBACK" in
   *m) LOOKBACK_SECONDS=$(( ${LOOKBACK%m} * 60 )) ;;
@@ -193,4 +226,26 @@ done
 
 echo "ok: query returned ${streams} stream(s); label sets:" >&2
 echo "$response" | jq -S '[.data.result[].stream]' >&2
-echo "$response" | jq -c '.data.result'
+
+if [ "$EMIT" = "result" ]; then
+  echo "$response" | jq -c '.data.result'
+  exit 0
+fi
+
+# --emit=series. Gated on the query above having returned data, so an empty series
+# response means "these streams carry no indexed labels", never "nothing was collected".
+now="$(date +%s)"
+series="$(curl -fsS -G "${BASE}/loki/api/v1/series" \
+  --data-urlencode "match[]=${SERIES_MATCH}" \
+  --data-urlencode "start=$(( now - LOOKBACK_SECONDS ))" \
+  --data-urlencode "end=${now}" 2>/dev/null || true)"
+series_count="$(echo "${series:-}" | jq '(.data // []) | length' 2>/dev/null || echo 0)"
+if [ "$series_count" -lt "$MIN_STREAMS" ]; then
+  echo "FAIL: /series for ${SERIES_MATCH} returned ${series_count} stream(s), expected at least ${MIN_STREAMS}" >&2
+  echo "      (the query_range above DID return ${streams}, so this is a label-indexing difference, not missing data)" >&2
+  dump_diagnostics
+  exit 1
+fi
+echo "ok: /series returned ${series_count} indexed stream(s) for ${SERIES_MATCH}" >&2
+echo "$series" | jq -S '.data' >&2
+echo "$series" | jq -c '.data'
