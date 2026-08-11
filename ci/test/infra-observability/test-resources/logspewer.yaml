@@ -1,0 +1,74 @@
+---
+# Fixture for the log-collection assertions in this suite.
+#
+# Nothing else in ci/test/ proves that logs actually *arrive* in Loki - every other
+# assertion here is structural (the DaemonSet is Ready, the HelmRelease reconciled),
+# and a log pipeline that has silently stopped labelling, or stopped collecting
+# entirely, keeps every one of those green. This Deployment is the known-good input
+# side of that check: a pod whose identity is fully known ahead of time, so the labels
+# Loki ends up carrying for it can be compared against an expectation rather than
+# eyeballed.
+#
+# Why each detail is the way it is - these are load-bearing, not incidental:
+#
+# - the three app.kubernetes.io/{name,instance,component} labels carry deliberately
+#   *different* values. promtail derives the `app`, `instance` and `component` Loki
+#   labels from them via three separate relabel rules; if those rules were ever crossed
+#   or collapsed, identical fixture values would hide it and distinct ones cannot.
+# - the container is named `logspewer` because promtail's `filename` label is derived
+#   from the on-disk path /var/log/pods/<ns>_<pod>_<uid>/<container>/<restart>.log,
+#   stripped back to "<container>/<restart>.log" by a regex pipeline stage. The
+#   container name is therefore half the asserted value.
+# - it writes to BOTH stdout and stderr, because the `stream` label is produced by the
+#   CRI parsing stage rather than by any relabel rule, and is only proven if it is
+#   observed taking both of its values.
+# - it loops forever instead of emitting once, so the assertion never depends on
+#   promtail having been running (or having replayed the file from offset 0) at the
+#   moment the fixture happened to speak.
+# - replicas is 1 so the expected number of Loki streams is exactly two (one per
+#   stream direction), which is what lets the assertion be an equality rather than a
+#   "at least one" check that a zero/partial result could satisfy.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logspewer
+  namespace: default
+  labels:
+    app.kubernetes.io/name: logspewer
+    app.kubernetes.io/instance: logspewer-ci
+    app.kubernetes.io/component: spewer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: logspewer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: logspewer
+        app.kubernetes.io/instance: logspewer-ci
+        app.kubernetes.io/component: spewer
+    spec:
+      containers:
+      - name: logspewer
+        image: busybox@sha256:dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616
+        command:
+        - /bin/sh
+        - -c
+        # The marker is a single fixed token so a LogQL line filter can select exactly
+        # these lines and nothing else in the cluster.
+        # yamllint disable-line rule:indentation
+        - |
+          seq=0
+          while true; do
+            seq=$((seq + 1))
+            echo "chainsaw-logspewer-marker stream=stdout seq=${seq}"
+            echo "chainsaw-logspewer-marker stream=stderr seq=${seq}" >&2
+            sleep 2
+          done
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            memory: 32Mi

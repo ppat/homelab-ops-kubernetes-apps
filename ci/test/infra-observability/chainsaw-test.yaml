@@ -30,6 +30,32 @@ spec:
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=minio-release --namespace=minio --timeout=2m
         timeout: 2m
 
+  # Applied before the modules rather than after, for two reasons: it costs the suite
+  # nothing (the fixture is Ready long before Loki is), and it means the fixture has
+  # been emitting for the whole module rollout, so the log-collection assertion at the
+  # end never waits on the fixture - only on the pipeline.
+  - name: Apply log-collection fixture
+    try:
+    - description: Apply logspewer
+      apply:
+        file: ./test-resources/logspewer.yaml
+    - description: Assert deployment/logspewer
+      assert:
+        bindings:
+        - name: name
+          value: logspewer
+        - name: namespace
+          value: default
+        file: ../chainsaw/assertions/deployment-ready.yaml
+    catch:
+    - describe:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: logspewer
+        namespace: default
+    - events:
+        namespace: default
+
   - name: Apply infra-observability modules
     try:
     - description: Apply infra-observability-core
@@ -96,3 +122,23 @@ spec:
   - name: Validate Syslog-NG
     use:
       template: ./validate-syslog-ng.yaml
+
+  # The first assertion in this repo that looks at a pipeline's OUTPUT rather than at
+  # resource status. Everything above proves promtail and Loki are running; only this
+  # proves a line written by a pod is retrievable from Loki afterwards.
+  - name: Validate log collection
+    use:
+      template: ../chainsaw/steps/assert-loki-query.yaml
+      with:
+        bindings:
+        - name: loki_query
+          value: '{job="default/logspewer"} |= "chainsaw-logspewer-marker"'
+        # One stream per direction of the fixture's output (stdout and stderr), and no
+        # more: replicas is 1, so any other count means something is wrong rather than
+        # merely incomplete.
+        - name: loki_min_streams
+          value: "2"
+        - name: loki_diagnostic_match
+          value: '{namespace="default"}'
+        - name: loki_deadline
+          value: "180"
