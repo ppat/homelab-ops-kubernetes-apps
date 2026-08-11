@@ -5,5 +5,13 @@
 # Renovate's `# renovate:` comment convention here (see
 # .github/renovate/custom-managers.json) only scans `.ya?ml$` files, and
 # .pre-commit-config.yaml's hook schema has no field to hang the comment on.
+#
+# Must track the Alloy *appVersion* actually deployed by
+# infrastructure/subsystems/observability-core/alloy/helm-release-alloy.yaml's chart
+# version (chart 1.11.1 -> appVersion v1.18.1; the alloy Helm chart's version and
+# appVersion are not the same number). A pin older than the deployed binary silently
+# rejects syntax the deployed Alloy actually accepts -- e.g. v1.11.x's `alloy validate`
+# rejects the `file_match` block in `loki.source.file` that v1.18.1 requires and
+# accepts, which would fail this gate on config that is genuinely correct.
 # renovate: datasource=docker depName=grafana/alloy
-version: "v1.11.3"
+version: "v1.18.1"
