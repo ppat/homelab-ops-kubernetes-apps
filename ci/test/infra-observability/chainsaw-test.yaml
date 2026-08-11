@@ -103,6 +103,10 @@ spec:
     use:
       template: ./validate-promtail.yaml
 
+  - name: Validate Alloy
+    use:
+      template: ./validate-alloy.yaml
+
   - name: Validate SNMP Exporter
     use:
       template: ./validate-snmp-exporter.yaml
