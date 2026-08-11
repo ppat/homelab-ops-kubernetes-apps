@@ -34,12 +34,6 @@ config:
             regex: ^;*([^;]+)(;.*)?$
             action: replace
             target_label: instance
-          - source_labels:
-              - __meta_kubernetes_pod_label_app_kubernetes_io_component
-              - __meta_kubernetes_pod_label_component
-            regex: ^;*([^;]+)(;.*)?$
-            action: replace
-            target_label: component
           {{- if .Values.config.snippets.addScrapeJobLabel }}
           - replacement: kubernetes-pods
             target_label: scrape_job
