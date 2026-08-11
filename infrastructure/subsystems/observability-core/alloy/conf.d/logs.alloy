@@ -18,7 +18,7 @@ discovery.relabel "pod_logs" {
 	}
 
 	rule {
-		action = "replace"
+		action        = "replace"
 		source_labels = [
 			"__meta_kubernetes_pod_label_app_kubernetes_io_name",
 			"__meta_kubernetes_pod_label_app",
@@ -30,7 +30,7 @@ discovery.relabel "pod_logs" {
 	}
 
 	rule {
-		action = "replace"
+		action        = "replace"
 		source_labels = [
 			"__meta_kubernetes_pod_label_app_kubernetes_io_instance",
 			"__meta_kubernetes_pod_label_instance",
@@ -40,7 +40,7 @@ discovery.relabel "pod_logs" {
 	}
 
 	rule {
-		action = "replace"
+		action        = "replace"
 		source_labels = [
 			"__meta_kubernetes_pod_label_app_kubernetes_io_component",
 			"__meta_kubernetes_pod_label_component",
@@ -94,7 +94,7 @@ discovery.relabel "pod_logs" {
 	// UID-derived path above never matches. Dropping this rule silently loses
 	// all static-pod logs while the collector stays green.
 	rule {
-		action = "replace"
+		action        = "replace"
 		source_labels = [
 			"__meta_kubernetes_pod_annotationpresent_kubernetes_io_config_hash",
 			"__meta_kubernetes_pod_annotation_kubernetes_io_config_hash",
@@ -122,7 +122,7 @@ loki.source.file "pod_logs" {
 loki.process "pod_logs" {
 	forward_to = [loki.write.default.receiver]
 
-	stage.cri {}
+	stage.cri { }
 
 	// `loki.process` seeds the extracted map from the entry labels, so
 	// `source = "filename"` reads the label set by loki.source.file.

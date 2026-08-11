@@ -31,3 +31,6 @@ node_modules/
 
 # mise vscode extension
 .vscode/mise-tools/
+
+# ci/scripts/alloy-lint.sh validate scratch dir (self-cleaning; only survives a crash)
+.alloy-lint-validate.*/

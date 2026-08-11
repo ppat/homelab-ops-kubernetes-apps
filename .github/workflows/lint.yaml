@@ -23,6 +23,11 @@ jobs:
       files_yaml: |
         actions:
         - .github/workflows/**
+        alloy:
+        - '**/*.alloy'
+        - ci/scripts/alloy-lint.sh
+        - ci/scripts/alloy-lint-version.yaml
+        - .github/workflows/lint.yaml
         kubernetes:
         - 'apps/**/*.yaml'
         - 'ci/**/*.yaml'
@@ -48,6 +53,40 @@ jobs:
       fetch_depth: ${{ github.event.pull_request.commits || 0 }}
       from: ${{ github.event.pull_request.head.sha || 'HEAD' }}~${{ github.event.pull_request.commits || '1' }}
       to: ${{ github.event.pull_request.head.sha || 'HEAD' }}
+
+  alloy:
+    needs: [detect-changes]
+    if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).alloy_any_changed == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: 1
+        persist-credentials: false
+
+    # Whether this job runs at all is gated by detect-changes (above), scoped to a
+    # broad **/*.alloy glob plus this gate's own inputs (alloy-lint.sh, the version
+    # pin, this workflow file) so a change to the gate is always exercised by the PR
+    # that makes it. What it checks once running is a separate concern: each step
+    # below still discovers every *.alloy file in the repo via git ls-files, not just
+    # the changed ones -- alloy validate operates on a directory as one merged unit
+    # (see ci/scripts/alloy-lint.sh), so a partial file list produces false
+    # "component does not exist" errors for cross-file references.
+    - name: alloy fmt --test
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        mapfile -t files < <(git ls-files -- '*.alloy')
+        ./ci/scripts/alloy-lint.sh fmt-check "${files[@]}"
+
+    - name: alloy validate
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        mapfile -t files < <(git ls-files -- '*.alloy')
+        ./ci/scripts/alloy-lint.sh validate "${files[@]}"
 
   github-actions:
     needs: [detect-changes]
