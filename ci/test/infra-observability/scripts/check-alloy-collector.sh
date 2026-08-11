@@ -10,7 +10,7 @@ set -euo pipefail
 #   1. the cluster-injected fragment landed in the ConfigMap byte-for-byte,
 #   2. the running collector loaded a non-empty component graph containing every
 #      component the module and the fragment declare, in both directions across files,
-#   3. those components are healthy,
+#   3. every one of those components reports healthy,
 #   4. the ServiceAccount can watch pods but cannot read secrets or configmaps.
 
 NAMESPACE=logging
@@ -43,9 +43,12 @@ check_fragment_injected() {
     fail "configmap/$CONFIG_MAP has no '$FRAGMENT_KEY' key - the cluster seam patch did not apply"
     return
   fi
-  if ! diff -u "$FRAGMENT_FILE" <(printf '%s' "$injected") >/dev/null; then
+  # Compared through command substitution on both sides, which strips trailing newlines:
+  # the `patch: |-` block that carries the fragment into the ConfigMap drops the file's
+  # final newline, and that difference is not one worth failing on.
+  if [ "$injected" != "$(cat "$FRAGMENT_FILE")" ]; then
     fail "'$FRAGMENT_KEY' in configmap/$CONFIG_MAP differs from $FRAGMENT_FILE"
-    diff -u "$FRAGMENT_FILE" <(printf '%s' "$injected") >&2 || true
+    diff -u "$FRAGMENT_FILE" <(printf '%s\n' "$injected") >&2 || true
     return
   fi
   ok "cluster fragment '$FRAGMENT_KEY' injected into configmap/$CONFIG_MAP unchanged"
@@ -72,7 +75,7 @@ fetch_components() {
 }
 
 check_components() {
-  local components expected_components component health
+  local components expected_components component entry health
   if ! components="$(fetch_components)"; then
     fail "could not reach the alloy component API"
     return
@@ -95,22 +98,25 @@ check_components() {
     "loki.process.cluster_pvc_logs"
   )
 
-  for component in "${expected_components[@]}"; do
-    if echo "$components" | grep -q "\"localID\":\"${component}\""; then
-      ok "component $component loaded"
-    else
-      fail "component $component is not loaded - the collector is running with an incomplete graph"
-    fi
-  done
+  # One component object per line so localID and its own health can be read together.
+  # shellcheck disable=SC2001  # bash parameter expansion cannot insert a newline here
+  components="$(echo "$components" | sed 's/{"name":"/\n{"name":"/g')"
 
-  # loki.source.journal is exempt: kind nodes run no systemd, so the journal reader has
-  # nothing to open. Every other component must be healthy - an unhealthy loki.write or
-  # loki.source.file means logs are being dropped while the pod stays Ready.
   for component in "${expected_components[@]}"; do
-    [ "$component" = "loki.source.journal.journal" ] && continue
-    health="$(echo "$components" | tr '}' '\n' | grep "\"localID\":\"${component}\"" | grep -o '"health":"[a-z]*"' | head -1 || true)"
-    if [ -n "$health" ] && [ "$health" != '"health":"healthy"' ]; then
-      fail "component $component is ${health}"
+    entry="$(echo "$components" | grep -F "\"localID\":\"${component}\"" | head -1 || true)"
+    if [ -z "$entry" ]; then
+      fail "component $component is not loaded - the collector is running with an incomplete graph"
+      continue
+    fi
+    # An unhealthy loki.write or loki.source.file means logs are being dropped while the
+    # DaemonSet stays Ready, so health is asserted for every component including the
+    # journal reader (which reports healthy even on a node with no systemd at all - it
+    # simply returns nothing, which is why the pod's own health proves so little here).
+    health="$(echo "$entry" | grep -o '"state":"[a-z]*"' | head -1 || true)"
+    if [ "$health" != '"state":"healthy"' ]; then
+      fail "component $component is not healthy: ${health:-<no health reported>}"
+    else
+      ok "component $component loaded and healthy"
     fi
   done
 }

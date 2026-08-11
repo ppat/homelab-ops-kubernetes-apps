@@ -22,10 +22,10 @@ spec:
         value: logging
       file: ../chainsaw/assertions/helmrelease-ready.yaml
 
-  # Each of the following pins a value whose failure mode is a green, error-free collector
-  # that silently collects nothing or drops a label. They are asserted on the rendered
-  # DaemonSet because none of them are observable from the workload's health.
-  - description: Assert daemonset/alloy is loading its config directory as a directory
+  # Everything below pins a value whose failure mode is a green, Ready, error-free
+  # collector that silently collects nothing or drops a label. None of it is observable
+  # from the workload's health, which is why it is asserted on the rendered DaemonSet.
+  - description: Assert daemonset/alloy loads its config directory as a directory
     assert:
       resource:
         apiVersion: apps/v1
@@ -36,31 +36,28 @@ spec:
         spec:
           template:
             spec:
-              containers:
-              # `run /etc/alloy/.` is directory mode. `/etc/alloy/..data` - the obvious
-              # alternative, and what the chart produces from key "..data" - is a symlink,
-              # and alloy given a symlinked root config path loads zero components, exits
-              # 0 and logs nothing at all.
-              - (name == 'alloy'):
-                  (contains(args, 'run')): true
-                  (contains(args, '/etc/alloy/.')): true
-                  (contains(args, '--storage.path=/var/lib/alloy')): true
-                  (contains(args, '--disable-reporting')): true
-                  # `host` comes from sys.env("K8S_NODE_NAME"); constants.hostname would
-                  # be the pod name. With the variable unset sys.env returns "", Loki
-                  # drops the empty label, and every stream ships with no `host` label
-                  # while the process stays healthy.
-                  (env[?name == 'K8S_NODE_NAME'] | [0].valueFrom.fieldRef.fieldPath): spec.nodeName
-                  # A subPath mount would break both directory mode and the sidecar's
-                  # live-update of the ConfigMap.
-                  (volumeMounts[?name == 'config'] | [0]):
-                    mountPath: /etc/alloy
-                    (subPath == null): true
+              (containers[?name == 'alloy']):
+              # `run /etc/alloy/.` is directory mode. `/etc/alloy/..data` - what the chart
+              # produces from the plausible-looking key "..data" - is a symlink, and alloy
+              # given a symlinked root config path loads ZERO components, exits 0, logs
+              # neither an error nor a warning and passes every readiness probe.
+              - (contains(args, 'run')): true
+                (contains(args, '/etc/alloy/.')): true
+                (contains(args, '--storage.path=/var/lib/alloy')): true
+                (contains(args, '--disable-reporting')): true
+                # `host` comes from sys.env("K8S_NODE_NAME"); constants.hostname would be
+                # the pod name. With the variable unset sys.env returns "", Loki drops the
+                # empty label, and every stream ships with no `host` label at all.
+                (env[?name == 'K8S_NODE_NAME'] | [0].valueFrom.fieldRef.fieldPath): spec.nodeName
+                # A subPath mount would break both directory mode and the sidecar's
+                # live-update of the ConfigMap.
+                (volumeMounts[?name == 'config'] | [0].mountPath): /etc/alloy
+                (volumeMounts[?name == 'config'] | [0].subPath == null): true
               # `checksum/config` cannot be emitted while the chart does not own the
               # ConfigMap, so this sidecar is the only thing that propagates a config
               # change to a running collector.
-              - (name == 'config-reloader'):
-                  (contains(args, '--watched-dir=/etc/alloy')): true
+              (containers[?name == 'config-reloader']):
+              - (contains(args, '--watched-dir=/etc/alloy')): true
   - description: Assert daemonset/alloy runs unprivileged with the log-reading groups
     assert:
       resource:
@@ -76,22 +73,24 @@ spec:
                 runAsNonRoot: true
                 runAsUser: 473
                 runAsGroup: 473
-                # GID 0 grants the reads that UID 0 would otherwise be needed for;
-                # ${systemd_journal_gid} is what makes the journal reader return entries
-                # rather than sitting healthy and empty.
+                # GID 0 grants the reads that UID 0 would otherwise be needed for
+                # (/var/log/pods/**/N.log is root:root 0640); ${systemd_journal_gid} is
+                # what makes the journal reader return entries instead of sitting healthy
+                # and empty.
                 supplementalGroups:
                 - 0
                 - 999
               # kubelet does not apply fsGroup to hostPath volumes, so without this the
               # non-root container cannot write its positions files and every restart
               # re-ingests from the beginning.
-              initContainers:
-              - (name == 'init-storage'):
-                  (securityContext.runAsUser): 0
-                  (securityContext.capabilities.add): [CHOWN]
-              volumes:
-              - (name == 'storage'):
-                  (hostPath.path): /var/lib/alloy
+              (initContainers[?name == 'init-storage']):
+              - (securityContext.runAsUser): 0
+                (securityContext.capabilities.add): [CHOWN]
+                (securityContext.capabilities.drop): [ALL]
+              (volumes[?name == 'storage']):
+              - (hostPath.path): /var/lib/alloy
+              (volumes[?name == 'pods']):
+              - (hostPath.path): /var/log/pods
 
   - description: Assert alloy loaded a complete component graph and holds narrow RBAC
     script:
