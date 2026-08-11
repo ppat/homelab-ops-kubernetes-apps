@@ -137,9 +137,12 @@ spec:
         bindings:
         - name: loki_query
           value: '{job="default/logspewer"} |= "chainsaw-logspewer-marker"'
-        # One stream per direction of the fixture's output (stdout and stderr), and no
-        # more: replicas is 1, so any other count means something is wrong rather than
-        # merely incomplete.
+        # One stream per direction of the fixture's output (stdout and stderr). This
+        # selector is deliberately NOT scoped to a collector - it asks only whether
+        # anything at all retrieved these logs - so while promtail and Alloy both run, 2
+        # is a floor rather than the exact count. Exactness is asserted per collector by
+        # the two contract steps below, which is where a collector that shipped nothing
+        # is actually caught.
         - name: loki_min_streams
           value: "2"
         - name: loki_diagnostic_match
@@ -161,3 +164,29 @@ spec:
         # the fixture's streams from both collectors would be asserted as one set.
         - name: collector_label
           value: ""
+        - name: collector_name
+          value: promtail
+        - name: collector_config_map
+          value: promtail
+
+  # The other half of the equivalence check, and the reason the migration's success
+  # criterion is machine-checked rather than eyeballed: the SAME contract, against the
+  # SAME fixture pod on the SAME node, for the streams Alloy pushed. The expected label
+  # set is promtail's plus `collector`, derived inside the script from
+  # --collector-label being non-empty - so the two runs cannot drift apart by editing
+  # one list and forgetting the other.
+  #
+  # Alloy is asserted after promtail rather than before on purpose. Alloy is the new
+  # collector; if BOTH fail, the promtail result is what tells you whether the fixture,
+  # Loki or the query broke instead, and chainsaw stops at the first failing step.
+  - name: Validate log-label contract (alloy)
+    use:
+      template: ./validate-log-label-contract.yaml
+      with:
+        bindings:
+        - name: collector_label
+          value: alloy
+        - name: collector_name
+          value: alloy
+        - name: collector_config_map
+          value: alloy-config

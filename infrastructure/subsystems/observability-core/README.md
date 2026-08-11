@@ -260,6 +260,11 @@ flowchart TB
   `syslog_identifier`, `systemd_unit`). Both collectors ship the same logs during a parallel equivalence
   comparison; Alloy additionally sets a temporary `collector="alloy"` label so its streams can be told apart.
   Promtail is removed once the comparison is complete, at which point that label goes too.
+  That equivalence is machine-checked, not eyeballed: `ci/test/infra-observability` runs the same log-label
+  contract assertion twice against one fixture pod - once for `collector=""` (Promtail) and once for
+  `collector="alloy"` - and requires exact label-set equality in both, differing only by `collector` itself.
+  The three journal-only labels (`severity`, `syslog_identifier`, `systemd_unit`) are out of scope there
+  because kind nodes have no systemd journal to read.
 - **A healthy Alloy pod is weak evidence.** Several ways of misconfiguring this collector produce a Ready pod
   that exits 0, logs nothing, and collects nothing or drops a label: a symlinked config path loads zero
   components; a missing `K8S_NODE_NAME` drops the `host` label; a missing journal GID leaves the journal reader

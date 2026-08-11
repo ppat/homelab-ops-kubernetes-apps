@@ -77,17 +77,41 @@ set -euo pipefail
 # A non-empty --collector-label is also an assertion in its own right: the label joins the
 # expected sets below and its value is checked, so a collector that stops marking its
 # streams fails here rather than silently merging into the other one's.
+#
+# WHAT WOULD MAKE THIS VACUOUS - `--collector-name`
+# -------------------------------------------------
+# "Every label this collector pushed is correct" is trivially true of a collector that
+# pushed nothing. Two things stop that:
+#
+#   1. loki-query.sh is called with --min-streams=2 and the exact count is asserted
+#      afterwards, so an empty or partial result is a failure, not a pass.
+#   2. --collector-name=<app.kubernetes.io/name> names the DaemonSet workload behind the
+#      label, and its presence ON THE FIXTURE'S NODE is checked before anything is
+#      queried. A DaemonSet reports Ready when every pod it SCHEDULED is ready, so a node
+#      it never scheduled onto at all is invisible in its status - which is exactly what
+#      the alloy chart's empty default `tolerations` did to kind's tainted control-plane
+#      node. If the fixture then lands on that node, the collector genuinely never sees
+#      it. (1) would still catch that, but 180 seconds later and phrased as "Loki returned
+#      nothing", which reads like a slow pipeline rather than a node with no collector on
+#      it.
 
-# Required, but legitimately empty for promtail - hence a sentinel rather than "", so an
-# omitted flag cannot masquerade as the promtail case and quietly assert the wrong thing.
+# --collector-label is required but legitimately EMPTY for promtail - hence a sentinel
+# rather than "", so an omitted flag cannot masquerade as the promtail case and quietly
+# assert the wrong thing.
 COLLECTOR_LABEL_UNSET="<unset>"
 COLLECTOR_LABEL="$COLLECTOR_LABEL_UNSET"
+COLLECTOR_NAME=""
+COLLECTOR_NAMESPACE="logging"
 
 for param in "$@"
 do
   case $param in
     --collector-label=*)
       COLLECTOR_LABEL="${param#*=}"
+      shift
+      ;;
+    --collector-name=*)
+      COLLECTOR_NAME="${param#*=}"
       shift
       ;;
     *)
@@ -99,6 +123,10 @@ done
 
 if [ "$COLLECTOR_LABEL" = "$COLLECTOR_LABEL_UNSET" ]; then
   echo "--collector-label=<value> is required; pass it empty for a collector that sets no 'collector' label" >&2
+  exit 1
+fi
+if [ -z "$COLLECTOR_NAME" ]; then
+  echo "--collector-name=<app.kubernetes.io/name> is required" >&2
   exit 1
 fi
 
@@ -199,6 +227,30 @@ if [ "$FIXTURE_NODE" = "$FIXTURE_POD" ]; then
   echo "FAIL: node name and pod name are identical; the host assertion would prove nothing" >&2
   exit 1
 fi
+
+# ---------------------------------------------------------------------------------
+# The collector under test must be running on the node the fixture landed on.
+#
+# Everything below asserts properties of the streams this collector pushed for this
+# fixture. If it has no pod on the fixture's node it pushed none, and "no bad labels" is
+# then true for free. See the --collector-name note in the header for why a Ready
+# DaemonSet does not rule this out. Checked here rather than left to the empty-result
+# failure so the message names the cause.
+# ---------------------------------------------------------------------------------
+COLLECTOR_PODS_ON_NODE="$(
+  kubectl -n "$COLLECTOR_NAMESPACE" get pods \
+    -l "app.kubernetes.io/name=${COLLECTOR_NAME}" \
+    --field-selector "spec.nodeName=${FIXTURE_NODE},status.phase=Running" \
+    -o jsonpath='{range .items[*]}{.metadata.name}{" "}{end}'
+)"
+if [ -z "$COLLECTOR_PODS_ON_NODE" ]; then
+  echo "FAIL: no Running ${COLLECTOR_NAME} pod on node ${FIXTURE_NODE}, which is where the fixture is." >&2
+  echo "      Nothing collected the fixture, so every label assertion below would pass vacuously." >&2
+  kubectl -n "$COLLECTOR_NAMESPACE" get pods -l "app.kubernetes.io/name=${COLLECTOR_NAME}" -o wide >&2 || true
+  kubectl get nodes -o wide >&2 || true
+  exit 1
+fi
+echo "collector: ${COLLECTOR_NAME} running on the fixture's node as ${COLLECTOR_PODS_ON_NODE% }"
 
 # `collector=""` is not redundant: it isolates the collector under test while promtail and
 # Alloy both read this fixture (see the --collector-label note in the header). An empty
