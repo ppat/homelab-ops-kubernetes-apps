@@ -1,0 +1,59 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: assert-loki-query
+# Asserts that a LogQL query against the in-cluster Loki returns at least
+# `loki_min_streams` streams, retrying to a deadline. See
+# ../scripts/loki-query.sh for why this is a script rather than an `assert:` file:
+# ../assertions/ holds resource matchers evaluated against the Kubernetes API, and the
+# thing being asserted here is not in the Kubernetes API at all - it is whether data
+# arrived at the far end of a pipeline.
+#
+# Every caller must supply all four bindings; there are deliberately no defaults, so a
+# typo in a binding name fails loudly instead of silently asserting something weaker.
+#
+#   loki_query             LogQL selector (plus any line filter) to assert on.
+#   loki_min_streams       Minimum number of streams the query must return. Set this to
+#                          the exact number expected: "at least 1" is the shape of check
+#                          that a partially-collected pipeline passes.
+#   loki_diagnostic_match  Stream selector dumped, with full label sets, when the
+#                          assertion fails - i.e. what the query SHOULD have been able
+#                          to match. Usually a broader selector than loki_query.
+#   loki_deadline          Seconds to keep retrying before failing.
+spec:
+  try:
+  - description: Assert loki returns the expected streams
+    script:
+      env:
+      - name: LOKI_QUERY
+        value: ($loki_query)
+      - name: LOKI_MIN_STREAMS
+        value: ($loki_min_streams)
+      - name: LOKI_DIAGNOSTIC_MATCH
+        value: ($loki_diagnostic_match)
+      - name: LOKI_DEADLINE
+        value: ($loki_deadline)
+      # yamllint disable-line rule:indentation
+      content: |
+        ../chainsaw/scripts/loki-query.sh \
+          --query="${LOKI_QUERY}" \
+          --min-streams="${LOKI_MIN_STREAMS}" \
+          --diagnostic-match="${LOKI_DIAGNOSTIC_MATCH}" \
+          --deadline="${LOKI_DEADLINE}"
+      timeout: 5m
+
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: DaemonSet
+      name: promtail
+      namespace: logging
+  - podLogs:
+      selector: app.kubernetes.io/name=promtail
+      namespace: logging
+      tail: 100
+  - podLogs:
+      selector: app.kubernetes.io/name=loki
+      namespace: logging
+      tail: 100
