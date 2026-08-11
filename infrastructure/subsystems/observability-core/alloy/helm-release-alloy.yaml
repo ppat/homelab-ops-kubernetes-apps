@@ -101,6 +101,17 @@ spec:
 
     controller:
       type: daemonset
+      # The promtail chart tolerates these by default; the alloy chart's tolerations
+      # default to [] instead. Without them a tainted control-plane node keeps running
+      # promtail and silently gets no alloy pod at all - a whole node missing from the
+      # equivalence comparison, with a fully Ready DaemonSet either side of it.
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
       initContainers:
       # kubelet creates hostPath directories as root:root 0755 and does not apply fsGroup
       # to them, so the non-root alloy container cannot write its positions files there

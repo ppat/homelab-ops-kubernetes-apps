@@ -11,7 +11,8 @@ set -euo pipefail
 #   2. every collector pod loaded a non-empty component graph containing every component
 #      the module and the fragment declare, in both directions across files,
 #   3. every one of those components reports healthy,
-#   4. the ServiceAccount can watch pods but cannot read secrets or configmaps.
+#   4. the DaemonSet actually covers every node,
+#   5. the ServiceAccount can watch pods but cannot read secrets or configmaps.
 
 NAMESPACE=logging
 SERVICE_ACCOUNT=alloy
@@ -125,7 +126,26 @@ check_components() {
 }
 
 # ----------------------------------------------------------------------------------------
-# 4. RBAC posture.
+# 4. Node coverage.
+#
+# A DaemonSet reports Ready when every pod it *scheduled* is ready, so a node it never
+# scheduled onto at all is invisible: the promtail chart tolerates the control-plane taint
+# by default and the alloy chart does not, which silently left one of CI's three nodes
+# uncollected while both DaemonSets showed green.
+# ----------------------------------------------------------------------------------------
+check_node_coverage() {
+  local nodes desired
+  nodes="$(kubectl get nodes --no-headers | wc -l | tr -d ' ')"
+  desired="$(kubectl get daemonset alloy -n "$NAMESPACE" -o jsonpath='{.status.desiredNumberScheduled}')"
+  if [ "$desired" != "$nodes" ]; then
+    fail "daemonset/alloy is scheduled onto $desired of $nodes nodes - the rest are collecting nothing"
+  else
+    ok "daemonset/alloy is scheduled onto all $nodes nodes"
+  fi
+}
+
+# ----------------------------------------------------------------------------------------
+# 5. RBAC posture.
 #
 # The chart's default rules grant cluster-wide get/list/watch on secrets and configmaps
 # for `remote.kubernetes.*` components this module does not use; promtail granted nothing
@@ -173,6 +193,7 @@ check_rbac() {
 
 check_fragment_injected
 check_components
+check_node_coverage
 check_rbac
 
 if [ "$FAILED" -ne 0 ]; then
