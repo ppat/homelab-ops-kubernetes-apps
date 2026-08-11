@@ -60,8 +60,7 @@ spec:
         enabled: false
       stabilityLevel: generally-available
       storagePath: /var/lib/alloy
-      # Chart default is true, which adds outbound telemetry to Grafana Labs. Promtail
-      # sent none.
+      # Chart default is true, which adds outbound telemetry to Grafana Labs.
       enableReporting: false
       mounts:
         # Nothing in conf.d reads /var/lib/docker/containers. Pod logs are read from
@@ -92,19 +91,55 @@ spec:
           - ALL
         readOnlyRootFilesystem: true
 
+      # Memory is bounded, CPU deliberately is not.
+      #
+      # Sized on the promtail parallel run: steady state measured 107-118Mi per pod, and
+      # the cold-start peak - a fresh state directory, so every discovered file is read
+      # from offset 0 - measured 210Mi. Promtail doing the same work on the same nodes
+      # ranged 75-412Mi, so any limit at or below that is one this workload has already
+      # been observed to exceed. 512Mi is ~2.4x the measured peak and ~4.5x steady state.
+      # The request is raised off the chart's 32Mi default for the same reason: at 32Mi
+      # every pod runs permanently over its request and is a first-choice eviction
+      # candidate on a node under memory pressure.
+      #
+      # Erring towards headroom rather than tightness is the deliberate part.
+      # `loki.write` has no write-ahead log (see prometheusrule-alloy.yaml), so an
+      # OOMKill discards the in-memory queue outright and the replacement pod re-reads
+      # from its last persisted offset - a limit set too low therefore buys nothing and
+      # costs log loss plus a re-read storm, on every node at once.
+      #
+      # No CPU limit: throttling does not kill a log shipper, it makes it lag silently.
+      # Every alert in prometheusrule-alloy.yaml keys off entries STOPPING, not slowing,
+      # so a CPU limit would trade a bounded blast radius for the one failure mode this
+      # module has no way to detect.
+      resources:
+        requests:
+          cpu: 32m
+          memory: 128Mi
+        limits:
+          memory: 512Mi
+
     # `checksum/config` is structurally unreachable while `configMap.create` is false, so
     # a ConfigMap change never rolls the DaemonSet. This sidecar is the only propagation
     # path: it POSTs /-/reload on a change, which reloads in place, and a config that
     # fails to parse is rejected with a 400 while the last valid one keeps running.
     configReloader:
       enabled: true
+      # Measured at 6-7Mi across all four pods; it wakes only when the ConfigMap changes.
+      # The chart's 50Mi request is ~7x that, and it has no limit at all.
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          memory: 64Mi
 
     controller:
       type: daemonset
-      # The promtail chart tolerates these by default; the alloy chart's tolerations
-      # default to [] instead. Without them a tainted control-plane node keeps running
-      # promtail and silently gets no alloy pod at all - a whole node missing from the
-      # equivalence comparison, with a fully Ready DaemonSet either side of it.
+      # The chart's tolerations default to []. Without these a tainted control-plane node
+      # gets no alloy pod at all and its logs are simply never collected - and because a
+      # DaemonSet reports Ready over the pods it SCHEDULED, the DaemonSet stays fully
+      # Ready while a whole node is missing from it.
       tolerations:
       - key: node-role.kubernetes.io/master
         operator: Exists
@@ -181,7 +216,7 @@ spec:
     # The chart default additionally grants cluster-wide get/list/watch on secrets and
     # configmaps (for `remote.kubernetes.*`), plus events, pods/log, namespaces, nodes,
     # nodes/metrics and the prometheus-operator CRDs. This module only runs
-    # `discovery.kubernetes` with role=pod. Promtail granted nothing comparable.
+    # `discovery.kubernetes` with role=pod.
     #
     # The chart concatenates `rules` and `clusterRules` into one ClusterRole and emits
     # invalid YAML if either is `[]` (it renders a bare "[]" as a sequence entry), so the
@@ -199,6 +234,7 @@ spec:
         resources: ["pods"]
         verbs: ["watch"]
 
-    # Parity with promtail; the chart default is false.
+    # Chart default is false, which would leave prometheusrule-alloy.yaml with no metrics
+    # to evaluate.
     serviceMonitor:
       enabled: true

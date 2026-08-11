@@ -6,7 +6,7 @@ set -euo pipefail
 #
 # This exists because every other assertion in ci/test/ is structural: it reads a
 # resource's own status and believes it. A log pipeline is the one place where that is
-# not enough - promtail's DaemonSet stays Ready, Loki's StatefulSet stays Ready, and
+# not enough - the collector's DaemonSet stays Ready, Loki's StatefulSet stays Ready, and
 # Grafana keeps rendering, while a dropped relabel rule or an unexpanded glob quietly
 # collects nothing. The only thing that can distinguish "healthy" from "healthy and
 # actually working" is querying the output side.
@@ -197,7 +197,7 @@ dump_diagnostics() {
   echo >&2
 }
 
-# Log ingestion is asynchronous - promtail batches, and Loki's ingesters are queryable
+# Log ingestion is asynchronous - the collector batches, and Loki's ingesters are queryable
 # only once the write lands. Poll to a deadline rather than sleeping a fixed amount:
 # a fixed sleep is a race that passes on a fast runner and flakes on a slow one, and
 # tuning it upward costs every run the worst case.

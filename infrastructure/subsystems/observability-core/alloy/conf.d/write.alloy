@@ -14,9 +14,5 @@ loki.write "default" {
 		// The node name, injected by the chart from spec.nodeName.
 		// NOT constants.hostname - that is os.Hostname(), i.e. the pod name.
 		host = sys.env("K8S_NODE_NAME"),
-
-		// Temporary: distinguishes Alloy's streams from promtail's during the
-		// parallel run. Removed at cutover.
-		collector = "alloy",
 	}
 }

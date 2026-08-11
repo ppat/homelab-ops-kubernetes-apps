@@ -8,7 +8,6 @@ resources:
 - pvc/
 - minio/
 - loki/
-- promtail/
 - ../../infra-security/infra-security-core.yaml
 - fake-secret-store.yaml
 - minio.yaml

@@ -12,10 +12,10 @@
 # Why each detail is the way it is - these are load-bearing, not incidental:
 #
 # - the three app.kubernetes.io/{name,instance,component} labels carry deliberately
-#   *different* values. promtail derives the `app`, `instance` and `component` Loki
+#   *different* values. The collector derives the `app`, `instance` and `component` Loki
 #   labels from them via three separate relabel rules; if those rules were ever crossed
 #   or collapsed, identical fixture values would hide it and distinct ones cannot.
-# - the container is named `logspewer` because promtail's `filename` label is derived
+# - the container is named `logspewer` because the `filename` label is derived
 #   from the on-disk path /var/log/pods/<ns>_<pod>_<uid>/<container>/<restart>.log,
 #   stripped back to "<container>/<restart>.log" by a regex pipeline stage. The
 #   container name is therefore half the asserted value.
@@ -23,7 +23,7 @@
 #   CRI parsing stage rather than by any relabel rule, and is only proven if it is
 #   observed taking both of its values.
 # - it loops forever instead of emitting once, so the assertion never depends on
-#   promtail having been running (or having replayed the file from offset 0) at the
+#   the collector having been running (or having replayed the file from offset 0) at the
 #   moment the fixture happened to speak.
 # - replicas is 1 so the expected number of Loki streams is exactly two (one per
 #   stream direction), which is what lets the assertion be an equality rather than a

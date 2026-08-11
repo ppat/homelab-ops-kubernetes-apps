@@ -39,5 +39,5 @@ loki.source.journal "journal" {
 	forward_to    = [loki.write.default.receiver]
 
 	// `path` deliberately unset: one component then reads both
-	// /var/log/journal and /run/log/journal, replacing promtail's two jobs.
+	// /var/log/journal and /run/log/journal.
 }

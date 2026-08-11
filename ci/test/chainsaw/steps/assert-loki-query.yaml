@@ -47,10 +47,10 @@ spec:
   - describe:
       apiVersion: apps/v1
       kind: DaemonSet
-      name: promtail
+      name: alloy
       namespace: logging
   - podLogs:
-      selector: app.kubernetes.io/name=promtail
+      selector: app.kubernetes.io/name=alloy
       namespace: logging
       tail: 100
   - podLogs:

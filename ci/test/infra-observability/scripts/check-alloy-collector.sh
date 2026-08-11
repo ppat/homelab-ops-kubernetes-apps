@@ -129,9 +129,9 @@ check_components() {
 # 4. Node coverage.
 #
 # A DaemonSet reports Ready when every pod it *scheduled* is ready, so a node it never
-# scheduled onto at all is invisible: the promtail chart tolerates the control-plane taint
-# by default and the alloy chart does not, which silently left one of CI's three nodes
-# uncollected while both DaemonSets showed green.
+# scheduled onto at all is invisible: the alloy chart's tolerations default to [], which
+# silently left CI's tainted control-plane node uncollected while the DaemonSet showed
+# green.
 # ----------------------------------------------------------------------------------------
 check_node_coverage() {
   local nodes desired
@@ -148,8 +148,7 @@ check_node_coverage() {
 # 5. RBAC posture.
 #
 # The chart's default rules grant cluster-wide get/list/watch on secrets and configmaps
-# for `remote.kubernetes.*` components this module does not use; promtail granted nothing
-# comparable. The module narrows them, and the narrowing is split across rbac.rules and
+# for `remote.kubernetes.*` components this module does not use. The module narrows them, and the narrowing is split across rbac.rules and
 # rbac.clusterRules because the chart renders invalid YAML if either list is empty - so
 # `watch` is asserted too: it lives in the half that a chart change could silently drop.
 # ----------------------------------------------------------------------------------------

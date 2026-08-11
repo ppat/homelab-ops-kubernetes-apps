@@ -1,5 +1,9 @@
 // Pod logs: discovery -> relabel -> file tail -> process -> write.
-// 1:1 reproduction of the promtail `kubernetes-pods` scrape job.
+//
+// The label set these rules produce is a contract with the streams already in Loki, not
+// a free choice: changing any of them gives existing series a new identity rather than
+// extending them, and the dashboards and retention_stream selectors key off the result.
+// `ci/test/infra-observability` asserts the whole set for exact equality.
 
 discovery.kubernetes "pods" {
 	role = "pod"
