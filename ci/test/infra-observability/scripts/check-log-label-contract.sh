@@ -48,10 +48,15 @@ set -euo pipefail
 # real journal. Do not "fix" a future failure by widening or narrowing these sets without
 # deciding which of the two contracts you are changing.
 #
-# `method` and `status` are absent from production too, but for a different reason: only
-# a currently-broken traefik access-log job would produce them. Their absence is asserted
-# explicitly (not merely implied by set equality) so that re-adding them has to be a
-# decision rather than an accident.
+# `method` and `status` are asserted absent for a different reason again. They are real
+# production labels: traefik's access-log pipeline attaches them via `stage.json` +
+# `stage.labels`. But that pipeline lives in a CLUSTER-INJECTED `.alloy` fragment, and
+# Alloy loads the module's own files and those fragments as ONE merged component graph -
+# so a mis-wired `forward_to` in a fragment can route ordinary pod-log entries through the
+# traefik pipeline. This fixture is a plain stdout workload; these two labels turning up on
+# ITS stream is the visible symptom of exactly that cross-contamination, a failure mode
+# this composition design newly introduces. The assertion guards that seam - it is NOT a
+# claim that `method`/`status` exist nowhere.
 #
 # WHICH COLLECTOR - `--collector-label`
 # -------------------------------------
@@ -332,9 +337,9 @@ done
 # ---------------------------------------------------------------------------------
 for absent in method status; do
   if [ "$(label "$absent")" = "<absent>" ]; then
-    echo "ok: '${absent}' is absent, as in production"
+    echo "ok: '${absent}' is absent, as it must be on a plain stdout stream"
   else
-    fail "'${absent}' is present with value '$(label "$absent")'; in production it exists only via a broken traefik access-log job, so adding it must be a decision"
+    fail "'${absent}' is present with value '$(label "$absent")'; this label is produced by traefik's access-log pipeline, which lives in a cluster-injected .alloy fragment - a plain stdout fixture carrying it means a fragment's forward_to is routing pod logs through that pipeline"
   fi
 done
 
