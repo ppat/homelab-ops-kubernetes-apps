@@ -1,0 +1,9 @@
+---
+# Pinned version of the grafana/alloy container image used by
+# ci/scripts/alloy-lint.sh (local pre-commit hooks + CI). Kept in its own file,
+# separate from .pre-commit-config.yaml and .github/workflows/lint.yaml, because
+# Renovate's `# renovate:` comment convention here (see
+# .github/renovate/custom-managers.json) only scans `.ya?ml$` files, and
+# .pre-commit-config.yaml's hook schema has no field to hang the comment on.
+# renovate: datasource=docker depName=grafana/alloy
+version: "v1.11.3"

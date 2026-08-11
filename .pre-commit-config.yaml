@@ -76,3 +76,21 @@ repos:
     - --base-kustomization-file
     - ci/validation/kustomization.yaml
     - --debug
+- repo: local
+  hooks:
+  - id: alloy-fmt
+    name: alloy fmt
+    description: Auto-format Grafana Alloy (.alloy) configuration files
+    entry: ci/scripts/alloy-lint.sh fmt-write
+    language: script
+    files: \.alloy$
+    require_serial: true
+  - id: alloy-validate
+    name: alloy validate
+    description: >-
+      Validate Grafana Alloy (.alloy) configuration directories (component
+      resolution, stability level, duplicate component labels)
+    entry: ci/scripts/alloy-lint.sh validate
+    language: script
+    files: \.alloy$
+    require_serial: true

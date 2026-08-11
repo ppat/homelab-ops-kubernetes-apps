@@ -49,6 +49,35 @@ jobs:
       from: ${{ github.event.pull_request.head.sha || 'HEAD' }}~${{ github.event.pull_request.commits || '1' }}
       to: ${{ github.event.pull_request.head.sha || 'HEAD' }}
 
+  alloy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: 1
+        persist-credentials: false
+
+    # No detect-changes gating: unlike the other lint jobs, this one is cheap even
+    # when unfiltered -- ci/scripts/alloy-lint.sh is itself a no-op when no *.alloy
+    # files exist (see its own guard), so there's no benefit to also skipping via a
+    # files-changed glob here, and one less glob is one less place for path
+    # discovery to silently go stale as .alloy configs move around the repo.
+    - name: alloy fmt --test
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        mapfile -t files < <(git ls-files -- '*.alloy')
+        ./ci/scripts/alloy-lint.sh fmt-check "${files[@]}"
+
+    - name: alloy validate
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        mapfile -t files < <(git ls-files -- '*.alloy')
+        ./ci/scripts/alloy-lint.sh validate "${files[@]}"
+
   github-actions:
     needs: [detect-changes]
     if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).actions_any_changed == 'true' }}
