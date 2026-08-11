@@ -99,10 +99,6 @@ spec:
     use:
       template: ./validate-goldilocks.yaml
 
-  - name: Validate Promtail
-    use:
-      template: ./validate-promtail.yaml
-
   - name: Validate Alloy
     use:
       template: ./validate-alloy.yaml
@@ -128,7 +124,7 @@ spec:
       template: ./validate-syslog-ng.yaml
 
   # The first assertion in this repo that looks at a pipeline's OUTPUT rather than at
-  # resource status. Everything above proves promtail and Loki are running; only this
+  # resource status. Everything above proves Alloy and Loki are running; only this
   # proves a line written by a pod is retrievable from Loki afterwards.
   - name: Validate log collection
     use:
@@ -138,11 +134,9 @@ spec:
         - name: loki_query
           value: '{job="default/logspewer"} |= "chainsaw-logspewer-marker"'
         # One stream per direction of the fixture's output (stdout and stderr). This
-        # selector is deliberately NOT scoped to a collector - it asks only whether
-        # anything at all retrieved these logs - so while promtail and Alloy both run, 2
-        # is a floor rather than the exact count. Exactness is asserted per collector by
-        # the two contract steps below, which is where a collector that shipped nothing
-        # is actually caught.
+        # step asks only whether anything at all retrieved these logs; the contract step
+        # below asserts the count exactly, which is where a collector that shipped
+        # nothing or fragmented the fixture's identity is actually caught.
         - name: loki_min_streams
           value: "2"
         - name: loki_diagnostic_match
@@ -153,40 +147,6 @@ spec:
   # Runs after the retrievability check above deliberately: if nothing was collected at
   # all, that step says so in one line, instead of this one reporting twelve simultaneous
   # label failures for a single root cause.
-  - name: Validate log-label contract (promtail)
+  - name: Validate log-label contract
     use:
       template: ./validate-log-label-contract.yaml
-      with:
-        bindings:
-        # Empty on purpose - it is the LogQL matcher `collector=""`, which selects the
-        # streams that carry no `collector` label, i.e. promtail's. Alloy tags its own
-        # with collector="alloy" for the duration of the parallel run, so without this
-        # the fixture's streams from both collectors would be asserted as one set.
-        - name: collector_label
-          value: ""
-        - name: collector_name
-          value: promtail
-        - name: collector_config_map
-          value: promtail
-
-  # The other half of the equivalence check, and the reason the migration's success
-  # criterion is machine-checked rather than eyeballed: the SAME contract, against the
-  # SAME fixture pod on the SAME node, for the streams Alloy pushed. The expected label
-  # set is promtail's plus `collector`, derived inside the script from
-  # --collector-label being non-empty - so the two runs cannot drift apart by editing
-  # one list and forgetting the other.
-  #
-  # Alloy is asserted after promtail rather than before on purpose. Alloy is the new
-  # collector; if BOTH fail, the promtail result is what tells you whether the fixture,
-  # Loki or the query broke instead, and chainsaw stops at the first failing step.
-  - name: Validate log-label contract (alloy)
-    use:
-      template: ./validate-log-label-contract.yaml
-      with:
-        bindings:
-        - name: collector_label
-          value: alloy
-        - name: collector_name
-          value: alloy
-        - name: collector_config_map
-          value: alloy-config

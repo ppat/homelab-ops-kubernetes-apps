@@ -1,6 +1,0 @@
----
-config:
-  snippets:
-    # yamllint disable-line rule:indentation
-    extraScrapeConfigs: |-
-      # put your scrape configs here

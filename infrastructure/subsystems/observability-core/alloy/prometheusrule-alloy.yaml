@@ -1,7 +1,7 @@
 ---
 # ------------------------------------------------------------------------------------
-# Standalone because the alloy chart, unlike the promtail chart, has no
-# `serviceMonitor.prometheusRule` key to inline these under.
+# Standalone because the alloy chart has no `serviceMonitor.prometheusRule` key to inline
+# these under.
 #
 # There is deliberately no "config failed to load" alert: alloy v1.18.1 has no
 # config-load-success metric - reload errors are surfaced as component diagnostics and

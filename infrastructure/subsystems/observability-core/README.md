@@ -18,8 +18,7 @@ The observability-core module provides these capabilities:
 
 2. Log Management
    - Centralized log aggregation with Loki
-   - Log collection and shipping with Promtail
-   - Log collection and shipping with Grafana Alloy, running alongside Promtail
+   - Log collection and shipping with Grafana Alloy
    - Journal and container log collection from every node
    - S3-compatible storage backend
    - Stream-specific retention policies
@@ -83,7 +82,6 @@ flowchart TB
 
     %% Logging Components
     loki[Loki]:::logs
-    promtail[Promtail]:::logs
     alloy[Grafana Alloy]:::logs
 
     %% Visualization
@@ -98,9 +96,7 @@ flowchart TB
     end
 
     %% Data Flow Relationships
-    container_logs & journal_logs --> promtail
     container_logs & journal_logs --> alloy
-    promtail --> loki
     alloy --> loki
     loki --> s3_bucket
     loki -- "sends alerts via ruler" --> alertmanager
@@ -140,9 +136,8 @@ flowchart TB
 | ----------- | ------------- | ------------------- |
 | Prometheus | Metrics collection and storage | • Collects metrics via ServiceMonitors and PodMonitors<br>• Stores metrics in persistent storage with configurable retention<br>• Evaluates alerting rules and sends alerts to AlertManager<br>• Provides query interface for metrics access |
 | AlertManager | Alert routing and management | • Receives alerts from Prometheus rule evaluations<br>• Receives alerts from Loki rule evaluations<br>• Routes and groups alerts based on defined rules<br>• Manages notification delivery to configured channels |
-| Promtail | Log collection agent | • Discovers and tails container log files on nodes<br>• Attaches labels to log streams based on Kubernetes metadata<br>• Ships logs to Loki for storage<br>• Supports various log formats and compression |
-| Grafana Alloy | Log collection agent, successor to Promtail | • Discovers and tails container log files on nodes, reproducing Promtail's label set<br>• Reads the systemd journal from both `/run/log/journal` and `/var/log/journal`<br>• Ships logs to Loki for storage<br>• Accepts additional collection jobs injected by the consuming cluster<br>• Exposes its own metrics via ServiceMonitor and alerts via PrometheusRule |
-| Loki | Log aggregation and storage | • Receives logs from Promtail and Grafana Alloy agents<br>• Stores logs in S3-compatible storage<br>• Evaluates log-based alerting rules<br>• Provides LogQL query interface |
+| Grafana Alloy | Log collection agent | • Discovers and tails container log files on every node<br>• Attaches labels to log streams based on Kubernetes metadata<br>• Reads the systemd journal from both `/run/log/journal` and `/var/log/journal`<br>• Ships logs to Loki for storage<br>• Accepts additional collection jobs injected by the consuming cluster<br>• Exposes its own metrics via ServiceMonitor and alerts via PrometheusRule |
+| Loki | Log aggregation and storage | • Receives logs from the Grafana Alloy agents<br>• Stores logs in S3-compatible storage<br>• Evaluates log-based alerting rules<br>• Provides LogQL query interface |
 | K3s Monitoring | K3s-specific monitoring | • Collects metrics from K3s unified binary<br>• Provides custom alerting rules for K3s components<br>• Includes specialized dashboards for K3s architecture<br>• Replaces standard Kubernetes monitoring |
 | Grafana | Observability platform | • Provides unified visualization of metrics and logs<br>• Auto-discovers and provisions dashboards from ConfigMaps<br>• Manages alert rules and notifications<br>• Supports SSO integration and user management |
 | Goldilocks | Resource optimization visualization | • Integrates with external VPA installation<br>• Exposes dashboard at goldilocks.${domain_name}<br>• Uses websecure entrypoint with TLS<br>• Provides resource usage insights<br>• Runs with specific resource limits |
@@ -254,17 +249,19 @@ flowchart TB
 
 ## Notes
 
-- **Grafana Alloy runs alongside Promtail, not instead of it.** Promtail is end-of-life and its chart is frozen
-  upstream; Alloy is its successor and reproduces its label set exactly (`app`, `component`, `container`,
+- **The pushed label set is a contract, not a free choice.** Alloy pushes `app`, `component`, `container`,
   `filename`, `host`, `instance`, `job`, `namespace`, `node_name`, `pod`, `service_name`, `severity`, `stream`,
-  `syslog_identifier`, `systemd_unit`). Both collectors ship the same logs during a parallel equivalence
-  comparison; Alloy additionally sets a temporary `collector="alloy"` label so its streams can be told apart.
-  Promtail is removed once the comparison is complete, at which point that label goes too.
-  That equivalence is machine-checked, not eyeballed: `ci/test/infra-observability` runs the same log-label
-  contract assertion twice against one fixture pod - once for `collector=""` (Promtail) and once for
-  `collector="alloy"` - and requires exact label-set equality in both, differing only by `collector` itself.
-  The three journal-only labels (`severity`, `syslog_identifier`, `systemd_unit`) are out of scope there
-  because kind nodes have no systemd journal to read.
+  `syslog_identifier` and `systemd_unit`. Changing any of them gives the existing Loki series a new identity
+  rather than extending it, and breaks the dashboards and `retention_stream` selectors that key off them -
+  which is also why no `collector`-style marker label is pushed. `ci/test/infra-observability` asserts the set
+  for exact equality against a fixture pod, so a leaked extra label fails as loudly as a missing one. The three
+  journal-only labels (`severity`, `syslog_identifier`, `systemd_unit`) are out of scope there because kind
+  nodes have no systemd journal to read.
+- **Alloy has a memory limit but deliberately no CPU limit.** The limit is sized on measured usage with
+  headroom, because `loki.write` has no write-ahead log: an OOMKill discards the in-memory queue and the
+  replacement pod re-reads from its last persisted offset. A CPU limit is omitted because throttling a log
+  shipper does not kill it, it makes it lag silently - and every alert in `prometheusrule-alloy.yaml` keys off
+  entries stopping rather than slowing.
 - **A healthy Alloy pod is weak evidence.** Several ways of misconfiguring this collector produce a Ready pod
   that exits 0, logs nothing, and collects nothing or drops a label: a symlinked config path loads zero
   components; a missing `K8S_NODE_NAME` drops the `host` label; a missing journal GID leaves the journal reader

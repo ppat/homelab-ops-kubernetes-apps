@@ -1,4 +1,7 @@
 ---
+# Alloy is the only chart in this module sourced from grafana.github.io; loki and grafana
+# come from grafana-community-repository instead. That split is why two Grafana-run chart
+# repositories sit side by side here.
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:

@@ -10,7 +10,6 @@ resources:
 - kube-prometheus-stack/
 - k3s-monitoring/
 - loki/
-- promtail/
 - alloy/
 - grafana/
 - goldilocks/

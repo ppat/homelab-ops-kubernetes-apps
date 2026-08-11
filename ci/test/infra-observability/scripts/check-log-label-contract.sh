@@ -15,7 +15,7 @@ set -euo pipefail
 # WHICH ENDPOINT, AND WHY TWO
 # ---------------------------
 # Not /loki/api/v1/labels: that reports the union over every stream in the cluster -
-# promtail's own logs, kube-system, Loki, Prometheus, MinIO. It can neither gain nor
+# the collector's own logs, kube-system, Loki, Prometheus, MinIO. It can neither gain nor
 # lose a label because of what happened to OUR fixture, so equality against it would be
 # both meaningless and flaky.
 #
@@ -39,10 +39,10 @@ set -euo pipefail
 #   app component container filename host instance job namespace node_name pod
 #   service_name severity stream syslog_identifier systemd_unit
 #
-# The last three - severity, syslog_identifier, systemd_unit - come ONLY from promtail's
-# two `journal` scrape jobs. kind nodes have no systemd journal (nothing to read under
-# /run/log/journal or /var/log/journal), so those jobs collect nothing here and those
-# labels cannot appear no matter how correct the config is. They are deliberately
+# The last three - severity, syslog_identifier, systemd_unit - come ONLY from the
+# `loki.source.journal` component in journal.alloy. kind nodes have no systemd journal
+# (nothing to read under /run/log/journal or /var/log/journal), so it collects nothing here
+# and those labels cannot appear no matter how correct the config is. They are deliberately
 # excluded below, and this layer therefore asserts the POD-LOG contract only - the part
 # kind can actually prove. Journal behaviour is validated separately against a VM with a
 # real journal. Do not "fix" a future failure by widening or narrowing these sets without
@@ -58,25 +58,15 @@ set -euo pipefail
 # this composition design newly introduces. The assertion guards that seam - it is NOT a
 # claim that `method`/`status` exist nowhere.
 #
-# WHICH COLLECTOR - `--collector-label`
-# -------------------------------------
-# During the Promtail->Alloy migration both collectors read the same pod logs, so the
-# fixture produces two sets of streams and a `{job=...}` selector alone would match both.
-# Set equality would then fail for a reason that has nothing to do with the contract. The
-# collector under test is therefore isolated by the temporary `collector` external label
-# that Alloy sets and promtail does not:
-#
-#   --collector-label=alloy   ->  {job="...", collector="alloy"}   Alloy's streams
-#   --collector-label=        ->  {job="...", collector=""}        promtail's streams
-#
-# LogQL's empty-string matcher matches streams where the label is ABSENT as well as empty,
-# so the second form selects promtail both now and before Alloy exists, and keeps working
-# unchanged after cutover removes the `collector` label from Alloy altogether. Do not
-# delete it as redundant-looking noise.
-#
-# A non-empty --collector-label is also an assertion in its own right: the label joins the
-# expected sets below and its value is checked, so a collector that stops marking its
-# streams fails here rather than silently merging into the other one's.
+# NO COLLECTOR SELECTOR
+# ---------------------
+# `{job="default/logspewer"}` matches the fixture's streams and nothing else, because
+# exactly one collector reads these logs. There was briefly a second - a `collector`
+# external label isolated Alloy's streams from Promtail's while the two ran in parallel -
+# and that label is now asserted ABSENT below rather than matched on. Reintroducing a
+# selector for a collector that is not running is the specific way this file goes
+# quietly wrong: a matcher that resolves to no streams makes every assertion below true
+# for free.
 #
 # WHAT WOULD MAKE THIS VACUOUS - `--collector-name`
 # -------------------------------------------------
@@ -95,21 +85,12 @@ set -euo pipefail
 #      nothing", which reads like a slow pipeline rather than a node with no collector on
 #      it.
 
-# --collector-label is required but legitimately EMPTY for promtail - hence a sentinel
-# rather than "", so an omitted flag cannot masquerade as the promtail case and quietly
-# assert the wrong thing.
-COLLECTOR_LABEL_UNSET="<unset>"
-COLLECTOR_LABEL="$COLLECTOR_LABEL_UNSET"
 COLLECTOR_NAME=""
 COLLECTOR_NAMESPACE="logging"
 
 for param in "$@"
 do
   case $param in
-    --collector-label=*)
-      COLLECTOR_LABEL="${param#*=}"
-      shift
-      ;;
     --collector-name=*)
       COLLECTOR_NAME="${param#*=}"
       shift
@@ -121,10 +102,6 @@ do
   esac
 done
 
-if [ "$COLLECTOR_LABEL" = "$COLLECTOR_LABEL_UNSET" ]; then
-  echo "--collector-label=<value> is required; pass it empty for a collector that sets no 'collector' label" >&2
-  exit 1
-fi
 if [ -z "$COLLECTOR_NAME" ]; then
   echo "--collector-name=<app.kubernetes.io/name> is required" >&2
   exit 1
@@ -140,13 +117,6 @@ MARKER="chainsaw-logspewer-marker"
 # What the collector pushes, as seen through /series. This is the list the production
 # contract is actually about.
 PUSHED_LABELS="app component container filename host instance job namespace node_name pod service_name stream"
-
-# The migration marker is a pushed label like any other, so a collector that sets one has
-# to declare it here or fail set equality - which is the point: it keeps the temporary
-# label visible in the contract instead of exempt from it.
-if [ -n "$COLLECTOR_LABEL" ]; then
-  PUSHED_LABELS="${PUSHED_LABELS} collector"
-fi
 
 # What a query returns: the pushed set plus what Loki adds on its own.
 #   service_name  - already in the pushed set above because Loki writes it as a real
@@ -252,13 +222,11 @@ if [ -z "$COLLECTOR_PODS_ON_NODE" ]; then
 fi
 echo "collector: ${COLLECTOR_NAME} running on the fixture's node as ${COLLECTOR_PODS_ON_NODE% }"
 
-# `collector=""` is not redundant: it isolates the collector under test while promtail and
-# Alloy both read this fixture (see the --collector-label note in the header). An empty
-# matcher selects streams where the label is absent, i.e. promtail's, and keeps doing so
-# after cutover drops the label entirely.
-SELECTOR="{job=\"${FIXTURE_NAMESPACE}/${FIXTURE_APP}\", collector=\"${COLLECTOR_LABEL}\"}"
+# Deliberately unqualified by collector - see the header. One collector reads this
+# fixture, so this selects everything it pushed and the exact-count assertion below turns
+# "the collector stopped shipping" into a failure instead of a vacuous pass.
+SELECTOR="{job=\"${FIXTURE_NAMESPACE}/${FIXTURE_APP}\"}"
 QUERY="${SELECTOR} |= \"${MARKER}\""
-echo "collector under assertion: '${COLLECTOR_LABEL:-<none: the collector that sets no marker>}'"
 
 # ---------------------------------------------------------------------------------
 # Fetch the fixture's streams, both views.
@@ -326,9 +294,9 @@ expect "job" "$(label job)" "${FIXTURE_NAMESPACE}/${FIXTURE_APP}"
 # is present and working. Unstripped, this would be the full host path.
 expect "filename" "$(label filename)" "${FIXTURE_CONTAINER}/0.log"
 
-# `host` is the NODE name (promtail's -client.external-labels=host=$(HOSTNAME), where the
-# chart wires HOSTNAME to fieldRef spec.nodeName), not the pod name and not the
-# collector pod's name.
+# `host` is the NODE name - write.alloy sets it from the K8S_NODE_NAME env var, which the
+# chart wires to fieldRef spec.nodeName - not the pod name and not the collector pod's
+# name.
 expect "host" "$(label host)" "$FIXTURE_NODE"
 if [ "$(label host)" = "$FIXTURE_POD" ]; then
   fail "host is the POD name, not the node name - the exact downward-API mix-up this check exists for"
@@ -352,16 +320,6 @@ expect "component" "$(label component)" "$FIXTURE_COMPONENT"
 # selectors and the dashboards key off it, and it silently changes if `app` stops being
 # pushed.
 expect "service_name" "$(label service_name)" "$FIXTURE_APP"
-
-# The migration marker itself. Asserted in both directions: for the collector that is
-# supposed to set it, that it carries the expected value; for the one that is not, that it
-# is absent - because if that ever stopped being true, `collector=""` would stop isolating
-# one collector and this run would be asserting against a mixture of both.
-if [ -n "$COLLECTOR_LABEL" ]; then
-  expect "collector" "$(label collector)" "$COLLECTOR_LABEL"
-else
-  expect "collector" "$(label collector)" "<absent>"
-fi
 
 # `stream` is produced by the CRI parsing stage, not by any relabel rule, so it is only
 # proven by observing BOTH of its values.
@@ -394,6 +352,17 @@ for absent in method status; do
     fail "'${absent}' is present with value '$(label "$absent")'; this label is produced by traefik's access-log pipeline, which lives in a cluster-injected .alloy fragment - a plain stdout fixture carrying it means a fragment's forward_to is routing pod logs through that pipeline"
   fi
 done
+
+# `collector` was a temporary external label that distinguished Alloy's streams from
+# Promtail's during the migration. It is gone, and it has to stay gone: while it is set,
+# every stream Alloy pushes carries it, and Alloy's series never rejoin the historical
+# ones it is supposed to be continuing. Asserted here rather than left to set equality
+# above so that the reason survives an edit to the expected sets.
+if [ "$(label collector)" = "<absent>" ]; then
+  echo "ok: 'collector' is absent - the migration marker is not being pushed"
+else
+  fail "'collector' is present with value '$(label collector)'; this was a temporary migration label and must not be reintroduced - it permanently forks every stream away from its historical series"
+fi
 
 if [ "$FAILED" -ne 0 ]; then
   echo "log-label contract violated (see FAIL lines above)" >&2
