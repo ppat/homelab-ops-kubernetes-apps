@@ -1,10 +1,10 @@
 ---
 # Pinned version of the grafana/alloy container image used by
-# ci/scripts/alloy-lint.sh (local pre-commit hooks + CI). Kept in its own file,
-# separate from .pre-commit-config.yaml and .github/workflows/lint.yaml, because
+# ci/scripts/alloy-lint.sh, called from the `alloy` job in
+# .github/workflows/lint.yaml. Kept in its own file, separate from lint.yaml, because
 # Renovate's `# renovate:` comment convention here (see
-# .github/renovate/custom-managers.json) only scans `.ya?ml$` files, and
-# .pre-commit-config.yaml's hook schema has no field to hang the comment on.
+# .github/renovate/custom-managers.json) only scans `.ya?ml$` files on a plain
+# `key: "value"` line, which a workflow's `run:` shell block can't satisfy.
 #
 # Must track the Alloy *appVersion* actually deployed by
 # infrastructure/subsystems/observability-core/alloy/helm-release-alloy.yaml's chart

@@ -5,9 +5,15 @@
 # chainsaw module tests already require (see TESTING.md).
 #
 # Usage:
-#   alloy-lint.sh fmt-write <file>...   # auto-format in place (local pre-commit hook)
 #   alloy-lint.sh fmt-check <file>...   # fail if formatting would change a file (CI)
 #   alloy-lint.sh validate  <file>...   # validate all given files as one merged unit
+#
+# Both modes are driven by the `alloy` CI job in .github/workflows/lint.yaml -- there
+# is no local pre-commit hook (this repo's primary dev environment has no Docker, and
+# the shared lint-pre-commit reusable workflow only runs a fixed hardcoded hook-id
+# list, so a local hook here would get zero CI coverage anyway; see the `alloy` job's
+# comments). There is deliberately no `fmt-write` mode: it existed only to back that
+# hook, and Docker's absence locally means nothing could actually call it.
 #
 # `validate` merges every given file into one scratch directory and validates that as
 # a single unit, rather than per-file or per-git-parent-directory. Our .alloy configs
@@ -46,13 +52,12 @@ alloy_image="grafana/alloy:${alloy_version}"
 # (`--stability.level=generally-available`); keep in sync with that HelmRelease.
 stability_level="generally-available"
 
-mode="${1:?usage: alloy-lint.sh <fmt-write|fmt-check|validate> <file>...}"
+mode="${1:?usage: alloy-lint.sh <fmt-check|validate> <file>...}"
 shift
 
-# pre-commit already skips this hook entirely when no *.alloy files match (see the
-# `files:` regex in .pre-commit-config.yaml) and the CI job skips its steps the same
-# way (see .github/workflows/lint.yaml) -- this guard just makes direct/manual
-# invocation with no files a no-op instead of an error.
+# The CI job already skips its steps entirely when no *.alloy files are matched by
+# detect-changes (see .github/workflows/lint.yaml) -- this guard just makes direct/
+# manual invocation with no files a no-op instead of an error.
 if [[ $# -eq 0 ]]; then
   echo "alloy-lint.sh: no files given, nothing to do"
   exit 0
@@ -68,11 +73,6 @@ run_alloy() {
 }
 
 case "${mode}" in
-fmt-write)
-  for f in "$@"; do
-    run_alloy fmt --write "${f}"
-  done
-  ;;
 fmt-check)
   for f in "$@"; do
     run_alloy fmt --test "${f}"
@@ -80,7 +80,7 @@ fmt-check)
   ;;
 validate)
   # `run_alloy` only bind-mounts $(pwd) into the container, so the scratch dir must be
-  # a child of $(pwd) (repo root, in both CI and pre-commit) to be visible inside it.
+  # a child of $(pwd) (the repo root in CI) to be visible inside it.
   scratch="$(mktemp -d -p "$(pwd)" .alloy-lint-validate.XXXXXX)"
   trap 'rm -rf "${scratch}"' EXIT
   for f in "$@"; do
@@ -95,7 +95,7 @@ validate)
   run_alloy validate --stability.level="${stability_level}" "$(basename -- "${scratch}")"
   ;;
 *)
-  echo "alloy-lint.sh: unknown mode '${mode}' (expected fmt-write, fmt-check, or validate)" >&2
+  echo "alloy-lint.sh: unknown mode '${mode}' (expected fmt-check or validate)" >&2
   exit 1
   ;;
 esac
