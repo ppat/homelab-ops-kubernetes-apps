@@ -9,7 +9,7 @@ config:
           {{- toYaml .Values.config.snippets.pipelineStages | nindent 4 }}
           - regex:
               source: filename
-              expression: "(?P<stripped_filename>.*)"
+              expression: "/var/log/pods/[^/]+/(?P<stripped_filename>.*)"
           - labels:
               filename: stripped_filename
         kubernetes_sd_configs:
