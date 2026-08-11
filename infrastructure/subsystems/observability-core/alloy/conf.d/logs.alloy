@@ -40,16 +40,6 @@ discovery.relabel "pod_logs" {
 	}
 
 	rule {
-		action = "replace"
-		source_labels = [
-			"__meta_kubernetes_pod_label_app_kubernetes_io_component",
-			"__meta_kubernetes_pod_label_component",
-		]
-		regex        = "^;*([^;]+)(;.*)?$"
-		target_label = "component"
-	}
-
-	rule {
 		action        = "replace"
 		source_labels = ["__meta_kubernetes_pod_node_name"]
 		target_label  = "node_name"
