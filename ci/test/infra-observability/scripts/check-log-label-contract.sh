@@ -52,6 +52,50 @@ set -euo pipefail
 # a currently-broken traefik access-log job would produce them. Their absence is asserted
 # explicitly (not merely implied by set equality) so that re-adding them has to be a
 # decision rather than an accident.
+#
+# WHICH COLLECTOR - `--collector-label`
+# -------------------------------------
+# During the Promtail->Alloy migration both collectors read the same pod logs, so the
+# fixture produces two sets of streams and a `{job=...}` selector alone would match both.
+# Set equality would then fail for a reason that has nothing to do with the contract. The
+# collector under test is therefore isolated by the temporary `collector` external label
+# that Alloy sets and promtail does not:
+#
+#   --collector-label=alloy   ->  {job="...", collector="alloy"}   Alloy's streams
+#   --collector-label=        ->  {job="...", collector=""}        promtail's streams
+#
+# LogQL's empty-string matcher matches streams where the label is ABSENT as well as empty,
+# so the second form selects promtail both now and before Alloy exists, and keeps working
+# unchanged after cutover removes the `collector` label from Alloy altogether. Do not
+# delete it as redundant-looking noise.
+#
+# A non-empty --collector-label is also an assertion in its own right: the label joins the
+# expected sets below and its value is checked, so a collector that stops marking its
+# streams fails here rather than silently merging into the other one's.
+
+# Required, but legitimately empty for promtail - hence a sentinel rather than "", so an
+# omitted flag cannot masquerade as the promtail case and quietly assert the wrong thing.
+COLLECTOR_LABEL_UNSET="<unset>"
+COLLECTOR_LABEL="$COLLECTOR_LABEL_UNSET"
+
+for param in "$@"
+do
+  case $param in
+    --collector-label=*)
+      COLLECTOR_LABEL="${param#*=}"
+      shift
+      ;;
+    *)
+      echo "Unknown parameter: $param" >&2
+      exit 1
+      ;;
+  esac
+done
+
+if [ "$COLLECTOR_LABEL" = "$COLLECTOR_LABEL_UNSET" ]; then
+  echo "--collector-label=<value> is required; pass it empty for a collector that sets no 'collector' label" >&2
+  exit 1
+fi
 
 FIXTURE_NAMESPACE="default"
 FIXTURE_APP="logspewer"
@@ -63,6 +107,13 @@ MARKER="chainsaw-logspewer-marker"
 # What the collector pushes, as seen through /series. This is the list the production
 # contract is actually about.
 PUSHED_LABELS="app component container filename host instance job namespace node_name pod service_name stream"
+
+# The migration marker is a pushed label like any other, so a collector that sets one has
+# to declare it here or fail set equality - which is the point: it keeps the temporary
+# label visible in the contract instead of exempt from it.
+if [ -n "$COLLECTOR_LABEL" ]; then
+  PUSHED_LABELS="${PUSHED_LABELS} collector"
+fi
 
 # What a query returns: the pushed set plus what Loki adds on its own.
 #   service_name  - already in the pushed set above because Loki writes it as a real
@@ -144,8 +195,13 @@ if [ "$FIXTURE_NODE" = "$FIXTURE_POD" ]; then
   exit 1
 fi
 
-SELECTOR="{job=\"${FIXTURE_NAMESPACE}/${FIXTURE_APP}\"}"
+# `collector=""` is not redundant: it isolates the collector under test while promtail and
+# Alloy both read this fixture (see the --collector-label note in the header). An empty
+# matcher selects streams where the label is absent, i.e. promtail's, and keeps doing so
+# after cutover drops the label entirely.
+SELECTOR="{job=\"${FIXTURE_NAMESPACE}/${FIXTURE_APP}\", collector=\"${COLLECTOR_LABEL}\"}"
 QUERY="${SELECTOR} |= \"${MARKER}\""
+echo "collector under assertion: '${COLLECTOR_LABEL:-<none: the collector that sets no marker>}'"
 
 # ---------------------------------------------------------------------------------
 # Fetch the fixture's streams, both views.
@@ -239,6 +295,16 @@ expect "component" "$(label component)" "$FIXTURE_COMPONENT"
 # selectors and the dashboards key off it, and it silently changes if `app` stops being
 # pushed.
 expect "service_name" "$(label service_name)" "$FIXTURE_APP"
+
+# The migration marker itself. Asserted in both directions: for the collector that is
+# supposed to set it, that it carries the expected value; for the one that is not, that it
+# is absent - because if that ever stopped being true, `collector=""` would stop isolating
+# one collector and this run would be asserting against a mixture of both.
+if [ -n "$COLLECTOR_LABEL" ]; then
+  expect "collector" "$(label collector)" "$COLLECTOR_LABEL"
+else
+  expect "collector" "$(label collector)" "<absent>"
+fi
 
 # `stream` is produced by the CRI parsing stage, not by any relabel rule, so it is only
 # proven by observing BOTH of its values.

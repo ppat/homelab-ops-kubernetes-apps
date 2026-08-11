@@ -146,6 +146,14 @@ spec:
   # Runs after the retrievability check above deliberately: if nothing was collected at
   # all, that step says so in one line, instead of this one reporting twelve simultaneous
   # label failures for a single root cause.
-  - name: Validate log-label contract
+  - name: Validate log-label contract (promtail)
     use:
       template: ./validate-log-label-contract.yaml
+      with:
+        bindings:
+        # Empty on purpose - it is the LogQL matcher `collector=""`, which selects the
+        # streams that carry no `collector` label, i.e. promtail's. Alloy tags its own
+        # with collector="alloy" for the duration of the parallel run, so without this
+        # the fixture's streams from both collectors would be asserted as one set.
+        - name: collector_label
+          value: ""
