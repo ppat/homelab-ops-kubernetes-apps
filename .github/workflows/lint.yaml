@@ -23,6 +23,11 @@ jobs:
       files_yaml: |
         actions:
         - .github/workflows/**
+        alloy:
+        - '**/*.alloy'
+        - ci/scripts/alloy-lint.sh
+        - ci/scripts/alloy-lint-version.yaml
+        - .github/workflows/lint.yaml
         kubernetes:
         - 'apps/**/*.yaml'
         - 'ci/**/*.yaml'
@@ -50,6 +55,8 @@ jobs:
       to: ${{ github.event.pull_request.head.sha || 'HEAD' }}
 
   alloy:
+    needs: [detect-changes]
+    if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).alloy_any_changed == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -59,11 +66,14 @@ jobs:
         fetch-depth: 1
         persist-credentials: false
 
-    # No detect-changes gating: unlike the other lint jobs, this one is cheap even
-    # when unfiltered -- ci/scripts/alloy-lint.sh is itself a no-op when no *.alloy
-    # files exist (see its own guard), so there's no benefit to also skipping via a
-    # files-changed glob here, and one less glob is one less place for path
-    # discovery to silently go stale as .alloy configs move around the repo.
+    # Whether this job runs at all is gated by detect-changes (above), scoped to a
+    # broad **/*.alloy glob plus this gate's own inputs (alloy-lint.sh, the version
+    # pin, this workflow file) so a change to the gate is always exercised by the PR
+    # that makes it. What it checks once running is a separate concern: each step
+    # below still discovers every *.alloy file in the repo via git ls-files, not just
+    # the changed ones -- alloy validate operates on a directory as one merged unit
+    # (see ci/scripts/alloy-lint.sh), so a partial file list produces false
+    # "component does not exist" errors for cross-file references.
     - name: alloy fmt --test
       shell: bash
       # yamllint disable-line rule:indentation
