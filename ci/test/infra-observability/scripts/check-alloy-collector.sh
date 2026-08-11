@@ -8,19 +8,16 @@ set -euo pipefail
 #
 # Checked here, in order:
 #   1. the cluster-injected fragment landed in the ConfigMap byte-for-byte,
-#   2. the running collector loaded a non-empty component graph containing every
-#      component the module and the fragment declare, in both directions across files,
+#   2. every collector pod loaded a non-empty component graph containing every component
+#      the module and the fragment declare, in both directions across files,
 #   3. every one of those components reports healthy,
 #   4. the ServiceAccount can watch pods but cannot read secrets or configmaps.
 
 NAMESPACE=logging
-DAEMONSET=alloy
 SERVICE_ACCOUNT=alloy
 CONFIG_MAP=alloy-config
 FRAGMENT_KEY=cluster-pvc-logs.alloy
 FRAGMENT_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/pre-requisites/alloy/conf.d/${FRAGMENT_KEY}"
-# Pinned to the same digest the module's own initContainer uses.
-BUSYBOX_IMAGE="busybox@sha256:dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616"
 
 FAILED=0
 
@@ -62,24 +59,16 @@ check_fragment_injected() {
 # components, exits 0, logs neither an error nor a warning, and passes every readiness
 # probe. Asserting on the component list is the only way to see it.
 # ----------------------------------------------------------------------------------------
+# Read through the API server's pod proxy rather than from a throwaway curl pod: no extra
+# image, no attach race, and one call per pod so every node's collector is checked, not
+# just whichever one a Service happened to route to.
 fetch_components() {
-  local endpoint="http://${DAEMONSET}.${NAMESPACE}.svc.cluster.local:12345/api/v0/web/components"
-  kubectl run "alloy-component-probe-$$" \
-    --namespace "$NAMESPACE" \
-    --image "$BUSYBOX_IMAGE" \
-    --restart Never \
-    --rm \
-    --attach \
-    --quiet \
-    --command -- wget -q -O - "$endpoint"
+  local pod="$1"
+  kubectl get --raw "/api/v1/namespaces/${NAMESPACE}/pods/${pod}:12345/proxy/api/v0/web/components"
 }
 
 check_components() {
-  local components expected_components component entry health
-  if ! components="$(fetch_components)"; then
-    fail "could not reach the alloy component API"
-    return
-  fi
+  local pods pod components expected_components component entry health
 
   expected_components=(
     # Declared by the module (conf.d/*.alloy).
@@ -98,26 +87,40 @@ check_components() {
     "loki.process.cluster_pvc_logs"
   )
 
-  # One component object per line so localID and its own health can be read together.
-  # shellcheck disable=SC2001  # bash parameter expansion cannot insert a newline here
-  components="$(echo "$components" | sed 's/{"name":"/\n{"name":"/g')"
+  pods="$(kubectl get pods -n "$NAMESPACE" -l app.kubernetes.io/name=alloy \
+    -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')"
+  if [ -z "$pods" ]; then
+    fail "no alloy pods found in namespace $NAMESPACE"
+    return
+  fi
 
-  for component in "${expected_components[@]}"; do
-    entry="$(echo "$components" | grep -F "\"localID\":\"${component}\"" | head -1 || true)"
-    if [ -z "$entry" ]; then
-      fail "component $component is not loaded - the collector is running with an incomplete graph"
+  for pod in $pods; do
+    if ! components="$(fetch_components "$pod")"; then
+      fail "could not reach the component API of pod/$pod"
       continue
     fi
-    # An unhealthy loki.write or loki.source.file means logs are being dropped while the
-    # DaemonSet stays Ready, so health is asserted for every component including the
-    # journal reader (which reports healthy even on a node with no systemd at all - it
-    # simply returns nothing, which is why the pod's own health proves so little here).
-    health="$(echo "$entry" | grep -o '"state":"[a-z]*"' | head -1 || true)"
-    if [ "$health" != '"state":"healthy"' ]; then
-      fail "component $component is not healthy: ${health:-<no health reported>}"
-    else
-      ok "component $component loaded and healthy"
-    fi
+
+    # One component object per line so localID and its own health can be read together.
+    # shellcheck disable=SC2001  # bash parameter expansion cannot insert a newline here
+    components="$(echo "$components" | sed 's/{"name":"/\n{"name":"/g')"
+
+    for component in "${expected_components[@]}"; do
+      entry="$(echo "$components" | grep -F "\"localID\":\"${component}\"" | head -1 || true)"
+      if [ -z "$entry" ]; then
+        fail "pod/$pod has not loaded component $component - it is running with an incomplete graph"
+        continue
+      fi
+      # An unhealthy loki.write or loki.source.file means logs are being dropped while the
+      # DaemonSet stays Ready, so health is asserted for every component including the
+      # journal reader (which reports healthy even on a node with no systemd at all - it
+      # simply returns nothing, which is why the pod's own health proves so little here).
+      health="$(echo "$entry" | grep -o '"state":"[a-z]*"' | head -1 || true)"
+      if [ "$health" != '"state":"healthy"' ]; then
+        fail "pod/$pod component $component is not healthy: ${health:-<no health reported>}"
+      else
+        ok "pod/$pod component $component loaded and healthy"
+      fi
+    done
   done
 }
 
