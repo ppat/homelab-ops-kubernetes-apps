@@ -61,18 +61,24 @@ if [ -z "$NAMESPACE" ] || [ -z "$BUCKET" ]; then
   exit 1
 fi
 
+# aws-cli's --body wants an actual file path (not /dev/null - it stats the file to size
+# the request), so give it a throwaway one up front.
+probe_body="$(mktemp)"
+echo "chainsaw wrong-key probe" > "$probe_body"
+
 kubectl port-forward -n "$NAMESPACE" "svc/${SERVICE}" "${LOCAL_PORT}:${SERVICE_PORT}" \
   >"/tmp/object-store-wrong-key-port-forward.log" 2>&1 &
 PF_PID=$!
-# shellcheck disable=SC2064  # PF_PID must be expanded now, not when the trap fires.
-trap "kill ${PF_PID} >/dev/null 2>&1 || true" EXIT
+# shellcheck disable=SC2064  # PF_PID/probe_body must be expanded now, not when the trap fires.
+trap "rm -f '${probe_body}'; kill ${PF_PID} >/dev/null 2>&1 || true" EXIT
 
-# A bare TCP probe, not `curl -f`: Garage answers an unauthenticated GET with a 4xx S3
-# error body, which curl -f treats as failure even though it proves the port is up.
+# Not `curl -f`: Garage answers an unauthenticated GET with a 4xx S3 error body, which
+# -f treats as failure even though it proves the port is up. Any exit code curl gives for
+# a completed request (2xx-5xx) proves reachability; only a connection-level failure
+# (curl's own non-zero exit) means it isn't up yet.
 ready=0
 for _ in $(seq 1 60); do
-  if (exec 3<>"/dev/tcp/127.0.0.1/${LOCAL_PORT}") 2>/dev/null; then
-    exec 3<&- 3>&- 2>/dev/null || true
+  if curl --connect-timeout 2 -s -o /dev/null "http://127.0.0.1:${LOCAL_PORT}/"; then
     ready=1
     break
   fi
@@ -89,7 +95,7 @@ set +e
 output="$(AWS_ACCESS_KEY_ID="wrong-key-this-must-be-rejected" \
   AWS_SECRET_ACCESS_KEY="wrong-secret-this-must-be-rejected" \
   aws --endpoint-url "http://127.0.0.1:${LOCAL_PORT}" --region "${REGION}" \
-  s3api put-object --bucket "${BUCKET}" --key chainsaw-wrong-key-probe --body /dev/null 2>&1)"
+  s3api put-object --bucket "${BUCKET}" --key chainsaw-wrong-key-probe --body "$probe_body" 2>&1)"
 status=$?
 set -e
 
