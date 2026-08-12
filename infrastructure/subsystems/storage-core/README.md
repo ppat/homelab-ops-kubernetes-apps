@@ -57,7 +57,7 @@ The storage-core module provides four main capabilities:
 
    | Variable | Purpose | Required By |
    | ---------- | --------- | ------------- |
-   | domain_name | Domain for MinIO and Garage S3 API endpoints | MinIO ingress, Garage S3 API ingress |
+   | domain_name | Base domain for all object-storage endpoints; hostnames are composed in-module | MinIO ingress, Garage S3 API ingress, Garage website ingress and certificate, GarageCluster webApi rootDomain |
    | secret_store | Bitwarden `ClusterSecretStore` name | minio-admin-credentials and garage-credentials ExternalSecrets |
    | cert_issuer | cert-manager `ClusterIssuer` name | Garage website endpoint TLS certificate |
    | garage_admin_token_key | Bitwarden key for the Garage admin API token | garage-credentials ExternalSecret |
@@ -67,7 +67,6 @@ The storage-core module provides four main capabilities:
    | garage_storage_class | Storage class for Garage's metadata and data volumes | GarageCluster |
    | garage_metadata_size | Size of Garage's metadata volume | GarageCluster |
    | garage_data_size | Size of Garage's data volume | GarageCluster |
-   | garage_web_root_domain | Root domain for Garage's anonymous per-bucket website hosting | GarageCluster webApi, website ingress and certificate |
 
 ## Usage
 

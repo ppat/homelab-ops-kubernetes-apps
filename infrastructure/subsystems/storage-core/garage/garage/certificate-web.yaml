@@ -9,8 +9,8 @@ spec:
     name: ${cert_issuer}
     kind: ClusterIssuer
   dnsNames:
-  - '${garage_web_root_domain}'
-  - '*.${garage_web_root_domain}'
+  - 'garage-web.${domain_name}'
+  - '*.garage-web.${domain_name}'
   # Certificate duration is fixed at 90d by LetsEncrypt and cannot be changed via this parameter.
   # The parameter is set primarily for documentation purposes.
   duration: 2160h # 90d
