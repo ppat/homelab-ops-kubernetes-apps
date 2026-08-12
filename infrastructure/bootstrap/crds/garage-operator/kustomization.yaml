@@ -28,3 +28,25 @@ patches:
     version: v1
     kind: CustomResourceDefinition
     name: .*\.garage\.rajsingh\.info
+###########################################################
+# The v0.7.3 install.yaml's GarageCluster CRD points its conversion webhook
+# at a Service named "garage-operator-webhook-service", but the matching
+# v0.7.3 OCI Helm chart's own CRD template (and the webhook Service it
+# actually creates) names it "garage-operator-webhook" -- a stale/mismatched
+# release artifact upstream, confirmed by diffing the two for the same tag.
+# Left uncorrected, every v1beta1<->v1beta2 conversion call 404s and
+# GarageCluster never leaves Pending. Only GarageCluster declares a webhook
+# conversion strategy; the other 5 CRDs have a single served+storage version
+# and need no conversion. Drop this once upstream re-cuts the release asset
+# to match the chart.
+###########################################################
+# yamllint disable-line rule:indentation
+- patch: |-
+    - op: replace
+      path: /spec/conversion/webhook/clientConfig/service/name
+      value: garage-operator-webhook
+  target:
+    group: apiextensions.k8s.io
+    version: v1
+    kind: CustomResourceDefinition
+    name: garageclusters.garage.rajsingh.info
