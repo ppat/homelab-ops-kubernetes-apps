@@ -136,6 +136,12 @@
       "component": "infra-storage-core",
       "extra-label": "pr-type:release,subsystem:infra-storage-core"
     },
+    "infrastructure/subsystems/storage-object-core": {
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "component": "infra-storage-object-core",
+      "extra-label": "pr-type:release,subsystem:infra-storage-object-core"
+    },
     "infrastructure/subsystems/virtualization-core": {
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
