@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.2.3...infra-storage-core-v0.3.0) (2026-08-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-storage-core:** infra-storage-core now requires new postBuild substitute variables that did not exist before -- cert_issuer, garage_admin_token_key, garage_rpc_secret_key, garage_replication_factor, garage_storage_replicas, garage_storage_class, garage_metadata_size, garage_data_size, and garage_web_root_domain -- plus a garage-credentials secret (keys admin-token, rpc-secret) resolvable from secret_store. Bumping an existing cluster's infra-storage-core ref.tag to this release without adding them fails the whole Kustomization to build, taking down Longhorn and MinIO reconciliation along with it, since all four components share one Flux Kustomization.
+* **infra-storage-core:** update longhorn (1.11.2 -> 1.12.0) ([#3233](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3233))
+
+### ✨ Features
+
+* **infra-storage-core:** fold Garage object storage into storage-core ([#3636](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3636)) ([4972983](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4972983ae633b014b6076b89cbe0a810cef60dd0)), closes [#3611](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3611)
+* **infra-storage-core:** update longhorn (1.11.2 -&gt; 1.12.0) ([#3233](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3233)) ([61d1d70](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/61d1d701801b8850238b253c186c971e4afc41cb))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** update csi-driver-nfs (4.13.3 -&gt; 4.13.4) ([#3240](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3240)) ([e72c4b3](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e72c4b30121d4d870ad43b774102f940cd6039a4))
+
 ## [0.2.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.2.2...infra-storage-core-v0.2.3) (2026-06-23)
 
 
