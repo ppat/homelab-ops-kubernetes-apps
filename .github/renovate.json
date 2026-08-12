@@ -31,6 +31,7 @@
     "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/organize-labels-deptype",
     "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/organize-labels-subsystem",
     "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/organize-semantic-scope",
+    "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/group-related-updates",
     "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/version-separation",
     "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/version-scheme",
     "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/override-release-age",
