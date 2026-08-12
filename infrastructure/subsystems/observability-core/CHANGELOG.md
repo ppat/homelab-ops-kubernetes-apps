@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.29.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.28.0...infra-observability-core-v0.29.0) (2026-08-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-observability-core:** loki_s3_endpoint_key, loki_s3_accesskeyid_key and loki_s3_secretkey_key are now required postBuild.substitute variables for this module. A consuming cluster that does not supply them will fail to render (empty ExternalSecret remoteRef.key), where previously it silently got cluster_homelab_minio_loki_endpoint / _accesskeyid / _secretkey.
+
+### ✨ Features
+
+* **infra-observability-core:** require loki S3 secret-store key names as post-build variables ([#3618](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3618)) ([10b1f29](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/10b1f29b8d51aaff4ebbda3a29d7c90eb712cfc5))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** make Loki's S3 signing region configurable ([#3628](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3628)) ([846a1b9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/846a1b9d063500ebaeebc4a79442bf053cd138f4))
+* **infra-observability-core:** parameterise prometheus memory resources ([#3620](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3620)) ([704e178](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/704e1787238795042f0ffe1038ca5d875ac10cfa)), closes [#3611](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3611)
+
 ## [0.28.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.27.0...infra-observability-core-v0.28.0) (2026-08-12)
 
 
