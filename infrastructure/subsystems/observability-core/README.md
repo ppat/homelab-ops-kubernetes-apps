@@ -172,6 +172,9 @@ flowchart TB
    | loki_retention_size | Default log retention period | Loki |
    | loki_results_cache_memory | Results cache size | Loki |
    | loki_chunks_cache_memory | Chunks cache size | Loki |
+   | loki_s3_endpoint_key | Bitwarden key naming the S3 endpoint for Loki storage | Loki |
+   | loki_s3_accesskeyid_key | Bitwarden key naming the S3 access key id for Loki storage | Loki |
+   | loki_s3_secretkey_key | Bitwarden key naming the S3 secret access key for Loki storage | Loki |
    | systemd_journal_gid | GID of the `systemd-journal` group on the cluster's nodes, added to the collector's supplementary groups | Grafana Alloy |
 
 4. Stream-Specific Log Retention

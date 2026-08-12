@@ -26,6 +26,9 @@ spec:
       # rejects a signed-region mismatch outright (see helm-release-loki.yaml's region
       # comment), unlike the old MinIO fixture, which ignored this entirely.
       loki_s3_region: us-east-1
+      loki_s3_endpoint_key: cluster_homelab_minio_loki_endpoint
+      loki_s3_accesskeyid_key: cluster_homelab_minio_loki_accesskeyid
+      loki_s3_secretkey_key: cluster_homelab_minio_loki_secretkey
       loki_results_cache_memory: "512"
       loki_chunks_cache_memory: "512"
       # kind nodes have no systemd journal; any GID is fine, the group need not exist.

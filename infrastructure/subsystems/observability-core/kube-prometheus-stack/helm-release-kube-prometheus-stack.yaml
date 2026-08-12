@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: prometheus-community-repository
         namespace: flux-system
-      version: 87.21.0
+      version: 88.3.0
   install:
     crds: CreateReplace
     createNamespace: false
@@ -145,9 +145,9 @@ spec:
         resources:
           requests:
             cpu: 100m
-            memory: 1Gi
+            memory: ${prometheus_memory_request:=1Gi}
           limits:
-            memory: 2Gi
+            memory: ${prometheus_memory_limit:=2Gi}
         tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
