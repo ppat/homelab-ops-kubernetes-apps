@@ -1,0 +1,32 @@
+---
+# yamllint disable rule:line-length
+name: test-infrastructure-storage-object
+
+on:
+  pull_request:
+    paths:
+    # NOTE: intentionally omits this workflow file's own path (unlike sibling
+    # test-infrastructure-*.yaml workflows) until ci/test/infra-storage-object
+    # exists -- until then, self-triggering would run chainsaw against a
+    # nonexistent test_path and fail. Add it back once that directory lands.
+    - '.github/kind-cluster-multi-node.yaml'
+    - 'ci/test/infra-storage-object/**'
+    - 'infrastructure/subsystems/storage-object-core/**'
+    - '!infrastructure/subsystems/storage-object-core/**.md'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test-infrastructure-storage-object:
+    uses: ppat/github-workflows/.github/workflows/chainsaw-test.yaml@1e8ca1b00b6e69bdf5aef8b33111c594c051ff65 # v4.4.0
+    with:
+      git_ref: ${{ github.head_ref || github.ref }}
+      test_path: ./ci/test/infra-storage-object
+      chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
+      kind_config: .github/kind-cluster-multi-node.yaml
