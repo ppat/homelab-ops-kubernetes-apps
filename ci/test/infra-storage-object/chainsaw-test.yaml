@@ -1,0 +1,61 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: infra-storage-object
+spec:
+  steps:
+  - name: Bootstrap FluxCD
+    use:
+      template: ../chainsaw/steps/bootstrap-flux.yaml
+
+  - name: Bootstrap pre-requisites
+    use:
+      template: ../chainsaw/steps/bootstrap-prerequisites.yaml
+      with:
+        bindings:
+        - name: prerequisites_path
+          value: ./ci/test/infra-storage-object/pre-requisites
+
+  - name: Reconcile pre-requisites
+    try:
+    - description: Reconcile helmrelease/cert-manager-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cert-manager-release --namespace=cert-manager --timeout=2m
+        timeout: 2m
+    - description: Reconcile helmrelease/external-secrets-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
+        timeout: 2m
+
+  - name: Apply infra-storage-object-core
+    try:
+    - description: Apply infra-storage-object-core
+      apply:
+        file: ./infra-storage-object-core.yaml
+    catch:
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: infra-storage-object-core
+        namespace: flux-system
+    - events:
+        namespace: flux-system
+
+  - name: Validate garage operator
+    use:
+      template: ./validate-garage-operator.yaml
+
+  - name: Validate garage cluster
+    use:
+      template: ./validate-garage-cluster.yaml
+
+  - name: Validate garage bucket
+    use:
+      template: ./validate-garage-bucket.yaml
+
+  - name: Validate garage key
+    use:
+      template: ./validate-garage-key.yaml
