@@ -1,0 +1,45 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: object-store-config
+  namespace: object-store
+data:
+  garage.toml: |
+    # A test double for infrastructure/subsystems/storage-object-core's Garage, not a copy
+    # of it - two settings are deliberately different from the production module:
+    #
+    # - db_engine "sqlite" with metadata_dir/data_dir on emptyDir, vs. the production
+    #   module's "lmdb" + metadataFsync: true. A throwaway single-node instance that gets
+    #   torn down with the test namespace wants fast startup, not crash durability. Do not
+    #   "align" this with production - that trades away the only thing this fixture is
+    #   optimizing for, in exchange for a guarantee it doesn't need.
+    # - s3_region "us-east-1", vs. the production module's "garage". Garage enforces an
+    #   EXACT match between the region a client signs into its request and this value (a
+    #   mismatch fails with "AuthorizationHeaderMalformed"), unlike MinIO, which accepts
+    #   any region. Neither Loki's storage config nor the barman-cloud ObjectStore CRD
+    #   these suites exercise sets an explicit region, so boto3 (barman-cloud) falls back
+    #   to its hardcoded default of "us-east-1" - this is set to match that default. Loki's
+    #   S3 client auto-detects the bucket's region via GetBucketLocation regardless, so it
+    #   works with any value configured here.
+    metadata_dir = "/data/meta"
+    data_dir = "/data/data"
+    db_engine = "sqlite"
+
+    replication_factor = 1
+
+    rpc_bind_addr = "[::]:3901"
+    rpc_public_addr = "127.0.0.1:3901"
+    # Fixture-only value, not a real secret. Shared with job-bootstrap.yaml's --rpc-secret
+    # (the only way the bootstrap Job, which has no filesystem in common with this pod, can
+    # authenticate its layout/bucket/key admin calls).
+    rpc_secret = "cafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe"
+
+    [s3_api]
+    s3_region = "us-east-1"
+    api_bind_addr = "[::]:9000"
+
+    [admin]
+    api_bind_addr = "[::]:3903"
+    admin_token = "fixture-admin-token-not-a-real-secret"
+    metrics_token = "fixture-metrics-token-not-a-real-secret"

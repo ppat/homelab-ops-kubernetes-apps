@@ -24,11 +24,16 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=3m
         timeout: 3m
-    - description: Reconcile helmrelease/minio-release
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=minio-release --namespace=minio --timeout=2m
-        timeout: 2m
+
+  - name: Validate object-store fixture credentials
+    use:
+      template: ../chainsaw/steps/assert-object-store-wrong-key.yaml
+      with:
+        bindings:
+        - name: namespace
+          value: object-store
+        - name: bucket
+          value: homelab-loki-chunks
 
   # Applied before the modules rather than after, for two reasons: it costs the suite
   # nothing (the fixture is Ready long before Loki is), and it means the fixture has
@@ -65,11 +70,6 @@ spec:
       apply:
         file: ./infra-observability-extra.yaml
     catch:
-    - describe:
-        apiVersion: kustomize.toolkit.fluxcd.io/v1
-        kind: Kustomization
-        name: minio
-        namespace: flux-system
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization

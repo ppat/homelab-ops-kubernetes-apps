@@ -1,0 +1,179 @@
+---
+# One-shot cluster bootstrap: assigns this single node its layout (Garage, unlike MinIO,
+# needs an explicit layout commit before it will serve S3 traffic at all - even with one
+# node), then creates every bucket either consuming suite needs and grants one shared
+# access key read/write on all of them. Both suites run against their own fresh,
+# disposable cluster, so the two suites' bucket names never collide - creating buckets
+# neither suite individually needs is cheaper than giving each suite its own copy of this
+# Job.
+#
+# Every step targets the Deployment over the network (--rpc-host=<node-id>@<service
+# DNS>:3901, matching secret-node-key.yaml's pre-seeded node ID), not a shared
+# filesystem - this Job's pod has nothing in common with the Deployment's pod besides the
+# rpc_secret below. Garage will not auto-create a bucket on first write (unlike MinIO,
+# which does): every bucket a consuming suite writes to must already exist here.
+#
+# Split into one container per command rather than a shell script, because the garage
+# image has no shell to write one in - initContainers already give sequential,
+# run-to-completion ordering for free, and a failing step (e.g. the Deployment's pod
+# isn't Ready yet) is retried automatically by the pod's own restartPolicy: OnFailure,
+# with no retry loop to write.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: object-store-bootstrap
+  namespace: object-store
+spec:
+  backoffLimit: 30
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: object-store-bootstrap
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+      - name: layout-assign
+        # renovate: datasource=docker depName=dxflrs/garage
+        image: dxflrs/garage:v2.3.0
+        command: ["/garage"]
+        args:
+        - --rpc-host=ff57575dc7af8bfc4d0837cc1ce2017b686a88145dc5579a958e3462fe9a908e@object-store.object-store.svc.cluster.local:3901
+        - --rpc-secret=cafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe
+        - layout
+        - assign
+        - -z
+        - ci
+        - -c
+        - 1G
+        - ff57575dc7af8bfc4d0837cc1ce2017b686a88145dc5579a958e3462fe9a908e
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+      - name: layout-apply
+        image: dxflrs/garage:v2.3.0
+        command: ["/garage"]
+        args:
+        - --rpc-host=ff57575dc7af8bfc4d0837cc1ce2017b686a88145dc5579a958e3462fe9a908e@object-store.object-store.svc.cluster.local:3901
+        - --rpc-secret=cafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe
+        - layout
+        - apply
+        - --version=1
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+      - name: bucket-create-loki-chunks
+        image: dxflrs/garage:v2.3.0
+        command: ["/garage"]
+        args:
+        - --rpc-host=ff57575dc7af8bfc4d0837cc1ce2017b686a88145dc5579a958e3462fe9a908e@object-store.object-store.svc.cluster.local:3901
+        - --rpc-secret=cafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe
+        - bucket
+        - create
+        - homelab-loki-chunks
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+      - name: bucket-create-loki-ruler
+        image: dxflrs/garage:v2.3.0
+        command: ["/garage"]
+        args:
+        - --rpc-host=ff57575dc7af8bfc4d0837cc1ce2017b686a88145dc5579a958e3462fe9a908e@object-store.object-store.svc.cluster.local:3901
+        - --rpc-secret=cafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe
+        - bucket
+        - create
+        - homelab-loki-ruler
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+      - name: bucket-create-cloudnativepg-backups
+        image: dxflrs/garage:v2.3.0
+        command: ["/garage"]
+        args:
+        - --rpc-host=ff57575dc7af8bfc4d0837cc1ce2017b686a88145dc5579a958e3462fe9a908e@object-store.object-store.svc.cluster.local:3901
+        - --rpc-secret=cafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe
+        - bucket
+        - create
+        - nas-cloudnativepg-backups
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+      - name: key-import
+        image: dxflrs/garage:v2.3.0
+        command: ["/garage"]
+        args:
+        - --rpc-host=ff57575dc7af8bfc4d0837cc1ce2017b686a88145dc5579a958e3462fe9a908e@object-store.object-store.svc.cluster.local:3901
+        - --rpc-secret=cafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe
+        - key
+        - import
+        # Fixture-only credential, not a real secret - deliberately in-manifest (no
+        # ExternalSecret, no secret store) so both consuming suites' fake-secret-store.yaml
+        # can reference a stable, known value instead of reading it back out of Garage.
+        - fixture-access-key
+        - fixture-secret-key-not-a-real-secret
+        - --yes
+        - -n
+        - ci
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+      - name: bucket-allow-loki-chunks
+        image: dxflrs/garage:v2.3.0
+        command: ["/garage"]
+        args:
+        - --rpc-host=ff57575dc7af8bfc4d0837cc1ce2017b686a88145dc5579a958e3462fe9a908e@object-store.object-store.svc.cluster.local:3901
+        - --rpc-secret=cafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe
+        - bucket
+        - allow
+        - --read
+        - --write
+        - homelab-loki-chunks
+        - --key=fixture-access-key
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+      - name: bucket-allow-loki-ruler
+        image: dxflrs/garage:v2.3.0
+        command: ["/garage"]
+        args:
+        - --rpc-host=ff57575dc7af8bfc4d0837cc1ce2017b686a88145dc5579a958e3462fe9a908e@object-store.object-store.svc.cluster.local:3901
+        - --rpc-secret=cafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe
+        - bucket
+        - allow
+        - --read
+        - --write
+        - homelab-loki-ruler
+        - --key=fixture-access-key
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+      containers:
+      - name: bucket-allow-cloudnativepg-backups
+        image: dxflrs/garage:v2.3.0
+        command: ["/garage"]
+        args:
+        - --rpc-host=ff57575dc7af8bfc4d0837cc1ce2017b686a88145dc5579a958e3462fe9a908e@object-store.object-store.svc.cluster.local:3901
+        - --rpc-secret=cafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe
+        - bucket
+        - allow
+        - --read
+        - --write
+        - nas-cloudnativepg-backups
+        - --key=fixture-access-key
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]

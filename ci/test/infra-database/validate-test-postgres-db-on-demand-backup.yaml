@@ -52,8 +52,8 @@ spec:
       namespace: cnpg-system
       tail: 100
   - podLogs:
-      selector: app=minio
-      namespace: minio
+      selector: app.kubernetes.io/name=object-store
+      namespace: object-store
       tail: 50
   - events:
       namespace: default
