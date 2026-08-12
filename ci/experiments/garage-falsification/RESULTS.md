@@ -7,12 +7,38 @@ alongside the real result for every test that has one. Raw data in `results/`.
 
 | Test | Verdict | Confidence |
 | ------ | --------- | ------------ |
-| H1 — RSS/LIST at scale | **NOT KILLED (partial)** | Real data to 500k only; 1M+ not reached, see below |
-| H2 — unclean-shutdown durability | **NOT KILLED (pilot scale)** | 5/25 hard-reset iterations, 8/25 kill-9 iterations |
-| H3 — ListObjectsV2 `db//` | **KILLED-ISH — Garage is worse than MinIO here** | Raw API confirmed; CNPG e2e not reached |
-| H4 — Expiration reclaims space | **KILLED** | `du` never dropped — same bug as the MinIO incumbent |
+| H1 — RSS/LIST at scale | **NOT KILLED (partial) — central claim unsupported** | Real data to 500k only; 1M+ not reached; Garage used 1.81× MinIO's RSS at the only checkpoint measured on the same host for both, see below |
+| H2 — unclean-shutdown durability | **NOT KILLED (pilot scale)** | 5/25 hard-reset iterations, 8/25 kill-9 iterations; H1-instance data-loss confound investigated, most plausible alternative ruled out (not independently reproduced) |
+| H3 — ListObjectsV2 `db//` | **NOT KILLED — original finding was a test artifact, reversed on correction** | Raw API retest confirmed on both backends: Garage self-consistent, MinIO write-rejects; CNPG e2e still not reached |
+| H4 — Expiration reclaims space | **VOID (original) → REFUTED ON RETEST** | `du` reclaims at ~602–632s once the fail-first and object-dedup defects are fixed; sub-3KB inline path (95.4% of the estate) remains untested — see "Known blind spots" |
 | H5 — Longhorn restore | **SKIPPED** | Real infra blocker, documented, not worked around |
 | H6 — Terraform 1.6.6 backend | **PASSED** | Full pre-registered flow, clean |
+
+---
+
+## Known blind spots (read before trusting a "not killed"/"cleared" reading anywhere below)
+
+- **The sub-3KB inline path is 95.4% of this estate's objects and is untested by anything in
+  this run.** Garage stores any object under `INLINE_THRESHOLD` (3072 B) inline in LMDB — no
+  `Version`, no `BlockRef`, no block written to `data_dir` at all. Measured directly
+  (`h4-lifecycle-expiration/h4c_inline.sh`): 20,000 × 512 B objects grew `data_dir` by
+  **exactly 0 bytes**, while 200 × 1 MiB objects grew it by 209,722,600 B. Both H4's original
+  run and its retest used 1 MiB objects exclusively — neither says anything about whether the
+  dominant, sub-inline-threshold object shape ever reclaims. `du` on `data_dir` is
+  structurally the wrong instrument for that majority: LMDB does not return freed pages to the
+  filesystem, so `du` will not shrink there even when reclamation is working correctly.
+  Reclamation for small objects runs through the 24h `TABLE_GC_DELAY` metadata-tombstone path
+  instead; the right instruments are object count and metadata growth *rate*, not `du`. This
+  needs a dedicated ≥24h, two-cycle run before it can be called either way.
+- **H1 is unfinished and its central claim is on the line, not confirmed.** Only the 100k/500k
+  checkpoints were reached against a 3.44M target; the RSS growth curve cannot yet be
+  distinguished from superlinear with two points; and at the only checkpoint measured on the
+  same host for both engines, Garage used 1.81× MinIO's RSS. See the H1 section below — do not
+  read "not killed" there as "cleared."
+- **A pre-registered kill criterion (H4) fired, then was invalidated by defects in the test
+  itself, not by new evidence about Garage.** That sequence, not the retest's eventual RECLAIMED
+  result, is the most instructive part of this run — see "The standing rule this harness is
+  built around" in `README.md`.
 
 ---
 
@@ -53,18 +79,37 @@ very instance being measured would have produced RSS/latency numbers of unknown 
 checkpoint this run actually reached under real conditions.
 
 **What the 100k→500k trend already shows**: Garage's RSS **more than quadrupled** (217.9 →
-947.1 MiB) between the two lowest checkpoints while the object count only grew 5×, i.e. its
-early growth is *roughly linear, trending slightly superlinear* on this small a sample —
-consistent with, but nowhere near confirming, the brief's concern about an unsharded index
-that "collapses around 10M" (issue #1222). Two points is not enough to call superlinearity
-with confidence; that call needs the 1M/2M/3.44M points this run did not reach in time.
-MinIO's RSS was flat (~523 MiB) across both checkpoints — for MinIO, 500k objects clearly
-isn't yet enough to see its curve either.
+947.1 MiB) between the two lowest checkpoints while the object count only grew 5×. That is
+**not** superlinear: 5× objects → 4.35× RSS is an exponent of ln(4.35)/ln(5) ≈ **0.913**,
+marginally *sub*linear. (An earlier reading of this same data called the trend "trending
+slightly superlinear" — corrected here; that reading was simply wrong about the arithmetic.)
+The real concern here is the *level*, not the curvature: MinIO's RSS was flat (~523 MiB)
+across both checkpoints, so at the only checkpoint measured for both engines on the same host
+(500,000 objects), **Garage used 1.81× MinIO's RSS (947.1 vs 523.4 MiB)**. H1's whole claim is
+that Garage holds this workload at *materially lower* RSS than MinIO — that claim is currently
+**unsupported** by this run's data, and this document should say so plainly rather than let
+the "not killed" verdict below read as vindication.
 
-**Verdict**: **NOT KILLED, but NOT CLEARED either** — the pre-registered kill criteria (RSS
-> 6 GiB at 3.44M; p99 LIST > 1s at 1.86/s; superlinear 1M→3.44M growth) were not reachable in
-the time available. Garage's RSS growth 100k→500k is a real yellow flag worth extending this
-run to confirm or refute — do not read "not killed" here as "cleared."
+**Extrapolating to 3.44M against the 6 GiB kill criterion** (labelled as extrapolation, not
+measurement — two points cannot distinguish between these models): proportional-from-500k →
+6.36 GiB (breaches the criterion); two-point linear fit → 6.16 GiB (breaches); power-law fit
+at the measured exponent 0.913 → 5.38 GiB (clears). All three land within ±10% of the 6 GiB
+threshold, and the three models disagree on whether it's breached — this run's two data points
+genuinely cannot settle it. The 1M/2M/3.44M checkpoints this run did not reach are what would.
+
+**A new sizing input worth recording**: `metadata_dir` runs roughly **1.6–2.6 KiB/object**
+across the measurements this run happened to take (the inline-object probe: 32.5 MB for 20k
+objects ≈ 1.6 KiB/object; the H1 Garage instance itself: ~1.4 GB at ~550k objects ≈ 2.5
+KiB/object). Extrapolated to 3.44M objects, that's **~5.6–9 GB of `metadata_dir`** — a real
+sizing input for `garage_metadata_size` regardless of how the RSS question resolves.
+
+**Verdict**: **NOT KILLED, but NOT CLEARED either, and the central claim is currently
+unsupported** — the pre-registered kill criteria (RSS > 6 GiB at 3.44M; p99 LIST > 1s at
+1.86/s; superlinear 1M→3.44M growth) were not reachable in the time available, and the growth
+exponent measured so far does not itself indicate superlinearity. But H1's claim was never "not
+superlinear" — it was "materially lower RSS than MinIO," and on the one apples-to-apples
+checkpoint this run has, Garage used *more* RSS, not less. Do not read "not killed" here as
+"cleared."
 
 **Keyspace**: synthetic (see README "Environment constraints") — no read-only production
 credentials were obtainable in this session. Shape (prefix-clustered, two key families,
@@ -145,6 +190,25 @@ real, live risk, not a theoretical one — and it directly contradicts a naive r
 "5/5 clean" result above. Weigh this anecdote, not the small-scale 5/5, as the more reliable
 signal about `fsync=false` from this session.
 
+**The obvious alternative explanation was checked and ruled out.** The alternative reading of
+this counterexample is that nothing was actually lost — Docker auto-created an empty
+bind-mount source after the reset (the exact failure mode `post_hardreset_recover.sh` exists
+to guard against, see "A finding about this VM itself" below) and Garage simply bootstrapped a
+brand-new, empty cluster there, which would misreport as "everything survived, empty" rather
+than real data loss. If that had happened, the node's identity (`node_key`) would necessarily
+have been regenerated. It was not: `node_key`'s mtime is 02:43:58, matching the instance's
+original bootstrap time, and `cluster_layout` likewise carries the original timestamp; there is
+no shadow directory under the mountpoint holding a second, fresh dataset; and the 1.4 GB LMDB
+file plus 2.7 GB of now-orphaned blocks are still on disk. So this was reading the same,
+original metadata store the whole time, and that store lost its bucket and access-key tables
+while plain files written 20+ minutes earlier on the same host survived the same reset — the
+signature of an LMDB write that was acknowledged but never `fsync`'d, not of a fresh bootstrap.
+The deliberate H2 cells' much shorter ~7s write-to-reset gap, against a 5s kernel background
+writeback interval (`dirty_writeback_centisecs`), is exactly why they were too loose a race to
+catch the same failure (see the caveat immediately below). **This was not independently
+reproduced** — it is a single accidental occurrence, and its most plausible alternative
+explanation is what was checked and ruled out, not a second confirming instance.
+
 ### Read the 5/5 hard-reset cell result carefully — it is weaker evidence than it looks
 
 **Do not read "5/5 clean, including fsync=false" as "fsync=false is safe"** — see the H1
@@ -209,68 +273,139 @@ to close the writeback-timing gap described above.
 
 ## H3 — `ListObjectsV2` and the Barman trailing-slash prefix
 
-**Reproduced against MinIO first** (required by the brief): `ListObjectsV2(Prefix="db//")`
-raises `ClientError: XMinioInvalidObjectName ... Object name contains unsupported characters`
-(HTTP 400) — confirms the documented bug and confirms this test's detector can catch it.
+**This section's original verdict was reversed on correction. Read the retest below, not the
+original probe, as the finding.**
 
-**Against Garage v2.3.0**: `ListObjectsV2(Prefix="db//")` returns **HTTP 200, `KeyCount=0`,
-empty `Contents`** — even though `ListObjectsV2(Prefix="db/")` on the identical bucket
-returns the 3 seeded objects. This is the third, explicitly-flagged-as-worst outcome in the
-brief: **not** parity, **not** a fix — a silent no-op that a retention/pruning job would read
-as "nothing here to delete" with no error anywhere to catch. Draft upstream issue at
-`h3-listobjectsv2-barman/UPSTREAM_ISSUE_DRAFT.md`, not yet filed.
+**Original probe (kept here for the record, reclassified)**: reproduced against MinIO first,
+`ListObjectsV2(Prefix="db//")` raised `ClientError: XMinioInvalidObjectName` (HTTP 400).
+Against Garage v2.3.0, the identical call returned **HTTP 200, `KeyCount=0`, empty
+`Contents`**, even though `ListObjectsV2(Prefix="db/")` on the same bucket returned the 3
+seeded objects. This was originally read as Garage silently no-opping a retention job. It is
+not: the probe seeded keys with a **single** slash (`db/base/...`) and then listed with a
+**double**-slash prefix (`Prefix="db//"`). S3 keys are opaque byte strings with no path
+normalization — `db//base/x` and `db/base/x` are different keys, so a `db//` prefix genuinely
+matches nothing when only single-slash keys exist. HTTP 200 with an empty list is **correct
+AWS behavior** for that mismatched pairing, not a defect. The original classifier hardcoded
+that pairing as "worse than MinIO," which is what produced the wrong verdict.
 
-**CNPG + barman-cloud-plugin end-to-end assertion (real deletions under a retention policy)
-was NOT attempted** — descoped for time, per the brief's own Pareto guidance (H1/H2 first).
-The raw-API-level result above is the load-bearing finding (it's what would actually break a
-retention job); the CNPG layer would confirm the same thing end-to-end but is secondary
-confirmation, not a different question. **Marked not-reached, not silently downgraded.**
+**The real barman scenario is different**: a trailing slash in `destinationPath` makes
+barman-cloud both **write and list** with the doubled separator — the actual question is
+whether a backend that wrote `db//base/...` can also find it again under `Prefix="db//"`.
+Retested on both backends with that corrected pairing (`h3-listobjectsv2-barman/h3b_probe.py`,
+driven by `h3b_run.sh`):
 
-**Verdict**: Garage is measurably *worse* than MinIO on this specific, real operational
-pattern. Not immediately disqualifying (barman-cloud can likely be configured to avoid ever
-constructing a `//`-containing prefix), but it is a concrete defect that should be filed
-upstream and tracked before this reaches production, and it means any retention/pruning
-automation must be positively verified against Garage, not assumed to behave like MinIO.
+- **Garage**: `PUT db//base/...` succeeds → `ListObjectsV2(Prefix="db//")` returns all 3
+  objects → `DeleteObjects` on the listed keys prunes them → re-list is empty.
+  **`verdict=SELF-CONSISTENT`.**
+- **MinIO**: the same `PUT db//base/...` is **rejected outright**
+  (`XMinioInvalidObjectName`), and the same list call throws. **`verdict=WRITE-REJECTED`.**
+
+So on the scenario that actually matters — a doubled-separator misconfiguration reaching the
+S3 API — **Garage handles it correctly end-to-end, and MinIO is the non-conformant backend**,
+not the other way around.
+
+**`UPSTREAM_ISSUE_DRAFT.md` has been deleted, not filed.** It would have reported
+AWS-conformant behavior as a Garage bug, and it was internally incoherent on its own terms: its
+"Expected" section listed the observed HTTP-200-empty-on-a-mismatched-prefix outcome as one of
+its own two acceptable outcomes, while the rest of the draft called that same outcome the
+defect.
+
+**The one-character `destinationPath` fix identified during this exercise is still correct**
+— but for the opposite of the original reason. It matters for **MinIO's** sake, on the
+non-migrating `nas` instance: MinIO is the backend that write-rejects a doubled separator
+outright, which is the operationally worse failure mode (backup writes fail loudly) if
+`destinationPath` is ever misconfigured there. It is not needed to protect Garage from this
+particular failure.
+
+**Caveat, unchanged by the correction**: both the original probe and the retest verify the raw
+S3 API layer, not barman-cloud's actual path-construction logic — confirming barman-cloud
+itself never produces a doubled separator (or always produces one consistently on write and
+list) is a separate, not-yet-done check. The CNPG + barman-cloud-plugin end-to-end assertion
+(real deletions under a retention policy) was **still not attempted**, descoped for time per
+the brief's own Pareto guidance (H1/H2 first). **Marked not-reached, not silently downgraded.**
+
+**Verdict**: **NOT KILLED.** The originally reported "Garage worse than MinIO" finding was a
+test-construction artifact, not a Garage defect. On the corrected, operationally realistic
+pairing, Garage is the backend that behaves correctly and MinIO is the one that fails
+(loudly, which is the safer failure mode of the two, but a failure nonetheless).
 
 ---
 
 ## H4 — plain `Expiration` on a non-versioned bucket actually reclaims space
 
-**Fail-first**: PUT 200×1MiB objects, snapshot all 3 assertions before applying any rule.
-`list=200 bucket_objects=200 du_bytes=1048677` — correctly NOT-RECLAIMED (nothing has run
-yet). `failfirst_ok: true`.
+**This section's original verdict (NOT-RECLAIMED / KILLED) was VOID, not negative — see the
+three defects below — and the corrected retest REFUTES it: reclamation works, at ~602–632s.**
 
-**Real run**: applied `Expiration.Date=<yesterday>`, triggered Garage's lifecycle worker (see
-below for how), waited, then ran `garage repair --yes blocks` and waited again (60s
-automated, up to 2.5+ minutes during manual investigation).
+### Why the original result is void, not negative
 
-| Snapshot | list KeyCount | bucket object count | `du` on data_dir |
+Three independent defects in the original test, each sufficient on its own to invalidate the
+result:
+
+1. **The `du` detector was never validated.** The original fail-first only asserted
+   `du_bytes > 0` *before* the rule was applied — true by construction, since nothing had run
+   yet. It never demonstrated the probe could register a *drop*. By this harness's own
+   governing rule ("a fail-first that comes back clean means the detector is broken and every
+   downstream result from it is void, not 'probably fine'" — see `README.md`), that makes the
+   original result void.
+2. **The 200 test objects deduplicated into a single block.** `lifecycle_check.py` called
+   `os.urandom(...)` **once** and PUT that same body 200 times. Garage is content-addressed,
+   so 200 MiB of PUTs stored as one ~1 MiB block — visible in the recorded `du` of
+   1,048,677 B (1 MiB + 101 B of directory overhead, not the 200 MiB actually PUT). That
+   number was itself evidence the probe wasn't measuring what the test assumed.
+3. **The wait was structurally too short, and `repair blocks` cannot shorten it.** Garage
+   v2.3.0 hardcodes `BLOCK_GC_DELAY = 600s` (`src/block/manager.rs:44`); `block_decref`
+   schedules the deleting resync at `now + BLOCK_GC_DELAY + 10s` (`:490`). `garage repair
+   blocks` is *exclusively* `put_to_resync(hash, 0)` (`src/block/repair.rs:92-150`), and
+   `resync_block` no-ops on a block whose `at_time` hasn't elapsed. Upstream removed
+   repair-triggered deletion **deliberately** in PR #135 to fix data-loss issue #39 — so
+   `repair blocks` was never going to shorten the wait, no matter how many times it was run.
+   The original run waited ~3.5 minutes total against a 610s floor.
+
+**The "`GcTodo: 200` stalled" reading in the original run was also a misdiagnosis.** That
+counter is governed by `TABLE_GC_DELAY = 86400s` (`src/table/gc.rs:30`) — a 24-hour *metadata
+tombstone* timer touching `metadata_dir` only, not the disk-reclamation path `du` measures. A
+constant `GcTodo` on `version`/`block_ref` is actually positive evidence the deletion
+propagated correctly through the metadata layer; it says nothing about block-level reclamation
+timing one way or the other.
+
+**`block_gc_delay` is not a configuration key**, worth recording explicitly so it isn't
+re-investigated as a fix: it does not appear in `src/util/config.rs` or the config docs;
+`BLOCK_GC_DELAY` is a compile-time `pub(crate) const` with no env var, admin endpoint, or
+`garage worker set` knob. So there is no tuning tradeoff to weigh here — the correct posture is
+simply to size for a ~610s reclamation lag. At this estate's measured delete rate (0.191
+deletes/s × ~3.9 KB mean object size), that's roughly **450 KB of transient lag** — a
+non-issue at this estate's scale.
+
+### Retest, actually run
+
+Two arms on the same image/config, with the control the original run lacked
+(`h4-lifecycle-expiration/h4b_retest.py`, driven by `h4b_run.sh`):
+
+| arm | after PUT | at original stop point (~3.5 min) | final |
 | --- | --- | --- | --- |
-| before rule | 200 | 200 | 1,048,677 B |
-| after worker run | **0** | **0** | **1,048,677 B (unchanged)** |
-| after `repair --yes blocks` | 0 | 0 | **1,048,677 B (unchanged)** |
+| A: plain `DeleteObject` (control) | 52,430,714 B | 52,430,714 B | **64 B @ +632.4s** |
+| B: `Expiration` lifecycle rule (treatment) | 52,430,714 B | 52,430,714 B → NOT-RECLAIMED | **64 B @ +602.3s** |
 
-**Verdict: NOT-RECLAIMED.** Assertions (1) and (2) — the same two the incumbent MinIO bug
-already satisfies while still leaking 44GB — both flip to "reclaimed" immediately. Assertion
-(3), the one the brief specifically says would have caught the incumbent bug, **never
-changes**. `garage stats` after the worker run showed `object`/`version`/`block_ref` tables
-all stuck at `GcTodo: 200` with zero progress after 2.5+ minutes of manual observation past
-the automated 60s wait — this is not "just needs a bit longer," it looks stalled. **This is
-the same failure class as the MinIO bug this whole project exists to fix, reproduced on
-Garage.** This is a hard, direct, disqualifying-unless-explained finding for the "plain
-Expiration reclaims space" claim as tested.
+`SUMMARY verdict=RECLAIMED control_arm=RECLAIMED treatment_arm=RECLAIMED
+original_window_verdict=NOT-RECLAIMED`. Arm B reproduces the original run's exact result at
+the original run's exact stopping point (`NOT-RECLAIMED`), then goes on to reclaim at 602.3s —
+matching the ~610s prediction from the source analysis above almost exactly. The lifecycle
+worker's execution was confirmed directly in container logs (`Lifecycle: expiring 1 object in
+bucket 43a53bff71055904` × 200; `lifecycle-last-completed` updated to the retest's own run
+date), and `expirationDate` was set to yesterday exactly as the original brief specified.
 
-**Timing method, a real deviation from both of the brief's suggested options**: neither
-"offset the container clock" nor "accept a 26h wait" was used. Garage's lifecycle worker runs
-once per calendar day and persists a `last_completed: <date>` marker in
-`<meta>/lifecycle_worker_state`; a plain `docker restart` on the same day does **not**
-re-trigger it (first assumption, wrong — see README). Deleting that state file before restart
-does force a fresh run in seconds. Documented in `h4-lifecycle-expiration/lifecycle_check.py`.
+### The gap that survives the correction
 
-**Caveat**: this result should be reproduced with a longer wait (tens of minutes, not just
-2.5) before treating it as fully dispositive — but a stalled `GcTodo` queue with zero movement
-over 2.5 minutes is already well past "needs a moment," and it is exactly the assertion the
-brief pre-registered as the falsifier.
+**This retest, like the original, used 1 MiB objects — it says nothing about the 95.4% of
+this estate's objects that are under 1 KB and stored inline, below Garage's inline threshold.**
+See "Known blind spots" above and `h4-lifecycle-expiration/h4c_inline.sh` for that separate,
+genuinely open question: `du` is structurally blind to that majority regardless of whether
+block-level GC (what this section tests) works correctly.
+
+**Verdict: VOID (original) → REFUTED ON RETEST, for the block-storage path only.** Plain
+`Expiration` on a non-versioned bucket does reclaim space, once the fail-first and dedup
+defects in the original test are fixed and the wait respects Garage's real GC delay. This does
+**not** extend to the inline/sub-3KB object path, which remains untested.
 
 ---
 
@@ -335,11 +470,16 @@ it explicitly (still functions, just emits a warning) rather than silently swapp
    silently corrupting the result set with fresh-empty-cluster false CLEAN readings. This is
    an environment finding independent of Garage, worth fixing upstream regardless of this
    project's outcome.
-4. **H4 reproduces the exact incumbent MinIO bug this whole migration exists to fix** — plain
-   `Expiration` metadata-deletes cleanly (list/count both drop to zero) but never reclaims the
-   underlying blocks even after a `repair --yes blocks` pass and multiple minutes of
-   observation. If this holds up under a longer wait, it is a serious, direct hit against one
-   of the stated reasons for migrating away from MinIO in the first place.
-5. **Garage is measurably worse than MinIO, not just different, on the Barman trailing-slash
-   case** (H3): a silent HTTP-200-empty instead of an error is the worst of the three possible
-   outcomes the brief called out in advance, and it was the one that happened.
+4. **H4's own fail-first didn't validate what it needed to, and the "incumbent bug reproduced"
+   finding it produced was void, not negative.** The fail-first only proved `du_bytes > 0`
+   before the rule ran — true by construction — never that the probe could register a *drop*;
+   and a single random body reused across all 200 PUTs meant the "underlying blocks" being
+   measured were one deduplicated block, not 200 objects' worth. Once both defects were fixed
+   and the wait respected Garage's real ~610s block-GC delay, reclamation worked. This is now
+   the clearest instance in this whole harness of the standing rule it's built around (see
+   `README.md`): a fail-first that cannot fail makes everything downstream void, not negative.
+5. **The Barman trailing-slash finding was reversed on correction, not confirmed** (H3): the
+   original probe paired single-slash writes with a double-slash list — a mismatch for which
+   HTTP-200-empty is correct S3 behavior, not a defect. On the pairing that actually matches
+   barman-cloud's real doubled-write-then-list behavior, Garage handles it correctly
+   end-to-end and MinIO is the backend that rejects the write outright.

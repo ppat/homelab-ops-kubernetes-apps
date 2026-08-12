@@ -74,9 +74,11 @@ and a single greppable `SUMMARY ... verdict=` line per test.
 
 ## What broke and what it means (the most valuable part of this exercise)
 
-Two things overturned an assumption made in this harness's own design, both caught by the
-fail-first-first discipline rather than by a real iteration silently producing a wrong
-number. Full detail in `RESULTS.md`; summary:
+Three things overturned an assumption made in this harness's own design. Two were caught by
+the fail-first-first discipline during the harness's own development. The third slipped past
+that same discipline and was only caught later, by an independent adjudication reviewing the
+harness's results — and that gap is itself the most important lesson here, see #3. Full detail
+in `RESULTS.md`; summary:
 
 1. **The brief's exact H2 fail-first mechanic ("dd the last 4KiB off data.mdb") does not
    reliably corrupt LMDB on a small/near-empty database.** LMDB's meta pages live at the
@@ -93,6 +95,24 @@ number. Full detail in `RESULTS.md`; summary:
    caught because the harness's own `du`/list/count snapshots came back completely unchanged
    after the "trigger," which shouldn't happen for a working trigger. Fixed by clearing that
    state file before restart. See `h4-lifecycle-expiration/lifecycle_check.py`'s comment.
+3. **H4's own fail-first was not a real fail-first, and this harness's own discipline did not
+   catch it at the time.** It asserted `du_bytes > 0` before the Expiration rule was applied —
+   true by construction, since nothing had been deleted yet — and never demonstrated the `du`
+   probe could observe a *decrease*. It also PUT one random body 200 times, which Garage's
+   content-addressing collapsed into a single ~1 MiB block, so the `du` figure it did record
+   was tracking one block's lifecycle, not 200 objects' worth. Both defects passed this
+   harness's own fail-first-first discipline as originally applied, because that discipline
+   only asked "does the detector see the pre-condition" (yes, trivially), never "can the
+   detector see the post-condition change at all" — the harder, load-bearing question. It was
+   caught only by an independent adjudication reviewing the run afterward, not by anything
+   internal to this harness at the time. **This is the standing lesson of the whole exercise:
+   a fail-first that cannot fail makes everything downstream void, not negative — and a
+   fail-first can look rigorous (it runs, it asserts something, it comes back green) while
+   still being the wrong shape to ever register a failure.** Expect this exact failure mode to
+   recur in future tests built on this pattern; the fix applied here (see
+   `h4-lifecycle-expiration/lifecycle_check.py`) is to make the fail-first a real control —
+   delete something and prove the detector observes the drop — not just a snapshot of an
+   untouched state.
 
 Also caught and fixed pre-real-run: the (b) "repair reports no errors" check originally did
 a substring search for the word "error" across raw container logs, which false-matched
@@ -108,6 +128,12 @@ runbook for H2's hard-reset mechanic, which cannot be one unattended script beca
 being rebooted cannot supervise its own reboot). See each directory's own script comments —
 they carry the "why", not just the "what". `lib/keygen.py` is shared between H1 and any test
 that needs the same synthetic Loki-shaped keyspace.
+
+`h4-lifecycle-expiration/h4b_run.sh` and `h3-listobjectsv2-barman/h3b_run.sh` are independent
+adjudication retests, not replacements for `run.sh` in either directory — see RESULTS.md's H3
+and H4 sections for why each original result needed one. `h4-lifecycle-expiration/h4c_inline.sh`
+probes the still-open sub-3KB inline-object question described in RESULTS.md's "Known blind
+spots" section; it is exploratory, not a pass/fail test.
 
 Everything here targets the Docker VM (`docker-vm.sandbox-docker.svc.cluster.local`, SSH key
 `~/.ssh/sandbox_docker_vm`) or `sandbox-talos` (`kubectl --context sandbox-talos`), both

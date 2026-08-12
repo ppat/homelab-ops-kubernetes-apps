@@ -1,10 +1,38 @@
 #!/usr/bin/env python3
 """H4 body: PUT real objects, measure the three assertions BEFORE the rule is even applied
-(fail-first -- all three must report NOT-RECLAIMED), apply an Expiration rule dated
-yesterday, restart Garage (triggers its startup lifecycle-worker run), then measure all
-three again. If `du` hasn't dropped, run `garage repair --yes blocks` once (the brief's
-falsifier: "du does not drop within one worker cycle plus one repair blocks pass") and
-measure a third time.
+(fail-first -- validated against a real control that proves the `du` probe can register a
+DROP, not just a nonzero value), apply an Expiration rule dated yesterday, restart Garage
+(triggers its startup lifecycle-worker run), then measure all three again after waiting past
+Garage's block-GC delay.
+
+Fixed after the original run's fail-first and timing turned out to be void, not negative (see
+RESULTS.md H4 for the full account):
+
+  - Every object body is now distinct (`os.urandom` per object). The original PUT the SAME
+    body 200 times; Garage is content-addressed, so 200 MiB of PUTs deduplicated into a
+    single ~1 MiB block, and `du` on data_dir was tracking one block's lifecycle, not 200
+    objects' worth of blocks.
+  - The fail-first now actually proves the `du` probe CAN register a drop, using a small
+    control set removed via plain DeleteObject and polled to the same wait floor used for the
+    real result. The original fail-first only asserted `du_bytes > 0` before the rule was
+    applied -- true by construction, and it never demonstrated the probe could observe a
+    decrease at all. A fail-first that cannot fail makes the downstream result void, not
+    negative -- that is the standing rule this whole harness is built around (see README).
+  - The wait after triggering GC is now >= BLOCK_GC_DELAY + 10s (610s), not ~60s. Garage
+    v2.3.0 hardcodes `BLOCK_GC_DELAY = 600s` (src/block/manager.rs:44) and schedules the
+    deleting resync at `now + BLOCK_GC_DELAY + 10s` (:490) -- there is no config knob for
+    this; `block_gc_delay` does not appear in `src/util/config.rs` or the config docs, so
+    there is no tuning tradeoff to weigh, only a floor to wait out. `garage repair --yes
+    blocks` CANNOT shorten this: it is exclusively `put_to_resync(hash, 0)`
+    (src/block/repair.rs:92-150), and `resync_block` no-ops on a block whose `at_time` hasn't
+    elapsed. Upstream removed repair-triggered deletion deliberately in PR #135 to fix
+    data-loss issue #39 -- do not "fix" this by making repair force the delete, that
+    reintroduces #39. This script still runs `repair --yes blocks` (matching the brief's
+    falsifier), it just no longer relies on it to shorten the wait.
+
+Note this test's 1 MiB objects do NOT exercise Garage's inline-object path
+(`INLINE_THRESHOLD = 3072 B`) that covers 95.4% of the real production estate -- see
+`h4c_inline.sh` in this directory for that separate, still-open question.
 """
 import argparse
 import datetime
@@ -12,34 +40,43 @@ import json
 import os
 import subprocess
 import sys
+import time
 
 import boto3
 from botocore.config import Config
 
+# See module docstring: Garage v2.3.0's block deletion resync is scheduled at
+# now + BLOCK_GC_DELAY(600s) + 10s, with no config knob to shorten it.
+BLOCK_GC_DELAY_S = 600
+MIN_WAIT_S = BLOCK_GC_DELAY_S + 30  # floor + margin
+POLL_INTERVAL_S = 30
+
+
+def sh(cmd, **kw):
+    return subprocess.run(cmd, capture_output=True, text=True, **kw)
+
 
 def du_bytes(path):
-    out = subprocess.run(["sudo", "du", "-sb", path], capture_output=True, text=True, check=True).stdout
-    return int(out.split()[0])
+    return int(sh(["sudo", "du", "-sb", path], check=True).stdout.split()[0])
 
 
 def object_count(container, bucket):
-    out = subprocess.run(["docker", "exec", container, "/garage", "bucket", "info", bucket],
-                          capture_output=True, text=True, check=True).stdout
+    out = sh(["docker", "exec", container, "/garage", "bucket", "info", bucket], check=True).stdout
     for line in out.splitlines():
         if line.strip().startswith("Objects:"):
             return int(line.split(":")[1].strip())
     return None
 
 
-def list_count(client, bucket):
-    resp = client.list_objects_v2(Bucket=bucket)
+def list_count(client, bucket, prefix=""):
+    resp = client.list_objects_v2(Bucket=bucket, Prefix=prefix)
     return resp.get("KeyCount", 0)
 
 
-def snapshot(client, bucket, container, data_dir, label):
+def snapshot(client, bucket, container, data_dir, label, prefix=""):
     s = {
         "label": label,
-        "list_key_count": list_count(client, bucket),
+        "list_key_count": list_count(client, bucket, prefix),
         "bucket_object_count": object_count(container, bucket),
         "du_bytes": du_bytes(data_dir),
     }
@@ -47,8 +84,23 @@ def snapshot(client, bucket, container, data_dir, label):
     return s
 
 
-def reclaimed(before, after):
-    return after["list_key_count"] < before["list_key_count"] and (after["bucket_object_count"] or 0) < (before["bucket_object_count"] or 0) and after["du_bytes"] < before["du_bytes"]
+def poll_for_drop(data_dir, baseline_du, max_wait_s, interval=POLL_INTERVAL_S):
+    """Poll du until it drops materially (>10%) below baseline_du, or max_wait_s elapses.
+    Returns (dropped: bool, final_du: int)."""
+    deadline = time.time() + max_wait_s
+    du = baseline_du
+    while True:
+        du = du_bytes(data_dir)
+        if du < baseline_du * 0.9:
+            return True, du
+        if time.time() >= deadline:
+            return False, du
+        time.sleep(interval)
+
+
+def put_distinct(client, bucket, prefix, n, mib):
+    for i in range(n):
+        client.put_object(Bucket=bucket, Key=f"{prefix}{i:05d}", Body=os.urandom(mib * 1024 * 1024))
 
 
 def main():
@@ -59,9 +111,11 @@ def main():
     ap.add_argument("--bucket", required=True)
     ap.add_argument("--container", required=True)
     ap.add_argument("--data-dir", required=True)
+    ap.add_argument("--meta-dir", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--n-objects", type=int, default=200)
     ap.add_argument("--object-mib", type=int, default=1)
+    ap.add_argument("--n-control-objects", type=int, default=10)
     args = ap.parse_args()
 
     client = boto3.client(
@@ -69,20 +123,41 @@ def main():
         config=Config(s3={"addressing_style": "path"}), region_name="garage",
     )
 
-    print(f"PUTting {args.n_objects} x {args.object_mib}MiB objects...", flush=True)
-    body = os.urandom(args.object_mib * 1024 * 1024)
-    for i in range(args.n_objects):
-        client.put_object(Bucket=args.bucket, Key=f"expire-me/{i:05d}", Body=body)
-
     result = {}
-    result["before_rule"] = snapshot(client, args.bucket, args.container, args.data_dir, "before_rule")
-    before_not_reclaimed = (
-        result["before_rule"]["list_key_count"] > 0
-        and (result["before_rule"]["bucket_object_count"] or 0) > 0
-        and result["before_rule"]["du_bytes"] > 0
-    )
-    result["failfirst_ok"] = before_not_reclaimed
-    print(f"FAIL-FIRST (pre-rule, must be NOT-RECLAIMED on all 3): {'OK' if before_not_reclaimed else 'DETECTOR-BROKEN'}", flush=True)
+
+    # --- Fail-first: prove the du probe can register a DROP, not just a nonzero value. ---
+    print(f"FAIL-FIRST CONTROL: PUT {args.n_control_objects}x{args.object_mib}MiB distinct objects, "
+          f"delete them, and confirm du drops before trusting any real result.", flush=True)
+    put_distinct(client, args.bucket, "control-me/", args.n_control_objects, args.object_mib)
+    result["control_before_delete"] = snapshot(
+        client, args.bucket, args.container, args.data_dir, "control_before_delete", prefix="control-me/")
+    keys = [{"Key": o["Key"]} for o in client.list_objects_v2(Bucket=args.bucket, Prefix="control-me/").get("Contents", [])]
+    client.delete_objects(Bucket=args.bucket, Delete={"Objects": keys})
+    control_dropped, control_final_du = poll_for_drop(
+        args.data_dir, result["control_before_delete"]["du_bytes"], MIN_WAIT_S)
+    result["control_dropped"] = control_dropped
+    result["control_final_du"] = control_final_du
+    print(f"FAIL-FIRST CONTROL result: du {'DROPPED' if control_dropped else 'DID NOT DROP'} "
+          f"within {MIN_WAIT_S}s of DeleteObject -> {'DETECTOR-OK' if control_dropped else 'DETECTOR-BROKEN'}", flush=True)
+    if not control_dropped:
+        # By this harness's own governing rule, a fail-first that cannot fail makes every
+        # downstream result void, not negative. Stop here rather than reporting NOT-RECLAIMED.
+        result["verdict"] = "VOID"
+        result["failfirst_ok"] = False
+        print("SUMMARY test=h4-lifecycle-expiration verdict=VOID reason=du-probe-cannot-register-a-drop")
+        with open(args.out, "w") as f:
+            json.dump(result, f, indent=2)
+        sys.exit(1)
+    result["failfirst_ok"] = True
+
+    # --- Real test: a distinct body per object. Garage is content-addressed, so a single
+    # body reused across N PUTs deduplicates to one block and makes `du` measure the wrong
+    # thing -- this is exactly what invalidated the original run of this test. ---
+    print(f"PUTting {args.n_objects} x {args.object_mib}MiB DISTINCT objects...", flush=True)
+    put_distinct(client, args.bucket, "expire-me/", args.n_objects, args.object_mib)
+
+    result["before_rule"] = snapshot(
+        client, args.bucket, args.container, args.data_dir, "before_rule", prefix="expire-me/")
 
     yesterday = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)).strftime("%Y-%m-%dT00:00:00.000Z")
     client.put_bucket_lifecycle_configuration(
@@ -98,40 +173,33 @@ def main():
     )
     print(f"lifecycle rule applied: Expiration.Date={yesterday}", flush=True)
 
-    # DEVIATION, RECORD OF WHY (see run.sh's header for the fuller version): a plain
-    # `docker restart` was tried FIRST and did NOT re-trigger the worker -- Garage persists
-    # a per-day "already ran today" marker in <meta>/lifecycle_worker_state and skips
-    # re-running on a same-day restart. Deleting that file before restart forces it to
-    # re-evaluate, confirmed against this exact container: the very next start logged
-    # "Lifecycle: expiring 1 object in bucket ..." x200 and "objects expired: 200".
-    print("stopping garage, clearing lifecycle_worker_state (see script comment), restarting...", flush=True)
-    subprocess.run(["docker", "stop", args.container], check=True, capture_output=True)
-    subprocess.run(["sudo", "rm", "-f", os.path.join(os.path.dirname(args.data_dir.rstrip("/")), "meta", "lifecycle_worker_state")], capture_output=True)
-    subprocess.run(["docker", "start", args.container], check=True, capture_output=True)
-    import time
+    # A plain `docker restart` does NOT re-trigger the worker on a second same-day restart --
+    # Garage persists a per-day `last_completed` marker in <meta>/lifecycle_worker_state.
+    # Clearing that file before restart forces a fresh run.
+    print("stopping garage, clearing lifecycle_worker_state, restarting...", flush=True)
+    sh(["docker", "stop", args.container], check=True)
+    sh(["sudo", "rm", "-f", os.path.join(args.meta_dir, "lifecycle_worker_state")])
+    sh(["docker", "start", args.container], check=True)
     for _ in range(30):
-        r = subprocess.run(["docker", "exec", args.container, "/garage", "status"], capture_output=True)
-        if r.returncode == 0:
+        if sh(["docker", "exec", args.container, "/garage", "status"]).returncode == 0:
             break
         time.sleep(1)
-    time.sleep(5)  # let the startup lifecycle-worker pass (and its block deletions) finish
+    time.sleep(15)  # let the startup lifecycle-worker pass finish expiring the objects
 
-    result["after_worker"] = snapshot(client, args.bucket, args.container, args.data_dir, "after_worker")
+    result["after_worker"] = snapshot(
+        client, args.bucket, args.container, args.data_dir, "after_worker", prefix="expire-me/")
 
-    if not reclaimed(result["before_rule"], result["after_worker"]):
-        print("du/list/count did not all drop after one worker cycle -- running `garage repair --yes blocks` once, per the brief's falsifier", flush=True)
-        subprocess.run(["docker", "exec", args.container, "/garage", "repair", "--yes", "blocks"], capture_output=True)
-        time.sleep(60)  # generous: manual investigation during harness development waited 2.5+
-        # minutes past this point with `garage stats` still showing GcTodo=200 on object/
-        # version/block_ref and zero change in `du` -- this isn't "just needs a bit longer".
-        result["after_repair_blocks"] = snapshot(client, args.bucket, args.container, args.data_dir, "after_repair_blocks")
-        final = result["after_repair_blocks"]
-    else:
-        final = result["after_worker"]
+    # `repair --yes blocks` cannot shorten BLOCK_GC_DELAY (see module docstring) -- run it
+    # anyway so this matches the brief's falsifier, but poll for the real floor regardless.
+    sh(["docker", "exec", args.container, "/garage", "repair", "--yes", "blocks"])
+    dropped, final_du = poll_for_drop(args.data_dir, result["before_rule"]["du_bytes"], MIN_WAIT_S)
+    result["reclaimed_within_wait"] = dropped
+    result["final_du_bytes"] = final_du
+    result["after_repair_blocks"] = snapshot(
+        client, args.bucket, args.container, args.data_dir, "after_repair_blocks", prefix="expire-me/")
 
-    result["reclaimed"] = reclaimed(result["before_rule"], final)
-    result["verdict"] = "RECLAIMED" if result["reclaimed"] else "NOT-RECLAIMED"
-    print(f"SUMMARY test=h4-lifecycle-expiration verdict={result['verdict']}")
+    result["verdict"] = "RECLAIMED" if dropped else "NOT-RECLAIMED"
+    print(f"SUMMARY test=h4-lifecycle-expiration verdict={result['verdict']} wait_floor_s={MIN_WAIT_S}")
 
     with open(args.out, "w") as f:
         json.dump(result, f, indent=2)

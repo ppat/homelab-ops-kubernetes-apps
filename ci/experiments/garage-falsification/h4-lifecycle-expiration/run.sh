@@ -17,6 +17,10 @@
 # can't fire on a freshly-written object), a worker run "for today" still catches it
 # (yesterday <= today). This substitutes for both of the brief's suggested options and
 # completes in seconds instead of 26h.
+#
+# This trick shortens the lifecycle-worker trigger, but NOT the wait for actual block
+# reclamation: see lifecycle_check.py's module docstring for why the real floor is
+# BLOCK_GC_DELAY(600s)+10s, and why `garage repair --yes blocks` cannot shorten it either.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -74,5 +78,6 @@ SECRET=$(echo "$INFO" | grep "Secret key:" | awk '{print $NF}')
 
 python3 "$HERE/lifecycle_check.py" \
   --endpoint "http://127.0.0.1:$S3_PORT" --access-key "$ACCESS" --secret-key "$SECRET" \
-  --bucket h4lifecycle --container "$CONTAINER" --data-dir "$DATA_ROOT/data" \
+  --bucket h4lifecycle --container "$CONTAINER" \
+  --data-dir "$DATA_ROOT/data" --meta-dir "$DATA_ROOT/meta" \
   --out "$OUT"
