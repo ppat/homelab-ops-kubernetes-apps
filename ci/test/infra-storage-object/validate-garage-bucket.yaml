@@ -1,0 +1,37 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-garage-bucket
+spec:
+  try:
+  - description: Apply test-bucket
+    apply:
+      file: ./test-bucket.yaml
+  # LifecycleConfigured=True is the falsifiable part of this assertion: the
+  # operator reports False (naming the reason) instead of a no-op success
+  # when the target Garage predates v2.3.0, so a True reading here proves the
+  # pinned image actually took effect rather than merely being requested.
+  - description: Assert garagebucket/chainsaw-test-bucket reconciles with lifecycle configured
+    assert:
+      resource:
+        apiVersion: garage.rajsingh.info/v1beta1
+        kind: GarageBucket
+        metadata:
+          name: chainsaw-test-bucket
+          namespace: garage
+        status:
+          (conditions[?type == 'Ready']):
+          - status: 'True'
+          (conditions[?type == 'LifecycleConfigured']):
+          - status: 'True'
+      timeout: 3m
+
+  catch:
+  - describe:
+      apiVersion: garage.rajsingh.info/v1beta1
+      kind: GarageBucket
+      name: chainsaw-test-bucket
+      namespace: garage
+  - events:
+      namespace: garage

@@ -1,0 +1,19 @@
+---
+apiVersion: garage.rajsingh.info/v1beta1
+kind: GarageBucket
+metadata:
+  name: chainsaw-test-bucket
+  namespace: garage
+spec:
+  clusterRef:
+    name: garage
+  quotas:
+    maxSize: 50Mi
+  # Requires Garage v2.3.0+ -- the operator sets LifecycleConfigured=False,
+  # naming that requirement, against an older Garage rather than reporting a
+  # success that never took effect. This module pins v2.3.0, so this rule is
+  # expected to apply and the condition to read True.
+  lifecycle:
+    rules:
+    - id: abort-incomplete-uploads
+      abortIncompleteMultipartUploadDays: 7
