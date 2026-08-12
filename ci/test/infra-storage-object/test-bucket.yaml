@@ -15,4 +15,5 @@ spec:
   # expected to apply and the condition to read True.
   lifecycle:
     rules:
-    - abortIncompleteMultipartUploadDays: 7
+    - id: abort-incomplete-uploads
+      abortIncompleteMultipartUploadDays: 7
