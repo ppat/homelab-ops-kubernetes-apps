@@ -90,6 +90,18 @@ spec:
         s3:
           # see: https://grafana.com/docs/loki/latest/configure/#s3_storage_config
           # endpoint, accessKeyId, and secretAccessKey injected by helmrelease's spec.valuesFrom
+          #
+          # Left unset, Loki's S3 client (pkg/storage/chunk/client/aws) signs every request
+          # with the literal placeholder region "dummy" instead of leaving it blank or
+          # auto-detecting the bucket's real region (see
+          # https://github.com/grafana/loki/issues/11453) - a long-standing upstream quirk
+          # that's invisible against MinIO (which ignores the signed region entirely) but
+          # fails every request with AuthorizationHeaderMalformed against Garage, which
+          # enforces an exact match to its configured s3_region. Defaults to empty so
+          # clusters still on MinIO see no behavior change; a cluster whose object store
+          # enforces region matching (e.g. Garage) must set this to that store's configured
+          # region via postBuild.substitute.
+          region: ${loki_s3_region:=}
           s3ForcePathStyle: true
           insecure: false
           http_config:
