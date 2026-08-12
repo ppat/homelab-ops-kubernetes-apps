@@ -6,6 +6,7 @@ resources:
 - namespace.yaml
 - csi-driver-nfs/
 - minio/
+- garage/
 - longhorn/
 
 sortOptions:
