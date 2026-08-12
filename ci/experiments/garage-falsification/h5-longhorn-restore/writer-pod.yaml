@@ -1,0 +1,61 @@
+# H5 step 3: PVC + pod that writes real, checksummable data onto a Longhorn volume, then
+# records a manifest with the same checksum_verify.py used to validate the restore later.
+# That script is mounted in from a ConfigMap created by backup-restore-driver.sh via
+# `kubectl create configmap --from-file=checksum_verify.py` -- deliberately NOT duplicated
+# inline here, so there is exactly one copy of the checker logic and it can't drift.
+#
+# storageClassName is deliberately "longhorn" (the chart's default StorageClass) -- change
+# only if testing against a non-default StorageClass Longhorn config.
+#
+# VERIFIED (2026-08-12, see NOTES.md): this write/checksum command was smoke-tested against
+# a throwaway local-path-backed PVC (NOT Longhorn, which never became schedulable -- see
+# NOTES.md) to confirm the write/checksum logic itself is correct. The Longhorn-specific
+# parts (storageClassName, and everything backup-restore-driver.sh does afterwards) remain
+# UNVERIFIED.
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: h5-data
+  namespace: h5-garage
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 512Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: h5-writer
+  namespace: h5-garage
+spec:
+  restartPolicy: Never
+  containers:
+  - name: writer
+    image: python:3.13-slim
+    command:
+    - bash
+    - -c
+    - |
+        set -euo pipefail
+        cd /data
+        head -c 5242880 /dev/urandom > fixture-a.bin    # 5 MiB
+        head -c 10485760 /dev/urandom > fixture-b.bin   # 10 MiB
+        seq 1 20000 | sed 's#^#h5-fixture line #; s#$# the quick brown fox jumps over the lazy dog#' > fixture-c.txt
+        python3 /scripts/checksum_verify.py --generate --dir /data --manifest /data/manifest.json
+        echo "wrote $(du -sh /data | cut -f1) to /data"
+    volumeMounts:
+    - name: data
+      mountPath: /data
+    - name: scripts
+      mountPath: /scripts
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: h5-data
+  - name: scripts
+    configMap:
+      name: h5-checksum-verify

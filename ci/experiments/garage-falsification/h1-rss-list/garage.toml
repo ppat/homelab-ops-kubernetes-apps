@@ -1,0 +1,20 @@
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+db_engine = "lmdb"  # default engine and default metadata_fsync (off) -- H1 tests RSS/LIST, not durability (that's H2)
+
+replication_factor = 1  # single node, matches the sandbox-talos target topology being evaluated
+compression_level = 1
+
+rpc_bind_addr = "[::]:3901"
+rpc_public_addr = "127.0.0.1:3901"
+rpc_secret = "a7d0754a5ceaded2ceaeaeda44864637004a3d58aa844f4177c0b833463a4c32"
+
+[s3_api]
+s3_region = "garage"
+api_bind_addr = "[::]:3900"
+root_domain = ".s3.garage.localhost"
+
+[admin]
+api_bind_addr = "[::]:3903"
+metrics_token = "h1falsify-metrics-token"
+admin_token = "h1falsify-admin-token"

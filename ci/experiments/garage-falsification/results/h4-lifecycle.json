@@ -1,0 +1,23 @@
+{
+  "before_rule": {
+    "label": "before_rule",
+    "list_key_count": 200,
+    "bucket_object_count": 200,
+    "du_bytes": 1048677
+  },
+  "failfirst_ok": true,
+  "after_worker": {
+    "label": "after_worker",
+    "list_key_count": 0,
+    "bucket_object_count": 0,
+    "du_bytes": 1048677
+  },
+  "after_repair_blocks": {
+    "label": "after_repair_blocks",
+    "list_key_count": 0,
+    "bucket_object_count": 0,
+    "du_bytes": 1048677
+  },
+  "reclaimed": false,
+  "verdict": "NOT-RECLAIMED"
+}

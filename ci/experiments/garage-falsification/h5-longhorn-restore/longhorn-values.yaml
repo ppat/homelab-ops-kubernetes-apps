@@ -1,0 +1,51 @@
+# H5 Longhorn install values: as close to what this estate actually deploys
+# (infrastructure/subsystems/storage-core/longhorn/helm-release-longhorn.yaml, chart 1.12.0)
+# as a single-node sandbox permits. Deviations from that file are called out below --
+# everything else is copied verbatim so the S3-backup-target code path under test is
+# representative of production Longhorn, not a stripped-down config.
+#
+# DEVIATION 1: defaultReplicaCount 2 -> 1. Sandbox is a single Talos node; Longhorn
+# refuses to place >1 replica of a volume on the same node by default, so
+# defaultReplicaCount:2 would leave every volume permanently degraded (1/2 replicas).
+# This does not affect what's under test here -- the S3 backup/restore engine talks to
+# the *backup target* (Garage) independently of in-cluster replica count.
+# DEVIATION 2: metrics.serviceMonitor.enabled -> false (no prometheus-operator CRDs
+# installed in this sandbox; irrelevant to the backup/restore path under test).
+---
+global:
+  tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+
+defaultSettings:
+  allowCollectingLonghornUsageMetrics: false
+  concurrentAutomaticEngineUpgradePerNodeLimit: 1
+  concurrentVolumeBackupRestorePerNodeLimit: 2
+  defaultDataLocality: best-effort
+  defaultReplicaCount: 1 # DEVIATION 1, see header
+  fastReplicaRebuildEnabled: true
+  nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
+  offlineRelicaRebuilding: true
+  upgradeChecker: false
+  snapshotDataIntegrity: fast-check
+  snapshotDataIntegrityCronjob: "0 6 * * *"
+  snapshotDataIntegrityImmediateCheckAfterSnapshotCreation: false
+  snapshotMaxCount: 24
+  orphanResourceAutoDeletion: replica-data;instance
+  orphanResourceAutoDeletionGracePeriod: 259200
+  allowRecurringJobWhileVolumeDetached: true
+  recurringFailedJobsHistoryLimit: 7
+  recurringSuccessfulJobsHistoryLimit: 7
+  restoreVolumeRecurringJobs: true
+  restoreConcurrentLimit: 4
+  replicaAutoBalance: least-effort
+  storageMinimalAvailablePercentage: 15
+  storageOverProvisioningPercentage: 100
+  storageReservedPercentageForDefaultDisk: 10
+  autoCleanupSnapshotAfterOnDemandBackupCompleted: true
+  removeSnapshotsDuringFilesystemTrim: true
+  taintToleration: node-role.kubernetes.io/control-plane=true:NoSchedule
+
+metrics:
+  serviceMonitor:
+    enabled: false # DEVIATION 2, see header

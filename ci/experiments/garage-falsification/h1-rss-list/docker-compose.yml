@@ -1,0 +1,48 @@
+---
+# H1: MinIO and Garage side by side on the same host (same CPU/memory/page-cache pressure),
+# so RSS numbers are comparable to each other even though neither is comparable in absolute
+# terms to the 12,344 MiB baseline figure (that came from different hardware -- see README).
+#
+# Data dirs are bind-mounted onto /var/lib/docker's volume (vdb, 200GB) rather than the small
+# root disk (vda, ~19GB) -- see ../README.md "Environment constraints".
+name: h1-rss-list
+
+services:
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z  # pins the tag actually deployed in this repo's storage-core module
+    container_name: h1-minio
+    command: server /data --address ":9000" --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: h1falsify
+      MINIO_ROOT_PASSWORD: h1falsify-minio-password
+    ports:
+    - "19000:9000"
+    - "19001:9001"
+    volumes:
+    - /opt/build-scratch/h1-data/minio:/data
+    deploy:
+      resources:
+        limits:
+          memory: 8g
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  garage:
+    image: dxflrs/garage:v2.3.0
+    container_name: h1-garage
+    environment:
+      RUST_LOG: garage=info
+    ports:
+    - "13900:3900"  # S3 API
+    - "13903:3903"  # admin API (metrics)
+    volumes:
+    - ./garage.toml:/etc/garage.toml:ro
+    - /opt/build-scratch/h1-data/garage-meta:/var/lib/garage/meta
+    - /opt/build-scratch/h1-data/garage-data:/var/lib/garage/data
+    deploy:
+      resources:
+        limits:
+          memory: 8g

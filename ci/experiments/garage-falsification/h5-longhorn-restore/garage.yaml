@@ -1,0 +1,106 @@
+# H5 Garage instance: a plain Deployment + Service (per the brief's "even a plain Pod for
+# simplicity" option), single-node RF1, deployed in its OWN namespace (h5-garage) so it
+# cannot collide with the `garage`/`garage-operator-system` namespaces that were already
+# present on sandbox-talos when this test started -- those belong to a separate, actively
+# reconciling Flux Kustomization (infra-storage-object-core, a chainsaw test run for the
+# real production module) and must not be touched. emptyDir is intentional: this instance
+# only needs to survive for the lifetime of this test run, not a pod restart.
+#
+# s3_region is deliberately "garage" -- same convention already used by h2/h4 elsewhere in
+# this harness -- and MUST exactly match the region Longhorn's BackupTarget is configured
+# with (see backup-target-secret.yaml / longhorn's backupTarget setting): Garage enforces
+# exact-match on s3_region, unlike MinIO which is lenient. See NOTES.md for the boto3-level
+# proof of that exact-match enforcement (AuthorizationHeaderMalformed on mismatch).
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: h5-garage
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: garage-config
+  namespace: h5-garage
+data:
+  garage.toml: |
+    metadata_dir = "/var/lib/garage/meta"
+    data_dir = "/var/lib/garage/data"
+    db_engine = "lmdb"
+    metadata_fsync = true
+    replication_factor = 1
+    rpc_bind_addr = "[::]:3901"
+    rpc_public_addr = "127.0.0.1:3901"
+    rpc_secret = "2b845521bca5522d7eb5579c9c8006839d0b2e75a95f5967bc17b5ea83e4c1e3"
+
+    [s3_api]
+    s3_region = "garage"
+    api_bind_addr = "[::]:3900"
+    root_domain = ".s3.garage.localhost"
+
+    [admin]
+    api_bind_addr = "[::]:3903"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garage
+  namespace: h5-garage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: garage
+  template:
+    metadata:
+      labels:
+        app: garage
+    spec:
+      containers:
+      - name: garage
+        image: dxflrs/garage:v2.3.0
+        ports:
+        - containerPort: 3900
+          name: s3-api
+        - containerPort: 3901
+          name: rpc
+        - containerPort: 3903
+          name: admin
+        volumeMounts:
+        - name: config
+          mountPath: /etc/garage.toml
+          subPath: garage.toml
+        - name: data
+          mountPath: /var/lib/garage
+        readinessProbe:
+          tcpSocket:
+            port: 3900
+          initialDelaySeconds: 2
+          periodSeconds: 2
+      volumes:
+      - name: config
+        configMap:
+          name: garage-config
+      - name: data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: garage
+  namespace: h5-garage
+spec:
+  selector:
+    app: garage
+  ports:
+  - name: s3-api
+    port: 3900
+    targetPort: 3900
+  - name: rpc
+    port: 3901
+    targetPort: 3901
+  - name: admin
+    port: 3903
+    targetPort: 3903
