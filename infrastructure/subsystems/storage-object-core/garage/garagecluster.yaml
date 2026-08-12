@@ -5,12 +5,15 @@ metadata:
   name: garage
   namespace: garage
 spec:
-  # renovate: datasource=docker depName=dxflrs/garage
   # Pinned explicitly rather than left to the operator's own built-in default
   # (which currently also resolves to v2.3.0) -- this way a garage-operator
   # chart bump can never silently move the Garage data-plane version out from
-  # under a running cluster.
-  image: dxflrs/garage:v2.3.0
+  # under a running cluster. No "# renovate:" directive is needed here:
+  # Renovate's built-in kubernetes manager already tracks any bare
+  # `image: repo:tag` field like this one, unlike the operator's own image
+  # field below, which is nested under a `tag:` key and needs an explicit
+  # one.
+  image: dxflrs/garage:v2.3.0@sha256:866bd13ed2038ba7e7190e840482bc27234c4afaf77be8cfa439ae088c1e4690
 
   replication:
     factor: ${garage_replication_factor}

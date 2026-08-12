@@ -28,13 +28,13 @@ spec:
 
   values:
     image:
-      # renovate: datasource=docker depName=ghcr.io/rajsinghtech/garage-operator
       # Pinned by digest (in addition to the chart's own version pin above) per
       # the operator's own supply-chain guidance -- its images are keyless-signed
       # (cosign, issuer https://token.actions.githubusercontent.com) and carry
       # SLSA provenance + an SBOM, so a digest pin is verifiable, not just a
       # convention. This repo has no Kyverno verifyImages precedent yet to
       # enforce that signature at admission time.
+      # renovate: datasource=docker depName=ghcr.io/rajsinghtech/garage-operator versioning=loose
       tag: "v0.7.3@sha256:f27fc636efd57d7f821aa40ccdb2e340be7e6756c388f621eed5546e7d40544f"
 
     # webhooks.enabled defaults to true and provisions its own cert-manager
