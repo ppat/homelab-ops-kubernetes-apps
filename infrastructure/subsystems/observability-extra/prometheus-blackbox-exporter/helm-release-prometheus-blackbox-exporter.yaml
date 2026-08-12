@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: prometheus-community-repository
         namespace: flux-system
-      version: 11.16.0
+      version: 11.16.1
   install:
     createNamespace: false
     remediation:
