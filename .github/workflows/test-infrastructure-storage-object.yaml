@@ -5,11 +5,14 @@ name: test-infrastructure-storage-object
 on:
   pull_request:
     paths:
-    # NOTE: intentionally omits this workflow file's own path (unlike sibling
-    # test-infrastructure-*.yaml workflows) until ci/test/infra-storage-object
-    # exists -- until then, self-triggering would run chainsaw against a
-    # nonexistent test_path and fail. Add it back once that directory lands.
-    - '.github/kind-cluster-multi-node.yaml'
+    # NOTE: intentionally omits this workflow file's own path and the shared
+    # kind-cluster-multi-node.yaml (unlike sibling test-infrastructure-*.yaml
+    # workflows) until ci/test/infra-storage-object exists -- until then,
+    # triggering would run chainsaw against a nonexistent test_path and fail.
+    # A PR touching kind-cluster-multi-node.yaml would otherwise also trigger
+    # this workflow, since that file is shared with every other
+    # test-infrastructure-*.yaml workflow. Add both back once the test
+    # directory lands.
     - 'ci/test/infra-storage-object/**'
     - 'infrastructure/subsystems/storage-object-core/**'
     - '!infrastructure/subsystems/storage-object-core/**.md'
