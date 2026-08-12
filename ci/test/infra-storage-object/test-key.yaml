@@ -1,0 +1,16 @@
+---
+apiVersion: garage.rajsingh.info/v1beta1
+kind: GarageKey
+metadata:
+  name: chainsaw-test-key
+  namespace: garage
+spec:
+  clusterRef:
+    name: garage
+  bucketPermissions:
+  - bucketRef:
+      name: chainsaw-test-bucket
+    read: true
+    write: true
+  secretTemplate:
+    name: chainsaw-test-key-secret

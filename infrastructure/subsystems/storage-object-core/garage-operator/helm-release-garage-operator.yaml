@@ -1,0 +1,43 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: garage-operator-release
+  namespace: garage-operator-system
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: garage-operator
+    namespace: flux-system
+  install:
+    crds: CreateReplace
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 30m0s
+  releaseName: garage-operator
+  targetNamespace: garage-operator-system
+  timeout: 15m0s
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+
+  values:
+    image:
+      # Pinned by digest (in addition to the chart's own version pin above) per
+      # the operator's own supply-chain guidance -- its images are keyless-signed
+      # (cosign, issuer https://token.actions.githubusercontent.com) and carry
+      # SLSA provenance + an SBOM, so a digest pin is verifiable, not just a
+      # convention. This repo has no Kyverno verifyImages precedent yet to
+      # enforce that signature at admission time.
+      # renovate: datasource=docker depName=ghcr.io/rajsinghtech/garage-operator versioning=loose
+      tag: "v0.7.3@sha256:f27fc636efd57d7f821aa40ccdb2e340be7e6756c388f621eed5546e7d40544f"
+
+    # webhooks.enabled defaults to true and provisions its own cert-manager
+    # self-signed Issuer/Certificate for admission + conversion webhook TLS --
+    # cert-manager itself (security-core) is a hard dependency declared at
+    # point of use, not something this module can express.
