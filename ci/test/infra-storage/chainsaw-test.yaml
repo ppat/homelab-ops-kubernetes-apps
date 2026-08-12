@@ -19,6 +19,11 @@ spec:
 
   - name: Reconcile pre-requisites
     try:
+    - description: Reconcile helmrelease/cert-manager-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cert-manager-release --namespace=cert-manager --timeout=3m
+        timeout: 3m
     - description: Reconcile helmrelease/external-secrets-release
       script:
         # yamllint disable-line rule:line-length
@@ -45,6 +50,18 @@ spec:
   - name: Validate minio
     use:
       template: ./validate-minio.yaml
+  - name: Validate garage operator
+    use:
+      template: ./validate-garage-operator.yaml
+  - name: Validate garage cluster
+    use:
+      template: ./validate-garage-cluster.yaml
+  - name: Validate garage bucket
+    use:
+      template: ./validate-garage-bucket.yaml
+  - name: Validate garage key
+    use:
+      template: ./validate-garage-key.yaml
   - name: Validate longhorn
     use:
       template: ./validate-longhorn.yaml

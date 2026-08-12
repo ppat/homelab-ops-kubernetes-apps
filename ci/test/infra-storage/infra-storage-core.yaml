@@ -14,6 +14,15 @@ spec:
       domain_name: cluster.example.com
       minio_admin_username_key: minio_admin_username
       minio_admin_password_key: minio_admin_password
+      cert_issuer: selfsigned-issuer
+      garage_admin_token_key: garage_admin_token
+      garage_data_size: 200Mi
+      garage_metadata_size: 100Mi
+      garage_replication_factor: "1"
+      garage_rpc_secret_key: garage_rpc_secret
+      garage_storage_class: standard
+      garage_storage_replicas: "1"
+      garage_web_root_domain: garage-web.cluster.example.com
   prune: false
   sourceRef:
     kind: GitRepository
