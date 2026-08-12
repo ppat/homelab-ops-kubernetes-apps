@@ -5,7 +5,7 @@ metadata:
   name: garage-web
   namespace: garage
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: ${garage_web_root_domain},*.${garage_web_root_domain}
+    external-dns.alpha.kubernetes.io/hostname: ${garage_web_root_domain}
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
