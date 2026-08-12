@@ -22,6 +22,10 @@ spec:
       prometheus_volume_name: deleted-by-kustomize-patch
       loki_storage_class: standard
       loki_singlebinary_storage_size: 1Gi
+      # Must match ../chainsaw/fixtures/object-store's configured s3_region - Garage
+      # rejects a signed-region mismatch outright (see helm-release-loki.yaml's region
+      # comment), unlike the old MinIO fixture, which ignored this entirely.
+      loki_s3_region: us-east-1
       loki_results_cache_memory: "512"
       loki_chunks_cache_memory: "512"
       # kind nodes have no systemd journal; any GID is fine, the group need not exist.
