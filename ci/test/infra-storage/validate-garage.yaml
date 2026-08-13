@@ -78,6 +78,11 @@ spec:
             - alert: GarageBlockResyncErrors
             - alert: GarageHighBlockResyncQueue
             - alert: GarageLowDiskSpace
+          - name: object-store-recovery-events
+            rules:
+            - record: object_store:garage_up
+            - record: object_store:recovery_block_corruptions_total
+            - record: object_store:recovery_blocks_currently_errored
   # The Grafana dashboard sidecar discovers dashboards purely by label, so a
   # typo in the label key/value -- or a lost annotation -- doesn't fail
   # anything: the ConfigMap applies cleanly and the dashboard simply never

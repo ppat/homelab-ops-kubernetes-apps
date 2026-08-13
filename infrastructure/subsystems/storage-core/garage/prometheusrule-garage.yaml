@@ -115,3 +115,54 @@ spec:
           garage_local_disk_avail/garage_local_disk_total is below 10% on the
           {{ $labels.volume }} volume -- with no second node, there's nowhere else
           for writes to land once this fills.
+  - name: object-store-recovery-events
+    rules:
+    # Records the recovery-events KPI tracked by homelab-ops-kubernetes-apps#3611
+    # (pass = zero over its 30-day trial), no alert rules, distinct from
+    # GarageBlockResyncErrors above which alerts on the same underlying gauge --
+    # that alert fires on a sustained problem, this records a continuous series
+    # a KPI decision can be read back from, including whether Garage was ever
+    # actually being measured. Must come first in this group: later rules
+    # reference it, and rules within one PrometheusRule group see earlier
+    # rules' output from the same evaluation.
+    #
+    # This needs stricter handling than this module's own `or vector(0)`
+    # convention for Garage's lazily-emitted counters (see GarageHighRPCErrorRate
+    # above and the Garage dashboard's RPC panel): `or vector(0)` always renders
+    # 0 for an absent counter, which is exactly right for a dashboard panel a
+    # human reads alongside other liveness context, but wrong for a KPI whose
+    # pass bar is "zero over 30 days" -- it would make "Garage was never
+    # deployed" and "Garage ran healthy the whole trial" render identically.
+    # Gating through object_store:garage_up keeps those two states apart:
+    # absent while Garage isn't scraped, an explicit 0 while it is and
+    # healthy, the real count the moment it isn't.
+    - record: object_store:garage_up
+      expr: max(up{job="garage"})
+    # block_corruption_counter ("data corruptions detected on block reads",
+    # src/block/metrics.rs) is Garage's own direct corruption signal - the
+    # closest real proxy to "restart needing garage repair". Confirmed live
+    # against production (2026-08-13): absent from a healthy node's /metrics
+    # entirely, consistent with it being one of the OpenTelemetry counters this
+    # module's other rules already document as unemitted before their first
+    # increment (see GarageHighRPCErrorRate above) - exactly the gap
+    # object_store:garage_up exists to paper over.
+    - record: object_store:recovery_block_corruptions_total
+      expr: |
+        sum(block_corruption_counter{job="garage"})
+        or
+        (0 * object_store:garage_up)
+    # block_resync_errored_blocks is a gauge, not a counter, and - unlike
+    # block_corruption_counter - was confirmed present and reporting 0 on that
+    # same healthy production node, so it doesn't strictly need the same
+    # absent-vs-zero treatment today. Carrying it anyway keeps this rule
+    # identical in shape to the one above and doesn't depend on that eager-
+    # registration behaviour continuing to hold across future Garage versions.
+    # Deliberately not carrying block_resync_error_counter alongside it: that
+    # one counts resync *attempt* failures, which includes ordinary transient
+    # retries, not confirmed corruption or an unresolved backlog - a noisier
+    # proxy than the two rules above for a KPI whose pass bar is "zero".
+    - record: object_store:recovery_blocks_currently_errored
+      expr: |
+        sum(block_resync_errored_blocks{job="garage"})
+        or
+        (0 * object_store:garage_up)

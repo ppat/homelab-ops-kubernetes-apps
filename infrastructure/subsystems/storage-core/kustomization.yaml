@@ -8,6 +8,7 @@ resources:
 - minio/
 - garage/
 - longhorn/
+- prometheusrule-object-store.yaml
 
 sortOptions:
   order: fifo
