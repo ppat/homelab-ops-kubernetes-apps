@@ -8,6 +8,7 @@ resources:
 - deployment.yaml
 - ingress-s3.yaml
 - ingress-web.yaml
+- ingress-admin.yaml
 - servicemonitor.yaml
 - prometheusrule-garage.yaml
 - dashboards/
