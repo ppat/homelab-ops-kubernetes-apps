@@ -56,3 +56,6 @@ spec:
   - name: Validate longhorn
     use:
       template: ./validate-longhorn.yaml
+  - name: Validate object-store
+    use:
+      template: ./validate-object-store.yaml

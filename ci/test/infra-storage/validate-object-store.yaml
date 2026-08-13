@@ -1,0 +1,31 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-object-store
+# Structural check only: kind has no MinIO usage data (no S3 traffic, no
+# kubelet_volume_stats_* backing a real PVC in the way production does), so
+# this cannot exercise the ratio's actual value - only that the Prometheus
+# Operator CRD accepted the resource as written.
+spec:
+  try:
+  - description: Assert prometheusrule/object-store-disk-amplification loaded with its expected rule
+    assert:
+      resource:
+        apiVersion: monitoring.coreos.com/v1
+        kind: PrometheusRule
+        metadata:
+          name: object-store-disk-amplification
+          namespace: minio
+        spec:
+          groups:
+          - name: object-store-disk-amplification
+            rules:
+            - record: object_store:disk_amplification_ratio
+
+  catch:
+  - describe:
+      apiVersion: monitoring.coreos.com/v1
+      kind: PrometheusRule
+      name: object-store-disk-amplification
+      namespace: minio

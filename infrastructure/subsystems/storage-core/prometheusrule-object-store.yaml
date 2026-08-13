@@ -1,0 +1,47 @@
+---
+# Cross-engine, so it lives at this module's root rather than under minio/ or
+# garage/: it must keep working while MinIO is still the live store, and
+# isn't part of either engine's own lifecycle. Backs the disk-amplification
+# KPI tracked by homelab-ops-kubernetes-apps#3611 (a 30-day MinIO->Garage
+# object-store trial). No alert rules here by design - this estate leaves
+# AlertManager unwired until there's an AI triage path for it; this exists to
+# be graphed and queried, not to page anyone.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    release: kube-prometheus-stack
+  name: object-store-disk-amplification
+  namespace: minio
+spec:
+  groups:
+  - name: object-store-disk-amplification
+    rules:
+    # du(data_dir) / live bytes. Both halves are already scraped with no new
+    # exporter: kubelet_volume_stats_used_bytes is the kubelet's own statfs
+    # read of the PVC (same figure `du` on data_dir would show, since the PVC
+    # is dedicated to the object store), and minio_cluster_usage_total_bytes
+    # is MinIO's own data-usage-crawler total, which - unlike the PVC's raw
+    # disk usage - excludes delete markers (they are zero-byte placeholder
+    # objects), making it the "live bytes" denominator, not a filesystem fact.
+    # Confirmed against production on 2026-08-13: ~3.22x, matching the 3.2x
+    # MinIO measurement in issue #3611 almost exactly - this is the same
+    # defect that motivated the trial.
+    #
+    # "minio"/"minio-data" are this module's own fixed, non-parameterized
+    # identifiers - every cluster that deploys this module's MinIO submodule
+    # gets that exact namespace and PVC name (see minio/helm-release-minio.yaml).
+    #
+    # No twin engine="garage" rule: verified live against this module's own
+    # Garage deployment (production homelab, 2026-08-13) - its /metrics
+    # exposes no bucket/object byte-total series at all, only
+    # garage_local_disk_* (statvfs-level, the same fact kubelet_volume_stats_*
+    # already gives). Live bytes for Garage isn't buildable as a recording
+    # rule from what it currently scrapes.
+    - record: object_store:disk_amplification_ratio
+      labels:
+        engine: minio
+      expr: |
+        sum(kubelet_volume_stats_used_bytes{namespace="minio", persistentvolumeclaim="minio-data"})
+        /
+        sum(minio_cluster_usage_total_bytes)
