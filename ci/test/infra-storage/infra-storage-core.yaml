@@ -22,7 +22,6 @@ spec:
       garage_rpc_secret_key: garage_rpc_secret
       garage_storage_class: standard
       garage_storage_replicas: "1"
-      garage_web_root_domain: garage-web.cluster.example.com
   prune: false
   sourceRef:
     kind: GitRepository

@@ -54,7 +54,7 @@ spec:
     # Authentik-readable media bucket. Garage has no S3 bucket-policy
     # support, so this vhost-style anonymous read is the only way to expose
     # a subset of buckets publicly.
-    rootDomain: ${garage_web_root_domain}
+    rootDomain: garage-web.${domain_name}
 
   # Creates a ServiceMonitor targeting the admin API's /metrics endpoint --
   # supersedes hand-rolling one, and stays correct across operator versions

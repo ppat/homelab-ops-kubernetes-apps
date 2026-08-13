@@ -5,17 +5,17 @@ metadata:
   name: garage-web
   namespace: garage
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: ${garage_web_root_domain}
+    external-dns.alpha.kubernetes.io/hostname: garage-web.${domain_name}
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   tls:
   - secretName: garage-web-tls-cert
     hosts:
-    - '${garage_web_root_domain}'
-    - '*.${garage_web_root_domain}'
+    - 'garage-web.${domain_name}'
+    - '*.garage-web.${domain_name}'
   rules:
-  - host: '${garage_web_root_domain}'
+  - host: 'garage-web.${domain_name}'
     http:
       paths:
       - path: /
@@ -25,7 +25,7 @@ spec:
             name: garage
             port:
               number: 3902
-  - host: '*.${garage_web_root_domain}'
+  - host: '*.garage-web.${domain_name}'
     http:
       paths:
       - path: /
