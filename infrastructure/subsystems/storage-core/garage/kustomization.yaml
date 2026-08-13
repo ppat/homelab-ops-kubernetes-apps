@@ -10,6 +10,7 @@ resources:
 - ingress-web.yaml
 - servicemonitor.yaml
 - prometheusrule-garage.yaml
+- dashboards/
 
 commonAnnotations:
   # as this is a critical infrastructure component, prevent pruning unintentionally

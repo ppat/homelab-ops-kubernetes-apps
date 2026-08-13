@@ -78,6 +78,28 @@ spec:
             - alert: GarageBlockResyncErrors
             - alert: GarageHighBlockResyncQueue
             - alert: GarageLowDiskSpace
+  # The Grafana dashboard sidecar discovers dashboards purely by label, so a
+  # typo in the label key/value -- or a lost annotation -- doesn't fail
+  # anything: the ConfigMap applies cleanly and the dashboard simply never
+  # appears in Grafana. Nothing else in this repo would catch that, which is
+  # why the label and folder annotation are asserted literally here rather
+  # than just the ConfigMap's existence. Asserting the name unsuffixed also
+  # pins disableNameSuffixHash, which dashboards/kustomization.yaml depends on
+  # so that repeated edits don't strand orphaned ConfigMaps (Flux prune is
+  # disabled cluster-wide).
+  - description: Assert configmap/dashboard-garage is labelled for the Grafana dashboard sidecar
+    assert:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: dashboard-garage
+          namespace: garage
+          labels:
+            grafana_dashboard: "1"
+          annotations:
+            grafana_folder: Garage
+            kustomize.toolkit.fluxcd.io/substitute: disabled
   # ../chainsaw/assertions/ingress-ready.yaml doesn't apply here: it asserts
   # status.loadBalancer.ingress, but this suite (like the pre-existing MinIO
   # ingresses it never asserted for the same reason) deliberately installs no
