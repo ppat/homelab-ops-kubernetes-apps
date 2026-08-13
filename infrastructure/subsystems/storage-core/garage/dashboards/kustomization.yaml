@@ -26,7 +26,7 @@ generatorOptions:
     # (observability-core/grafana/helm-release-grafana.yaml: sidecar.dashboards
     # label/labelValue, searchNamespace ALL -- so this ConfigMap is picked up
     # from the garage namespace without needing to live alongside Grafana).
-    grafana_dashboard: "1"
+    grafana_dashboard: "0"
   annotations:
     # Consumed by that same sidecar's folderAnnotation (paired with
     # provider.foldersFromFilesStructure, which is enabled); files this under a
