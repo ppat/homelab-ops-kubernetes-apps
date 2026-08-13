@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "Garage single-node object storage. Garage ships no admin UI, so this dashboard is the operator console: it is the only place bucket-store health, capacity and reclamation are visible. Every panel is built on series verified present on a live garage v2.3.0 node -- see the module README for what Garage does not expose and what is shown instead.",
+  "description": "Garage single-node object storage. Garage ships no admin UI, so this dashboard is the operator console: it is the only place bucket-store health, capacity and reclamation are visible.\n\nA panel reading \"No data\" here is not necessarily broken. Grafana cannot render custom empty-state text when a query returns no series at all, so a metric that has never been emitted looks identical to a failing panel. Where zero is the truthful reading, the query coalesces to an explicit zero line rather than relying on that text. Where zero would be a false claim -- an undefined ratio, or a recording rule that has not shipped yet -- the panel is deliberately left empty instead of asserting a zero. Each panel's description says which of the two it is, and the module README lists what Garage does not expose at all.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -71,8 +71,7 @@
               }
             ]
           },
-          "unit": "none",
-          "noValue": "ABSENT"
+          "unit": "none"
         },
         "overrides": []
       },
@@ -279,8 +278,7 @@
             ]
           },
           "unit": "none",
-          "decimals": 2,
-          "noValue": "no objects"
+          "decimals": 2
         },
         "overrides": []
       },
@@ -330,7 +328,7 @@
         "type": "prometheus",
         "uid": "$datasource"
       },
-      "description": "object_store:recovery_block_corruptions_total -- the recording rule from PR #3641, which coalesces Garage's block_corruption_counter to an explicit 0 while Garage is up.\n\nThe raw counter is a lazily-bound OpenTelemetry instrument: it is absent from a healthy node's /metrics entirely rather than present and zero, so a panel over the raw series could not tell \"no corruptions\" apart from \"never deployed\". This panel reads No data until #3641 ships and reaches the cluster; that is a real dependency, not a bug here.",
+      "description": "Data corruptions Garage has detected on block reads.\n\nblock_corruption_counter is a lazily-bound OpenTelemetry instrument: it is absent from a healthy node's /metrics entirely rather than present and zero, so a bare query over it could not tell \"no corruptions\" apart from \"Garage was never deployed\". The `or (0 * max(up))` term resolves that into three distinguishable states: absent when Garage is not being scraped at all, an explicit 0 when Garage is up and has recorded none, and a real count when it has.\n\nThis is PR #3648's recording-rule logic inlined rather than a reference to object_store:recovery_block_corruptions_total. That was the original intent, but the rule has not shipped, and a panel keyed to a series that does not exist yet is blind in exactly the way this coalescing exists to prevent -- it would read \"No data\" whether or not the store was corrupting. Inlining costs one line and makes the panel true today; the recorded series can be swapped back in once #3648 lands, with no change in meaning.\n\nFeeds the recovery-events KPI on issue #3611, whose pass bar is zero over 30 days.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -350,8 +348,7 @@
               }
             ]
           },
-          "unit": "short",
-          "noValue": "awaiting #3641"
+          "unit": "short"
         },
         "overrides": []
       },
@@ -386,7 +383,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "object_store:recovery_block_corruptions_total",
+          "expr": "sum(block_corruption_counter{job=\"garage\"})\nor\n(0 * max(up{job=\"garage\"}))",
           "range": false,
           "instant": true,
           "refId": "A",
@@ -489,7 +486,7 @@
         "type": "prometheus",
         "uid": "$datasource"
       },
-      "description": "Garage alert conditions currently firing or pending, from the PrometheusRule that ships with this module.\n\nThis estate deliberately runs AlertManager unwired -- alerts evaluate and are queryable but route to nobody. That makes this table the only place a Garage alert is ever surfaced, which is why it is on the dashboard rather than assumed to be someone else's job.\n\nEmpty is the healthy state: ALERTS series exist only while an alert is pending or firing.",
+      "description": "Garage alert conditions currently firing or pending, from the PrometheusRule that ships with this module.\n\nThis estate deliberately runs AlertManager unwired -- alerts evaluate and are queryable but route to nobody. That makes this table the only place a Garage alert is ever surfaced, which is why it is on the dashboard rather than assumed to be someone else's job.\n\nEmpty is the healthy state: ALERTS series exist only while an alert is pending or firing.\n\nLeft uncoalesced on purpose, unlike the S3 panels. A zero row would have to be fabricated -- there is no alert to name, no state and no severity to put in it -- and for a table of *active* alerts, Grafana's \"No data\" and \"nothing is firing\" are the same statement to a reader. This is the one panel where the default empty state already says the right thing.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -501,7 +498,6 @@
             "inspect": false
           },
           "mappings": [],
-          "noValue": "No Garage alert conditions firing",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -740,7 +736,7 @@
         "type": "prometheus",
         "uid": "$datasource"
       },
-      "description": "PROXY, not a direct measurement. Garage exposes no live-bytes series anywhere in its Prometheus surface -- no stored-bytes, no per-bucket usage -- so the consumed/live ratio PR #3641 builds for MinIO cannot be reproduced for Garage. What follows is the closest substitute the metric surface can support.\n\nBytes occupied on the metadata volume divided by the object-table row count. This is the amplification proxy that matters for this workload: 95.4% of objects are under 1 KB, and Garage stores anything under 3072 bytes inline in LMDB, so the overwhelming majority of live data lives on the metadata volume rather than as data blocks.\n\nRead it as a shape, not a number. Flat means metadata grows in step with the objects in it. A curve that climbs while the object count is flat means the LMDB store is consuming disk without live rows behind it -- uncollected version/tombstone rows, or free pages LMDB never returns -- which is the Garage-native form of the failure that went unseen on MinIO for months (44 GB consumed against 13.58 GB live, 3.2x).\n\nIt cannot separate that from objects simply getting larger. If it climbs, confirm against the GC backlog and table row-count panels before concluding anything.\n\nBaseline from H1 at 3.44M objects: 6361.8 MiB of metadata, ~1.94 KiB/object. Blank while the object count is zero.",
+      "description": "PROXY, not a direct measurement. Garage exposes no live-bytes series anywhere in its Prometheus surface -- no stored-bytes, no per-bucket usage -- so the consumed/live ratio PR #3648 builds for MinIO cannot be reproduced for Garage. What follows is the closest substitute the metric surface can support.\n\nBytes occupied on the metadata volume divided by the object-table row count. This is the amplification proxy that matters for this workload: 95.4% of objects are under 1 KB, and Garage stores anything under 3072 bytes inline in LMDB, so the overwhelming majority of live data lives on the metadata volume rather than as data blocks.\n\nRead it as a shape, not a number. Flat means metadata grows in step with the objects in it. A curve that climbs while the object count is flat means the LMDB store is consuming disk without live rows behind it -- uncollected version/tombstone rows, or free pages LMDB never returns -- which is the Garage-native form of the failure that went unseen on MinIO for months (44 GB consumed against 13.58 GB live, 3.2x).\n\nIt cannot separate that from objects simply getting larger. If it climbs, confirm against the GC backlog and table row-count panels before concluding anything.\n\nBaseline from H1 at 3.44M objects: 6361.8 MiB of metadata, ~1.94 KiB/object. Blank while the object count is zero.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -790,8 +786,7 @@
             ]
           },
           "unit": "bytes",
-          "min": 0,
-          "noValue": "no objects stored yet"
+          "min": 0
         },
         "overrides": []
       },
@@ -841,7 +836,7 @@
         "type": "prometheus",
         "uid": "$datasource"
       },
-      "description": "PROXY, not a direct measurement. Garage exposes no live-bytes series anywhere in its Prometheus surface -- no stored-bytes, no per-bucket usage -- so the consumed/live ratio PR #3641 builds for MinIO cannot be reproduced for Garage. What follows is the closest substitute the metric surface can support.\n\nBytes occupied on the data volume divided by block_rc_size, the number of blocks Garage's reference-count table says should exist on disk.\n\nThe denominator is deliberately blocks, not objects: only objects above 3072 bytes become data blocks at all, so dividing data bytes by the total object count would mostly measure the inline/block mix rather than amplification. Against block_rc_size the reading is direct -- what is on disk over what is supposed to be on disk.\n\nFlat means blocks are being deleted as their references go away. A rising curve means block files are outliving their reference counts: orphaned blocks, the data-volume half of \"retention stopped reclaiming\". Garage delays block GC by design (BLOCK_GC_DELAY), so a bump after a bulk delete that settles within minutes is expected; a monotonic climb is not.\n\nBlank while no blocks are referenced. Note both series here also include filesystem overhead, which dominates when the store is nearly empty.",
+      "description": "PROXY, not a direct measurement. Garage exposes no live-bytes series anywhere in its Prometheus surface -- no stored-bytes, no per-bucket usage -- so the consumed/live ratio PR #3648 builds for MinIO cannot be reproduced for Garage. What follows is the closest substitute the metric surface can support.\n\nBytes occupied on the data volume divided by block_rc_size, the number of blocks Garage's reference-count table says should exist on disk.\n\nThe denominator is deliberately blocks, not objects: only objects above 3072 bytes become data blocks at all, so dividing data bytes by the total object count would mostly measure the inline/block mix rather than amplification. Against block_rc_size the reading is direct -- what is on disk over what is supposed to be on disk.\n\nFlat means blocks are being deleted as their references go away. A rising curve means block files are outliving their reference counts: orphaned blocks, the data-volume half of \"retention stopped reclaiming\". Garage delays block GC by design (BLOCK_GC_DELAY), so a bump after a bulk delete that settles within minutes is expected; a monotonic climb is not.\n\nBlank while no blocks are referenced. Note both series here also include filesystem overhead, which dominates when the store is nearly empty.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -891,8 +886,7 @@
             ]
           },
           "unit": "bytes",
-          "min": 0,
-          "noValue": "no blocks referenced yet"
+          "min": 0
         },
         "overrides": []
       },
@@ -942,7 +936,7 @@
         "type": "prometheus",
         "uid": "$datasource"
       },
-      "description": "object_store:disk_amplification_ratio -- PR #3641's recording rule: the data volume's used bytes over MinIO's own crawler-reported live bytes. Reproduced live against production at 3.218x.\n\nThis is MinIO's number, on Garage's dashboard on purpose. It is the reference the two proxy panels to the left are approximating, and the 1.15x line is the threshold the 30-day trial on issue #3611 is scored against. Without it those curves have no scale.\n\nReads No data until #3641 ships and reaches the cluster. There is no Garage twin of this rule, and #3641 documents why: the denominator does not exist in Garage's metric surface. Expect this panel to be retired with MinIO itself (#3644).",
+      "description": "object_store:disk_amplification_ratio -- PR #3648's recording rule: the data volume's used bytes over MinIO's own crawler-reported live bytes. Reproduced live against production at 3.218x.\n\nThis is MinIO's number, on Garage's dashboard on purpose. It is the reference the two proxy panels to the left are approximating, and the 1.15x line is the threshold the 30-day trial on issue #3611 is scored against. Without it those curves have no scale.\n\nDeliberately NOT coalesced to zero, unlike the S3 panels. This one is empty because its recording rule has not shipped yet (#3648, open; the earlier #3641 was closed in its favour) -- and an amplification ratio rendered as 0 would assert that MinIO is amplifying nothing, which is false and is precisely the confidently-wrong reading this project keeps getting bitten by. Empty is the honest state; the title carries the reason, since Grafana will not render custom text for a query returning no series.\n\nDrop the title suffix once #3648 lands. There is no Garage twin of this rule, and #3648 documents why: the denominator does not exist in Garage's metric surface. Expect this panel to be retired with MinIO itself (#3644).",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -997,8 +991,7 @@
           },
           "unit": "none",
           "decimals": 2,
-          "min": 0,
-          "noValue": "awaiting #3641"
+          "min": 0
         },
         "overrides": []
       },
@@ -1040,7 +1033,7 @@
           "legendFormat": "{{engine}}"
         }
       ],
-      "title": "MinIO disk amplification  (comparator)",
+      "title": "MinIO disk amplification  (comparator -- needs #3648)",
       "type": "timeseries"
     },
     {
@@ -1315,7 +1308,7 @@
         "type": "prometheus",
         "uid": "$datasource"
       },
-      "description": "rate(api_s3_request_counter) by api_endpoint -- what Garage is actually being asked to do.\n\nThe expected shape for this estate is distinctive and worth checking against: ~2.17 ops/sec of which ~86% are LIST, driven by Loki's chunk store. A sudden change in the mix is more informative than a change in total volume -- e.g. GET overtaking LIST would mean something other than Loki has started using this store.\n\nThe api_s3_* families are lazily-bound OpenTelemetry instruments: they are absent from /metrics until the first S3 request of that kind is served, so this panel is genuinely empty -- not broken -- until a client is cut over to Garage.",
+      "description": "rate(api_s3_request_counter) by api_endpoint -- what Garage is actually being asked to do.\n\nThe expected shape for this estate is distinctive and worth checking against: ~2.17 ops/sec of which ~86% are LIST, driven by Loki's chunk store. A sudden change in the mix is more informative than a change in total volume -- e.g. GET overtaking LIST would mean something other than Loki has started using this store.\n\nThe api_s3_* families are lazily-bound OpenTelemetry instruments: they are absent from /metrics until the first S3 request of that kind is served, and no client has been cut over to Garage yet. The flat zero line is a second query, guarded by `and on() absent(...)`, that exists only while the counter does not -- it disappears by itself the moment real traffic starts, so it can never sit alongside live data. Without it the panel would return no series at all, which Grafana renders as a bare \"No data\" indistinguishable from a broken query.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1365,8 +1358,7 @@
             ]
           },
           "unit": "reqps",
-          "min": 0,
-          "noValue": "no S3 traffic yet"
+          "min": 0
         },
         "overrides": []
       },
@@ -1406,6 +1398,18 @@
           "instant": false,
           "refId": "A",
           "legendFormat": "{{api_endpoint}}"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "vector(0) and on() absent(api_s3_request_counter{job=\"garage\"})",
+          "range": true,
+          "instant": false,
+          "refId": "B",
+          "legendFormat": "no S3 requests served yet"
         }
       ],
       "title": "S3 requests by operation",
@@ -1416,7 +1420,7 @@
         "type": "prometheus",
         "uid": "$datasource"
       },
-      "description": "p99 of api_s3_request_duration, per operation.\n\nThe 1s line is the gate H1 pre-registered for this workload (LIST p99 <= 1000 ms at 1.86 LIST/s); Garage measured 271.7 ms against MinIO's 347.9 ms on the same host at 3.44M objects. That benchmark used a closed-loop load generator at n=200 per checkpoint, so treat its p99 as indicative rather than precise -- but this panel measures the real server-side distribution, which the benchmark could not.\n\nThe api_s3_* families are lazily-bound OpenTelemetry instruments: they are absent from /metrics until the first S3 request of that kind is served, so this panel is genuinely empty -- not broken -- until a client is cut over to Garage.",
+      "description": "p99 of api_s3_request_duration, per operation.\n\nThe 1s line is the gate H1 pre-registered for this workload (LIST p99 <= 1000 ms at 1.86 LIST/s); Garage measured 271.7 ms against MinIO's 347.9 ms on the same host at 3.44M objects. That benchmark used a closed-loop load generator at n=200 per checkpoint, so treat its p99 as indicative rather than precise -- but this panel measures the real server-side distribution, which the benchmark could not.\n\nThe api_s3_* families are lazily-bound OpenTelemetry instruments: they are absent from /metrics until the first S3 request of that kind is served, and no client has been cut over to Garage yet. The flat zero line is a second query, guarded by `and on() absent(...)`, that exists only while the counter does not -- it disappears by itself the moment real traffic starts, so it can never sit alongside live data. Without it the panel would return no series at all, which Grafana renders as a bare \"No data\" indistinguishable from a broken query.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1470,8 +1474,7 @@
             ]
           },
           "unit": "s",
-          "min": 0,
-          "noValue": "no S3 traffic yet"
+          "min": 0
         },
         "overrides": []
       },
@@ -1511,6 +1514,18 @@
           "instant": false,
           "refId": "A",
           "legendFormat": "{{api_endpoint}}"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "vector(0) and on() absent(api_s3_request_duration_bucket{job=\"garage\"})",
+          "range": true,
+          "instant": false,
+          "refId": "B",
+          "legendFormat": "no S3 requests served yet (not a latency reading)"
         }
       ],
       "title": "S3 request latency p99 by operation",
@@ -1521,7 +1536,7 @@
         "type": "prometheus",
         "uid": "$datasource"
       },
-      "description": "rate(api_s3_error_counter) by status_code and operation. Garage only increments this instrument for 4xx and 5xx responses -- 2xx and 3xx never touch it -- so any line here is a real client-visible failure and there is no success traffic to drown it out.\n\nDistinguish the two families before reacting. 5xx is Garage failing. 4xx is usually the client, and on this deployment one 4xx cause is known and specific: Garage validates the SigV4 signing region exactly and rejects a mismatch with AuthorizationHeaderMalformed, where MinIO ignored it entirely. That difference was fatal to Loki's compactor at cutover, not merely degrading, so a burst of 4xx immediately after pointing a new client at Garage is the first thing to check.\n\nThe rate of a status code that has never occurred is absent rather than zero -- these are lazily-bound counters, so an empty panel means no errors have ever been recorded, which is also the healthy state.",
+      "description": "rate(api_s3_error_counter) by status_code and operation. Garage only increments this instrument for 4xx and 5xx responses -- 2xx and 3xx never touch it -- so any line here is a real client-visible failure and there is no success traffic to drown it out.\n\nDistinguish the two families before reacting. 5xx is Garage failing. 4xx is usually the client, and on this deployment one 4xx cause is known and specific: Garage validates the SigV4 signing region exactly and rejects a mismatch with AuthorizationHeaderMalformed, where MinIO ignored it entirely. That difference was fatal to Loki's compactor at cutover, not merely degrading, so a burst of 4xx immediately after pointing a new client at Garage is the first thing to check.\n\nThe rate of a status code that has never occurred is absent rather than zero -- these are lazily-bound counters, so Garage emits nothing at all until the first failure. The flat zero line is a second query, guarded by `and on() absent(...)`, that exists only while the counter does not; it removes itself the moment a real error is recorded, so it can never sit alongside live data. A zero line here is therefore the healthy state, and is distinguishable from a broken panel -- which is what a bare \"No data\" would have looked like.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1572,8 +1587,7 @@
           },
           "unit": "reqps",
           "decimals": 3,
-          "min": 0,
-          "noValue": "no S3 errors recorded"
+          "min": 0
         },
         "overrides": []
       },
@@ -1613,6 +1627,18 @@
           "instant": false,
           "refId": "A",
           "legendFormat": "{{status_code}} {{api_endpoint}}"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "vector(0) and on() absent(api_s3_error_counter{job=\"garage\"})",
+          "range": true,
+          "instant": false,
+          "refId": "B",
+          "legendFormat": "no S3 errors recorded yet"
         }
       ],
       "title": "S3 errors by status code",
@@ -2091,7 +2117,7 @@
         "current": {
           "selected": false,
           "text": "Prometheus",
-          "value": "Prometheus"
+          "value": "prometheus"
         },
         "hide": 0,
         "includeAll": false,
