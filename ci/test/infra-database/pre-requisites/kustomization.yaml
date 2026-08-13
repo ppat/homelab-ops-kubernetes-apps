@@ -4,11 +4,9 @@ kind: Kustomization
 
 resources:
 - ../../../../infrastructure/bootstrap/crds/
-- namespaces.yaml
-- minio/
+- ../../chainsaw/fixtures/object-store
 - ../../infra-security/infra-security-core.yaml
 - fake-secret-store.yaml
-- minio.yaml
 
 patches:
 # yamllint disable-line rule:indentation

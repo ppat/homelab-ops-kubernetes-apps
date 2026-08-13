@@ -1,0 +1,11 @@
+---
+# Shared fake S3 for the infra-observability and infra-database suites, which each need
+# exactly one bucket and one access key to test Loki and CloudNativePG's backup path.
+# Not a copy of, or a stand-in for, the production storage-core module (Garage lives in
+# its garage/ subdirectory) - infra-storage has its own suite for that. This exists
+# purely so two unrelated suites can get their bucket and key without deploying a real
+# object store or reaching out to a chart registry.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: object-store

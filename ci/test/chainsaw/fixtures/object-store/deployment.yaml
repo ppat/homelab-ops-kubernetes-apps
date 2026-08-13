@@ -1,0 +1,130 @@
+---
+# A single Garage node as a plain Deployment - deliberately not the garage-operator, not
+# a HelmRelease, not an OCIRepository. The operator exists to manage cluster layout
+# across multiple replicas; a single-node throwaway needs none of that, and pulling it in
+# would recreate the exact production-module coupling this fixture exists to remove.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: object-store
+  namespace: object-store
+  labels:
+    app.kubernetes.io/name: object-store
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: object-store
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: object-store
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+      # The garage image ships no shell and no coreutils (its entrypoint is a single
+      # static binary), so it cannot copy its own pre-seeded identity into place - a
+      # minimal image that has `cp` does it instead. Copying (rather than mounting
+      # secret-node-key.yaml's Secret directly into metadata_dir) is required, not a
+      # style choice: metadata_dir also holds Garage's own sqlite/layout state, which
+      # needs to stay writable, and a Secret volume mounted over part of that directory
+      # makes kubelet materialize the rest of it root-owned and read-only.
+      - name: seed-node-key
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        # yamllint disable-line rule:indentation
+        - |
+          set -eu
+          mkdir -p /data/meta
+          cp /seed/node_key /data/meta/node_key
+          cp /seed/node_key.pub /data/meta/node_key.pub
+          chmod 0600 /data/meta/node_key
+          chmod 0644 /data/meta/node_key.pub
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: node-key-seed
+          mountPath: /seed
+          readOnly: true
+      containers:
+      - name: garage
+        # renovate: datasource=docker depName=dxflrs/garage
+        image: dxflrs/garage:v2.3.0
+        # --single-node (v2.3.0, pinned above) stages and commits this node's one-time
+        # cluster layout in-process before any listener binds, replacing what used to be
+        # ../job-bootstrap.yaml's layout-assign/layout-apply steps - the same mechanism
+        # infrastructure/subsystems/storage-core/garage/deployment.yaml uses in
+        # production. It requires replication_factor = 1 (configmap-garage-toml.yaml,
+        # already set) and is safe to leave in place indefinitely for a fixture whose
+        # layout never changes after this first commit - see that production manifest's
+        # comment for the exact hard-error mode if it ever did.
+        command: ["/garage", "-c", "/etc/garage.toml", "server", "--single-node"]
+        ports:
+        - name: s3
+          containerPort: 9000
+        - name: rpc
+          containerPort: 3901
+        - name: admin
+          containerPort: 3903
+        readinessProbe:
+          tcpSocket:
+            port: s3
+          initialDelaySeconds: 1
+          periodSeconds: 2
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 256Mi
+        volumeMounts:
+        - name: config
+          mountPath: /etc/garage.toml
+          subPath: garage.toml
+        - name: data
+          mountPath: /data
+      volumes:
+      - name: config
+        configMap:
+          name: object-store-config
+      - name: data
+        emptyDir: {}
+      - name: node-key-seed
+        secret:
+          secretName: object-store-node-key
+          defaultMode: 0440
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: object-store
+  namespace: object-store
+spec:
+  selector:
+    app.kubernetes.io/name: object-store
+  ports:
+  - name: s3
+    port: 9000
+    targetPort: s3
+  - name: rpc
+    port: 3901
+    targetPort: rpc
+  - name: admin
+    port: 3903
+    targetPort: admin

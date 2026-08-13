@@ -6,11 +6,10 @@ resources:
 - ../../../../infrastructure/bootstrap/crds/
 - namespaces.yaml
 - pvc/
-- minio/
+- ../../chainsaw/fixtures/object-store
 - loki/
 - ../../infra-security/infra-security-core.yaml
 - fake-secret-store.yaml
-- minio.yaml
 
 patches:
 # yamllint disable-line rule:indentation
