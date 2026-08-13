@@ -1,0 +1,67 @@
+---
+# Falsifiable LogQL correctness check for the object-store trial (issue #3611).
+# See loki-query-correctness.py for what this actually proves and why. Talks
+# only to Loki's own query API - never to the object store - so it is
+# backend-agnostic and keeps re-verifying the same baseline across a future
+# cutover without any change here.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: loki-query-correctness
+  namespace: logging
+  labels:
+    app.kubernetes.io/name: loki-query-correctness
+spec:
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 8
+  jobTemplate:
+    metadata:
+      labels:
+        app.kubernetes.io/name: loki-query-correctness
+    spec:
+      activeDeadlineSeconds: 600
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: loki-query-correctness
+        spec:
+          serviceAccountName: loki-query-correctness
+          automountServiceAccountToken: true
+          containers:
+          - name: loki-query-correctness
+            image: python:3.13-alpine@sha256:540c7d91f98ff6880174c40e99067bf5941eb54d818a7a5e094d188b196a934d
+            command: ["python3", "/scripts/loki-query-correctness.py"]
+            env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+              readOnlyRootFilesystem: true
+            volumeMounts:
+            - mountPath: /scripts
+              name: script
+              readOnly: true
+            - mountPath: /tmp
+              name: temp
+          restartPolicy: OnFailure
+          securityContext:
+            runAsUser: 11111
+            runAsGroup: 11111
+            runAsNonRoot: true
+          volumes:
+          - name: script
+            configMap:
+              name: loki-query-correctness-script
+          - name: temp
+            emptyDir: {}
+      ttlSecondsAfterFinished: 604800  # 1 week
+  schedule: "30 3 * * *"
+  startingDeadlineSeconds: 43200  # 12 hours
+  successfulJobsHistoryLimit: 8
+  timeZone: Etc/UTC

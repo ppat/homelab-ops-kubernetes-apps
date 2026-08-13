@@ -1,0 +1,106 @@
+---
+# Recording rules backing the object-store trial KPIs tracked in issue #3611.
+# No alert rules here by design - this estate leaves AlertManager unwired
+# until there's an AI triage path for it; these exist to be graphed and
+# queried, not to page anyone.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    release: kube-prometheus-stack
+  name: object-store-kpi-rules
+  namespace: logging
+spec:
+  groups:
+  - name: object-store-disk-amplification
+    rules:
+    # du(data_dir) / live bytes. Both halves are already scraped with no new
+    # exporter: kubelet_volume_stats_used_bytes is the kubelet's own statfs
+    # read of the PVC (same figure `du` on data_dir would show, since the PVC
+    # is dedicated to the object store), and minio_cluster_usage_total_bytes
+    # is MinIO's own data-usage-crawler total, which - unlike the PVC's raw
+    # disk usage - excludes delete markers (they are zero-byte placeholder
+    # objects), making it the "live bytes" denominator, not a filesystem fact.
+    # Confirmed against production on 2026-08-13: 44141297664 / 13716415543 =
+    # 3.22x, matching the 3.2x MinIO measurement in issue #3611 almost
+    # exactly - this is the same defect that motivated the trial.
+    #
+    # "minio"/"minio-data" are this repo's own fixed, non-parameterized
+    # storage-core identifiers (same category as k3s-monitoring's hardcoded
+    # "kube-system"/"kubelet" a few directories over), not a cluster-specific
+    # value - every cluster that deploys storage-core's MinIO submodule gets
+    # that exact namespace and PVC name.
+    #
+    # Garage landed folded into storage-core (not the separate
+    # storage-object-core module originally anticipated - see PR #3636/#3639),
+    # but a twin engine="garage" rule still isn't added here: its /metrics
+    # (verified live against sandbox-talos's real deployment, garage v2.3.0)
+    # exposes no bucket/object byte-total series at all - only
+    # garage_local_disk_*, which is statvfs-level and adds nothing over
+    # kubelet_volume_stats_* (see the recovery-events group below for the
+    # same finding applied to metadata growth). Live bytes for Garage isn't
+    # buildable as a recording rule from what it currently scrapes.
+    - record: object_store:disk_amplification_ratio
+      labels:
+        engine: minio
+      expr: |
+        sum(kubelet_volume_stats_used_bytes{namespace="minio", persistentvolumeclaim="minio-data"})
+        /
+        sum(minio_cluster_usage_total_bytes)
+  - name: object-store-query-correctness
+    rules:
+    # Freshness of the scripted LogQL correctness check (loki-query-correctness
+    # CronJob). kube_cronjob_status_last_successful_time is already exported by
+    # kube-state-metrics - no new instrumentation. A rising value means the
+    # check has stopped succeeding, whether from a hash mismatch (real
+    # migration-safety failure) or an infra hiccup; kubectl logs on the CronJob
+    # tells them apart, which is enough for a homelab with no on-call.
+    - record: object_store:query_correctness_check_seconds_since_success
+      expr: |
+        time() - kube_cronjob_status_last_successful_time{namespace="logging", cronjob="loki-query-correctness"}
+  - name: object-store-recovery-events
+    rules:
+    # Pass criterion in #3611 is "zero over 30 days", which only means something
+    # if "zero" and "never collected" are different values on the graph - a gap
+    # here would let the trial pass on a metric that was never measured, the
+    # same failure class as a check that can't go red. object_store:garage_up
+    # is the discriminator: it exists (1) only while Garage is actually being
+    # scraped, so every rule below is coalesced to an explicit 0 - not left
+    # absent - whenever Garage is up but has recorded no recovery events, and
+    # stays genuinely absent whenever Garage isn't deployed yet or isn't being
+    # scraped. Must come first in this group: later rules reference it, and
+    # rules within one PrometheusRule group see earlier rules' output from the
+    # same evaluation (documented Prometheus behaviour, not incidental).
+    - record: object_store:garage_up
+      expr: |
+        max(up{namespace="garage", job="garage"})
+    # block_corruption_counter ("data corruptions detected on block reads",
+    # src/block/metrics.rs) is Garage's own direct corruption signal - the
+    # closest real proxy to "restart needing garage repair". Verified against
+    # a live garage v2.3.0 instance in sandbox-talos (namespace
+    # claude-garage-metrics-probe, since torn down): a healthy node with zero
+    # corruptions exports no `block_corruption_counter` series at all rather
+    # than a present-and-zero one, consistent with it being a lazily-bound
+    # OpenTelemetry counter that isn't emitted before its first increment -
+    # exactly the gap object_store:garage_up exists to paper over.
+    - record: object_store:recovery_block_corruptions_total
+      expr: |
+        sum(block_corruption_counter{namespace="garage"})
+        or
+        (0 * object_store:garage_up)
+    # block_resync_errored_blocks ("number of block hashes whose last resync
+    # resulted in an error") is a gauge, not a counter, and - unlike
+    # block_corruption_counter - was confirmed present and reporting 0 on that
+    # same healthy sandbox-talos instance, so it doesn't strictly need the
+    # same absent-vs-zero treatment today. Carrying it anyway keeps this rule
+    # identical in shape to the one above and doesn't depend on that eager-
+    # registration behaviour continuing to hold across future Garage versions.
+    # Deliberately not carrying block_resync_error_counter alongside it: that
+    # one counts resync *attempt* failures, which includes ordinary transient
+    # retries, not confirmed corruption or an unresolved backlog - a noisier
+    # proxy than the two rules above for a KPI whose pass bar is "zero".
+    - record: object_store:recovery_blocks_currently_errored
+      expr: |
+        sum(block_resync_errored_blocks{namespace="garage"})
+        or
+        (0 * object_store:garage_up)

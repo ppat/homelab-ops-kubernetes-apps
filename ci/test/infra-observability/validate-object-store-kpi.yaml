@@ -1,0 +1,84 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-object-store-kpi
+# Structural checks only: kind has no MinIO usage data and the CronJob's schedule
+# means it never actually runs during a chainsaw pass, so this cannot exercise
+# loki-query-correctness.py's own logic (that's covered by running the script
+# directly against captured production data - see the module PR for issue #3611).
+# What this catches is a manifest that fails to render or apply at all.
+spec:
+  try:
+  - description: Assert serviceaccount/loki-query-correctness
+    assert:
+      resource:
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: loki-query-correctness
+          namespace: logging
+  - description: Assert role/loki-query-correctness
+    assert:
+      resource:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: Role
+        metadata:
+          name: loki-query-correctness
+          namespace: logging
+        rules:
+        - apiGroups: [""]
+          resources: ["configmaps"]
+          verbs: ["create"]
+        - apiGroups: [""]
+          resourceNames: ["loki-query-correctness-baseline"]
+          resources: ["configmaps"]
+          verbs: ["get", "update"]
+  - description: Assert cronjob/loki-query-correctness
+    assert:
+      resource:
+        apiVersion: batch/v1
+        kind: CronJob
+        metadata:
+          name: loki-query-correctness
+          namespace: logging
+        spec:
+          schedule: "30 3 * * *"
+          jobTemplate:
+            spec:
+              template:
+                spec:
+                  serviceAccountName: loki-query-correctness
+  - description: Assert prometheusrule/object-store-kpi-rules
+    assert:
+      resource:
+        apiVersion: monitoring.coreos.com/v1
+        kind: PrometheusRule
+        metadata:
+          name: object-store-kpi-rules
+          namespace: logging
+        spec:
+          groups:
+          - name: object-store-disk-amplification
+            rules:
+            - record: object_store:disk_amplification_ratio
+          - name: object-store-query-correctness
+            rules:
+            - record: object_store:query_correctness_check_seconds_since_success
+          - name: object-store-recovery-events
+            rules:
+            - record: object_store:garage_up
+            - record: object_store:recovery_block_corruptions_total
+            - record: object_store:recovery_blocks_currently_errored
+
+  catch:
+  - describe:
+      apiVersion: batch/v1
+      kind: CronJob
+      name: loki-query-correctness
+      namespace: logging
+  - describe:
+      apiVersion: monitoring.coreos.com/v1
+      kind: PrometheusRule
+      name: object-store-kpi-rules
+      namespace: logging

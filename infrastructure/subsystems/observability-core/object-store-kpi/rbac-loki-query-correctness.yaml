@@ -1,0 +1,38 @@
+---
+# Scoped to exactly the one ConfigMap this CronJob owns (issue #3611's
+# query-correctness baseline). `create` cannot be restricted by resourceName
+# (the object doesn't exist yet), so it is split from the get/update rule,
+# which is.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: loki-query-correctness
+  namespace: logging
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: loki-query-correctness
+  namespace: logging
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["create"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  resourceNames: ["loki-query-correctness-baseline"]
+  verbs: ["get", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: loki-query-correctness
+  namespace: logging
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: loki-query-correctness
+subjects:
+- kind: ServiceAccount
+  name: loki-query-correctness
+  namespace: logging

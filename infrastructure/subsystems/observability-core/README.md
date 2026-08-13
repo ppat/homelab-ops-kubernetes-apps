@@ -177,7 +177,13 @@ flowchart TB
    | loki_s3_secretkey_key | Bitwarden key naming the S3 secret access key for Loki storage | Loki |
    | systemd_journal_gid | GID of the `systemd-journal` group on the cluster's nodes, added to the collector's supplementary groups | Grafana Alloy |
 
-4. Stream-Specific Log Retention
+4. RBAC Requirements
+
+   | Resource | Access | Purpose |
+   | -------- | ------ | ------- |
+   | ConfigMap `loki-query-correctness-baseline` (namespace `logging`) | get, create, update | Lets the `loki-query-correctness` CronJob persist and re-verify its own scripted-LogQL correctness baseline (see Notes) |
+
+5. Stream-Specific Log Retention
    - Configure retention per log stream using ConfigMap:
 
      ```yaml
@@ -278,3 +284,40 @@ flowchart TB
   annotation for a ConfigMap it creates itself, and this module generates its own. Propagation is handled by
   the `config-reloader` sidecar, which reloads the running collector in place; an invalid config is rejected
   and the last valid one keeps running.
+- **`object-store-kpi/` is scoped to the MinIO→Garage trial in issue #3611, not a permanent capability.**
+  It adds two things: a `PrometheusRule` recording `object_store:disk_amplification_ratio` (`du(data_dir)` ÷
+  live bytes, labeled `engine="minio"`) from series already scraped today - `kubelet_volume_stats_used_bytes`
+  for the PVC and MinIO's own `minio_cluster_usage_total_bytes` for live bytes, which excludes delete markers
+  since they're zero-byte - and no new exporter; and a `loki-query-correctness` CronJob that captures a
+  byte-for-byte SHA256 baseline of a fixed set of LogQL queries over a fixed, already-flushed time window on
+  its first run, then re-verifies that same window against every scheduled run afterwards. Because it only
+  talks to Loki's own query API - never to the object-store backend - the same baseline keeps being
+  re-verified unchanged straight through a future backend cutover, which is what makes it usable as a
+  migration-safety check rather than a liveness probe. A baseline capture that returns fewer than 10 lines for
+  either query is rejected rather than stored, since a check that could pass on empty results proves nothing.
+  Both halves of the disk-amplification rule hardcode the `minio`/`minio-data` identifiers from storage-core's
+  MinIO submodule - the same category of cross-module reference `k3s-monitoring` already makes to
+  `kube-system`/`kubelet`, not a cluster-specific value, since every cluster deploying that submodule gets that
+  exact namespace and PVC name. Garage landed folded into storage-core rather than the separate
+  storage-object-core module originally anticipated (see PR #3636/#3639), but no twin `engine="garage"`
+  disk-amplification rule was added: verified live against a real garage v2.3.0 deployment, its `/metrics`
+  exposes no bucket/object byte-total series at all, only `garage_local_disk_*` (statvfs-level, functionally
+  the same fact `kubelet_volume_stats_*` already gives) - live bytes for Garage isn't buildable as a recording
+  rule from what it currently scrapes.
+  A third rule group, `object-store-recovery-events`, records `#3611`'s "Garage restarts needing `garage
+  repair`" KPI (pass = zero over 30 days) from two series Garage's `ServiceMonitor` already scrapes unfiltered
+  - `block_corruption_counter` and the gauge `block_resync_errored_blocks` - deliberately not
+  `block_resync_error_counter`, which counts ordinary transient resync-attempt retries rather than confirmed
+  corruption or an unresolved backlog, a noisier proxy for a KPI whose bar is "zero". Both chosen series are
+  coalesced through `object_store:garage_up` (`up{namespace="garage", job="garage"}`, recorded first in the
+  group so later rules can reference it) rather than recorded raw, because a healthy `block_corruption_counter`
+  is a lazily-bound OpenTelemetry counter that Garage doesn't emit at all before its first increment - verified
+  live, a corruption-free node exports no series for it, not a present-and-zero one. Without the coalesce, a
+  recording rule over that series would look identical whether Garage has never had a corruption or has never
+  been deployed; `object_store:garage_up` is what makes those two states distinguishable, so "zero over 30
+  days" can only be true once there's 30 days of `object_store:garage_up` behind it.
+  Metadata growth shape (the fourth `#3611` KPI needing new collection) was evaluated and deliberately not
+  wired: Garage exposes `garage_local_disk_avail`/`garage_local_disk_total{volume="metadata"}`, but - as above
+  - those are the same statvfs-level fact `kubelet_volume_stats_*` already supplies, so a dedicated rule would
+  duplicate an existing series rather than add one.
+  Expect this whole directory to be removed at trial end alongside MinIO's own removal.

@@ -95,6 +95,10 @@ spec:
     use:
       template: ./validate-loki.yaml
 
+  - name: Validate Object Store KPI
+    use:
+      template: ./validate-object-store-kpi.yaml
+
   - name: Validate goldilocks
     use:
       template: ./validate-goldilocks.yaml

@@ -13,6 +13,7 @@ resources:
 - alloy/
 - grafana/
 - goldilocks/
+- object-store-kpi/
 
 sortOptions:
   order: fifo
