@@ -1,0 +1,64 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: garage-admin
+  namespace: garage
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: garage-admin.${domain_name}
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  # setting tls to [], so that default certificate will be assigned -- same as
+  # ingress-s3.yaml/ingress-web.yaml.
+  tls: []
+  rules:
+  - host: garage-admin.${domain_name}
+    http:
+      paths:
+      # Only /v2 is routed -- deliberately NOT `path: /` like the other two
+      # Ingresses in this module.
+      #
+      # Port 3903 mixes two trust levels conf.d/garage.toml's [admin] comment
+      # already calls out: everything Terraform's garage/terracurl providers
+      # need (CreateBucket, UpdateBucket, CreateKey, AddBucketAlias, ...)
+      # lives under /v2/... and requires the GARAGE_ADMIN_TOKEN bearer token
+      # -- confirmed both by `strings` on the jkossis/garage provider binary
+      # (every admin call it makes is /v2/*) and by
+      # homelab-ops-terraform/modules/garage-bucket/{lifecycle,alias}.tf's
+      # direct REST seams (POST /v2/UpdateBucket, /v2/AddBucketAlias,
+      # /v2/RemoveBucketAlias). But Garage also serves GET /health, GET
+      # /check, and GET /metrics OUTSIDE /v2 with no auth at all by design --
+      # metrics_token is deliberately unset in conf.d/garage.toml so this
+      # module's own ServiceMonitor can scrape /metrics unauthenticated,
+      # matching MinIO's scrape in this same module. A `path: /` Ingress here
+      # would publish that unauthenticated /metrics (cluster topology,
+      # bucket/object counts, disk figures) to this hostname alongside the
+      # token-guarded /v2 operations. Routing only /v2 closes that gap without
+      # touching the ServiceMonitor or adding a metrics_token secret: /health,
+      # /check and /metrics have no matching rule and simply 404 through this
+      # Ingress (Traefik has no default backend configured), while every
+      # existing and future /v2/* admin call keeps working unchanged.
+      # Falsifiable check: `curl https://garage-admin.${domain_name}/metrics`
+      # must 404, while a Bearer-authenticated call to
+      # /v2/GetBucketInfo?... must reach Garage and get a real answer.
+      #
+      # Reachability (checked live against this estate's UniFi controller,
+      # the only place Garage runs): external-dns here uses the unifi webhook
+      # provider (components/external-dns-provider/unifi), which writes a
+      # plain A record resolving this hostname to the cluster's private LAN
+      # address -- there is no public DNS involved, and the router has zero
+      # port-forward rules, so nothing routes WAN traffic to it either. This
+      # hostname is reachable only from the LAN itself or through the
+      # Tailscale subnet router that advertises it (services/tailscale/ in
+      # the clusters repo), never from the raw internet. That narrows the
+      # blast radius of the /metrics gap this restriction closes, but doesn't
+      # remove the need for it -- anything on that LAN or tailnet, including a
+      # compromised device, could otherwise scrape it.
+      - path: /v2
+        pathType: Prefix
+        backend:
+          service:
+            name: garage
+            port:
+              number: 3903
