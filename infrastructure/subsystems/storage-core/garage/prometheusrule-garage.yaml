@@ -45,11 +45,29 @@ spec:
       # names are rpc_request_counter (total) and three separate failure
       # counters: rpc_netapp_error_counter (transport-layer), rpc_garage_error_counter
       # (application-level), and rpc_timeout_counter.
+      #
+      # Fixing the names alone still isn't enough: all three failure counters are
+      # lazily-bound OpenTelemetry counters that Garage never emits until their
+      # first increment, so on a healthy node they're absent from /metrics
+      # entirely, not present-and-zero. In PromQL, summing absent series yields
+      # an empty vector and empty + empty = empty -- the expression evaluates to
+      # nothing until an error has already happened once. Verified live: the
+      # uncoalesced expression returns no data on a healthy garage.
+      #
+      # Each numerator term is coalesced individually with `or vector(0)` (same
+      # pattern already used for these same three counters in the Garage
+      # dashboard's RPC panel) rather than recording-rule-style `or (0 * up)`
+      # coalescing: GarageNodeDown above already covers "Garage isn't being
+      # scraped", so this alert only needs "no errors recorded yet" to read as a
+      # real 0, not a three-state up/healthy/absent distinction. If the total
+      # (rpc_request_counter) itself is absent, division still yields no data and
+      # the alert stays silent -- which is correct, since GarageNodeDown is the
+      # one that fires for that case.
       expr: |
         (
-        sum(rate(rpc_netapp_error_counter{job="garage"}[5m]))
-        + sum(rate(rpc_garage_error_counter{job="garage"}[5m]))
-        + sum(rate(rpc_timeout_counter{job="garage"}[5m]))
+        (sum(rate(rpc_netapp_error_counter{job="garage"}[5m])) or vector(0))
+        + (sum(rate(rpc_garage_error_counter{job="garage"}[5m])) or vector(0))
+        + (sum(rate(rpc_timeout_counter{job="garage"}[5m])) or vector(0))
         )
         /
         sum(rate(rpc_request_counter{job="garage"}[5m])) > 0.1
