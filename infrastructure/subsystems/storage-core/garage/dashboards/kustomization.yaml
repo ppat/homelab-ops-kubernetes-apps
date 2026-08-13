@@ -1,0 +1,40 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: garage
+
+# Deliberately its own kustomization rather than another configMapGenerator
+# entry in ../kustomization.yaml: generatorOptions below is file-global, and
+# in the parent it would also apply to garage-config -- labelling garage.toml
+# as a dashboard for the sidecar to choke on, and stripping the name-suffix
+# hash that is what actually rolls the Deployment when the config changes.
+configMapGenerator:
+- name: dashboard-garage
+  files:
+  - garage.json
+
+generatorOptions:
+  # Flux prune is disabled cluster-wide, so a content-hashed name would strand
+  # the previous ConfigMap as an orphan on every dashboard edit -- and the
+  # sidecar would then serve both. A stable name is also what lets the chainsaw
+  # suite assert this ConfigMap by name (ci/test/infra-storage/validate-garage.yaml);
+  # a mislabelled dashboard fails silently by simply never appearing in Grafana.
+  disableNameSuffixHash: true
+  labels:
+    # Watched by the Grafana chart's dashboard sidecar
+    # (observability-core/grafana/helm-release-grafana.yaml: sidecar.dashboards
+    # label/labelValue, searchNamespace ALL -- so this ConfigMap is picked up
+    # from the garage namespace without needing to live alongside Grafana).
+    grafana_dashboard: "1"
+  annotations:
+    # Consumed by that same sidecar's folderAnnotation (paired with
+    # provider.foldersFromFilesStructure, which is enabled); files this under a
+    # "Garage" folder rather than dumping it at the Grafana root.
+    grafana_folder: Garage
+    # Mandatory, not defensive. Flux's postBuild substitution expands bare
+    # $name as well as ${name}, and a Grafana dashboard is full of bare
+    # $datasource / $__rate_interval / $__interval references -- without this
+    # annotation every one of them would be substituted away to an empty
+    # string and every panel on the dashboard would break.
+    kustomize.toolkit.fluxcd.io/substitute: disabled
