@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.3.0...infra-storage-core-v0.4.0) (2026-08-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-storage-core:** garage_web_root_domain is removed. Consumers must stop supplying it; domain_name (already required for the S3 API ingress) now covers the website endpoint too. No cluster currently sets it, since Garage has not been rolled out anywhere yet.
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** compose garage web hostname in-module from domain_name ([#3637](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3637)) ([06fb462](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/06fb4620ae971b200130fcd0dd65cecbc0037942)), closes [#3611](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3611)
+
 ## [0.3.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.2.3...infra-storage-core-v0.3.0) (2026-08-12)
 
 
