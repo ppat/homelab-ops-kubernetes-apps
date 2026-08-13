@@ -1,0 +1,13 @@
+---
+# See garage-metadata-test.yaml for why this is a pre-requisite rather than
+# applied later during validate-garage.yaml.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: garage-data-test
+  namespace: garage
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 200Mi

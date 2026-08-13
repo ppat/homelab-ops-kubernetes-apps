@@ -2,17 +2,8 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "packageRules": [
     {
-      "groupName": "garage-operator",
-      "description": "group the garage-operator chart, its own image, and its vendored bootstrap CRDs into one PR -- all three track the same upstream rajsinghtech/garage-operator release and form the control plane, kept separate from the Garage data-plane image below since a control-plane bump carries different risk and doesn't need the data-plane falsification harness re-run",
-      "matchPackageNames": [
-        "ghcr.io/rajsinghtech/charts/garage-operator",
-        "ghcr.io/rajsinghtech/garage-operator",
-        "rajsinghtech/garage-operator"
-      ]
-    },
-    {
       "groupName": "garage-data-plane",
-      "description": "keep the Garage data-plane image in its own PR, separate from garage-operator above -- it's an independently versioned upstream project and the one that needs the falsification harness re-run on a bump, so it must never ride along with a routine operator patch",
+      "description": "keep the Garage data-plane image in its own PR -- a bump needs the falsification harness re-run, so it must never ride along with an unrelated update",
       "matchPackageNames": [
         "dxflrs/garage"
       ]

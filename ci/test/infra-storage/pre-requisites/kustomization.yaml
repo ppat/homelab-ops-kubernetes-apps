@@ -6,6 +6,8 @@ resources:
 - ../../../../infrastructure/bootstrap/crds/
 - ../../infra-security/infra-security-core.yaml
 - fake-secret-store.yaml
+- namespaces.yaml
+- pvc/
 
 patches:
 # yamllint disable-line rule:indentation

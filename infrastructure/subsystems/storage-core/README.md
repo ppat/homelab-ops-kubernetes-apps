@@ -28,12 +28,13 @@ The storage-core module provides four main capabilities:
    - Storage class customization
    - FSGroup policy support
 
-4. Declarative Object Storage (Garage)
-   - S3-compatible API and admin API served by an operator-managed Garage cluster
-   - Bucket/key/layout lifecycle declared through `GarageCluster`/`GarageBucket`/`GarageKey` custom resources rather than imperative Helm-chart provisioning
-   - Configurable replication factor, with independently sized metadata and data volumes
+4. Single-Node Object Storage (Garage)
+   - S3-compatible API and admin API served by a single-replica Garage `Deployment`, run as plain Kubernetes resources with no operator or CRDs
+   - Metadata and data volumes on separate, externally-provisioned PVCs, referenced by claim name
+   - Cluster layout (the one imperative step Garage needs before it serves any request) assigned and applied in-process at startup via Garage's own `--single-node` flag, before any listener binds
    - Public bucket website hosting through Garage's `[s3_web]` module, since Garage has no S3 bucket-policy support
    - Deployed alongside MinIO while it is evaluated as MinIO's eventual replacement
+   - `PrometheusRule` alerting on node reachability, internal RPC error rate, block resync health, and disk space -- queryable state only, since this estate has no AlertManager routing configured
 
 ### Component Details
 
@@ -41,7 +42,7 @@ The storage-core module provides four main capabilities:
 | ----------- | ------------- | ------------------- |
 | Longhorn | Distributed block storage | • Provides replicated persistent volumes for stateful applications<br>• Manages volume snapshots and backups<br>• Ensures data availability through replication<br>• Enables volume expansion and data integrity checks |
 | MinIO | S3-compatible object storage | • Provides S3-compatible storage for applications<br>• Manages bucket policies and user access<br>• Enables object lifecycle management<br>• Exposes metrics for monitoring |
-| Garage | Declaratively provisioned S3-compatible object storage | • Garage operator reconciles `GarageCluster`/`GarageBucket`/`GarageKey`/`GarageNode` custom resources into a running Garage `StatefulSet`<br>• Configurable replication factor with independently sized metadata and data volumes<br>• Serves opted-in bucket contents anonymously through Garage's website hosting module<br>• Exposes Prometheus metrics generated directly from the `GarageCluster` resource |
+| Garage | Single-node S3-compatible object storage | • Runs as a plain single-replica `Deployment` with `Recreate` strategy, referencing externally-provisioned metadata/data PVCs by claim name<br>• Started with `garage server --single-node`, which assigns and applies its one-time cluster layout in-process before any listener binds, gated by a `startupProbe` on `/health`<br>• Serves opted-in bucket contents anonymously through Garage's website hosting module<br>• Exposes Prometheus metrics scraped via a `ServiceMonitor`<br>• A `PrometheusRule` alerts on node-down, RPC error rate, block resync errors/queue depth, and low disk space<br>• Bucket/key provisioning is out of this module's scope |
 | CSI Driver NFS | External NFS share integration | • Enables using external NFS shares as persistent volumes<br>• Supports dynamic volume provisioning from NFS shares<br>• Manages mount options and access modes<br>• Integrates with Kubernetes storage classes |
 
 ## Prerequisites
@@ -57,16 +58,20 @@ The storage-core module provides four main capabilities:
 
    | Variable | Purpose | Required By |
    | ---------- | --------- | ------------- |
-   | domain_name | Base domain for all object-storage endpoints; hostnames are composed in-module | MinIO ingress, Garage S3 API ingress, Garage website ingress and certificate, GarageCluster webApi rootDomain |
+   | domain_name | Base domain for all object-storage endpoints; hostnames are composed in-module | MinIO ingress, Garage S3 API and website ingresses, Garage's `[s3_web]` root_domain |
    | secret_store | Bitwarden `ClusterSecretStore` name | minio-admin-credentials and garage-credentials ExternalSecrets |
-   | cert_issuer | cert-manager `ClusterIssuer` name | Garage website endpoint TLS certificate |
    | garage_admin_token_key | Bitwarden key for the Garage admin API token | garage-credentials ExternalSecret |
    | garage_rpc_secret_key | Bitwarden key for the inter-node RPC shared secret | garage-credentials ExternalSecret |
-   | garage_replication_factor | Data replication factor across Garage storage nodes | GarageCluster |
-   | garage_storage_replicas | Garage storage node (StatefulSet) replica count | GarageCluster |
-   | garage_storage_class | Storage class for Garage's metadata and data volumes | GarageCluster |
-   | garage_metadata_size | Size of Garage's metadata volume | GarageCluster |
-   | garage_data_size | Size of Garage's data volume | GarageCluster |
+   | garage_metadata_claim | Name of the pre-provisioned PVC to use for Garage's metadata volume | Garage Deployment |
+   | garage_data_claim | Name of the pre-provisioned PVC to use for Garage's data volume | Garage Deployment |
+   | garage_s3_region | AWS-style region Garage signs/validates S3 requests against; must match every S3 client's own configured region (e.g. `loki_s3_region` at Loki's eventual cutover) | Garage `[s3_api]` config |
+
+3. Storage Requirements
+
+   | PVC (by claim name) | Purpose | Access Mode |
+   | ---------------------- | --------- | ------------- |
+   | ${garage_metadata_claim} | Garage's metadata volume (its LMDB database) | Provisioned externally by the cluster; not defined by this module |
+   | ${garage_data_claim} | Garage's object data volume | Provisioned externally by the cluster; not defined by this module |
 
 ## Usage
 
@@ -158,9 +163,12 @@ mountOptions:
 
 ## Notes
 
-- **Garage's operator is not where the data lives.** Garage's storage nodes run as an ordinary `StatefulSet` reconciled from the `GarageCluster` resource; the operator's role is to keep that reconciliation declarative. If the operator project were to be abandoned, the `StatefulSet`s keep serving Garage exactly as deployed and can be adopted and managed manually — the blast radius of losing the operator is "provisioning stops being declarative," not "storage stops working."
-- **No Garage buckets or keys ship with this module.** `GarageBucket` and `GarageKey` are cluster-wide custom resources; consuming app modules create their own against this cluster rather than this module pre-declaring any, keeping the module free of application-specific state.
-- **Garage's credentials are not Helm `lookup`-generated.** The upstream Garage Helm chart generates its admin/RPC secrets via a `lookup` function, which returns empty on helm-controller's dry-run and silently regenerates on every reconcile. This module sources both secrets from Bitwarden via `ExternalSecret` instead.
-- **Garage's `metadataFsync` is set explicitly.** Garage defaults this to off, and upstream's own documentation reports LMDB corruption after an unclean shutdown with it off. It is set to `true` here as a deliberate durability-over-throughput choice, currently under active re-evaluation — treat it as a considered default, not a fixed conclusion.
-- **Garage operator image signature verification is not enforced at admission.** The operator publishes cosign keyless-signed images with SLSA provenance and an SBOM, but this repo has no Kyverno `verifyImages` policy yet to check that signature — the chart and image are pinned by version/digest instead.
+- **Garage runs as plain Kubernetes resources, with no operator and no CRDs.** A single-replica `Deployment`, a `ConfigMap`, an `ExternalSecret`-sourced `Secret`, a `Service`, two `Ingress`es, and a `ServiceMonitor` are the entire module — nothing reconciles a custom resource, and nothing needs cluster-wide RBAC.
+- **A `Deployment`, not a `StatefulSet`.** Nothing in this module depends on stable per-pod network identity: Garage's node identity comes from a key persisted in its metadata volume, not from the pod's hostname, and the RPC address it advertises points at the `Service`, never a per-pod DNS name. That makes this the same single-instance-on-RWO-volumes shape as MinIO, including MinIO's `Recreate` update strategy — Garage's LMDB metadata store does not tolerate two processes writing to the same volume.
+- **Metadata and data PVCs are provisioned externally and referenced by claim name**, matching this repo's storage convention (a module never owns a PVC's lifecycle) — the cluster can pre-provision or statically bind either volume instead of the Deployment forcing dynamic provisioning.
+- **Garage serves no request until its cluster layout is assigned and applied**, which is imperative and versioned rather than reconciled. This module runs Garage with `garage server --single-node` (added in v2.3.0, the version this module pins), which stages and applies a one-node layout in-process before any listener binds — no separate bootstrap step, no call to Garage's own admin API from outside the process. Capacity is auto-detected from the data volume's total filesystem size and zone is hardcoded by Garage itself to `dc1`; both are inert at one node (100% of partitions land on the only node regardless) but become real placement inputs the moment a second node exists. **`--single-node` hard-errors at startup once the cluster layout version exceeds 1** — it does not skip or no-op against an existing layout past that point — so it must be removed before any deliberate layout change beyond the initial one (a capacity/zone correction, or adding a second node), or that change crashloops the Deployment; see `deployment.yaml`'s own comment on the flag for the exact failure mode.
+- **No Garage buckets or keys ship with this module.** Bucket/key provisioning is out of scope here and lives in Terraform instead; the admin API this module exposes (bearer-token authenticated via the `garage-credentials` Secret's `admin-token` key) is what a Terraform provider talks to.
+- **`metadata_fsync` is set explicitly to `true`.** Garage defaults this to off, and upstream's own documentation reports LMDB corruption after an unclean shutdown with it off. At `replication_factor = 1` there is no second copy to fall back on, so this is a deliberate durability-over-throughput choice.
+- **Garage's website hosting has no wildcard subdomain routing.** The `garage-web` ingress covers only its own host, matching MinIO's ingresses in relying on Traefik's cluster-wide default certificate rather than a per-host `cert-manager` `Certificate`. A bucket that wants its own vhost-style subdomain needs its own `Ingress` and TLS outside this module.
 - **Garage runs alongside MinIO, not in place of it.** Both are deployed by this module while Garage is evaluated as MinIO's eventual replacement.
+- **Garage's `PrometheusRule` only covers conditions meaningful at `replication_factor = 1` / one node.** Half of the alert set this module was evaluated against (quorum health, peer connectivity, storage-node and partition consistency across replicas) is deliberately omitted: at a single node those conditions are trivially satisfied whenever the process is up, so keeping them would just repeat the node-down alert under different names, not add signal. `PrometheusRule` defines queryable alert state only — this estate has no AlertManager routing configured, so nothing pages or notifies on these.

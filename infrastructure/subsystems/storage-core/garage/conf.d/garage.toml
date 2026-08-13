@@ -1,0 +1,72 @@
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+db_engine = "lmdb"
+
+# Garage defaults this to off, and upstream's own docs report LMDB
+# corruption after an unclean shutdown with it off. At replication_factor 1
+# there is no second copy to fall back on, so this is a deliberate
+# durability-over-throughput choice, not an oversight.
+metadata_fsync = true
+
+replication_factor = 1
+
+rpc_bind_addr = "[::]:3901"
+# The address this node reports to describe itself (e.g. in GetClusterStatus).
+# Set for correctness and to future-proof a second node ever being added
+# (nothing in a single-node deployment currently reads it -- deployment.yaml's
+# --single-node flag configures the initial layout in-process, never over
+# RPC).
+rpc_public_addr = "garage.garage.svc.cluster.local:3901"
+# rpc_secret (and admin.admin_token below) are deliberately absent here and
+# supplied instead via the GARAGE_RPC_SECRET / GARAGE_ADMIN_TOKEN env vars on
+# the container (deployment.yaml), not rpc_secret_file / admin_token_file.
+# Garage's file-based secret loader refuses to read a file with any group/
+# other permission bit set (mode must be exactly 0600), but a Kubernetes
+# Secret volume's files are always owned by uid 0 regardless of the
+# container's own user -- so satisfying that check would require the
+# container to run as root, which this module does not want to depend on.
+# The env-var path skips that file read (and its permission check) entirely,
+# see https://github.com/deuxfleurs-org/garage/blob/main/src/garage/secrets.rs.
+
+[s3_api]
+api_bind_addr = "[::]:3900"
+# A postBuild variable, not a literal, like every other cluster-specific
+# choice in this module -- s3_region is not an invariant of Garage itself,
+# it's a value a cluster operator picks (this estate's chosen production
+# value is "us-east-1", on the grounds that both MinIO and Garage accept it;
+# see ci/test/infra-storage/infra-storage-core.yaml for the value CI
+# exercises). Deliberately has no default here (unlike, say,
+# garage_metadata_claim/garage_data_claim having none either) -- an unsupplied
+# value fails loudly via strict-mode envsubst rather than silently landing on
+# some other default.
+#
+# Load-bearing beyond this module: every S3 client Garage serves signs its
+# requests with its own configured region, and Garage rejects a mismatch
+# outright (AuthorizationHeaderMalformed) with no client-side recovery. Most
+# consequentially, Loki's eventual cutover to Garage needs its own
+# loki_s3_region cluster variable set to this exact same value, or its
+# compactor crashloops on first delete-store init -- see
+# https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3611 (comment
+# 5282296514) for the experiment that found this. Don't remove this as an
+# "unused-looking" setting; it's this module's half of a contract with
+# whatever consumes it as an S3 client.
+s3_region = "${garage_s3_region}"
+
+[s3_web]
+bind_addr = "[::]:3902"
+# No leading dot / wildcard subdomain: this only ever resolves a bucket named
+# exactly "garage-web.${domain_name}" (Garage matches a bucket's own name
+# against the Host header directly, not only as a root_domain suffix -- see
+# https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#web_root_domain).
+# A cluster that wants additional per-bucket vhost subdomains needs its own
+# Ingress/TLS for that subdomain; bucket provisioning is out of this module's
+# scope (see README).
+root_domain = "garage-web.${domain_name}"
+index = "index.html"
+
+[admin]
+api_bind_addr = "[::]:3903"
+# metrics_token intentionally unset: without it, Garage serves /metrics
+# without auth (matching MinIO's unauthenticated ServiceMonitor scrape in
+# this module), and admin_token (set via GARAGE_ADMIN_TOKEN, see rpc_secret's
+# comment above) still guards every other admin endpoint.

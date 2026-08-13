@@ -14,14 +14,14 @@ spec:
       domain_name: cluster.example.com
       minio_admin_username_key: minio_admin_username
       minio_admin_password_key: minio_admin_password
-      cert_issuer: selfsigned-issuer
       garage_admin_token_key: garage_admin_token
-      garage_data_size: 200Mi
-      garage_metadata_size: 100Mi
-      garage_replication_factor: "1"
+      garage_data_claim: garage-data-test
+      garage_metadata_claim: garage-metadata-test
       garage_rpc_secret_key: garage_rpc_secret
-      garage_storage_class: standard
-      garage_storage_replicas: "1"
+      # Matches this estate's real production value (see conf.d/garage.toml's
+      # comment), not a synthetic CI-only value -- so this suite actually
+      # exercises what a cluster will run, not a stand-in that happens to work.
+      garage_s3_region: us-east-1
   prune: false
   sourceRef:
     kind: GitRepository

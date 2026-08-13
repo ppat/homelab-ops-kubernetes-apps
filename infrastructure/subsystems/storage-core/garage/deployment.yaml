@@ -1,0 +1,217 @@
+---
+# Deployment, not StatefulSet: nothing here depends on stable per-pod network
+# identity. Garage's node identity comes from a key persisted in metadata_dir
+# (on the metadata PVC), not from the pod's hostname, and rpc_public_addr
+# (conf.d/garage.toml) already points at the Service, never a per-pod DNS
+# name. That makes this the same single-instance-on-RWO-volumes shape as
+# MinIO next door, which is why it also matches MinIO's `Recreate` strategy:
+# Garage's LMDB metadata store does not tolerate two processes writing to the
+# same volume, so the old Pod must fully terminate before the new one starts.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garage
+  namespace: garage
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: garage
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: garage
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: garage
+        # Pinned by digest in addition to the tag: Renovate's built-in
+        # kubernetes manager tracks this bare `image: repo:tag` field on its
+        # own, no "# renovate:" directive needed (unlike a tag nested under a
+        # Helm values key).
+        image: dxflrs/garage:v2.3.0@sha256:866bd13ed2038ba7e7190e840482bc27234c4afaf77be8cfa439ae088c1e4690
+        # command/args, not the image's own CMD ["/garage", "server"]: --single-node
+        # has to be appended, and k8s args replaces CMD outright rather than
+        # extending it.
+        #
+        # --single-node auto-configures this Deployment's one-time cluster layout
+        # in-process (garage/src/garage/server.rs's initial_config, called from
+        # run_server before any listener binds -- not HTTP to Garage's own admin
+        # API, not a CLI shell-out, and not the separate sidecar/Job this module
+        # used before #3639's follow-up removed it). Added in v2.3.0, the version
+        # pinned above. Requires replication_factor = 1 (conf.d/garage.toml).
+        # Capacity is auto-detected from data_dir's filesystem *total* bytes (not
+        # available -- doesn't shrink misleadingly as the volume fills over time)
+        # and zone is hardcoded to "dc1" by Garage itself, not configurable here.
+        # Both are inert at one node: 100% of partitions land on the only node
+        # regardless of the capacity number (src/rpc/layout/graph_algo.rs's
+        # partition-assignment algorithm), there is no write-path check against
+        # declared capacity (real ENOSPC from the filesystem is what actually
+        # stops writes -- see upstream garage#837), and the `garage_local_disk_avail`
+        # metric is computed live via statvfs on every scrape, never from this
+        # frozen figure. /health is a quorum check (see readinessProbe below) and
+        # never references capacity either.
+        #
+        # CRITICAL, read before touching this flag: --single-node hard-errors at
+        # startup once the layout version exceeds 1 ("Refusing to run in
+        # single-node mode: layout version is already superior to 1" --
+        # server.rs's initial_config) -- it does NOT skip or no-op against an
+        # existing layout past that point. Version 0 (nothing yet -- this flag
+        # creates the layout) and version 1 (what it just created) are fine;
+        # anything beyond that crashloops this Deployment on its very next
+        # restart. This flag MUST be removed before any deliberate layout change
+        # beyond the initial one -- e.g. a capacity or zone correction -- or that
+        # change turns into a crashloop, possibly months later, whose cause this
+        # manifest argument only indirectly explains. This Deployment is
+        # single-node by design: growth means standing up a new Garage cluster
+        # and migrating data across, not adding a node to this one, so this
+        # module's layout is not expected to change and --single-node is safe
+        # to leave in place here.
+        command:
+        - /garage
+        args:
+        - server
+        - --single-node
+        ports:
+        - name: s3-api
+          containerPort: 3900
+        - name: rpc
+          containerPort: 3901
+        - name: web-api
+          containerPort: 3902
+        - name: admin
+          containerPort: 3903
+        # Passed as env vars rather than mounted files -- see conf.d/garage.toml's
+        # comment on rpc_secret for why.
+        env:
+        - name: GARAGE_RPC_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: garage-credentials
+              key: rpc-secret
+        - name: GARAGE_ADMIN_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: garage-credentials
+              key: admin-token
+        volumeMounts:
+        - name: config
+          mountPath: /etc/garage.toml
+          subPath: garage.toml
+          readOnly: true
+        - name: metadata
+          mountPath: /var/lib/garage/meta
+        - name: data
+          mountPath: /var/lib/garage/data
+        # Garage's /health (src/api/admin/special.rs) returns its *cluster*
+        # health, not just "is this process up" -- 503 (Unavailable) whenever
+        # quorum isn't available for some/all partitions. With --single-node's
+        # initial_config running synchronously before any listener binds (see
+        # the args comment above), that's no longer a real bootstrap window to
+        # protect against: by the time the admin port is even accepting
+        # connections, the layout already exists. What startupProbe absorbs now
+        # is ordinary slow-start (image pull, LMDB env open, disk stat) rather
+        # than a specific measured sequence -- 5s period * 36 failures = 180s is
+        # deliberately generous headroom for a loaded node or a cold image pull,
+        # not a reflection of expected normal latency, and stays well under this
+        # suite's own 5m deployment-ready timeout
+        # (ci/test/infra-storage/validate-garage.yaml) if something is actually
+        # broken. Once /health turns 200, startupProbe stops and liveness/
+        # readiness (both httpGet /health) take over immediately: no extra
+        # initialDelaySeconds needed, since startupProbe already proved /health
+        # healthy before either one is ever consulted.
+        startupProbe:
+          httpGet:
+            path: /health
+            port: admin
+          periodSeconds: 5
+          failureThreshold: 36
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: admin
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: admin
+          periodSeconds: 30
+        # Measured, not conventional -- do not copy MinIO's 1Gi request. The
+        # H1 falsification run measured Garage at production scale (3,439,460
+        # objects): anonymous (unreclaimable) RSS stayed flat at 4.4-5.7 MiB
+        # across a 34x increase in object count; total RSS is dominated by
+        # file-backed page cache over the mmap'd LMDB store and is therefore
+        # non-monotonic under memory pressure -- it peaked at 1527.7 MiB at 1M
+        # objects, then fell to 365.7 MiB at 3.44M as the kernel reclaimed
+        # cache. metadata_dir itself reached 6361.8 MiB, so no limit in the
+        # 1-2Gi band caches the whole DB regardless -- the limit only decides
+        # how much of the hot index stays resident. Under cgroup v2 the page
+        # cache counts toward the memory limit, so this is a latency knob
+        # (a tighter limit forces eviction and raises LIST p99), not a safety
+        # one -- anon usage is single-digit MiB, so OOM risk from this limit
+        # is not the tradeoff being made here. 2Gi is the smallest limit that
+        # does not cap below the observed 1527.7 MiB working set; do not
+        # lower it without re-running that measurement. requests.memory is
+        # ~40x the unreclaimable need, enough for Burstable QoS and a sane
+        # scheduling floor. requests.cpu matches MinIO's own measured 52-59m
+        # under real load; no CPU limit, also matching MinIO -- this estate
+        # doesn't use CPU limits since they cause throttling rather than
+        # graceful degradation.
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            memory: 2Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+          # Safe to set: Garage only ever writes to metadata_dir/data_dir (both
+          # explicit PVC mounts, see volumeMounts below) and its own LMDB store --
+          # confirmed against upstream source that neither it nor its db/multipart
+          # handling ever touches std::env::temp_dir()/tempfile, so no /tmp emptyDir
+          # is needed the way apps/subsystems/ai/n8n/deployment.yaml needs one.
+          readOnlyRootFilesystem: true
+      # runAsUser/runAsGroup are a literal, not a postBuild variable: unlike
+      # apps/subsystems/downloaders/qbittorrent's media_writer_uid/gid (a UID
+      # shared across multiple modules writing the same external media library),
+      # metadata/data here are private volumes only Garage itself ever touches, so
+      # there's nothing cross-module to coordinate -- matches how
+      # apps/subsystems/media/{jellyfin,plex} and apps/subsystems/ai/n8n hardcode
+      # their own private-volume UID/GID. 1000 is arbitrary and tolerated: the
+      # image (dxflrs/garage) is built FROM SCRATCH -- a single static binary with
+      # no /etc/passwd -- so it does no NSS user lookup and never assumed root.
+      # fsGroup (+ OnRootMismatch, matching minio's cluster-side patch and
+      # qbittorrent's module-side one) is what actually grants a non-root UID
+      # write access to metadata/data: Kubernetes always creates those PVCs'
+      # files owned by uid 0, and fsGroup is the mechanism that adds a writable
+      # group regardless of which UID ends up owning them.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - name: config
+        configMap:
+          name: garage-config
+      # Provisioned by the cluster, not this module -- referenced by claim
+      # name only, so a cluster can pre-provision or statically bind either
+      # volume (e.g. a static NFS/Longhorn PV) instead of relying on dynamic
+      # provisioning. Matches how minio/ and the rest of this repo's storage
+      # bindings work: the module never owns a PVC's lifecycle.
+      - name: metadata
+        persistentVolumeClaim:
+          claimName: ${garage_metadata_claim}
+      - name: data
+        persistentVolumeClaim:
+          claimName: ${garage_data_claim}
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
