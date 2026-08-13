@@ -1,0 +1,172 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-garage
+spec:
+  try:
+  # garage-metadata-test/garage-data-test (the cluster-provisioned PVCs this
+  # module expects by claim name, see deployment.yaml) are applied as
+  # pre-requisites (pre-requisites/pvc/), not here -- they must exist before
+  # infra-storage-core itself is applied, since its Deployment references them
+  # from the moment it's applied.
+  - description: Assert pvc/garage-metadata-test and pvc/garage-data-test
+    assert:
+      bindings:
+      - name: name
+        value: garage-metadata-test
+      - name: namespace
+        value: garage
+      file: ../chainsaw/assertions/pvc-bound.yaml
+  - assert:
+      bindings:
+      - name: name
+        value: garage-data-test
+      - name: namespace
+        value: garage
+      file: ../chainsaw/assertions/pvc-bound.yaml
+  - description: Assert externalsecret/garage-credentials
+    assert:
+      bindings:
+      - name: name
+        value: garage-credentials
+      - name: namespace
+        value: garage
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
+  # Generous, non-default timeout: garage's own readinessProbe (deployment.yaml)
+  # is tied to real cluster health, and startupProbe suppresses both liveness
+  # and readiness until /health first turns 200 -- so this Deployment cannot
+  # report Available until Garage itself is up, not just until the pod starts.
+  - description: Assert deployment/garage
+    assert:
+      bindings:
+      - name: name
+        value: garage
+      - name: namespace
+        value: garage
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 5m
+  - description: Assert service/garage
+    assert:
+      bindings:
+      - name: name
+        value: garage
+      - name: namespace
+        value: garage
+      file: ../chainsaw/assertions/service-clusterip-ready.yaml
+  # No shared assertions/prometheusrule-*.yaml exists yet to reuse (unlike
+  # deployment/service/ingress) -- this is the first PrometheusRule this
+  # suite validates. Asserting the exact group/alert shape proves the
+  # Prometheus Operator CRD accepted the resource as written, not just that
+  # it passed kubeconform's static schema check.
+  - description: Assert prometheusrule/garage loaded with its expected alert groups
+    assert:
+      resource:
+        apiVersion: monitoring.coreos.com/v1
+        kind: PrometheusRule
+        metadata:
+          name: garage
+          namespace: garage
+        spec:
+          groups:
+          - name: garage.availability
+            rules:
+            - alert: GarageNodeDown
+            - alert: GarageHighRPCErrorRate
+          - name: garage.storage
+            rules:
+            - alert: GarageBlockResyncErrors
+            - alert: GarageHighBlockResyncQueue
+            - alert: GarageLowDiskSpace
+  # ../chainsaw/assertions/ingress-ready.yaml doesn't apply here: it asserts
+  # status.loadBalancer.ingress, but this suite (like the pre-existing MinIO
+  # ingresses it never asserted for the same reason) deliberately installs no
+  # MetalLB and no ingress controller -- that's networking-core's suite to
+  # cover -- so no LoadBalancer address is ever assigned and that assert can
+  # never pass here. Assert shape (annotations + rules) instead, matching
+  # ci/test/apps-harbor/validate-dockerio-mirror.yaml's ingress assert.
+  - description: Assert ingress/garage-s3
+    assert:
+      resource:
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: garage-s3
+          namespace: garage
+          annotations:
+            external-dns.alpha.kubernetes.io/hostname: garage-s3.cluster.example.com
+            traefik.ingress.kubernetes.io/router.entrypoints: websecure
+            traefik.ingress.kubernetes.io/router.tls: "true"
+        spec:
+          rules:
+          - host: garage-s3.cluster.example.com
+            http:
+              paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: garage
+                    port:
+                      number: 3900
+  - description: Assert ingress/garage-web
+    assert:
+      resource:
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: garage-web
+          namespace: garage
+          annotations:
+            external-dns.alpha.kubernetes.io/hostname: garage-web.cluster.example.com
+            traefik.ingress.kubernetes.io/router.entrypoints: websecure
+            traefik.ingress.kubernetes.io/router.tls: "true"
+        spec:
+          rules:
+          - host: garage-web.cluster.example.com
+            http:
+              paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: garage
+                    port:
+                      number: 3902
+  # deployment/garage reporting Available (asserted above) already implies
+  # --single-node committed a layout, since readinessProbe is httpGet
+  # /health and Garage would otherwise have failed to start at all -- but
+  # that only proves the process is up, not that the S3 API is actually
+  # serving requests as a result. See ../chainsaw/scripts/garage-s3-roundtrip.sh.
+  - description: Assert the S3 API actually serves requests (round-trip + wrong-key rejection)
+    script:
+      content: ../chainsaw/scripts/garage-s3-roundtrip.sh
+      timeout: 5m
+
+  catch:
+  - describe:
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      name: garage-metadata-test
+      namespace: garage
+  - describe:
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      name: garage-data-test
+      namespace: garage
+  - describe:
+      apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      name: garage-credentials
+      namespace: garage
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: garage
+      namespace: garage
+  - podLogs:
+      selector: app.kubernetes.io/name=garage
+      namespace: garage
+      container: garage
+  - events:
+      namespace: garage

@@ -50,18 +50,9 @@ spec:
   - name: Validate minio
     use:
       template: ./validate-minio.yaml
-  - name: Validate garage operator
+  - name: Validate garage
     use:
-      template: ./validate-garage-operator.yaml
-  - name: Validate garage cluster
-    use:
-      template: ./validate-garage-cluster.yaml
-  - name: Validate garage bucket
-    use:
-      template: ./validate-garage-bucket.yaml
-  - name: Validate garage key
-    use:
-      template: ./validate-garage-key.yaml
+      template: ./validate-garage.yaml
   - name: Validate longhorn
     use:
       template: ./validate-longhorn.yaml

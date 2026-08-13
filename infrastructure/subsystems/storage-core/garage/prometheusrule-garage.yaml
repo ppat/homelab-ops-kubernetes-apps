@@ -1,0 +1,99 @@
+---
+# Ported from rajsinghtech/garage-operator's chart (garage-operator-0.7.3,
+# templates/prometheusrules.yaml) after dropping the operator itself (see
+# deployment.yaml) -- these rules key off Garage's own metrics
+# (garage_rpc/garage_local_disk_*/block_*), not the operator's controller or
+# any CRD status, so they're unaffected by that removal. Verified every
+# metric name below against the garage v2.3.0 source (src/rpc/system_metrics.rs,
+# src/block/metrics.rs, src/rpc/metrics.rs) rather than trusting the chart.
+#
+# Half the upstream rule set is deliberately not here: GarageClusterUnhealthy,
+# GarageClusterUnavailable, GarageStorageNodeDown, GaragePartitionsDegraded,
+# and GarageNodeDisconnected all key off cluster_healthy/cluster_available/
+# cluster_storage_nodes_ok/cluster_partitions_all_ok/cluster_layout_node_connected
+# -- quorum and peer-connectivity signals that are only meaningful across
+# multiple nodes. At this module's replication_factor = 1 / single node
+# (deployment.yaml's --single-node), each of those conditions is trivially
+# true whenever the process is up and can only go false in exactly the same
+# window GarageNodeDown below already covers -- keeping them would just be
+# GarageNodeDown five times over, not five more signals.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: garage
+  namespace: garage
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+  - name: garage.availability
+    rules:
+    - alert: GarageNodeDown
+      expr: up{job="garage"} == 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Garage has not been scraped for 5 minutes.
+        description: >-
+          Garage is the only object-store node in this cluster -- if it's down, the
+          S3/web/admin API is unavailable, not degraded.
+    - alert: GarageHighRPCErrorRate
+      # The upstream rule divided rpc_netapp_request_counter{status="error"} by
+      # rpc_netapp_request_counter -- neither series exists in v2.3.0 (confirmed
+      # against src/rpc/metrics.rs), so as shipped it can never fire. The real
+      # names are rpc_request_counter (total) and three separate failure
+      # counters: rpc_netapp_error_counter (transport-layer), rpc_garage_error_counter
+      # (application-level), and rpc_timeout_counter.
+      expr: |
+        (
+        sum(rate(rpc_netapp_error_counter{job="garage"}[5m]))
+        + sum(rate(rpc_garage_error_counter{job="garage"}[5m]))
+        + sum(rate(rpc_timeout_counter{job="garage"}[5m]))
+        )
+        /
+        sum(rate(rpc_request_counter{job="garage"}[5m])) > 0.1
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: More than 10% of Garage's internal RPC calls are failing.
+        description: >-
+          Garage routes every table and block operation through its RPC layer, even
+          addressed to itself on a single node -- this reflects internal request
+          health, not peer connectivity.
+  - name: garage.storage
+    rules:
+    - alert: GarageBlockResyncErrors
+      expr: block_resync_errored_blocks{job="garage"} > 0
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: Garage has blocks that failed to resync.
+        description: >-
+          At least one block hash's last resync attempt ended in an error for 15+
+          minutes -- data integrity may be affected. Also feeds the recovery-events
+          KPI tracked by #3611.
+    - alert: GarageHighBlockResyncQueue
+      expr: block_resync_queue_length{job="garage"} > 10000
+      for: 30m
+      labels:
+        severity: warning
+      annotations:
+        summary: Garage's block resync queue is backed up.
+        description: >-
+          More than 10000 block hashes have been queued for resync for 30+ minutes,
+          which on a single node with no peer to catch up from means Garage isn't
+          keeping up with its own local consistency checks.
+    - alert: GarageLowDiskSpace
+      expr: (garage_local_disk_avail{job="garage"} / garage_local_disk_total{job="garage"}) < 0.1
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: Garage's {{ $labels.volume }} volume has less than 10% disk space left.
+        description: >-
+          garage_local_disk_avail/garage_local_disk_total is below 10% on the
+          {{ $labels.volume }} volume -- with no second node, there's nowhere else
+          for writes to land once this fills.

@@ -7,7 +7,6 @@ resources:
 - cloudnative-pg/
 - dragonfly/
 - external-secrets/
-- garage-operator/
 - kubevirt/
 - longhorn/
 - metallb/

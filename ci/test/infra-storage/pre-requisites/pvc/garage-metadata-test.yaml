@@ -1,0 +1,18 @@
+---
+# Stands in for the cluster-provisioned PVC infra-storage-core's Deployment now
+# expects by claim name (garage_metadata_claim) instead of owning its lifecycle
+# itself -- see infrastructure/subsystems/storage-core/garage/deployment.yaml.
+# Applied as a pre-requisite, not later during validate-garage.yaml: the
+# Deployment references this claim name from the moment it's applied, so it
+# must already exist before infra-storage-core itself is applied, or the pod
+# fails to schedule ("persistentvolumeclaim ... not found").
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: garage-metadata-test
+  namespace: garage
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 100Mi
