@@ -25,7 +25,12 @@ jobs:
   test-infrastructure-observability:
     uses: ppat/github-workflows/.github/workflows/chainsaw-test.yaml@1e8ca1b00b6e69bdf5aef8b33111c594c051ff65 # v4.4.0
     with:
-      git_ref: ${{ github.head_ref || github.ref }}
+      # github.head_ref is only set on pull_request events; on workflow_dispatch/push
+      # it's empty, so this falls back to github.ref_name rather than github.ref --
+      # github.ref is a full "refs/heads/<branch>" ref, and chainsaw-test.yaml passes
+      # this straight through as Flux's GitRepository spec.ref.branch, which needs a
+      # bare branch name. ref_name is already bare for every event type.
+      git_ref: ${{ github.head_ref || github.ref_name }}
       test_path: ./ci/test/infra-observability
       chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
       kind_config: .github/kind-cluster-multi-node.yaml
