@@ -1,0 +1,33 @@
+---
+# Demonstrates loki/helm-release-loki.yaml's sidecar.rules pattern end-to-end, shipped
+# from `monitoring` rather than `logging` specifically to prove `searchNamespace: ALL`
+# collects across namespaces, not just that the label/sidecar exist. See that file's
+# "Ruler recording rules" comment for the full contract.
+#
+# Exists at all - rather than relying on config alone - because enabling remote_write
+# with zero rules is indistinguishable from a wrong endpoint or a receiver that never
+# turned on; something has to actually land in Prometheus to tell "wired" from "broken".
+# Kept permanently as a low-cardinality heartbeat rather than scaffolding to delete once
+# real rules exist: one series, one sample/minute, answering whether anything is still
+# landing in Loki from the logging namespace at all.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-rule-remote-write-canary
+  namespace: monitoring
+  labels:
+    loki_rule: "1"
+data:
+  # yamllint's multi-line-string indentation check treats this block scalar as flat
+  # text and can't validate the real nested YAML rule-group structure inside it -
+  # disabled for just this block rather than flattened to fake passing, which would
+  # make the rule group invalid Loki config.
+  # yamllint disable rule:indentation
+  remote-write-canary.yaml: |
+    groups:
+    - name: remote-write-canary
+      interval: 1m
+      rules:
+      - record: loki_ruler_canary:log_lines:count1m
+        expr: sum by (namespace) (count_over_time({namespace="logging"}[1m]))
+  # yamllint enable rule:indentation

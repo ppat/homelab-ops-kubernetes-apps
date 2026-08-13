@@ -118,6 +118,16 @@ spec:
         enableAdminAPI: true
         enableFeatures:
         - memory-snapshot-on-shutdown
+        # Currently used by Loki's ruler (rulerConfig.remote_write in
+        # observability-core/loki) but enabled here as a general platform capability,
+        # not scaffolding for that one use - so it's set directly rather than gated
+        # behind a postBuild variable a cluster would have to remember to supply.
+        #
+        # Security: /api/v1/write takes no authentication of its own - anything in the
+        # cluster that can reach this Service can write arbitrary series. That's a
+        # deliberate, deferred decision, not an oversight: access control (NetworkPolicy,
+        # a write-token proxy, mTLS) is out of scope for this change and left for later.
+        enableRemoteWriteReceiver: true
         retention: ${prometheus_retention_period}
         retentionSize: ${prometheus_retention_size}
         routePrefix: /

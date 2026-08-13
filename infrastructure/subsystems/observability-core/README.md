@@ -15,6 +15,7 @@ The observability-core module provides these capabilities:
    - K3s-specific component monitoring
    - AlertManager for alert routing
    - Kube State Metrics integration
+   - Accepts remote-write from Loki's ruler, turning LogQL recording rules into first-class Prometheus series
 
 2. Log Management
    - Centralized log aggregation with Loki
@@ -100,6 +101,7 @@ flowchart TB
     alloy --> loki
     loki --> s3_bucket
     loki -- "sends alerts via ruler" --> alertmanager
+    loki -- "writes recording-rule series via remote_write" --> prometheus
 
     servicemonitors & podmonitors & k3s_servicemonitor --> prometheus
     k3s_rules --> prometheus
@@ -134,10 +136,10 @@ flowchart TB
 
 | Component | Primary Role | Integration Points |
 | ----------- | ------------- | ------------------- |
-| Prometheus | Metrics collection and storage | • Collects metrics via ServiceMonitors and PodMonitors<br>• Stores metrics in persistent storage with configurable retention<br>• Evaluates alerting rules and sends alerts to AlertManager<br>• Provides query interface for metrics access |
+| Prometheus | Metrics collection and storage | • Collects metrics via ServiceMonitors and PodMonitors<br>• Stores metrics in persistent storage with configurable retention<br>• Evaluates alerting rules and sends alerts to AlertManager<br>• Provides query interface for metrics access<br>• Accepts remote-write from Loki's ruler |
 | AlertManager | Alert routing and management | • Receives alerts from Prometheus rule evaluations<br>• Receives alerts from Loki rule evaluations<br>• Routes and groups alerts based on defined rules<br>• Manages notification delivery to configured channels |
 | Grafana Alloy | Log collection agent | • Discovers and tails container log files on every node<br>• Attaches labels to log streams based on Kubernetes metadata<br>• Reads the systemd journal from both `/run/log/journal` and `/var/log/journal`<br>• Ships logs to Loki for storage<br>• Accepts additional collection jobs injected by the consuming cluster<br>• Exposes its own metrics via ServiceMonitor and alerts via PrometheusRule |
-| Loki | Log aggregation and storage | • Receives logs from the Grafana Alloy agents<br>• Stores logs in S3-compatible storage<br>• Evaluates log-based alerting rules<br>• Provides LogQL query interface |
+| Loki | Log aggregation and storage | • Receives logs from the Grafana Alloy agents<br>• Stores logs in S3-compatible storage<br>• Evaluates log-based alerting rules<br>• Evaluates LogQL recording rules and remote-writes the results to Prometheus<br>• Provides LogQL query interface |
 | K3s Monitoring | K3s-specific monitoring | • Collects metrics from K3s unified binary<br>• Provides custom alerting rules for K3s components<br>• Includes specialized dashboards for K3s architecture<br>• Replaces standard Kubernetes monitoring |
 | Grafana | Observability platform | • Provides unified visualization of metrics and logs<br>• Auto-discovers and provisions dashboards from ConfigMaps<br>• Manages alert rules and notifications<br>• Supports SSO integration and user management |
 | Goldilocks | Resource optimization visualization | • Integrates with external VPA installation<br>• Exposes dashboard at goldilocks.${domain_name}<br>• Uses websecure entrypoint with TLS<br>• Provides resource usage insights<br>• Runs with specific resource limits |
@@ -278,3 +280,21 @@ flowchart TB
   annotation for a ConfigMap it creates itself, and this module generates its own. Propagation is handled by
   the `config-reloader` sidecar, which reloads the running collector in place; an invalid config is rejected
   and the last valid one keeps running.
+- **Prometheus's remote-write receiver takes no authentication of its own.** Anything in the cluster that can
+  reach the Prometheus Service can write arbitrary series to it. Today the only writer is Loki's ruler; locking
+  it down further (NetworkPolicy, a write-token proxy, mTLS) is a deliberate, deferred decision, not an
+  oversight.
+- **Any module can ship its own Loki recording (or alerting) rules - the same self-service pattern as Grafana
+  dashboards, just for LogQL instead of dashboard JSON.** Add a `ConfigMap` in the module's own namespace
+  labelled `loki_rule: "1"`, with one data key per rule file, each a standard Loki rule-group YAML document
+  (`groups: [{name, rules: [{record or alert, expr, ...}]}]`). Loki's sidecar picks it up within a minute; see
+  `kube-prometheus-stack/configmap-loki-rule-demo.yaml` for a live example. Give rule files cluster-unique
+  names (two modules both choosing `rules.yaml` is worth avoiding even though `enableUniqueFilenames`
+  disambiguates on disk), and note that recording rules also need Prometheus's remote-write receiver enabled
+  (`enableRemoteWriteReceiver`, already on) - alerting rules don't, since they route to AlertManager directly.
+- **The sidecar's cluster-wide reach is ConfigMap read only - Secret read is explicitly stripped.**
+  `searchNamespace: ALL` requires the Loki ServiceAccount to read ConfigMaps in every namespace; the chart's
+  own ClusterRole template also grants Secret read by default, unconditional on any Helm value. A
+  `postRenderers` patch on `helm-release-loki.yaml` rewrites the rendered ClusterRole down to ConfigMaps only,
+  verified in CI via the ServiceAccount's actual effective permissions
+  (`ci/test/infra-observability/scripts/check-loki-rbac.sh`), not the ClusterRole's YAML.

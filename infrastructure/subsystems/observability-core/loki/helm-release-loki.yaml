@@ -70,6 +70,35 @@ spec:
         alertmanager_url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local.:9093/
         enable_api: true
         enable_alertmanager_v2: true
+        # Distributes rule evaluation across the ring instead of every one of the 3
+        # singleBinary replicas independently evaluating (and remote-writing) every
+        # rule group - the same one-active-owner shape the compactor already gets from
+        # its own ring above, and for the same reason: without it, remote_write below
+        # would ship 3x the samples for identical series. The ring backend needs no
+        # explicit config here: Loki defaults every unconfigured ring (ruler included)
+        # to the memberlist config already active in this file the moment
+        # memberlist.join_members is set, which the chart does unconditionally.
+        enable_sharding: true
+        # Ships results to Prometheus's remote-write receiver - same in-cluster FQDN +
+        # trailing-dot convention as alertmanager_url above. See
+        # kube-prometheus-stack/helm-release-kube-prometheus-stack.yaml's
+        # enableRemoteWriteReceiver for why that receiver is on and its security
+        # tradeoff (no authentication on /api/v1/write).
+        remote_write:
+          enabled: true
+          clients:
+            prometheus:
+              url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local.:9090/api/v1/write
+        # Matches where the sidecar delivers rule files (/rules/fake, see `sidecar:`
+        # below), not S3: the chart's ruler storage client reads from exactly one
+        # backend, so bucketNames.ruler (below) goes unused now that this is set. It
+        # stays defined regardless - the chart's template hard-requires it whenever
+        # `storage.type` is unset, so removing it would break any downstream patch
+        # that reverts this back to S3.
+        storage:
+          type: local
+          local:
+            directory: /rules
       # see:
       # - https://grafana.com/docs/loki/latest/operations/storage/schema/
       # - https://grafana.com/docs/loki/latest/operations/storage/tsdb/
@@ -215,5 +244,75 @@ spec:
       serviceMonitor:
         enabled: true
     ######################################################################################################################
+    # Ruler recording rules: sidecar-based rule delivery
+    #
+    # The chart's other rule-loading mechanism, values-baked `ruler.directories`
+    # (templates/ruler/configmap.yaml), only renders when `loki.deployment.isDistributed`
+    # is true - false here under `deploymentMode: Monolithic` - so it would leave every
+    # singleBinary replica stuck in ContainerCreating, mounting a ConfigMap the chart
+    # never creates. The sidecar below (kiwigrid/k8s-sidecar, the same component Grafana
+    # uses for dashboard discovery) is unconditionally wired into singleBinary pods, and
+    # is what lets any module self-serve LogQL rules via a ConfigMap labelled
+    # `loki_rule: "1"` in its own namespace - see the module README for the contract.
+    #
+    # `searchNamespace: ALL` needs the ServiceAccount to read ConfigMaps cluster-wide.
+    # The chart already creates a ClusterRole for this whenever `rbac.namespaced` stays
+    # at its default (false) - true before this change too, just previously unexercised
+    # since the default searchNamespace only watches Loki's own namespace.
+    # `rbac.namespaced: true` isn't an alternative: it scopes the grant to a Role in
+    # `logging` only, which would make `searchNamespace: ALL` silently see nothing
+    # outside `logging`.
+    #
+    # That ClusterRole also hardcodes `resources: ["configmaps", "secrets"]`,
+    # unconditional on any chart value. Cluster-wide Secret read is not something this
+    # module accepts, so the `postRenderers` patch below rewrites the chart's *rendered*
+    # ClusterRole to `["configmaps"]` only. `resource: configmap` here is kept alongside
+    # it deliberately: the patch removes the ServiceAccount's authority to read Secrets,
+    # this setting stops the sidecar process from ever asking to - either alone leaves a
+    # gap (an unused credential, or a process one chart bump away from an over-broad one
+    # it never needed). Verified in CI via the ServiceAccount's actual effective
+    # permissions, not the ClusterRole's YAML
+    # (ci/test/infra-observability/scripts/check-loki-rbac.sh).
     sidecar:
       resources: {}
+      # Without this, two modules that both name their rule file `rules.yaml` would
+      # silently overwrite each other on disk - the loser's rules just never load,
+      # with nothing in any status field to say so. Applies only to this sidecar
+      # (dashboards use monitoring.dashboards above, a different code path).
+      enableUniqueFilenames: true
+      rules:
+        enabled: true
+        label: loki_rule
+        labelValue: "1"
+        # Any namespace in the cluster, not just `logging` - the whole point of the
+        # self-service pattern above.
+        searchNamespace: "ALL"
+        # Only ever asks for ConfigMaps, never Secrets, at the sidecar process level -
+        # belt-and-braces alongside the postRenderers RBAC patch below.
+        resource: configmap
+        # "fake" is not a placeholder - it's Loki's actual internal tenant ID
+        # (`no_auth_tenant`, https://grafana.com/docs/loki/latest/configure/) used for
+        # every request under `auth_enabled: false` above, and the only directory name
+        # the ruler evaluates rule files from. Simpler than the chart's alternative
+        # (default /rules + per-ConfigMap folderAnnotation into a tenant subfolder)
+        # since every rule here belongs to the same one tenant anyway.
+        folder: /rules/fake
+
+  # Patches the chart's rendered ClusterRole (see the comment above `sidecar:`) - same
+  # postRenderers shape as security-extra/authentik's own use of this mechanism.
+  postRenderers:
+  - kustomize:
+      patches:
+      - target:
+          kind: ClusterRole
+          name: loki-clusterrole
+        # Whole-array replace, not an index-based removal of "secrets": a JSON6902
+        # `remove` on /rules/0/resources/1 would silently take out the wrong element
+        # (or fail) if the chart ever reorders that array; a whole-array replace either
+        # fully matches the intent or the HelmRelease fails loudly instead.
+        # yamllint disable-line rule:indentation
+        patch: |-
+          - op: replace
+            path: /rules/0/resources
+            value:
+            - configmaps
