@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.5.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.5.0...infra-storage-core-v0.5.1) (2026-08-13)
+
+
+### ✨ Features
+
+* **infra-storage-core:** add a Grafana dashboard for Garage, built from its verified metric surface ([#3646](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3646)) ([ad355ee](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ad355ee36a1341bf3b5c31a22d553c99bc0d3eda))
+* **infra-storage-core:** add permanent object-store KPI recording rules (disk amp, recovery events) ([#3648](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3648)) ([4257b0c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4257b0c215def3467b2cca133158bc508431a60c))
+* **infra-storage-core:** expose garage's admin API via a scoped ingress ([#3656](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3656)) ([884a7c2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/884a7c27758703d54c5d998ecaf2c2c717bee818))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** coalesce Garage's lazily-bound RPC error counters in GarageHighRPCErrorRate ([#3649](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3649)) ([2876e27](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2876e27e4a7eebf312b4ced0dd12f07d0a9ab746))
+* **infra-storage-core:** make the Garage dashboard's empty panels say why, where zero is not a lie ([#3654](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3654)) ([ced3785](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ced3785c4797b30a41a0a0c24854398b6bd14eef))
+
 ## [0.5.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.4.0...infra-storage-core-v0.5.0) (2026-08-13)
 
 
