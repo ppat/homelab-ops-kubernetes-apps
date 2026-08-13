@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.4.0...infra-storage-core-v0.5.0) (2026-08-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-storage-core:** the garage-operator CRDs, GarageCluster custom resource, and every chainsaw assertion tied to them are gone from infrastructure/bootstrap/crds and this module. A cluster consuming this module's Garage support now needs, with no defaults: garage_metadata_claim (PVC claim name for the metadata volume), garage_data_claim (PVC claim name for the data volume), and garage_s3_region (S3 signing region). garage_admin_token_key and garage_rpc_secret_key are unchanged. Dropped entirely: cert_issuer, garage_replication_factor, garage_storage_replicas, garage_storage_class, garage_metadata_size, garage_data_size. No cluster in homelab-ops-kubernetes-clusters currently references garage, so this is zero-blast-radius today.
+
+### ✨ Features
+
+* **infra-storage-core:** drop garage-operator, run Garage as plain Kubernetes resources ([#3639](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3639)) ([a651698](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a651698ec4c08a2e5afedd03db44e765ffc08e0d)), closes [#3611](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3611)
+
 ## [0.4.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.3.0...infra-storage-core-v0.4.0) (2026-08-13)
 
 
