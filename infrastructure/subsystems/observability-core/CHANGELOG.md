@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.29.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.29.1...infra-observability-core-v0.29.2) (2026-08-14)
+
+
+### ✨ Features
+
+* **infra-observability-core:** restore kubernetes event export via a singleton alloy instance ([#3660](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3660)) ([f40befa](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f40befae1a4e8d64a80a9bb05ef7fbfc7547def1))
+
 ## [0.29.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.29.0...infra-observability-core-v0.29.1) (2026-08-14)
 
 
