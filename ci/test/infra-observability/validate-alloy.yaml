@@ -96,14 +96,6 @@ spec:
   # The Kubernetes Event singleton. A second Alloy instance in the same namespace, with
   # its own ConfigMap, its own ServiceAccount and no host access at all.
   # ------------------------------------------------------------------------------------
-  - description: Assert helmrelease/alloy-events-release
-    assert:
-      bindings:
-      - name: name
-        value: alloy-events-release
-      - name: namespace
-        value: logging
-      file: ../chainsaw/assertions/helmrelease-ready.yaml
   - description: Assert deployment/alloy-events
     assert:
       bindings:
@@ -112,6 +104,14 @@ spec:
       - name: namespace
         value: logging
       file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert helmrelease/alloy-events-release
+    assert:
+      bindings:
+      - name: name
+        value: alloy-events-release
+      - name: namespace
+        value: logging
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
   - description: Assert deployment/alloy-events is a singleton with no host access
     assert:
       resource:
