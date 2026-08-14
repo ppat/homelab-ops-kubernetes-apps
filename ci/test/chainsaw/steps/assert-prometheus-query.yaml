@@ -1,0 +1,47 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: assert-prometheus-query
+# Asserts that a PromQL query against the in-cluster Prometheus returns at least one
+# result, retrying to a deadline. See ../scripts/prometheus-query.sh for why this is a
+# script rather than an `assert:` file: ../assertions/ holds resource matchers evaluated
+# against the Kubernetes API, and the thing being asserted here - whether a value was
+# actually written to Prometheus's TSDB - is not in the Kubernetes API at all.
+#
+# Every caller must supply both bindings; there are deliberately no defaults, so a typo
+# in a binding name fails loudly instead of silently asserting something weaker.
+#
+#   prometheus_query             PromQL instant-query expression to assert on.
+#   prometheus_diagnostic_match  Metric-name selector dumped when the assertion fails -
+#                                 i.e. what should have shown up under __name__.
+spec:
+  try:
+  - description: Assert prometheus returns a result
+    script:
+      env:
+      - name: PROMETHEUS_QUERY
+        value: ($prometheus_query)
+      - name: PROMETHEUS_DIAGNOSTIC_MATCH
+        value: ($prometheus_diagnostic_match)
+      # yamllint disable-line rule:indentation
+      content: |
+        ../chainsaw/scripts/prometheus-query.sh \
+          --query="${PROMETHEUS_QUERY}" \
+          --diagnostic-match="${PROMETHEUS_DIAGNOSTIC_MATCH}"
+      timeout: 6m
+
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      name: loki
+      namespace: logging
+  - podLogs:
+      selector: app.kubernetes.io/name=loki
+      namespace: logging
+      tail: 100
+  - podLogs:
+      selector: app.kubernetes.io/name=prometheus
+      namespace: monitoring
+      tail: 100

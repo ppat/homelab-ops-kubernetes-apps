@@ -95,6 +95,26 @@ spec:
     use:
       template: ./validate-loki.yaml
 
+  # The only thing in the suite that would catch a postRenderers patch whose target
+  # silently stops matching (a no-op, not an error) - see check-loki-rbac.sh for the
+  # full RBAC rationale.
+  - name: Validate Loki RBAC
+    try:
+    - description: Assert the loki ServiceAccount can read ConfigMaps but not Secrets
+      script:
+        content: ./scripts/check-loki-rbac.sh
+        timeout: 1m
+    catch:
+    - describe:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRole
+        name: loki-clusterrole
+    - describe:
+        apiVersion: helm.toolkit.fluxcd.io/v2
+        kind: HelmRelease
+        name: loki-release
+        namespace: logging
+
   - name: Validate goldilocks
     use:
       template: ./validate-goldilocks.yaml
@@ -150,3 +170,17 @@ spec:
   - name: Validate log-label contract
     use:
       template: ./validate-log-label-contract.yaml
+
+  # End-to-end proof, not just config-looks-right: checks that
+  # configmap-loki-rule-demo.yaml's demo rule actually landed as a series in
+  # Prometheus. See that file's comment for why remote_write needs a real rule to be
+  # meaningfully tested, and why it's shipped from monitoring rather than logging.
+  - name: Validate Loki ruler remote_write
+    use:
+      template: ../chainsaw/steps/assert-prometheus-query.yaml
+      with:
+        bindings:
+        - name: prometheus_query
+          value: 'loki_ruler_canary:log_lines:count1m{namespace="logging"}'
+        - name: prometheus_diagnostic_match
+          value: '{__name__=~"loki_ruler.*"}'
