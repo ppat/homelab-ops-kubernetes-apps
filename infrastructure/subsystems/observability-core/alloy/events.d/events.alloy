@@ -1,0 +1,86 @@
+// Cluster-scoped Kubernetes Event collection.
+//
+// This file is loaded by a SEPARATE Alloy instance - the singleton Deployment in
+// helm-release-alloy-events.yaml - and deliberately NOT by the node DaemonSet, which is
+// why it lives in its own directory rather than in conf.d/. `alloy run /etc/alloy/.`
+// loads every *.alloy file in one directory into ONE component graph, so this file in
+// conf.d/ would run on every node, and `loki.source.kubernetes_events` watches the whole
+// cluster: every node would then ship its own copy of every event. The component's
+// `clustering` block cannot dedupe that - it is a no-op unless global clustering is on,
+// and turning that on would shard `discovery.kubernetes`'s pod targets and silently gut
+// pod-log coverage (see helm-release-alloy.yaml, `alloy.clustering`).
+//
+// One replica reading the cluster once is therefore the only shape that yields exactly
+// one copy of each event without touching the DaemonSet at all.
+
+loki.write "default" {
+	endpoint {
+		// Trailing dot is deliberate: it makes the name fully qualified and skips
+		// ndots search-domain expansion. Same reasoning as conf.d/write.alloy.
+		// Do not "clean it up".
+		url = "http://loki.logging.svc.cluster.local.:3100/loki/api/v1/push"
+	}
+
+	// Deliberately no `host` external label, unlike conf.d/write.alloy. An Event is a
+	// cluster-scoped fact, not a node-local one: stamping it with whichever node this
+	// singleton happens to occupy would be untrue, and would re-mint every event
+	// stream on each reschedule.
+}
+
+// `loki.source.kubernetes_events` attaches only `namespace`, `job` and `instance` as
+// stream labels; every other field of the Event is in the logfmt line body. `type` is
+// pulled back out below so event streams participate in the same `severity` dimension
+// the journal pipeline already sets.
+//
+// `reason` is deliberately NOT promoted to a label. It is a free-form Event API string
+// that any controller may extend without bound, so indexing it would take the stream
+// count to roughly namespaces x reasons - thousands of near-empty streams, and therefore
+// thousands of tiny chunks and index entries - for a pipeline that ships a trickle. It
+// stays queryable in the line body via a filter expression.
+loki.process "events" {
+	forward_to = [loki.write.default.receiver]
+
+	stage.logfmt {
+		mapping = {
+			severity = "type",
+		}
+	}
+
+	// corev1 defines exactly two event types, Normal and Warning. Everything else -
+	// including the field being absent, which the component omits when the value is
+	// empty - maps to "info" rather than to nothing on purpose: Loki drops empty label
+	// values, so a blank `severity` would split each namespace into two stream
+	// identities instead of one.
+	stage.template {
+		source   = "severity"
+		template = "{{ if eq .Value \"Warning\" }}warning{{ else }}info{{ end }}"
+	}
+
+	stage.labels {
+		values = {
+			severity = "severity",
+		}
+	}
+
+	// The component sets `instance` to its own component ID. That is not what
+	// `instance` means anywhere else in this pipeline (there it is
+	// app.kubernetes.io/instance, an application's release name), so keeping it would
+	// give one label two meanings - and would re-mint every event stream if this
+	// component were ever renamed.
+	stage.label_drop {
+		values = ["instance"]
+	}
+}
+
+loki.source.kubernetes_events "events" {
+	// A stream label. Chosen to sit alongside the journal's "systemd-journal" in the
+	// same dimension; the component's own default is its full component ID, which
+	// would put a Go identifier in a label the dashboards select on.
+	job_name = "kubernetes-events"
+
+	// `namespaces` is deliberately left unset, which means every namespace. Setting it
+	// is the quiet way to end up with an event pipeline that is green, healthy, and
+	// covering a fraction of the cluster. `log_format` is likewise left at its default
+	// of "logfmt".
+	forward_to = [loki.process.events.receiver]
+}

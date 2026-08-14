@@ -4,9 +4,13 @@ kind: Kustomization
 
 resources:
 - helm-release-alloy.yaml
+- helm-release-alloy-events.yaml
 - prometheusrule-alloy.yaml
 
 configMapGenerator:
+# The node collector's config directory. Every key here is loaded by every alloy pod on
+# every node - which is precisely why events.d/ below is a separate ConfigMap and not
+# another key in this one.
 - name: alloy-config
   namespace: logging
   files:
@@ -24,4 +28,22 @@ configMapGenerator:
     # rolling the workload on a config change, and the chart cannot do that here anyway
     # (`checksum/config` is only emitted when the chart creates the ConfigMap itself) -
     # the config-reloader sidecar handles propagation instead.
+    disableNameSuffixHash: true
+
+# The event singleton's config directory - see the note on alloy-config above for why
+# it is a ConfigMap of its own.
+- name: alloy-events-config
+  namespace: logging
+  files:
+  - events.d/events.alloy
+  options:
+    # No `$` appears in events.alloy today, but a Go template or a relabel replacement
+    # gaining one later would be expanded to the empty string by Flux's post-build
+    # substitution with nothing to say so - the same trap conf.d/ is protected from.
+    annotations:
+      kustomize.toolkit.fluxcd.io/substitute: disabled
+    # Required, not cosmetic: `alloy.configMap.name` in helm-release-alloy-events.yaml
+    # is a literal string inside HelmRelease values, which kustomize's name references
+    # cannot rewrite - a hash suffix would leave the Deployment mounting a ConfigMap
+    # that does not exist.
     disableNameSuffixHash: true
