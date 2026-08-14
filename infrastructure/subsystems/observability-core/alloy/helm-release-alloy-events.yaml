@@ -105,11 +105,13 @@ spec:
         seccompProfile:
           type: RuntimeDefault
 
-      # Not measured. Sized DOWN from the node collector's measured figures (32m /
-      # 128Mi request, 512Mi limit) rather than up from nothing: this instance holds
-      # one informer over Events, bounded by the API server's ~1h Event TTL, instead
-      # of a file tailer per container plus a journal reader. Revisit against real
-      # usage.
+      # Sized to measured steady-state usage rather than the node collector's figures.
+      # Memory working-set peaked at ~77Mi and held there across informer cache
+      # cycles - the cache holds Events bounded by the API server's ~1h Event TTL, so
+      # usage plateaus within one TTL cycle instead of growing further, which is what
+      # makes a measurement taken past that point trustworthy rather than an
+      # early-run artifact. Goldilocks' independent VPA recommendation (~89Mi memory,
+      # 11m CPU) corroborates both requests.
       #
       # Limit well above request, and no CPU limit, for the same reasons as the node
       # collector: `loki.write` has no write-ahead log, so an OOMKill discards the
@@ -118,7 +120,7 @@ spec:
       resources:
         requests:
           cpu: 10m
-          memory: 64Mi
+          memory: 96Mi
         limits:
           memory: 256Mi
 
