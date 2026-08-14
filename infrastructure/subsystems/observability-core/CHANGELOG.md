@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.29.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.29.0...infra-observability-core-v0.29.1) (2026-08-14)
+
+
+### ✨ Features
+
+* **infra-observability-core:** enable Loki ruler recording rules via Prometheus remote_write ([#3650](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3650)) ([3790dd9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3790dd93dda5c41a8af8b2cced3617a896ead8c4))
+
 ## [0.29.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.28.0...infra-observability-core-v0.29.0) (2026-08-12)
 
 
