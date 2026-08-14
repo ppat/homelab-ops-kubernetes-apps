@@ -163,11 +163,14 @@ spec:
         # emptyDir, deliberately, and the tradeoff is accepted rather than solved: the
         # positions file holds one timestamp watermark, and losing it on restart makes
         # the informer re-deliver whatever the API server still holds (bounded by the
-        # ~1h Event TTL), i.e. a bounded burst of duplicates. The alternatives are
-        # worse - a hostPath is meaningless for a pod that can move nodes and would
-        # need a root init container to chown it (giving up the security posture
-        # above), and a PVC would inject a cluster-specific storage class into a
-        # module whose independence is the point.
+        # ~1h Event TTL). Most of that replay lands inside Loki's acceptance window as
+        # duplicates, but the oldest of it can already sit outside that window and gets
+        # rejected outright - a small, bounded, permanent loss on every restart, not
+        # just duplicates (see the module README, "An event carries its own
+        # timestamp..."). The alternatives are worse - a hostPath is meaningless for a
+        # pod that can move nodes and would need a root init container to chown it
+        # (giving up the security posture above), and a PVC would inject a
+        # cluster-specific storage class into a module whose independence is the point.
         - name: storage
           emptyDir: {}
 
