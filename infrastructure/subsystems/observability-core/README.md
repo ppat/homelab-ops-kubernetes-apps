@@ -299,21 +299,31 @@ flowchart TB
   Alloy does send the label - as the empty string - and Loki discards empty-valued labels on ingest, before
   the stream hash is computed, so no such series is ever stored (`syntax.ParseLabels`; grafana/loki#7355,
   every release since 2.7.0).
-- **An event carries its own timestamp, which bounds how much a restart can recover.** Entries are stamped
-  with the event's `LastTimestamp`, not the ingest time, and Loki accepts an out-of-order entry only while it
-  is within `ingester.max_chunk_age / 2` of the newest entry in that stream - 60 minutes at this module's
-  settings. The singleton keeps its read watermark in a positions file on an `emptyDir`, so a restart makes
-  it re-deliver whatever the API server still holds; that is bounded by the Kubernetes Event TTL of about an
-  hour, i.e. it lands right at the edge of the acceptance window. A `PersistentVolumeClaim` would avoid the
-  replay but would put a cluster-specific storage class inside the module, and a `hostPath` is meaningless
-  for a pod that can move nodes - so the bounded duplicate burst is the accepted cost. Anything actually
-  rejected is counted by `loki_discarded_samples_total`, and the `reason` label says which limit bit:
-  `too_far_behind` is the `max_chunk_age / 2` window described above (`TooFarBehind` in Loki's
-  `pkg/validation/validate.go`), and the lever for it is `ingester.max_chunk_age`, at the cost of chunks
-  staying in ingester memory for longer. That value has not been observed on this cluster - the only `reason`
-  the metric has ever carried here is `greater_than_max_sample_age`, which is a different limit
-  (`reject_old_samples_max_age`, left at Loki's default of a week and therefore not what a ~1h event replay
-  would ever trip). Check the label before reaching for the lever.
+- **An event carries its own timestamp, which bounds how much a restart can recover - and, at that same
+  boundary, can drop events outright rather than merely replay them.** Entries are stamped with the event's
+  `LastTimestamp`, not the ingest time, and Loki accepts an out-of-order entry only while it is within
+  `ingester.max_chunk_age / 2` of the newest entry in that stream - 60 minutes at this module's settings. The
+  singleton keeps its read watermark in a positions file on an `emptyDir`, so a restart makes it re-deliver
+  whatever the API server still holds, bounded by the Kubernetes Event TTL of about an hour. Most of that
+  replay lands inside the 60-minute window and is accepted as a duplicate, but the oldest events the API
+  server is still holding at that instant can already sit outside it: Loki rejects those (`too_far_behind`,
+  `TooFarBehind` in Loki's `pkg/validation/validate.go`) instead of storing them late, and there is no retry,
+  so they are lost rather than delayed. This is not a one-off - it recurs on every restart or reschedule,
+  because the `Recreate` update strategy plus the `emptyDir` watermark mean the positions file is always empty
+  on start, so the informer's initial List always re-delivers whatever near-TTL events the API server is
+  still holding. In practice that loss is a handful of the oldest, and therefore least valuable, events the
+  API server was holding, rejected within seconds of the new pod starting, and it does not repeat once the
+  pod is running - steady-state ingest lag stays minutes behind, nowhere near the 60-minute boundary, so a
+  long-running instance is unaffected. Fixing it properly means a `PersistentVolumeClaim` for the positions
+  file, so a preserved watermark makes a warm restart forward only events newer than the last one sent, which
+  are always inside the window - but that puts a cluster-specific storage class inside a module that has none
+  today, requiring per-cluster injection. The other lever, raising `ingester.max_chunk_age`, widens the
+  acceptance window cluster-wide at the cost of chunks staying in ingester memory longer, for a pipeline that
+  ships a trickle. Both are a bigger architectural cost than a few low-value events lost per restart, so this
+  is accepted rather than fixed. `loki_discarded_samples_total{reason="too_far_behind"}` is the signal to
+  watch for this loss specifically; the label also carries `greater_than_max_sample_age`, a different,
+  unrelated limit (`reject_old_samples_max_age`, left at Loki's default of a week) that this pipeline's
+  ~1h-old events would never trip.
 - **Alloy has a memory limit but deliberately no CPU limit.** The limit is sized on measured usage with
   headroom, because `loki.write` has no write-ahead log: an OOMKill discards the in-memory queue and the
   replacement pod re-reads from its last persisted offset. A CPU limit is omitted because throttling a log
