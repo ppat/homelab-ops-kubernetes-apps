@@ -43,14 +43,29 @@ spec:
           --deadline="${LOKI_DEADLINE}"
       timeout: 5m
 
+  # Both collectors are dumped regardless of which pipeline the caller queried: the
+  # template cannot tell from a LogQL string which one was supposed to have shipped the
+  # data, and the wrong half is cheap while a missing half means re-running the suite.
+  # `app.kubernetes.io/name` separates them only because the event singleton's
+  # HelmRelease sets `nameOverride` - the chart derives that label from the chart name,
+  # so without it both selectors would match both workloads.
   catch:
   - describe:
       apiVersion: apps/v1
       kind: DaemonSet
       name: alloy
       namespace: logging
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: alloy-events
+      namespace: logging
   - podLogs:
       selector: app.kubernetes.io/name=alloy
+      namespace: logging
+      tail: 100
+  - podLogs:
+      selector: app.kubernetes.io/name=alloy-events
       namespace: logging
       tail: 100
   - podLogs:

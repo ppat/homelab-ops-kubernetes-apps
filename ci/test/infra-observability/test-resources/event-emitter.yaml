@@ -1,0 +1,47 @@
+---
+# Fixture for the Kubernetes Event collection assertions in this suite.
+#
+# Nothing else in ci/test/ causes an event deliberately, and "the cluster will surely
+# produce some events during the run" is not an assertion - it is a hope that makes the
+# event pipeline's checks pass or fail on whatever kind happened to be doing at the time.
+# This pod is the known-good input side: a workload whose events are known ahead of time,
+# in a known namespace, carrying a token nothing else in the cluster emits.
+#
+# Why each detail is the way it is - these are load-bearing, not incidental:
+#
+# - `imagePullPolicy: Never` with an image that is not on the node makes the kubelet emit
+#   `Warning ErrImageNeverPull` with the image name in the message. That is deterministic
+#   and needs no registry, no DNS and no network: an image that fails to *pull* would tie
+#   this fixture to name resolution working inside kind.
+# - it therefore produces BOTH event types from one object: `Normal Scheduled` from the
+#   scheduler and `Warning ErrImageNeverPull` from the kubelet. Both are needed, because
+#   the `severity` label is derived from the event's `type` field and a mapping is only
+#   proven by observing it take both of its values.
+# - the image *name* is the marker. It is reproduced verbatim in the kubelet's message,
+#   so a LogQL line filter can select exactly these events and nothing else in the
+#   cluster - the events themselves carry no label that could distinguish them.
+# - the kubelet keeps re-emitting while the container stays in Waiting, so the assertion
+#   never depends on having queried Loki within seconds of the pod being created.
+# - a bare Pod, not a Deployment: it is never going to run, and a controller in front of
+#   it would only add its own events without adding anything to assert.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: event-emitter
+  namespace: default
+  labels:
+    app.kubernetes.io/name: event-emitter
+spec:
+  # Nothing should reschedule this: its whole job is to sit in one place failing.
+  restartPolicy: Never
+  containers:
+  - name: event-emitter
+    # Deliberately not a digest-pinned real image. This must NOT resolve.
+    image: chainsaw-event-marker:v1
+    imagePullPolicy: Never
+    resources:
+      requests:
+        cpu: 10m
+        memory: 16Mi
+      limits:
+        memory: 32Mi

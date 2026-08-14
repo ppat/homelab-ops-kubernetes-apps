@@ -15,27 +15,37 @@
 # comments). There is deliberately no `fmt-write` mode: it existed only to back that
 # hook, and Docker's absence locally means nothing could actually call it.
 #
-# `validate` merges every given file into one scratch directory and validates that as
-# a single unit, rather than per-file or per-git-parent-directory. Our .alloy configs
-# are loaded by Alloy as a directory unit (a module-owned conf.d/ merged with an
-# optional cluster-owned config), and a component in one file can legitimately
-# reference a component defined in a sibling file -- per-file validation would reject
-# those as unresolved references. That merge can itself span more than one git
-# directory: infrastructure/subsystems/observability-core/alloy/conf.d/ and
+# `validate` merges files into scratch directories and validates each as a single
+# unit, rather than per-file or per-git-parent-directory. Our .alloy configs are loaded
+# by Alloy as a directory unit (a module-owned conf.d/ merged with an optional
+# cluster-owned config), and a component in one file can legitimately reference a
+# component defined in a sibling file -- per-file validation would reject those as
+# unresolved references. That merge can itself span more than one git directory:
+# infrastructure/subsystems/observability-core/alloy/conf.d/ and
 # ci/test/infra-observability/pre-requisites/alloy/conf.d/ are two different paths in
 # this repo that Flux composes into the same ConfigMap (and therefore the same Alloy
 # runtime directory) via a `spec.patches` entry -- see
 # ci/test/infra-observability/infra-observability-core.yaml. Grouping by each file's
 # own git parent directory validates those apart and produces false "component does
 # not exist" errors for references that resolve correctly once actually deployed.
-# Merging everything is also the only mode that catches cross-file duplicate component
-# labels -- one of the two failure classes this gate exists to catch (the other being
-# components above the stability level the Helm chart pins).
+# Merging is also the only mode that catches cross-file duplicate component labels --
+# one of the two failure classes this gate exists to catch (the other being components
+# above the stability level the Helm chart pins).
 #
-# This assumes the repo has exactly one Alloy deployment (true today). A second,
-# independent one would incorrectly get validated together with this one -- if that
-# ever happens, scope the merge per-deployment (e.g. a shared ancestor directory
-# convention) rather than reverting to per-git-directory grouping.
+# WHICH FILES MERGE WITH WHICH: THE UNIT IS THE DIRECTORY *NAME*.
+# There is more than one Alloy deployment in this repo -- the node-log DaemonSet loads
+# `alloy/conf.d/`, the Kubernetes Event singleton loads `alloy/events.d/` -- and they
+# are separate processes with separate component namespaces. Validating them together
+# would be actively wrong: both legitimately declare `loki.write "default"`, and a
+# merged unit rejects that as a duplicate label. So files are grouped by the BASENAME
+# of their parent directory: everything under any `conf.d/` is one unit, everything
+# under any `events.d/` is another. The basename rather than the full path is what lets
+# the CI fixture above (a different path, same `conf.d/` name) merge with the module it
+# stands in for, which is the whole point of that fixture.
+#
+# A new Alloy deployment therefore needs its own distinctly-named config directory. Two
+# unrelated deployments both calling theirs `conf.d/` would be silently merged and would
+# fail on the first component name they happen to share.
 
 set -euo pipefail
 
@@ -79,20 +89,40 @@ fmt-check)
   done
   ;;
 validate)
-  # `run_alloy` only bind-mounts $(pwd) into the container, so the scratch dir must be
-  # a child of $(pwd) (the repo root in CI) to be visible inside it.
-  scratch="$(mktemp -d -p "$(pwd)" .alloy-lint-validate.XXXXXX)"
-  trap 'rm -rf "${scratch}"' EXIT
+  # `run_alloy` only bind-mounts $(pwd) into the container, so the scratch dirs must be
+  # children of $(pwd) (the repo root in CI) to be visible inside it.
+  scratch_root="$(mktemp -d -p "$(pwd)" .alloy-lint-validate.XXXXXX)"
+  trap 'rm -rf "${scratch_root}"' EXIT
+
+  declare -A units=()
   for f in "$@"; do
-    base="$(basename -- "${f}")"
-    if [[ -e "${scratch}/${base}" ]]; then
-      echo "alloy-lint.sh: two *.alloy files share the name '${base}'; cannot merge" \
-        "them into one validation unit (would silently drop one)" >&2
+    unit="$(basename -- "$(dirname -- "${f}")")"
+    # A file with no parent directory to name a unit after would resolve to "." and be
+    # copied into the scratch root, alongside the unit directories rather than into one.
+    if [[ "${unit}" == "." || "${unit}" == ".." || "${unit}" == "/" ]]; then
+      echo "alloy-lint.sh: '${f}' is not inside a config directory; every *.alloy file" \
+        "must live in one (conf.d/, events.d/, ...) because the directory name is the" \
+        "validation unit" >&2
       exit 1
     fi
-    cp -- "${f}" "${scratch}/${base}"
+    base="$(basename -- "${f}")"
+    mkdir -p "${scratch_root}/${unit}"
+    if [[ -e "${scratch_root}/${unit}/${base}" ]]; then
+      echo "alloy-lint.sh: two *.alloy files in unit '${unit}' share the name" \
+        "'${base}'; cannot merge them into one validation unit (would silently" \
+        "drop one)" >&2
+      exit 1
+    fi
+    cp -- "${f}" "${scratch_root}/${unit}/${base}"
+    units["${unit}"]=1
   done
-  run_alloy validate --stability.level="${stability_level}" "$(basename -- "${scratch}")"
+
+  # Sorted so the output order does not depend on associative-array iteration order.
+  while IFS= read -r unit; do
+    echo "alloy-lint.sh: validating unit '${unit}'"
+    run_alloy validate --stability.level="${stability_level}" \
+      "$(basename -- "${scratch_root}")/${unit}"
+  done < <(printf '%s\n' "${!units[@]}" | sort)
   ;;
 *)
   echo "alloy-lint.sh: unknown mode '${mode}' (expected fmt-check or validate)" >&2

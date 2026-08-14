@@ -92,7 +92,89 @@ spec:
               (volumes[?name == 'pods']):
               - (hostPath.path): /var/log/pods
 
-  - description: Assert alloy loaded a complete component graph and holds narrow RBAC
+  # ------------------------------------------------------------------------------------
+  # The Kubernetes Event singleton. A second Alloy instance in the same namespace, with
+  # its own ConfigMap, its own ServiceAccount and no host access at all.
+  # ------------------------------------------------------------------------------------
+  - description: Assert deployment/alloy-events
+    assert:
+      bindings:
+      - name: name
+        value: alloy-events
+      - name: namespace
+        value: logging
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert helmrelease/alloy-events-release
+    assert:
+      bindings:
+      - name: name
+        value: alloy-events-release
+      - name: namespace
+        value: logging
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+  - description: Assert deployment/alloy-events is a singleton with no host access
+    assert:
+      resource:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: alloy-events
+          namespace: logging
+        spec:
+          # Not a capacity setting: `loki.source.kubernetes_events` watches the whole
+          # cluster and its `clustering` block is a no-op while alloy.clustering is off,
+          # so a second replica means a second copy of every event in Loki.
+          replicas: 1
+          # The other half of that. RollingUpdate's default maxSurge rounds up to 1, so
+          # the default strategy would run two event watchers concurrently through every
+          # rollout - `replicas: 1` alone does not give exactly-once delivery.
+          strategy:
+            type: Recreate
+          template:
+            spec:
+              # This pod reads the Kubernetes API and nothing else. Asserted as an
+              # exact count plus the identity of each volume rather than "no hostPath",
+              # because chainsaw matches arrays by subset - a check phrased as a list
+              # would not notice a third volume being added. Any host mount appearing
+              # here means the singleton has quietly acquired the node-level access the
+              # split exists to keep off it.
+              (length(volumes)): 2
+              (volumes[?name == 'config'] | [0].configMap.name): alloy-events-config
+              (volumes[?name == 'storage'] | [0].emptyDir != null): true
+              securityContext:
+                runAsNonRoot: true
+                runAsUser: 473
+                runAsGroup: 473
+                # Applies to the emptyDir backing storagePath. kubelet does apply it to
+                # emptyDir (unlike hostPath), which is why this instance needs no root
+                # init container and can keep the stricter posture below.
+                fsGroup: 473
+                seccompProfile:
+                  type: RuntimeDefault
+              # Neither GID 0 nor the per-host systemd-journal GID: this pod reads no
+              # host files, so it must not carry the node collector's group grants.
+              (securityContext.supplementalGroups == null): true
+              (initContainers == null): true
+              (containers[?name == 'alloy']):
+              # Same directory-mode trap as the DaemonSet above: "..data" is a symlink,
+              # and alloy given a symlinked root config path loads ZERO components,
+              # exits 0 and logs nothing.
+              - (contains(args, 'run')): true
+                (contains(args, '/etc/alloy/.')): true
+                (contains(args, '--storage.path=/var/lib/alloy')): true
+                (contains(args, '--disable-reporting')): true
+                (volumeMounts[?name == 'config'] | [0].mountPath): /etc/alloy
+                (volumeMounts[?name == 'config'] | [0].subPath == null): true
+                # Container level as well as pod level - the pod-level field alone did
+                # not satisfy Kyverno's restrict-seccomp-strict on the DaemonSet
+                # (apps#3605), and this pod needs no host access to justify a gap.
+                (securityContext.seccompProfile.type): RuntimeDefault
+                (securityContext.readOnlyRootFilesystem): true
+                (securityContext.allowPrivilegeEscalation): false
+              (containers[?name == 'config-reloader']):
+              - (contains(args, '--watched-dir=/etc/alloy')): true
+
+  - description: Assert both alloy instances loaded complete component graphs and hold narrow RBAC
     script:
       content: ./scripts/check-alloy-collector.sh
       timeout: 3m
@@ -104,12 +186,26 @@ spec:
       name: alloy-release
       namespace: logging
   - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: alloy-events-release
+      namespace: logging
+  - describe:
       apiVersion: apps/v1
       kind: DaemonSet
       name: alloy
       namespace: logging
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: alloy-events
+      namespace: logging
   - podLogs:
       selector: app.kubernetes.io/name=alloy
+      namespace: logging
+      tail: 200
+  - podLogs:
+      selector: app.kubernetes.io/name=alloy-events
       namespace: logging
       tail: 200
   - events:

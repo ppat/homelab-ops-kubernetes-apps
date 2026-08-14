@@ -8,6 +8,17 @@
 # never counted. A fragment unparseable enough to abort startup is caught by the
 # cluster-wide KubePodCrashLooping rule instead; one that only breaks a single component
 # is caught by AlloyComponentsUnhealthy below.
+#
+# Two alloy instances share this namespace: `alloy` is the node-log DaemonSet and
+# `alloy-events` is the Kubernetes Event singleton (helm-release-alloy-events.yaml).
+# Their metrics are distinguished only by `job`, which
+# prometheus-operator sets from the Service name because the chart's ServiceMonitor sets
+# no `jobLabel`. The liveness-by-output rules below are therefore pinned to job="alloy":
+# unpinned, a healthy singleton would satisfy `absent()` for a dead DaemonSet, and a
+# per-instance version of "shipped nothing for 15 minutes" would fire permanently on the
+# singleton, because a quiet cluster legitimately emits no events for far longer than
+# that. Event-pipeline liveness is deliberately left to queries and dashboards - there
+# are no new alert rules here.
 # ------------------------------------------------------------------------------------
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -26,10 +37,10 @@ spec:
     - alert: AlloyLogShippingMetricsAbsent
       annotations:
         # yamllint disable-line rule:line-length
-        description: No alloy instance is exporting loki_write_sent_entries_total. Either every collector is down, or the loaded configuration contains no loki.write component.
+        description: No node collector is exporting loki_write_sent_entries_total. Either every collector is down, or the loaded configuration contains no loki.write component.
         summary: Alloy log shipping metrics have disappeared.
       expr: |
-        absent(loki_write_sent_entries_total)
+        absent(loki_write_sent_entries_total{job="alloy"})
       for: 15m
       labels:
         severity: critical
@@ -37,10 +48,12 @@ spec:
     - alert: AlloyLogEntriesDropped
       annotations:
         # yamllint disable-line rule:line-length
-        description: 'Alloy is dropping log entries in {{ $labels.namespace }} (reason: {{ $labels.reason }}) at {{ $value }} entries/s. These entries are lost - loki.write has no write-ahead log.'
+        description: 'Alloy {{ $labels.job }} is dropping log entries in {{ $labels.namespace }} (reason: {{ $labels.reason }}) at {{ $value }} entries/s. These entries are lost - loki.write has no write-ahead log.'
         summary: Alloy is permanently dropping log entries.
+      # `job` is in the by-clause so the alert names which of the two instances is
+      # dropping; both remain covered, unlike the pinned rules above.
       expr: |
-        sum by (namespace, reason) (
+        sum by (job, namespace, reason) (
         rate(loki_write_dropped_entries_total{reason!~"rate_limited|queue_is_full"}[5m])
         ) > 0
       for: 10m
@@ -51,10 +64,10 @@ spec:
     - alert: AlloyLogEntriesThrottled
       annotations:
         # yamllint disable-line rule:line-length
-        description: 'Alloy is dropping log entries in {{ $labels.namespace }} due to backpressure (reason: {{ $labels.reason }}) at {{ $value }} entries/s. Check Loki ingestion limits and capacity.'
+        description: 'Alloy {{ $labels.job }} is dropping log entries in {{ $labels.namespace }} due to backpressure (reason: {{ $labels.reason }}) at {{ $value }} entries/s. Check Loki ingestion limits and capacity.'
         summary: Alloy is dropping log entries due to backpressure.
       expr: |
-        sum by (namespace, reason) (
+        sum by (job, namespace, reason) (
         rate(loki_write_dropped_entries_total{reason=~"rate_limited|queue_is_full"}[5m])
         ) > 0
       for: 30m
@@ -65,13 +78,19 @@ spec:
     - alert: AlloyNoLogEntriesShipped
       annotations:
         # yamllint disable-line rule:line-length
-        description: Alloy in {{ $labels.namespace }} has shipped no log entries for 15 minutes while its metrics are still being scraped.
+        description: The alloy node collector in {{ $labels.namespace }} has shipped no log entries for 15 minutes while its metrics are still being scraped.
         summary: Alloy is running but shipping no logs.
       expr: |
-        sum by (namespace) (rate(loki_write_sent_entries_total[15m])) == 0
+        sum by (namespace) (rate(loki_write_sent_entries_total{job="alloy"}[15m])) == 0
       for: 15m
       labels:
         severity: critical
+    # Deliberately not pinned to one instance: this is per-pod already (`instance` is
+    # the scrape target) and it is a state rather than a rate, so covering the singleton
+    # too costs nothing. It does NOT, however, cover the event watch itself:
+    # `loki.source.kubernetes_events` does not implement alloy's HealthComponent
+    # interface and never calls UpdateHealth, so it reports healthy even when an RBAC
+    # denial has left it with no watch at all. See the module README's note on that gap.
     - alert: AlloyComponentsUnhealthy
       annotations:
         # yamllint disable-line rule:line-length

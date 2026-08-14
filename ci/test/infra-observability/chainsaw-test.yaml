@@ -171,6 +171,123 @@ spec:
     use:
       template: ./validate-log-label-contract.yaml
 
+  # Applied here rather than alongside logspewer at the top of the suite: an Event's TTL
+  # on the API server is about an hour, and this suite is long. Creating the fixture
+  # immediately before the assertions keeps what it produces unambiguously fresh, and
+  # costs nothing - unlike the log fixture, nothing needs to have been emitting during
+  # the module rollout, because the collector only has to see the events once.
+  - name: Apply kubernetes event fixture
+    try:
+    - description: Apply event-emitter
+      apply:
+        file: ./test-resources/event-emitter.yaml
+    # Waiting on the specific waiting-reason, not on the Pod being Ready (it never will
+    # be): this is the state the kubelet emits the Warning event from, so it is also the
+    # signal that the event now exists.
+    - description: Assert pod/event-emitter is stuck on its missing image
+      assert:
+        resource:
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: event-emitter
+            namespace: default
+          status:
+            (containerStatuses[?name == 'event-emitter']):
+            - (state.waiting.reason): ErrImageNeverPull
+    catch:
+    - describe:
+        apiVersion: v1
+        kind: Pod
+        name: event-emitter
+        namespace: default
+    - events:
+        namespace: default
+
+  # The event equivalent of "Validate log collection" above, and for the same reason: a
+  # Ready singleton with a healthy component graph still proves nothing about whether an
+  # event that happened in the cluster is retrievable from Loki afterwards.
+  - name: Validate kubernetes event collection
+    use:
+      template: ../chainsaw/steps/assert-loki-query.yaml
+      with:
+        bindings:
+        - name: loki_query
+          value: '{job="kubernetes-events", namespace="default", severity="warning"} |= "chainsaw-event-marker"'
+        # A floor, not an exact count - this template asserts ">= n" (see its header).
+        # This step asks only whether anything at all retrieved the fixture's events; the
+        # contract step below asserts the stream count exactly, against /series, which is
+        # where a leaked label is actually caught.
+        - name: loki_min_streams
+          value: "1"
+        - name: loki_diagnostic_match
+          value: '{job="kubernetes-events"}'
+        - name: loki_deadline
+          value: "180"
+
+  # Same ordering rationale as the log-label contract: retrievability first so a pipeline
+  # that shipped nothing reports one cause rather than every label at once.
+  - name: Validate kubernetes event stream contract
+    try:
+    - description: Assert the kubernetes event stream contract
+      script:
+        content: ./scripts/check-event-stream-contract.sh
+        # Four Loki queries, each with its own port-forward wait (up to 60s) and its own
+        # retry deadline (180 + 120 + 60 + 120s). This has to exceed their sum, or a slow
+        # pipeline fails as an unexplained step timeout instead of a named assertion.
+        timeout: 15m
+    catch:
+    - describe:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: alloy-events
+        namespace: logging
+    # As yaml, not the default table: what a label failure needs is the config that
+    # produced the labels. The ConfigMap is kustomize-generated with no
+    # app.kubernetes.io labels, so it cannot be found by selector and has to be named.
+    - get:
+        apiVersion: v1
+        kind: ConfigMap
+        name: alloy-events-config
+        namespace: logging
+        format: yaml
+    - podLogs:
+        selector: app.kubernetes.io/name=alloy-events
+        namespace: logging
+        tail: 100
+    - podLogs:
+        selector: app.kubernetes.io/name=loki
+        namespace: logging
+        tail: 100
+
+  # The alert rules in prometheusrule-alloy.yaml select on job="alloy" to keep the event
+  # singleton out of the node collector's liveness rules. That `job` value is not written
+  # anywhere - prometheus-operator derives it from the Service name because the chart's
+  # ServiceMonitor sets no jobLabel - so a chart change could rename it and leave every
+  # one of those alerts matching nothing at all, which looks exactly like a healthy
+  # cluster. Both values are asserted, which also proves both instances are scraped.
+  - name: Validate alloy metrics carry the job label the alert rules select on
+    use:
+      template: ../chainsaw/steps/assert-prometheus-query.yaml
+      with:
+        bindings:
+        - name: prometheus_query
+          value: 'loki_write_sent_entries_total{job="alloy"}'
+        - name: prometheus_diagnostic_match
+          value: '{__name__="loki_write_sent_entries_total"}'
+  - name: Validate the event singleton is scraped under its own job label
+    use:
+      template: ../chainsaw/steps/assert-prometheus-query.yaml
+      with:
+        bindings:
+        - name: prometheus_query
+          value: 'alloy_component_controller_running_components{job="alloy-events"}'
+        # Deliberately a component-controller metric rather than a loki_write one: on an
+        # idle cluster the singleton can legitimately have shipped nothing yet, and a
+        # counter that has never been incremented is not exported at all.
+        - name: prometheus_diagnostic_match
+          value: '{__name__="alloy_component_controller_running_components"}'
+
   # End-to-end proof, not just config-looks-right: checks that
   # configmap-loki-rule-demo.yaml's demo rule actually landed as a series in
   # Prometheus. See that file's comment for why remote_write needs a real rule to be
