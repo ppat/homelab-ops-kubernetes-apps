@@ -67,9 +67,7 @@ flowchart TB
     %% Event Sources
     subgraph events["Event Collection"]
         direction TB
-        k8s-events["Kubernetes Events"]:::event
         node-problems["Node Problems"]:::event
-        event-exporter["Event Exporter"]:::event
         problem-detector["Problem Detector"]:::event
     end
 
@@ -105,9 +103,7 @@ flowchart TB
     end
 
     %% Event Flow
-    k8s-events --> event-exporter
     node-problems --> problem-detector
-    event-exporter --> loki
     problem-detector --> prometheus
 
     %% Network Flow
