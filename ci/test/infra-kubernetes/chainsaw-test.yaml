@@ -62,3 +62,18 @@ spec:
   - name: Validate descheduler
     use:
       template: ./validate-descheduler.yaml
+
+  # Asserts nothing; prints the readiness ordering this suite's step order would have to be
+  # derived from. Nothing here is retimed: the worst operation in the suite is
+  # node-feature-discovery-master at 19.7s against the 1m default (0.33), which the sizing
+  # rule leaves exactly where it is, and every other assertion returns in 0.1s. Nor is
+  # anything reordered -- node-feature-discovery is the only step that waits, and the three
+  # steps behind it take 0.1s each, so moving it last would buy it 0.3s.
+  #
+  # The reason that reasoning is thin is the reason this step exists: this suite has no
+  # failed runs in the last 100, so the shared catch-block dump has never fired for it, and
+  # a validate assert returning in 0.1s records that its component was ready by then, not
+  # when it became ready. Both statements above rest on censored data until this reports.
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml
