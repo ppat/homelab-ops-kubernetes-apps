@@ -8,6 +8,7 @@ on:
     - '.github/workflows/test-infrastructure-database.yaml'
     - '.github/kind-cluster-multi-node.yaml'
     - 'ci/test/infra-database/**'
+    - 'ci/test/chainsaw/**'
     - 'infrastructure/subsystems/database-core/**'
     - '!infrastructure/subsystems/database-core/**.md'
   workflow_dispatch:
