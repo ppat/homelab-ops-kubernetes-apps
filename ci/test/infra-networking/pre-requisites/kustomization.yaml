@@ -7,29 +7,23 @@ resources:
 - namespaces.yaml
 - configmap/
 - pvc/
-- ../../infra-security/infra-security-core.yaml
+# Two shared fixtures in place of the whole security-core module.
+#
+# Both are needed, and both were audited rather than inherited:
+# `networking-core/traefik/certificate-default.yaml` is a `Certificate` issued by
+# `${cert_issuer}` (substituted to `selfsigned-issuer`, which is what the cert-manager
+# fixture supplies), and `networking-extra` ships five `ExternalSecret` objects (three
+# under freeradius, one each for pihole and tailscale-operator) that resolve through the
+# `fake` ClusterSecretStore below.
+#
+# What goes is everything else security-core was installing to deliver those two: kyverno,
+# policy-reporter, trust-manager, the Bitwarden certificate chain and the
+# bitwarden-sdk-server subchart.
+#
+# See ../../chainsaw/pre-requisites/README.md.
+- ../../chainsaw/pre-requisites/cert-manager/
+- ../../chainsaw/pre-requisites/external-secrets/
 - fake-secret-store.yaml
-
-patches:
-# yamllint disable-line rule:indentation
-- patch: |-
-    - op: add
-      path: /spec/patches
-      value:
-        - patch: |-
-            $patch: delete
-            apiVersion: helm.toolkit.fluxcd.io/v2
-            kind: HelmRelease
-            metadata:
-              name: kyverno-policy-reporter-release
-              namespace: kyverno
-          target:
-            kind: HelmRelease
-            name: kyverno-policy-reporter-release
-            namespace: kyverno
-  target:
-    kind: Kustomization
-    name: infra-security-core
 
 sortOptions:
   order: fifo

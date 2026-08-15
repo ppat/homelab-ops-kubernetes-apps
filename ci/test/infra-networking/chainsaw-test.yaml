@@ -19,11 +19,20 @@ spec:
 
   - name: Reconcile pre-requisites
     try:
+    # 2m -> 3m, and the reason is the fixture switch rather than a new measurement. Until
+    # now `external-secrets-release` declared `dependsOn: cert-manager-release`, so the two
+    # installs were serialised and cert-manager had the runner to itself while it ran. The
+    # external-secrets fixture removes that dependency -- which is most of what makes it
+    # fast -- so the two now install concurrently on four cores and cert-manager's own
+    # install can only get slower, not faster. 3m is infra-storage's number for the
+    # identical operation, sized there against 36.1s on four of five green runs and 106.1s
+    # on the fifth; apps-misc measured 26/27/16s for it after the same switch. Raising it is
+    # free on any run that passes.
     - description: Reconcile helmrelease/cert-manager-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cert-manager-release --namespace=cert-manager --timeout=2m
-        timeout: 2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cert-manager-release --namespace=cert-manager --timeout=3m
+        timeout: 3m
     - description: Reconcile helmrelease/external-secrets-release
       script:
         # yamllint disable-line rule:line-length
@@ -52,6 +61,14 @@ spec:
     - events:
         namespace: flux-system
 
+  # Not reordered, and that is a decision. The three steps that wait -- MetalLB (30s),
+  # Traefik (36s), External-DNS (40-95s) -- are validated in that order because they are
+  # ordered that way in reality: traefik-release declares `dependsOn: metallb-release`, and
+  # Whoami, Pi-hole and Freeradius all assert LoadBalancer or Ingress status that cannot be
+  # populated until MetalLB and Traefik are serving. The instant steps therefore cannot be
+  # promoted ahead of them, and the only permutation left (External-DNS after Freeradius)
+  # would buy External-DNS 0.4s. Ordering pays where several steps are slow; here the slow
+  # ones are the dependency chain itself, so the budgets below are the whole fix.
   - name: Validate MetalLB
     use:
       template: ./validate-metallb.yaml
@@ -75,3 +92,11 @@ spec:
   - name: Validate Freeradius
     use:
       template: ./validate-freeradius.yaml
+
+  # Asserts nothing; prints the readiness ordering this suite's step order is derived from,
+  # so the next person to tune it has current data rather than an archaeology exercise. The
+  # existing failure dumps are all one content bug on `renovate/traefik-41.x`, which makes
+  # every late-stage workload in them unrepresentative.
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml
