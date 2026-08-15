@@ -96,13 +96,15 @@ spec:
   # assert absorbs the wait -- the ~300s of validate time is redistributed, not reduced.
   #
   # Readiness comes from this suite's own `Report readiness ordering` step, in seconds after
-  # the first pod in the cluster went Ready (T0). The first validate step begins at T0+142:
+  # the first pod in the cluster went Ready (T0), over two runs. The first validate step
+  # begins at T0+142 / T0+143:
   #
-  #   mcp-context7 164 . mcp-github 170 . mcp-home-assistant 170 . mcp-kubernetes-homelab 173
-  #   . mcp-kubernetes-nas 173 . mcp-playwright 181 . mcp-kubernetes-sandbox 185 .
-  #   mcp-unifi-protect 195 . mcp-unifi-network 200 . mcp-obsidian-agent 201 .
-  #   mcp-obsidian-ingestor 201 . mcp-grafana 205 . obsidian 275 . n8n 353 (n8n-db-test 342)
-  #   . open-webui 388 . openclaw 407 . litellm 443 (litellm-db-test 356, litellm-redis 193)
+  #   the twelve mcp-* 164-205 / 167-206 . obsidian 275 / 237 . n8n-db-test 342 / 342 .
+  #   litellm-db-test 356 / 353 . n8n 353 / 369 . open-webui 388 / 384 . openclaw 407 / 400 .
+  #   litellm 443 / 440 (litellm-redis 193 / 190)
+  #
+  # The two runs agree on every position except n8n against the two Clusters, which is the
+  # one place this file makes an exception; see the tail comment below.
   #
   # What this replaces: `Validate open-webui` ran FIRST while being the second-slowest
   # component in the suite, so the module's entire initial convergence was charged to the one
@@ -129,12 +131,12 @@ spec:
     use:
       template: ./validate-git-committer.yaml
 
-  # The twelve mcp-* Deployments are Ready within a 41s band (164-205) and are ordered inside
-  # it by that measurement, but the gaps between neighbours are 0-8s -- smaller than the
-  # run-to-run variation this single report can resolve. Treat their relative order as
-  # arbitrary; what matters is that the block as a whole sits ahead of everything slower.
-  # Each already carries an explicit 5m, and the first of them (mcp-context7) is the step
-  # that now absorbs the module's pod convergence: 22s predicted, 0.07 of its budget.
+  # The twelve mcp-* Deployments are Ready within a ~40s band and are ordered inside it by
+  # that measurement, but the gaps between neighbours are 0-8s -- smaller than the run-to-run
+  # variation two reports can resolve, and four pairs already swap between them. Treat their
+  # relative order as arbitrary; what matters is that the block as a whole sits ahead of
+  # everything slower. Each already carries an explicit 5m, and the first of them
+  # (mcp-context7) is the step that absorbs the module's pod convergence: measured 15s, 0.05.
   - name: Validate mcp-context7
     use:
       template: ./validate-mcp-context7.yaml
@@ -220,42 +222,45 @@ spec:
   # blind spot this step closes is what let it through.
   #
   # It no longer runs last. The placement argument used to be "heaviest image, longest boot
-  # chain, so give it the most head start"; the readiness report says obsidian is Ready at
-  # T0+275, mid-pack, ahead of n8n, openclaw, litellm and open-webui. That was a prediction
-  # from image bytes, and bytes lost to measurement here -- 70s of its 6m budget in this slot.
+  # chain, so give it the most head start"; the readiness report puts obsidian at T0+275 and
+  # T0+237, mid-pack, ahead of n8n, openclaw, litellm and open-webui. That was a prediction
+  # from image bytes, and bytes lost to measurement here -- 30s of its 6m budget in this slot.
   - name: Validate obsidian
     use:
       template: ./validate-obsidian.yaml
 
-  # n8n is promoted past litellm on readiness (353 vs 443), and the thing to watch is not n8n
-  # itself but `cluster/n8n-db-test` inside this step, which is Ready at T0+342 against a 3m
-  # budget that must not be raised (ppat/homelab-ops-kubernetes-apps#3678: those failures are
-  # an operator that never begins reconciling, and a bigger number would hide it). From this
-  # slot the Cluster assert starts at T0+275 and needs ~67s of its 180s. Refutation: if this
-  # step lands near 110s+, or the Cluster assert is the operation that expires, the promotion
-  # was wrong and n8n belongs back behind litellm.
-  - name: Validate n8n
-    use:
-      template: ./validate-n8n.yaml
-
-  # The tail deviates from strict ascending order on purpose: open-webui (388) is asserted
-  # AFTER litellm (443). Two readings of one dataset, and this is a genuinely open question --
-  # the alternative is one block swap away.
+  # The tail deviates from strict ascending readiness twice, both times for a reason that is
+  # not readiness, and both are one block move away from being reversed.
   #
-  # Implemented: litellm is late because of what it waits on -- a CNPG Cluster Ready at T0+356,
-  # a Dragonfly at 193, and a Helm pre-install hook Job -- so its readiness is roughly fixed
-  # wherever the step sits. open-webui is late because of a 1.77GB image pull, the
-  # highest-variance quantity in the suite: 208/238/270s green and three runs censored at the
-  # old 300s budget. Put the high-variance component where the whole suite's elapsed time is
-  # already working for it. The measured cost of doing so is nil -- at T0+443 open-webui is
-  # long Ready, so its assert returns in 0s where strict-mean order would have it wait ~35s --
-  # and the only step that pays is openclaw, 54s instead of 19s of a 6m budget.
+  # 1. open-webui (388) is asserted AFTER litellm (443). litellm is late because of what it
+  #    waits on -- a CNPG Cluster Ready at T0+353-356, a Dragonfly at ~190, a Helm pre-install
+  #    hook Job -- so its readiness is roughly fixed wherever the step sits. open-webui is late
+  #    because of a 1.77GB image pull, the highest-variance quantity in the suite: 208/238/270s
+  #    green and three runs censored at the old 300s budget. The high-variance component goes
+  #    where the whole suite's elapsed time is already working for it. Measured over two runs
+  #    this costs nothing -- open-webui's whole step returns in 0s from a T0+440 start, where
+  #    strict-mean order leaves it waiting ~35s -- and openclaw pays 30-163s of a 6m budget.
+  #    Alternative (strict mean order): ... -> open-webui -> openclaw -> litellm. It is the
+  #    better order only if open-webui's pull turns out to be stable.
   #
-  # Alternative (strict mean order): ... -> n8n -> open-webui -> openclaw -> litellm. Swap the
-  # `Validate open-webui` block back in front of `Validate openclaw` to test it. It is the
-  # better order if open-webui's pull turns out to be stable, since it minimises the largest
-  # single gap; it is the worse one on every run where the pull is slow, because then
-  # open-webui absorbs its own variance on top of the 35s.
+  # 2. n8n (369) is asserted AFTER litellm (440) even though it is Ready first, because the
+  #    step's exposure is not on its slowest object but on its FIRST one, and n8n's first
+  #    assert is `cluster/n8n-db-test` on a 3m budget that must not be raised
+  #    (ppat/homelab-ops-kubernetes-apps#3678 -- those failures are an operator that never
+  #    begins reconciling, and a bigger number would hide it).
+  #
+  #    This was tried the other way and measured. Promoted to directly behind obsidian, the
+  #    n8n step took 133s, of which the Cluster assert alone was 105s -- 0.58 of a budget that
+  #    cannot be raised, on a suite that had no such exposure before the reorder. The prior
+  #    step's own variance is what did it: obsidian was Ready at T0+237 on that run against
+  #    T0+275 on the previous one, so the Cluster assert inherited 38s less head start than
+  #    predicted. Behind litellm the same assert returns in 0s with ~98s of margin.
+  #
+  #    This does not weaken #3678 detection. A Cluster that never reconciles consumes the full
+  #    180s from wherever the step starts, so the late slot preserves the whole budget for
+  #    reporting inaction instead of spending 0.58 of it on ordinary parallel convergence.
+  #    What it costs is that n8n's own readiness goes back to being censored on green runs;
+  #    the readiness report is what covers that, and it is why this is recoverable.
   - name: Validate openclaw
     use:
       template: ./validate-openclaw.yaml
@@ -263,6 +268,10 @@ spec:
   - name: Validate litellm
     use:
       template: ./validate-litellm.yaml
+
+  - name: Validate n8n
+    use:
+      template: ./validate-n8n.yaml
 
   - name: Validate open-webui
     use:

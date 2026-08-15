@@ -74,17 +74,20 @@ spec:
   # "mssql 72-90s, admin 104-130s, identity 105-137s, api 188-229s" off assert durations, and
   # an assert duration is circular here -- mssql measured 81s and admin 43s because they ran
   # first and second and absorbed the convergence of the five components that were actually
-  # Ready before mssql, each of which then measured 0s. Predicted per-step now: web 36s,
-  # attachments 4s, notifications 13s, icons 3s, events 10s, mssql 15s, identity 34s, sso 7s,
-  # admin 2s, api 75s.
+  # Ready before mssql, each of which then measured 0s. Measured after the reorder: web 29s,
+  # attachments 18s, notifications 6s, icons 0s, events 10s, mssql 24s, identity 25s, sso 0s,
+  # admin 3s, api 101s. A second readiness report reproduces this ordering, with
+  # icons/notifications and sso/identity swapping inside 5-6s of each other -- those two pairs
+  # are ties and their order carries no information.
   #
   # There is no dependency to cross. Every step asserts one Deployment's own readiness, so
   # asserting `web` before `mssql` cannot pass because mssql has not been checked yet -- the
   # runtime dependency between the pods is unaffected by the order the asserts are read in.
   # What the reorder costs is that five steps still on the inherited 60s (attachments,
-  # notifications, icons, events, sso) go from absorbing 0s to absorbing 3-13s. At 0.22 of
-  # that default in the worst case they are not exposed, but they are the steps to look at
-  # first if this suite starts failing somewhere new: the reorder is what put time on them.
+  # notifications, icons, events, sso) go from absorbing 0s to absorbing up to 18s. That is
+  # 0.30 of the default -- higher than the 3-13s this reorder was predicted to move onto them,
+  # and measured on attachments. Still short of the exposure threshold, but they are the steps
+  # to look at first if this suite starts failing somewhere new: the reorder put time on them.
   #
   # `Validate bitwarden api` stays second-to-last on measurement (T0+325, 118s clear of
   # anything else) and `Validate bitwarden release` stays last on principle -- it asserts the

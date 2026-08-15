@@ -18,10 +18,11 @@ spec:
       # while its image is only ~159MB, so what it waits on is its own boot, not its pull.
       # 3m, as for every workload in this suite.
       #
-      # plex and jellyfin are 4s apart in the readiness report (167 vs 163) -- inside the
-      # noise -- so their order is not decided by it. It is decided by five earlier green runs
-      # (jellyfin 95-124s, plex 84-121s) and the image census, both of which put jellyfin
-      # last; plex stays ahead of it.
+      # plex takes the last slot on the only direct measurement of the two: both readiness
+      # reports put plex 4s behind jellyfin (167/168 against 163/164). The gap is not
+      # resolvable but its sign is reproducible, and both steps carry the same 3m, so the
+      # choice costs nothing either way. See validate-jellyfin.yaml for the older evidence
+      # that pointed the other way and why it does not settle it.
       timeout: 3m
   - podLogs:
       selector: app.kubernetes.io/name=plex

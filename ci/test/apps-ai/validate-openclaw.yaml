@@ -47,9 +47,13 @@ spec:
       # readiness can even begin; by the time this step is reached the pod has usually long
       # since settled, but keep headroom so a slow image pull/boot doesn't false-fail.
       #
-      # openclaw is Ready at T0+407, second-slowest measured in this suite, and it is the step
-      # that pays for asserting open-webui last rather than in strict readiness order: 54s of
-      # this 6m instead of 19s. See chainsaw-test.yaml for why that trade is taken.
+      # openclaw is Ready at T0+400-407, second-slowest measured in this suite, and it is the
+      # step that pays for the two ordering exceptions in chainsaw-test.yaml -- open-webui and
+      # n8n both asserted behind litellm. It is the only step in the tail that waits, and with
+      # both exceptions in place it inherits the gap from obsidian's readiness to its own:
+      # 30s measured with n8n still promoted, ~163s expected without. 0.45 of this 6m at
+      # worst, and it is a plain Deployment assert, which is the point -- the wait is parked
+      # on the widest budget in the tail rather than on a capped one.
       timeout: 6m
   catch:
   - describe:

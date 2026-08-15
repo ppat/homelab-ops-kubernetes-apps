@@ -15,12 +15,12 @@ spec:
       file: ../chainsaw/assertions/deployment-ready.yaml
       # The startupProbe below allows 30 failures at a 10s period (5m) before the kubelet
       # gives up and restarts the container, so the budget here has to clear that in the
-      # worst case. The step no longer runs last: obsidian is measured Ready at T0+275, ahead
-      # of n8n, openclaw, litellm and open-webui, so it now sits directly behind the mcp-*
-      # block and waits ~70s of this budget instead of 1s. Most of the pull is still amortized
-      # against the wall-clock every earlier step spent waiting, and real start-to-ready on
-      # hardware is seconds, not minutes -- but 0.19 of the budget is the number to watch if
-      # this ever moves again. 6m gives
+      # worst case. The step no longer runs last: obsidian is measured Ready at T0+275 and
+      # T0+237 over two runs, ahead of n8n, openclaw, litellm and open-webui, so it now sits
+      # directly behind the mcp-* block and waited 30s of this budget instead of 1s. Most of
+      # the pull is still amortized against the wall-clock every earlier step spent waiting,
+      # and real start-to-ready on hardware is seconds, not minutes -- but 0.08 of the budget
+      # is the number to watch if this ever moves again. 6m gives
       # one full startupProbe cycle plus pull/scheduling margin without letting a
       # structurally broken probe (see the catch block) drag the suite out for multiple
       # restart cycles before reporting.

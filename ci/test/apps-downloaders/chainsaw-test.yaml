@@ -100,19 +100,25 @@ spec:
   # sampled failure dumps show them Ready in 0 of 26 while the three DB-free apps are Ready in
   # 26 of 26. What that note missed is the other half -- those three DB-free apps were being
   # asserted *behind* an 86s database step they do not depend on, so the module's convergence
-  # was charged to the Cluster assert instead of to them. Predicted per-step now: qbittorrent
-  # 33s, bazarr 5s, sabnzbd 0s, database 48s, radarr 4s, lidarr 0s, prowlarr 2s, sonarr 2s,
-  # autobrr 7s, seerr 18s, qui 3s.
+  # was charged to the Cluster assert instead of to them. Measured after the reorder:
+  # qbittorrent 29s, bazarr 20s, sabnzbd 0s, database 26s, lidarr 10s, radarr 10s, prowlarr
+  # 0s, sonarr 5s, autobrr 0s, seerr 16s, qui 0s -- the Cluster assert down from 0.48 of its
+  # 180s to 0.14, on a run whose prerequisite reconcile was more than twice as slow as the
+  # one the ordering came from. A second readiness report reproduces the split exactly: the
+  # same three DB-free apps first, all seven DB-consumers behind the Cluster.
   #
-  # The CNPG Cluster's budget is untouched and the 86s -> ~48s drop is a side effect, not the
+  # The CNPG Cluster's budget is untouched and the 86s -> 26s drop is a side effect, not the
   # goal: those 25 failures show an empty `Status:`, `Events: <none>` and no instance pod
   # after the full 180s while flux reports cloudnative-pg Ready and the operator pod up 4m37s
   # (ppat/homelab-ops-kubernetes-apps#3678). The absence of the obligatory
   # SettingUp/CreatingInstance events proves the operator never acted, and no head start and
   # no bigger number can fix inaction.
   #
-  # lidarr and radarr are both Ready at T0+207 and prowlarr/sonarr are within 2s of them;
-  # treat those four as tied and do not read precision into their order.
+  # Order inside the DB-consumer block carries no information. The seven span 36s in the first
+  # report and 41s in the second, and six of the seven change places between the two -- lidarr
+  # and radarr are joint-Ready at T0+207 in the first, and the second puts seerr last where
+  # the first had qui. They are ties. What reproduces across both reports is only the split:
+  # the three DB-free apps first, then the Cluster, then these seven.
   - name: Validate qbittorrent
     use:
       template: ./validate-qbittorrent.yaml

@@ -13,6 +13,14 @@ spec:
       - name: namespace
         value: n8n
       file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
+      # 3m, unchanged, and it is why this step is asserted last among the workloads rather
+      # than at its readiness position. n8n-db-test is Ready at T0+342 on both measured runs,
+      # but this assert is the FIRST operation in the step, so promoting the step promotes it:
+      # asserted directly behind obsidian it consumed 105s of the 180s here (0.58), against
+      # 0s with ~98s of margin from behind litellm. The budget cannot absorb that, because it
+      # must not be raised -- the failures it exists to report are an operator that never
+      # begins reconciling (ppat/homelab-ops-kubernetes-apps#3678), and a Cluster in that
+      # state burns the full 180s from wherever the step starts.
       timeout: 3m
   - description: Assert pvc/n8n-data
     assert:

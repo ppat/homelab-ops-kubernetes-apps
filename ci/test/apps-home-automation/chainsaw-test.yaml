@@ -89,13 +89,17 @@ spec:
   # assumed faster; measured, both are Ready ~20-30s before it. Neither wyoming Deployment has
   # any secret, config or service reference to the database (they are wyoming voice services
   # with no env or volume references at all), so nothing is asserted before something it
-  # depends on. Predicted: nanomq 11s, piper + whisper 45s, database 20s, home-assistant 3s.
+  # depends on. Measured after the reorder: nanomq 11s, piper + whisper 42s, database 33s,
+  # home-assistant 1s -- the Cluster assert down from 0.36 of its 180s to 0.18. The second
+  # report also puts home-assistant (T0+198) ahead of the Cluster (T0+219), inverted from the
+  # first; it stays last anyway, because it is the one workload here that consumes the
+  # database and the dependency is the primary key.
   #
   # The CNPG Cluster's 3m budget is untouched, and moving it later is not an attempt to
   # relieve it: its failures in this suite are the operator never acting at all -- empty
   # `Status:`, `Events: <none>`, no instance pod after the full budget
   # (ppat/homelab-ops-kubernetes-apps#3678) -- and no head start fixes inaction. What the move
-  # does do is take its measured consumption from 64s to ~20s of 180s, which is worth stating
+  # does do is take its measured consumption from 64s to 33s of 180s, which is worth stating
   # plainly as a side effect rather than as the reason.
   #
   # home-assistant stays last on both keys. It is the slowest measured (T0+210) and it is the

@@ -46,15 +46,18 @@ spec:
   # circular: agregarr appeared to be the first component Ready because it ran first and
   # absorbed everyone's convergence (90s), and tautulli appeared instant because it did not.
   # Measured, agregarr is third and freetube -- which had looked free at 0s -- is first, so it
-  # takes the head of the suite and the 55s of module convergence that goes with it. Predicted
-  # per-step: freetube 55s, tautulli 30s, agregarr 5s, plex 27s, jellyfin 0s. If agregarr does
-  # not collapse to a few seconds in its new slot, its readiness is not what the report says.
+  # takes the head of the suite and the module convergence that goes with it. Measured after
+  # the reorder: freetube 38s, tautulli 42s, agregarr 1s, plex 24s, jellyfin 0s. agregarr
+  # collapsing from 90s to 1s is the direct confirmation that its old 45-51s was this suite's
+  # convergence and not its own readiness.
   #
-  # jellyfin and plex are NOT reordered against each other. They are 4s apart in one report,
-  # which is inside the run-to-run noise this instrument can resolve; five earlier green runs
-  # put jellyfin last (95-124s against plex's 84-121s) and the image census agrees (~661MB
-  # against ~159MB). One 4s inversion does not outweigh that, so the tie is broken by the
-  # older, larger sample and the order stands.
+  # jellyfin and plex are 4s apart and the gap is not resolvable, but its sign is: both
+  # readiness reports put jellyfin at 163/164 and plex at 167/168. They are ordered jellyfin
+  # then plex to follow the only direct measurement available. The older evidence pointed the
+  # other way -- five green runs of assert durations (jellyfin 95-124s, plex 84-121s) and the
+  # image census (~661MB against ~159MB) -- but assert duration is the circular metric this
+  # pass exists to replace, and it is censored for whichever of the two ran last. Nothing
+  # rides on the choice: both carry the same 3m, so whichever is second absorbs ~25s of it.
   #
   # The byte census does not predict this order at all: freetube (~976MB) and agregarr
   # (~670MB) are the two heaviest images and are Ready first and third, because all five pods
@@ -72,13 +75,13 @@ spec:
     use:
       template: ./validate-agregarr.yaml
 
-  - name: Validate plex
-    use:
-      template: ./validate-plex.yaml
-
   - name: Validate jellyfin
     use:
       template: ./validate-jellyfin.yaml
+
+  - name: Validate plex
+    use:
+      template: ./validate-plex.yaml
 
   - name: Report readiness ordering
     use:
