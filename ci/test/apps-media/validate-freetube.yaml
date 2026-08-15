@@ -13,6 +13,13 @@ spec:
       - name: namespace
         value: media
       file: ../chainsaw/assertions/deployment-ready.yaml
+      # freetube is the first component in this suite to become Ready (T0+105, against
+      # tautulli 135 and agregarr 140), so it now leads the suite and absorbs
+      # the module's convergence: ~55s predicted, from a first validate step that begins at
+      # T0+50. 3m is 3x that with the rounding rule, and is what every workload here carries.
+      # It is also the heaviest image in the suite (~976MB) and still the fastest to Ready,
+      # which is why the byte census cannot be used to order this module.
+      timeout: 3m
   catch:
   - describe:
       apiVersion: apps/v1

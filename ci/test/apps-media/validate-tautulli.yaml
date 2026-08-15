@@ -13,6 +13,11 @@ spec:
       - name: namespace
         value: media
       file: ../chainsaw/assertions/deployment-ready.yaml
+      # tautulli's readiness used to be censored -- its assert returned in 0s on all 5 green
+      # runs, proving only "ready by then". The readiness report measures it directly at
+      # T0+135, second in the suite behind freetube, so it moves to second and is predicted to
+      # wait ~30s. 3m, as for every workload here.
+      timeout: 3m
   catch:
   - describe:
       apiVersion: apps/v1
