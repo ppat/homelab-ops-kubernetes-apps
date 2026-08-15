@@ -8,8 +8,15 @@ spec:
   # kind's default CNI (kindnetd) does not implement NetworkPolicy enforcement, so this can
   # only assert the object exists and is shaped as expected -- it cannot prove ingress is
   # actually filtered. Enforcement must be verified on a real cluster; see TESTING.md.
+  # This is now the suite's first validate step (see chainsaw-test.yaml), so it is what
+  # absorbs the module's initial convergence and what reports a Kustomization that never
+  # reconciles. 60s is the inherited default made explicit rather than a raise: the module's
+  # objects are measurably present ~2s after the apply step -- that is the duration of the
+  # `litellm-openwebui-key` ExternalSecret assert that used to open this suite -- so x3 sizing
+  # lands below the smallest rung and 60s is where the "module did not apply" signal belongs.
   - description: Assert networkpolicy/mcp-servers-ingress
     assert:
+      timeout: 60s
       resource:
         apiVersion: networking.k8s.io/v1
         kind: NetworkPolicy

@@ -44,8 +44,12 @@ spec:
         value: openclaw
       file: ../chainsaw/assertions/deployment-ready.yaml
       # Generous: openclaw's startupProbe budget is up to 5m (failureThreshold 30 x 10s) before
-      # readiness can even begin; by this last validate step the pod has usually long since
-      # settled, but keep headroom so a slow image pull/boot doesn't false-fail.
+      # readiness can even begin; by the time this step is reached the pod has usually long
+      # since settled, but keep headroom so a slow image pull/boot doesn't false-fail.
+      #
+      # openclaw is Ready at T0+407, second-slowest measured in this suite, and it is the step
+      # that pays for asserting open-webui last rather than in strict readiness order: 54s of
+      # this 6m instead of 19s. See chainsaw-test.yaml for why that trade is taken.
       timeout: 6m
   catch:
   - describe:
