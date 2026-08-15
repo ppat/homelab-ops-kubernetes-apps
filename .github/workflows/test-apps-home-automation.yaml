@@ -8,6 +8,7 @@ on:
     - '.github/workflows/test-apps-home-automation.yaml'
     - '.github/kind-cluster-multi-node.yaml'
     - 'ci/test/apps-home-automation/**'
+    - 'ci/test/chainsaw/**'
     - 'apps/subsystems/home-automation/**'
     - '!apps/subsystems/home-automation/**.md'
   workflow_dispatch:

@@ -8,6 +8,7 @@ on:
     - '.github/workflows/test-apps-coder.yaml'
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/apps-coder/**'
+    - 'ci/test/chainsaw/**'
     - 'apps/subsystems/coder/**'
     - '!apps/subsystems/coder/**.md'
   workflow_dispatch:

@@ -8,6 +8,7 @@ on:
     - '.github/workflows/test-infrastructure-security.yaml'
     - '.github/kind-cluster-multi-node.yaml'
     - 'ci/test/infra-security/**'
+    - 'ci/test/chainsaw/**'
     - 'infrastructure/subsystems/security-core/**'
     - 'infrastructure/subsystems/security-extra/**'
     - '!infrastructure/subsystems/security-core/**.md'

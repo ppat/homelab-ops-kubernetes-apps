@@ -8,6 +8,7 @@ on:
     - '.github/workflows/test-infrastructure-kubernetes.yaml'
     - '.github/kind-cluster-multi-node.yaml'
     - 'ci/test/infra-kubernetes/**'
+    - 'ci/test/chainsaw/**'
     - 'infrastructure/subsystems/kubernetes-core/**'
     - 'infrastructure/subsystems/kubernetes-extra/**'
     - '!infrastructure/subsystems/kubernetes-core/**.md'

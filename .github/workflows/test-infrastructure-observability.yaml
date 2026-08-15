@@ -8,6 +8,7 @@ on:
     - '.github/workflows/test-infrastructure-observability.yaml'
     - '.github/kind-cluster-multi-node.yaml'
     - 'ci/test/infra-observability/**'
+    - 'ci/test/chainsaw/**'
     - 'infrastructure/subsystems/observability-core/**'
     - 'infrastructure/subsystems/observability-extra/**'
     - '!infrastructure/subsystems/observability-core/**.md'

@@ -8,6 +8,7 @@ on:
     - '.github/workflows/test-infrastructure-virtualization.yaml'
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/infra-virtualization/**'
+    - 'ci/test/chainsaw/**'
     - 'infrastructure/subsystems/virtualization-core/**'
     - '!infrastructure/subsystems/virtualization-core/**.md'
   workflow_dispatch:

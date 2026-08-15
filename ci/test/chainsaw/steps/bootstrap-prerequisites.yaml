@@ -31,9 +31,14 @@ spec:
       file: ../chainsaw/assertions/kustomization-ready.yaml
   - description: Reconcile kustomization/pre-requisites
     script:
+      # 2m against a measured worst case of 16.2s across 75 runs (all 16 suites). The
+      # previous 6m was never approached by a factor of 22, which made it useless as a
+      # statement of what this step should cost: `pre-requisites` sets no `wait`, so this
+      # only builds and applies the fixture objects and never waits for any of them to
+      # become healthy. A budget nothing can reach cannot detect a regression.
       # yamllint disable-line rule:line-length
-      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=pre-requisites --timeout=6m
-      timeout: 6m
+      content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=pre-requisites --timeout=2m
+      timeout: 2m
   catch:
   - describe:
       apiVersion: kustomize.toolkit.fluxcd.io/v1
