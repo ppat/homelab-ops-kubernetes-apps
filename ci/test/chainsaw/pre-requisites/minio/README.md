@@ -68,6 +68,13 @@ spread — and lets a suite use object storage without standing up external-secr
   immediately before the first step that actually uses S3, not in the prerequisite block. Moving it took
   `infra-database` from 451s to 341s and `infra-observability` from 370s to 341s.
 
+## Migrating a suite that had its own minio Kustomization
+
+This fixture's Flux `Kustomization` is named **`pre-requisites-minio`**, not `minio`. A suite that
+previously declared its own will have `catch` entries that `describe kustomization/minio`, and those
+will silently describe nothing after adopting — the dump stays green and simply omits the object.
+Grep the suite for the old name when switching; `infra-observability` had two.
+
 ## Unproven
 
 Least unproven of the six. Every patch here except the namespace is carried verbatim from

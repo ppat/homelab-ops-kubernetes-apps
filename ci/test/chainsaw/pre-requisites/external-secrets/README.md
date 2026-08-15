@@ -75,6 +75,23 @@ A suite that needs trust-manager for its own reasons (any `Bundle` of its own) a
   must be established and the webhook serving before the module `Kustomization` is applied at all. See
   [TESTING.md](../../../../TESTING.md#move-a-wait-to-where-the-dependency-actually-is).
 
+## Migrating a suite that used the whole security module
+
+Read this before adopting. Dropping `dependsOn: cert-manager-release` also drops something a
+consumer may not realise it had: a suite that waited only on `external-secrets-release` was
+**transitively** waiting on cert-manager too, because external-secrets would not go Ready until
+cert-manager had. That guarantee disappears with the dependency.
+
+So if the module under test ships a `Certificate` or `Issuer`, adopting this fixture means:
+
+1. compose `../cert-manager` as well, **and**
+2. add an explicit reconcile-and-wait step for `cert-manager-release`, which the suite previously
+   got for free.
+
+`apps-misc` is the live case: maddy ships `Certificate/smtp-tls` against `${cert_issuer}`, mounts
+the resulting Secret, and asserts the Certificate is Ready. Adopting external-secrets alone would
+have turned that suite red rather than fast.
+
 ## Unproven
 
 The objects are the same ones eleven suites deploy today, but **no suite has yet run external-secrets with
