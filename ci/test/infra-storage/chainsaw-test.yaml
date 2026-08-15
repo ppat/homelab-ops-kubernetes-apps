@@ -24,11 +24,16 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cert-manager-release --namespace=cert-manager --timeout=3m
         timeout: 3m
+    # 36.1s on four of five green runs and 106.1s on the fifth -- a 2.9x outlier, not a
+    # spread. Whatever produces the slow case produces it in full, so the budget has to
+    # cover the outlier rather than the cluster of fast runs. 5m is the sizing rule against
+    # 106.1s. This step runs before any module exists, so no validate-step reordering can
+    # buy it headroom; only the number can.
     - description: Reconcile helmrelease/external-secrets-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=3m
-        timeout: 3m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=5m
+        timeout: 5m
 
   - name: Apply infra-storage modules
     try:
@@ -44,6 +49,38 @@ spec:
     - events:
         namespace: flux-system
 
+  # Step order is unchanged, and that is a decision rather than an omission -- it is the
+  # obvious reorder in this repo and it does not survive contact with the data.
+  #
+  # The case for moving csi-driver-nfs off the front is real: it is validated at t+1s with
+  # zero head start and its controller (a five-container pod, 356 MB of images) then burns
+  # 32.6s median of what used to be the inherited 1m default, while garage and minio,
+  # validated behind it, return in 0.1s. But 0.1s is a censored measurement: it records that
+  # a component was ready by the time chainsaw arrived, not when it became ready. Promoting
+  # either of them promotes an assertion whose readiness has never actually been observed,
+  # and csi-nfs-controller's 32.6s is the ONLY measured readiness in this suite's front
+  # half -- so every available permutation replaces a measured front-runner with an
+  # unmeasured one.
+  #
+  # The creation times in the failure dumps (garage t+1..6s, minio t+3..9s) do not close
+  # that gap. Creation is not readiness, and the distance between them is the entire
+  # quantity an ordering depends on: the same inference put grafana 5th in
+  # infra-observability on a t+1..8s creation time, and the readiness reporter then measured
+  # it Ready at +72s.
+  #
+  # Promoting garage would also expose two `pvc-bound` assertions and an ExternalSecret to
+  # the module's apply latency on the inherited 1m default. The two PVCs declare no
+  # storageClassName, so they take kind's default WaitForFirstConsumer class and cannot bind
+  # until the garage pod is scheduled -- today they are asserted ~39s in and are trivially
+  # bound; at t+1s they would be waiting on Flux. Displacing pressure is not removing it.
+  #
+  # What the reorder was for is delivered by the budget instead: csi-nfs-controller now
+  # carries 2m (see validate-csi-driver-nfs.yaml), which takes it from 0.57 of its budget to
+  # 0.28 without moving anything. And a reorder would not have made this suite faster in any
+  # case -- it redistributes slack rather than creating it.
+  #
+  # Revisit once the reporter below has run: it produces the first true readiness times for
+  # garage and minio, which is exactly what is missing above.
   - name: Validate csi-driver-nfs
     use:
       template: ./validate-csi-driver-nfs.yaml
@@ -53,9 +90,23 @@ spec:
   - name: Validate garage
     use:
       template: ./validate-garage.yaml
+  # Correctly last of the workload steps: the five Longhorn CSI Deployments are the
+  # latest-created objects in the suite by a wide margin (t+76..125s across six failure
+  # dumps, against t+1..18s for everything else), because longhorn-driver-deployer does not
+  # create them until longhorn-manager reports ready.
   - name: Validate longhorn
     use:
       template: ./validate-longhorn.yaml
+  # Stays last despite returning in 0.1s. It asserts the recording rule that spans MinIO and
+  # Garage, so it is an end-of-suite outcome check, not a cheap step to be sorted forward.
   - name: Validate object-store
     use:
       template: ./validate-object-store.yaml
+
+  # Asserts nothing; prints real pod Ready transition times. This suite's ordering has only
+  # ever been reasoned about from catch dumps of failed runs -- a sample biased entirely
+  # toward slow ones, and one that reports creation rather than readiness. This is what
+  # closes that gap, and what the decision above defers to.
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml

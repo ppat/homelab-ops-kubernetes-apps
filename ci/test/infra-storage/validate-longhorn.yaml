@@ -21,6 +21,19 @@ spec:
       - name: namespace
         value: longhorn-system
       file: ../chainsaw/assertions/deployment-ready.yaml
+  # 1.9/4.1/30.4s over five green runs -- a 7.4x spread on a median of four seconds, which
+  # is the signature of a race rather than of a slow start. It is: on the runs that take the
+  # long path, one longhorn-manager pod hits `level=fatal Error starting manager: Operation
+  # cannot be fulfilled` (an optimistic-concurrency conflict on Longhorn's own settings) and
+  # recovers through CrashLoopBackOff with 2-3 restarts, while the DaemonSet sits at 2/3.
+  #
+  # 2m is the sizing rule against the 30.4s maximum, and it is worth being explicit about
+  # what that buys and what it hides: this budget now spans that restart loop, so a green
+  # run here is no longer evidence that the conflict did not happen. It is still visible in
+  # the Ready timeline the final step prints, as a longhorn-manager pod whose Ready
+  # transition trails its peers. This is a re-budgeting on headroom evidence and nothing
+  # more -- it does not address the startup conflict, which remains the variance source for
+  # every CSI workload below.
   - description: Assert daemonset/longhorn-manager
     assert:
       bindings:
@@ -29,7 +42,20 @@ spec:
       - name: namespace
         value: longhorn-system
       file: ../chainsaw/assertions/daemonset-ready.yaml
+      timeout: 2m
 
+  # The five CSI workloads below are not created by the Helm chart: longhorn-driver-deployer
+  # creates them at runtime, and only once longhorn-manager reports ready. So this budget
+  # has to cover creation as well as readiness -- across six failure dumps they first exist
+  # between t+76s and t+125s after module apply, and every longhorn-manager restart above
+  # pushes that later. It also means the HelmRelease-Ready condition asserted further down
+  # cannot stand in for these assertions the way it can for a chart-owned workload; helm
+  # never waited for objects it did not create.
+  #
+  # csi-attacher carries the budget for all five because it is asserted first and therefore
+  # absorbs the creation wait: 9.1/46.4/51.8s green (0.86 of the 1m default it used to
+  # inherit, the second-worst headroom in the infra suites), while the four behind it then
+  # complete in 0.1-8.3s. 3m is the sizing rule against 51.8s.
   - description: Assert deployment/csi-attacher
     assert:
       bindings:
@@ -38,6 +64,7 @@ spec:
       - name: namespace
         value: longhorn-system
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 3m
   - description: Assert deployment/csi-provisioner
     assert:
       bindings:
