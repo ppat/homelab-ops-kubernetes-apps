@@ -13,13 +13,13 @@ spec:
       - name: namespace
         value: media
       file: ../chainsaw/assertions/deployment-ready.yaml
-      # Was the inherited 60s default. jellyfin is asserted second-to-last: both readiness
-      # reports put it a few seconds ahead of plex (163/164 against 167/168), so it absorbs
-      # ~25s here and plex takes the last slot. The older evidence -- five green runs of
-      # assert durations putting jellyfin slowest, and the image census (~661MB against
-      # plex's ~159MB) -- pointed the other way, but assert duration is censored for whichever
-      # of the two ran last and is exactly the metric this ordering pass replaces. Both steps
-      # carry the same 3m, so nothing rides on which of them is second.
+      # Was the inherited 60s default. jellyfin is asserted second-to-last: three readiness
+      # reports put it a few seconds ahead of plex (163/164/151 against 167/168/155), so it
+      # absorbs the gap here -- 10s measured -- and plex takes the last slot. The older
+      # evidence pointed the other way: five green runs of assert durations putting jellyfin
+      # slowest, and the image census (~661MB against plex's ~159MB). But assert duration is
+      # censored for whichever of the two ran last, and it is exactly the metric this ordering
+      # pass replaces. Both steps carry the same 3m, so nothing rides on which is second.
       timeout: 3m
   - podLogs:
       selector: app.kubernetes.io/name=jellyfin

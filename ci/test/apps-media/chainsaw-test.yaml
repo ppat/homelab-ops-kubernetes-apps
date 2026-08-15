@@ -51,8 +51,8 @@ spec:
   # collapsing from 90s to 1s is the direct confirmation that its old 45-51s was this suite's
   # convergence and not its own readiness.
   #
-  # jellyfin and plex are 4s apart and the gap is not resolvable, but its sign is: both
-  # readiness reports put jellyfin at 163/164 and plex at 167/168. They are ordered jellyfin
+  # jellyfin and plex are 4s apart and the gap is not resolvable, but its sign is: three
+  # readiness reports put jellyfin at 163/164/151 and plex at 167/168/155. They are ordered jellyfin
   # then plex to follow the only direct measurement available. The older evidence pointed the
   # other way -- five green runs of assert durations (jellyfin 95-124s, plex 84-121s) and the
   # image census (~661MB against ~159MB) -- but assert duration is the circular metric this

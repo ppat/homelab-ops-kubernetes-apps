@@ -96,14 +96,14 @@ spec:
   # assert absorbs the wait -- the ~300s of validate time is redistributed, not reduced.
   #
   # Readiness comes from this suite's own `Report readiness ordering` step, in seconds after
-  # the first pod in the cluster went Ready (T0), over two runs. The first validate step
-  # begins at T0+142 / T0+143:
+  # the first pod in the cluster went Ready (T0), over three runs. The first validate step
+  # begins at T0+142 / 143 / 156:
   #
-  #   the twelve mcp-* 164-205 / 167-206 . obsidian 275 / 237 . n8n-db-test 342 / 342 .
-  #   litellm-db-test 356 / 353 . n8n 353 / 369 . open-webui 388 / 384 . openclaw 407 / 400 .
-  #   litellm 443 / 440 (litellm-redis 193 / 190)
+  #   the twelve mcp-* 164-205 / 167-206 / 172-207 . obsidian 275 / 237 / 233 .
+  #   n8n-db-test 342 / 342 / 314 . litellm-db-test 356 / 353 / 323 . n8n 353 / 369 / 326 .
+  #   open-webui 388 / 384 / 343 . openclaw 407 / 400 / 356 . litellm 443 / 440 / 396
   #
-  # The two runs agree on every position except n8n against the two Clusters, which is the
+  # The three runs agree on every position except n8n against the two Clusters, which is the
   # one place this file makes an exception; see the tail comment below.
   #
   # What this replaces: `Validate open-webui` ran FIRST while being the second-slowest
@@ -254,7 +254,8 @@ spec:
   #    cannot be raised, on a suite that had no such exposure before the reorder. The prior
   #    step's own variance is what did it: obsidian was Ready at T0+237 on that run against
   #    T0+275 on the previous one, so the Cluster assert inherited 38s less head start than
-  #    predicted. Behind litellm the same assert returns in 0s with ~98s of margin.
+  #    predicted. Behind litellm the same assert measures 0s with 87s of margin, and the whole
+  #    n8n step measures 0s.
   #
   #    This does not weaken #3678 detection. A Cluster that never reconciles consumes the full
   #    180s from wherever the step starts, so the late slot preserves the whole budget for
