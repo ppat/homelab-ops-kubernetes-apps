@@ -192,6 +192,28 @@ spec:
   - podLogs:
       selector: app=longhorn-ui
       namespace: longhorn-system
+  # The CSI Deployments above are created by longhorn-driver-deployer only once
+  # longhorn-manager reports ready, so a csi-* assertion failing is very often a
+  # longhorn-manager crash wearing a downstream costume - see #3643, where three different
+  # CSI components failed interchangeably and the shared cause was
+  # `level=fatal Error starting manager: Operation cannot be fulfilled`.
+  #
+  # `podLogs` fetches the CURRENT container, which after a restart is the one that has not
+  # crashed yet, so the message that explains the failure is exactly the one the dump loses.
+  # This grabs the previous container's logs and the restart counts, which is what
+  # distinguishes "late" from "crash-looping" - the distinction that decides whether a
+  # budget is the right fix or a mask.
+  # yamllint disable rule:line-length
+  - script:
+      timeout: 1m
+      content: |
+        echo '--- longhorn-manager restarts + previous-container logs ---'
+        kubectl get pods -n longhorn-system -l app=longhorn-manager -o custom-columns=NAME:.metadata.name,READY:.status.containerStatuses[*].ready,RESTARTS:.status.containerStatuses[*].restartCount
+        for p in $(kubectl get pods -n longhorn-system -l app=longhorn-manager -o name); do
+        echo "=== $p (previous) ==="
+        kubectl logs -n longhorn-system "$p" -c longhorn-manager --previous --tail=50 2>&1 || true
+        done
+  # yamllint enable rule:line-length
   - events:
       namespace: longhorn-system
   - events:
