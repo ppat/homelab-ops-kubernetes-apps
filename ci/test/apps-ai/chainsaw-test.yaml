@@ -91,13 +91,15 @@ spec:
     - events:
         namespace: flux-system
 
+  # `Validate open-webui` stays first, and that is deliberate rather than inherited. Every
+  # step between it and `Validate litellm` completes in 0-1s, so moving it later would buy it
+  # a head start of essentially nothing, and the obvious swap is unsafe: promoting litellm
+  # promotes `cluster/litellm-db-test` with it, whose readiness is censored at a step that
+  # starts 218-275s after apply. Handing a 180s budget to a component whose readiness has
+  # never been observed is how a reorder invents a failure.
   - name: Validate open-webui
     use:
       template: ./validate-open-webui.yaml
-
-  - name: Validate litellm
-    use:
-      template: ./validate-litellm.yaml
 
   - name: Validate network policy
     use:
@@ -182,6 +184,22 @@ spec:
     use:
       template: ./validate-mcp-unifi-protect.yaml
 
+  # litellm moves from second to behind the whole mcp block. It is the slowest component this
+  # suite measures -- Ready 287/302/329s after the module is applied, against every mcp-*
+  # sidecar returning in 0-1s -- and it is gated on a Helm pre-install hook Job, a CNPG
+  # Cluster and a Dragonfly before its own pod can start. The byte census agrees: ~600MB, the
+  # heaviest step here after open-webui and openclaw.
+  #
+  # What this buys is head start for `cluster/litellm-db-test`, whose 3m budget is the one
+  # thing in this step that has never been observed waiting. What it costs is that fourteen
+  # mcp-* steps each start ~50-115s earlier; their readiness is censored, but every workload
+  # among them carries 5m and the rest are Services, ConfigMaps and NetworkPolicies that
+  # materialise with the Kustomization. It does not make the suite faster -- Flux starts
+  # every pod in parallel, so ordering only decides which assert absorbs the wait.
+  - name: Validate litellm
+    use:
+      template: ./validate-litellm.yaml
+
   - name: Validate n8n
     use:
       template: ./validate-n8n.yaml
@@ -209,3 +227,7 @@ spec:
   - name: Validate obsidian
     use:
       template: ./validate-obsidian.yaml
+
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml
