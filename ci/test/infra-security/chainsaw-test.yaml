@@ -47,6 +47,12 @@ spec:
     - events:
         namespace: flux-system
 
+  # Not reordered, and that is a decision. Measured readiness from module apply runs
+  # cert-manager 11-48s, external-secrets 92s, kyverno (all four controllers plus policy
+  # reporter) censored at <=122s, authentik 234s -- the suite is already ascending, and the
+  # slowest component is already validated last. What is wrong here is the budgets, not the
+  # sequence: three of the four steps carry an at-risk operation and every one of them is
+  # fixed in its own file.
   - name: Validate cert-manager
     use:
       template: ./validate-cert-manager.yaml
@@ -60,3 +66,10 @@ spec:
   - name: Validate authentik
     use:
       template: ./validate-authentik.yaml
+
+  # Asserts nothing; prints the readiness ordering the step order above is derived from.
+  # Everything between external-secrets and authentik currently returns in 0.1s, so its
+  # true readiness is censored and the ordering claim above rests on upper bounds.
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml
