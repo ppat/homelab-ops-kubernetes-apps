@@ -1,0 +1,111 @@
+---
+# yamllint disable rule:indentation
+#
+# Trims the `infra-security-core` PREREQUISITE down to the two components that the eleven
+# suites consuming it actually depend on: cert-manager and external-secrets. It is applied
+# only where security-core is a fixture; `ci/test/infra-security` tests the module itself
+# and deploys all of it.
+#
+# Why this is safe rather than merely convenient, per component:
+#
+# - kyverno. Kyverno only acts on resources through `Policy`/`ClusterPolicy` objects, and
+#   there are none anywhere in this repository -- every policy in this homelab lives in the
+#   sibling clusters repo under `policies/`, applied by cluster-level Flux Kustomizations
+#   (`policy-best-practices`, `policy-pod-security-standards`) that CI never deploys. So in
+#   CI kyverno runs with an empty policy set, and its `kyverno-resource-mutating-webhook-cfg`
+#   is generated with no rules -- it intercepts nothing. No suite outside `infra-security`
+#   asserts anything about kyverno either. What the eleven suites stop exercising is
+#   "kyverno installs cleanly alongside this module", which `infra-security` already covers
+#   as its own subject.
+#
+# - trust-manager. Provides the `Bundle` API. Exactly one assertion in the repo reads a
+#   Bundle (`infra-security/validate-external-secrets.yaml`, via
+#   `assertions/bundle-synced.yaml`), and it is in the suite that keeps trust-manager. The
+#   module's own `bitwarden-ca-cert` Bundle is still applied here and simply never syncs;
+#   nothing selects the ConfigMap it would target, because no test namespace carries the
+#   `bitwarden-secrets/enabled` label except `infra-security`'s.
+#
+# - policy-reporter. Already removed suite-by-suite before this file existed; it is folded
+#   in here so the set lives in one place. It only reports on kyverno policies, of which
+#   there are none.
+#
+# - the two kyverno HelmRepositories. Dead once the releases above are gone -- nothing else
+#   references them -- and each one otherwise costs source-controller an index fetch.
+#
+# What this is worth, so nobody inherits the wrong model: it does NOT speed up the fixture's
+# critical path. The hypothesis was that 225 MB and eight pods contend on a four-core runner
+# and delay cert-manager; measured across seven suites, cert-manager's last pod moves +0.4s
+# on average. Kyverno was running in parallel and costing the critical path nothing. What
+# does shrink, by 6-21s, is the `Reconcile pre-requisites` step in the five suites that wait
+# on more than one prerequisite HelmRelease; the four that wait only on external-secrets are
+# unchanged. That mechanism is unverified -- helm-controller worker contention is the
+# plausible candidate -- so do not cite this patch as image-pull relief.
+#
+# NOT trimmed, deliberately:
+#
+# - cert-manager stays everywhere: `external-secrets-release` declares it in `dependsOn`, so
+#   it is load-bearing even in a suite that creates no `Certificate` of its own.
+# - `bitwarden-sdk-server` stays. It is unused (every suite substitutes `secret_store: fake`,
+#   the ESO-native provider) but it is a subchart *inside* the external-secrets release, so
+#   removing it would mean rewriting that release's values rather than deleting a sibling,
+#   and the eleven suites wait on precisely that release. Measured, it is also not on the
+#   critical path: it goes Ready ~25s before the release's last pod does, so Amdahl puts its
+#   removal at roughly zero.
+- op: add
+  path: /spec/patches
+  value:
+  - patch: |-
+      $patch: delete
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: kyverno-release
+        namespace: kyverno
+    target:
+      kind: HelmRelease
+      name: kyverno-release
+      namespace: kyverno
+  - patch: |-
+      $patch: delete
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: kyverno-policy-reporter-release
+        namespace: kyverno
+    target:
+      kind: HelmRelease
+      name: kyverno-policy-reporter-release
+      namespace: kyverno
+  - patch: |-
+      $patch: delete
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: trust-manager-release
+        namespace: external-secrets
+    target:
+      kind: HelmRelease
+      name: trust-manager-release
+      namespace: external-secrets
+  - patch: |-
+      $patch: delete
+      apiVersion: source.toolkit.fluxcd.io/v1
+      kind: HelmRepository
+      metadata:
+        name: kyverno-repository
+        namespace: flux-system
+    target:
+      kind: HelmRepository
+      name: kyverno-repository
+      namespace: flux-system
+  - patch: |-
+      $patch: delete
+      apiVersion: source.toolkit.fluxcd.io/v1
+      kind: HelmRepository
+      metadata:
+        name: kyverno-policy-reporter-repository
+        namespace: flux-system
+    target:
+      kind: HelmRepository
+      name: kyverno-policy-reporter-repository
+      namespace: flux-system
