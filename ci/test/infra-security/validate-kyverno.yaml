@@ -25,6 +25,20 @@ spec:
   # one that expires, that structural argument is wrong and the budget belongs on the step
   # rather than on two of its assertions.
   #
+  # Half of that structural argument was then refuted by the first green run under this
+  # order, and the refutation is the reason both assertions carry a budget instead of one.
+  # The step measured 72s, of which **58s landed on the assertion below** and only 7s on
+  # policy-reporter. The four controllers are NOT all at the front of the window:
+  # kyverno-admission-controller runs three replicas and they do not converge together -
+  # 105s, 158s, 159s on that run, 102/144/149 on another - and this assertion waits for the
+  # Deployment to be Available, so it waits for the last of them. The back of the 104-175
+  # window is shared between that third replica and policy-reporter, and which of the two
+  # holds the wait varies run to run: the run before this one had all three replicas up and
+  # failed at policy-reporter instead.
+  #
+  # 58s against the 1m default this used to inherit is 0.97. Budgeting only the assertion
+  # the structural argument pointed at would have left that one red.
+  #
   # One gotcha, recorded because it will otherwise be blamed on the ordering. This step can
   # fail at deployment/policy-reporter with `actual resource not found` while every kyverno
   # controller above it is healthy, when kyverno-policy-reporter-release is left holding a

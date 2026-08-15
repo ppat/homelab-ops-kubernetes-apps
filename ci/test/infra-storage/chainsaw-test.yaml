@@ -101,8 +101,17 @@ spec:
   # it exposed is part of the change, not a follow-up.
   #
   # The garage/WaitForFirstConsumer caution is settled by observation rather than argument:
-  # the first pvc-bound assert measured 10s in its new front position, 0.08 of the 2m it now
-  # carries and comfortably inside even the 1m default it used to inherit.
+  # the first pvc-bound assert measured 10s and then 5s in its new front position, 0.08 and
+  # 0.04 of the 2m it now carries, and comfortably inside even the 1m default it inherited.
+  #
+  # Confirmed on a green run: garage 20s, minio 20s, csi-driver-nfs 0s, longhorn 85s, total
+  # 197s against a 268s run of the previous order. None of that 71s is this change - the
+  # prerequisite reconcile, which runs before the module exists and is upstream of everything
+  # here, differed by 74s on its own between those two runs. Ordering redistributes slack.
+  #
+  # And the readiness ordering itself has now replicated three times on three runners:
+  # garage 118/184/105, minio 132/200/120, csi-nfs-controller 139/208/126. The absolute
+  # numbers move by a factor of two between runs; the order does not move at all.
   - name: Validate garage
     use:
       template: ./validate-garage.yaml
