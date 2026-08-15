@@ -5,6 +5,16 @@ metadata:
   name: validate-flux
 spec:
   try:
+  # No first-position budget here, deliberately, against the rule applied to the other infra
+  # suites. Elsewhere the first validate step absorbs the module's initial convergence and
+  # is budgeted for that (25-57s). This one absorbs 2.0s, because the four Deployments it
+  # asserts are the Flux controllers installed by the `Bootstrap FluxCD` step at the top of
+  # the suite: they have been Ready since long before the module was applied, so there is no
+  # convergence for this position to absorb and nothing to size a number from.
+  #
+  # x3 on 2.0s is 6s, which is below every rung available; the shared 1m default is already
+  # 30x the observation. Writing 60s here for symmetry with the other suites would look
+  # measured and would be arbitrary.
   - description: Assert deployment/helm-controller
     assert:
       bindings:

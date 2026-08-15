@@ -5,6 +5,11 @@ metadata:
   name: validate-reloader
 spec:
   try:
+  # The only operation in this suite that waits for anything: 18.1/20.7/31.8s (min/med/max)
+  # across four green runs, against the inherited 1m default nobody chose -- 0.53 of it on
+  # the worst, i.e. 28s of absolute slack, about one image pull on a contended runner.
+  # 2m is the repo's sizing rule, three times the observed maximum, and costs nothing on a
+  # green run: a passing assert returns the moment its condition holds.
   - description: Assert deployment/stakater-reloader-reloader
     assert:
       bindings:
@@ -13,6 +18,7 @@ spec:
       - name: namespace
         value: stakater-reloader
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 2m
   - description: Assert helmrelease/reloader-release
     assert:
       bindings:
