@@ -1,0 +1,45 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pre-requisites-cnpg-operator
+  namespace: flux-system
+spec:
+  interval: 15m0s
+  # The component directory, not ./infrastructure/subsystems/database-core -- which would also
+  # bring the dragonfly operator. That one is measured Ready at T0+178s, among the last things
+  # to converge in any cluster it is installed into, and no suite that wants Postgres wants it.
+  # A suite that does want it composes ../dragonfly-operator/ alongside this.
+  path: ./infrastructure/subsystems/database-core/cloudnative-pg
+  prune: false
+  # Flux defaults retryInterval to `interval` when unset, so at 15m0s a single transient
+  # failure parks this object for longer than any suite runs. See ../README.md and #3685.
+  retryInterval: 1m0s
+  sourceRef:
+    kind: GitRepository
+    name: test-source
+    namespace: flux-system
+  timeout: 2m0s
+  # The consumer waits on helmrelease/cloudnative-pg-release with its own measured budget --
+  # see ../README.md, "Waiting".
+  wait: false
+  patches:
+  # The Barman Cloud plugin is a second capability -- backing a Cluster up to object storage --
+  # not part of "an operator that reconciles Cluster objects", and it is only reachable through
+  # the components/db-backups and components/db-restore overlays. The only suite that exercises
+  # those is infra-database, where database-core is the module under test and this fixture is
+  # not used. Removing it costs a consumer the barmancloud.cnpg.io CRDs and the plugin
+  # Deployment; see README.md.
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      $patch: delete
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: plugin-barman-cloud-release
+        namespace: cnpg-system
+    target:
+      group: helm.toolkit.fluxcd.io
+      kind: HelmRelease
+      name: plugin-barman-cloud-release
+      namespace: cnpg-system

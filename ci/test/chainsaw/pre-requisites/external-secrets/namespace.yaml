@@ -1,0 +1,12 @@
+---
+# security-core keeps its namespaces in the module root (security-core/namespace.yaml), not in
+# the component directory this fixture points at, so pointing at the component alone leaves
+# this namespace unowned. See ../README.md, "Namespaces".
+#
+# The module's own copy carries a `bitwarden-secrets/enabled: "true"` label, which exists
+# solely so trust-manager's Bundle distributes the Bitwarden CA into this namespace. Both the
+# Bundle and trust-manager are removed here, so the label would select nothing.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: external-secrets

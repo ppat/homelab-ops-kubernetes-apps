@@ -1,0 +1,25 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pre-requisites-dragonfly-operator
+  namespace: flux-system
+spec:
+  interval: 15m0s
+  # The component directory, not ./infrastructure/subsystems/database-core -- which would also
+  # bring CloudNativePG and the Barman Cloud plugin. A suite that wants both composes
+  # ../cnpg-operator/ alongside this.
+  path: ./infrastructure/subsystems/database-core/dragonfly
+  prune: false
+  # Flux defaults retryInterval to `interval` when unset, so at 15m0s a single transient
+  # failure parks this object for longer than any suite runs. See ../README.md and #3685.
+  retryInterval: 1m0s
+  sourceRef:
+    kind: GitRepository
+    name: test-source
+    namespace: flux-system
+  timeout: 2m0s
+  # The consumer waits on helmrelease/dragonfly-operator-release with its own measured budget
+  # -- see ../README.md, "Waiting". Budget this one generously: it is measured Ready at
+  # T0+178s, among the last things to converge in any cluster it is installed into.
+  wait: false

@@ -1,0 +1,8 @@
+---
+# storage-core keeps its namespaces in the module root (storage-core/namespace.yaml), not in
+# the component directory this fixture points at, so pointing at the component alone leaves
+# this namespace unowned. See ../README.md, "Namespaces".
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: garage

@@ -1,0 +1,32 @@
+---
+# Garage's Deployment references both claims by name (garage/deployment.yaml -- the module
+# deliberately never owns a PVC's lifecycle), so a pod scheduled before they exist stays
+# Pending with "persistentvolumeclaim ... not found". They live in the fixture rather than in
+# the consuming suite so that adopting it is still one line; the parent `pre-requisites`
+# Kustomization applies these in the same pass as the child Kustomization below, and a pod
+# that does hit the window recovers on its own once the claim appears.
+#
+# Names are fixed here rather than left to the consumer, and fed to the module through
+# garage_data_claim / garage_metadata_claim in garage.yaml. Sizes match the infra-storage
+# suite's own PVCs, which is the only place Garage has ever run in CI.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: garage-metadata
+  namespace: garage
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: garage-data
+  namespace: garage
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 200Mi

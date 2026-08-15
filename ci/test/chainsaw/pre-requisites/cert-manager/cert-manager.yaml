@@ -1,0 +1,23 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pre-requisites-cert-manager
+  namespace: flux-system
+spec:
+  interval: 15m0s
+  # The component directory, not ./infrastructure/subsystems/security-core -- which would also
+  # bring external-secrets, trust-manager, the Bitwarden certificate chain and kyverno.
+  path: ./infrastructure/subsystems/security-core/cert-manager
+  prune: false
+  # Flux defaults retryInterval to `interval` when unset, so at 15m0s a single transient
+  # failure parks this object for longer than any suite runs. See ../README.md and #3685.
+  retryInterval: 1m0s
+  sourceRef:
+    kind: GitRepository
+    name: test-source
+    namespace: flux-system
+  timeout: 2m0s
+  # The consumer waits on helmrelease/cert-manager-release with its own measured budget --
+  # see ../README.md, "Waiting".
+  wait: false

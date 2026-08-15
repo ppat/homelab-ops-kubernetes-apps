@@ -1,0 +1,90 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pre-requisites-garage
+  namespace: flux-system
+spec:
+  interval: 15m0s
+  # The component directory, not ./infrastructure/subsystems/storage-core -- which would also
+  # bring longhorn, csi-driver-nfs and minio.
+  path: ./infrastructure/subsystems/storage-core/garage
+  postBuild:
+    substitute:
+      # Consumed by conf.d/garage.toml's [s3_web] root_domain and by the two Ingress objects
+      # that survive the patches below.
+      domain_name: cluster.example.com
+      # Matches this estate's real production value (see conf.d/garage.toml's comment), not a
+      # synthetic CI-only value -- so a suite using this fixture exercises what a cluster will
+      # run. Load-bearing for any S3 client: Garage rejects a signature from a client
+      # configured with a different region outright, with no client-side recovery.
+      garage_s3_region: us-east-1
+      # The claims pvc.yaml creates. The module references both by name and never owns their
+      # lifecycle.
+      garage_data_claim: garage-data
+      garage_metadata_claim: garage-metadata
+  prune: false
+  # Flux defaults retryInterval to `interval` when unset, so at 15m0s a single transient
+  # failure parks this object for longer than any suite runs. See ../README.md and #3685.
+  retryInterval: 1m0s
+  sourceRef:
+    kind: GitRepository
+    name: test-source
+    namespace: flux-system
+  timeout: 2m0s
+  # The consumer waits on deployment/garage with its own budget -- see ../README.md,
+  # "Waiting". Budget it generously: Garage's readinessProbe is a cluster-health check and its
+  # startupProbe suppresses readiness until /health first returns 200, so the Deployment
+  # cannot report Available until Garage itself is up. infra-storage allows 5m.
+  wait: false
+  patches:
+  # certificate-web.yaml and ingress-web.yaml are the apex+wildcard web endpoint
+  # (garage-web.${domain_name} and *.garage-web.${domain_name}). They are the only two objects
+  # in this component that need cert-manager, which is the entire reason they go: a fixture
+  # that drags cert-manager in is not supplying one thing. The S3 API (ingress-s3.yaml) and
+  # the admin API (ingress-admin.yaml) both set `tls: []` and are kept.
+  #
+  # What a consumer loses: bucket-per-subdomain static web serving. See README.md.
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      $patch: delete
+      apiVersion: cert-manager.io/v1
+      kind: Certificate
+      metadata:
+        name: garage-web-tls-cert
+        namespace: garage
+    target:
+      group: cert-manager.io
+      kind: Certificate
+      name: garage-web-tls-cert
+      namespace: garage
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      $patch: delete
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: garage-web
+        namespace: garage
+    target:
+      group: networking.k8s.io
+      kind: Ingress
+      name: garage-web
+      namespace: garage
+  # Garage's credentials are supplied directly by garage-credentials.yaml in this fixture, so
+  # the module's ExternalSecret for them is removed. See that file for why this is scaffolding
+  # rather than a loss of coverage; it is the same trade ../minio/ makes, and it is what lets
+  # a suite use object storage without standing up external-secrets at all.
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      $patch: delete
+      apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      metadata:
+        name: garage-credentials
+        namespace: garage
+    target:
+      group: external-secrets.io
+      kind: ExternalSecret
+      name: garage-credentials
+      namespace: garage
