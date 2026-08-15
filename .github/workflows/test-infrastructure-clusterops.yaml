@@ -11,6 +11,7 @@ on:
     - 'ci/test/chainsaw/**'
     - 'infrastructure/subsystems/clusterops-core/**'
     - '!infrastructure/subsystems/clusterops-core/**.md'
+    - '!ci/test/chainsaw/**.md'
   workflow_dispatch:
 
 concurrency:

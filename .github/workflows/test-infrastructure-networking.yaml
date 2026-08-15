@@ -13,6 +13,7 @@ on:
     - 'infrastructure/subsystems/networking-extra/**'
     - '!infrastructure/subsystems/networking-core/**.md'
     - '!infrastructure/subsystems/networking-extra/**.md'
+    - '!ci/test/chainsaw/**.md'
   workflow_dispatch:
 
 concurrency:
