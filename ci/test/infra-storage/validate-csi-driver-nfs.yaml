@@ -5,6 +5,10 @@ metadata:
   name: validate-csi-driver-nfs
 spec:
   try:
+  # A five-container pod on the inherited 1m default: 17.8/32.6/34.1s (min/med/max) over
+  # five green runs, 0.57 of the budget on the worst. It has already been observed expiring
+  # at 60s of 60s with the Deployment created only 5s before its own window opened. 2m is
+  # the sizing rule against the 34.1s maximum.
   - description: Assert deployment/csi-nfs-controller
     assert:
       bindings:
@@ -13,6 +17,7 @@ spec:
       - name: namespace
         value: csi-driver-nfs
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 2m
   - description: Assert daemonset/csi-nfs-node
     assert:
       bindings:

@@ -21,6 +21,14 @@ spec:
       - name: namespace
         value: authentik
       file: ../chainsaw/assertions/certificate-ready.yaml
+  # This 2m is deliberately not raised, despite being the single most frequent failure in
+  # this suite (9 of 11 real failures, each expiring at exactly its declared value with
+  # `Instances: 2, Ready Instances: 1` -- the second replica never joining). The experiment
+  # has already been run: on `fix/cert-manager-traefik-extraobjects` the value was walked
+  # 2m -> 3m -> 4m across three consecutive runs and failed at every one of them. A budget
+  # that has been tripled without passing is not an under-sized budget, and raising it
+  # again would convert a fast, loud failure into a slow one while removing the pressure to
+  # find what is actually stopping the second instance.
   - description: Assert cluster.postgresql.cnpg.io/authentik-db
     assert:
       bindings:
@@ -30,6 +38,13 @@ spec:
         value: authentik
       file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
       timeout: 2m
+  # Highest-variance workload measured anywhere in this repo, and the variance is in
+  # *creation*, not startup: across ten failure dumps the authentik Deployments first exist
+  # anywhere between t+4s and t+317s after the module is applied, a 313-second spread. The
+  # green assert durations (97.0/102.5/112.4s against the old 3m) only sample the runs where
+  # it was created early, so they understate what this has to survive rather than bound it.
+  # 6m is the sizing rule against the 112.4s green maximum; the creation spread is the
+  # reason not to shave it back toward the median.
   - description: Assert deployment/authentik-server
     assert:
       bindings:
@@ -38,7 +53,7 @@ spec:
       - name: namespace
         value: authentik
       file: ../chainsaw/assertions/deployment-ready.yaml
-      timeout: 3m
+      timeout: 6m
   - description: Assert deployment/authentik-worker
     assert:
       bindings:

@@ -33,3 +33,7 @@ jobs:
       test_path: ./ci/test/infra-storage
       chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
       kind_config: .github/kind-cluster-multi-node.yaml
+      # See the note in test-infrastructure-security.yaml. Here it is the external-secrets
+      # reconcile (3m -> 5m) and csi-attacher (1m -> 3m), either of which puts a failing run
+      # within about three quarters of the old 15m default once the catch block has run.
+      timeout: 25
