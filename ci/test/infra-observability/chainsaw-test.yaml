@@ -145,10 +145,21 @@ spec:
   # module's initial convergence, and its budget is sized for that rather than for its own
   # component (see validate-goldilocks.yaml).
   #
-  # Two swaps came out of this data, each worth ~13s of head start to the step it demotes:
-  # unpoller (191) ahead of syslog (204), and blackbox (220) ahead of snmp (233). Both had
-  # been the other way round. node-problem-detector and syslog are NOT swapped -- 196-206
-  # straddles 204, so the data does not separate them and the existing order stands.
+  # Two swaps came out of this data: unpoller (191) ahead of syslog (204), and blackbox (220)
+  # ahead of snmp (233). Both had been the other way round. node-problem-detector and syslog
+  # are NOT swapped -- 196-206 straddles 204, so the data does not separate them and the
+  # existing order stands.
+  #
+  # They are not worth the same, and a second run says so. The unpoller/syslog gap replicates
+  # exactly - 191/204 in the run above, 134/147 in another - 13s both times. The snmp/blackbox
+  # gap does not: the second run has snmp 163 and blackbox 164, one second apart and in the
+  # opposite order. Those two components are effectively tied and the order between them is
+  # noise. It is kept because ascending-by-measurement is the rule and it costs nothing, but
+  # it should not be defended as a saving if someone reverts it later.
+  #
+  # And it is not a saving. Measured across the swap: SNMP 11s + blackbox 0s before, blackbox
+  # 7s + SNMP 3s after. The pair's total is invariant, as it must be - what changes is which
+  # step holds the wait, not how long the suite spends waiting.
   #
   # Note grafana's position, because the first cut of this ordering got it wrong. Derived
   # from object CREATION times in failure dumps, grafana looked like a T0+1..8s component

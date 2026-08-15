@@ -25,6 +25,18 @@ spec:
   # one that expires, that structural argument is wrong and the budget belongs on the step
   # rather than on two of its assertions.
   #
+  # One gotcha, recorded because it will otherwise be blamed on the ordering. This step can
+  # fail at deployment/policy-reporter with `actual resource not found` while every kyverno
+  # controller above it is healthy, when kyverno-policy-reporter-release is left holding a
+  # stale `dependency 'kyverno/kyverno-release' is not ready` - the dependency was evaluated
+  # before kyverno-release went Ready and had not been re-evaluated by the end of the suite.
+  # It is not caused by validating kyverno early: on the run where it was first seen,
+  # external-secrets-release was stalled the same way on cert-manager-release, with no
+  # external-secrets Deployments in the cluster at all, so the previous ordering would have
+  # failed one step sooner on the same cluster. `flux get all -A` in the catch dump is what
+  # distinguishes the two - a release reading Ready=False with a DependencyNotReady message
+  # against a dependency that is plainly Ready is this, not a budget and not an order.
+  #
   # Kyverno Resources
   - description: Assert deployment/kyverno-admission-controller
     assert:

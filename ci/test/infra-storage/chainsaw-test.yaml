@@ -87,6 +87,22 @@ spec:
   # What this does NOT do is make the suite faster. Ordering redistributes slack; it does
   # not create it. The claim is that csi-nfs-controller's assert measures less against its
   # budget, and that garage's and minio's measure more.
+  #
+  # Measured on the first run carrying this order, against a run of the previous order ten
+  # minutes earlier on the same runner pool:
+  #
+  #   csi-driver-nfs  39s -> 0s        garage  7s -> 24s        minio  1s -> 26s
+  #   longhorn  72s -> unchanged
+  #
+  # csi-nfs-controller now returns immediately: the whole point, and a larger effect than
+  # the ~21s predicted. Both displaced steps absorbed it rather than one, and the reorder
+  # exposed one budget on the way, minio's aggregate HelmRelease assert - 21s of the 26s -
+  # which is now sized (see validate-minio.yaml). Reordering moves pressure; checking what
+  # it exposed is part of the change, not a follow-up.
+  #
+  # The garage/WaitForFirstConsumer caution is settled by observation rather than argument:
+  # the first pvc-bound assert measured 10s in its new front position, 0.08 of the 2m it now
+  # carries and comfortably inside even the 1m default it used to inherit.
   - name: Validate garage
     use:
       template: ./validate-garage.yaml
