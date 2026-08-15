@@ -10,6 +10,7 @@ spec:
   postBuild:
     substitute:
       secret_store: fake
+      cert_issuer: selfsigned-issuer
       dns_zone: example.com
       domain_name: cluster.example.com
       minio_admin_username_key: minio_admin_username
