@@ -239,7 +239,7 @@ spec:
   #    green and three runs censored at the old 300s budget. The high-variance component goes
   #    where the whole suite's elapsed time is already working for it. Measured over two runs
   #    this costs nothing -- open-webui's whole step returns in 0s from a T0+440 start, where
-  #    strict-mean order leaves it waiting ~35s -- and openclaw pays 30-163s of a 6m budget.
+  #    strict-mean order leaves it waiting ~35s -- and openclaw pays 30-123s of a 6m budget.
   #    Alternative (strict mean order): ... -> open-webui -> openclaw -> litellm. It is the
   #    better order only if open-webui's pull turns out to be stable.
   #
