@@ -19,16 +19,29 @@ spec:
 
   - name: Reconcile pre-requisites
     try:
+    # 2m -> 5m. This same reconcile is the single most exposed operation in the apps scope:
+    # five suites run it identically at 2m and all five sit at 0.74-0.97 of it (here:
+    # 79/80/84/88/89s over 5 green runs). The control is apps-ai, which runs the identical
+    # script at 4m and has been observed taking 154s -- 128% of what this budget allows. The
+    # distribution is also bimodal (a warm cluster and a cold one), so a 5-run maximum says
+    # very little about the upper mode's tail. Note the failure shape: flux-reconcile.sh
+    # passes this same duration to `flux reconcile --timeout`, so blowing it surfaces as a
+    # script exit 1 from flux, not as a chainsaw assert timeout.
     - description: Reconcile helmrelease/external-secrets-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
-        timeout: 2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=5m
+        timeout: 5m
+    # 2m -> 5m. Green runs show this taking 2s, which measures nothing: it is the warm path,
+    # where the release was already reconciled by the pre-requisites Kustomization. The cold
+    # path is what the budget has to survive, and it has been observed at 96-102s on passing
+    # runs and killed 8 apps-downloaders runs at exactly 120-121s. The operation is textually
+    # identical in all four suites that run it, so the evidence transfers.
     - description: Reconcile helmrelease/cloudnative-pg-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=2m
-        timeout: 2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=5m
+        timeout: 5m
 
   - name: Apply apps-home-automation modules
     try:
@@ -39,7 +52,7 @@ spec:
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
-        name: infra-database-core
+        name: pre-requisites-cnpg-operator
         namespace: flux-system
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -60,9 +73,44 @@ spec:
           value: home-automation
         file: ../chainsaw/assertions/externalsecret-ready.yaml
 
+  # Validate steps are ordered ascending by measured pod readiness. Flux creates every
+  # workload here within 1-2s of the module being applied and they converge in parallel, so
+  # this changes which assert absorbs the wait, not how long the suite takes: the four
+  # validate steps summed to 78s before and are predicted to sum to 79s after.
+  #
+  # Readiness from this suite's own `Report readiness ordering` step, in seconds after the
+  # first pod in the cluster went Ready (T0), with the first validate step beginning at T0+131:
+  #
+  #   nanomq 142 . wyoming-whisper 176 . wyoming-piper 187 . home-automation-db-test 207 .
+  #   home-assistant 210
+  #
+  # `Validate piper + whisper` moves ahead of `Validate database`, which is the one change
+  # here. Their readiness was censored when this order was last set and the CNPG Cluster was
+  # assumed faster; measured, both are Ready ~20-30s before it. Neither wyoming Deployment has
+  # any secret, config or service reference to the database (they are wyoming voice services
+  # with no env or volume references at all), so nothing is asserted before something it
+  # depends on. Measured after the reorder: nanomq 11s, piper + whisper 42s, database 33s,
+  # home-assistant 1s -- the Cluster assert down from 0.36 of its 180s to 0.18. The second
+  # report also puts home-assistant (T0+198) ahead of the Cluster (T0+219), inverted from the
+  # first; it stays last anyway, because it is the one workload here that consumes the
+  # database and the dependency is the primary key.
+  #
+  # The CNPG Cluster's 3m budget is untouched, and moving it later is not an attempt to
+  # relieve it: its failures in this suite are the operator never acting at all -- empty
+  # `Status:`, `Events: <none>`, no instance pod after the full budget
+  # (ppat/homelab-ops-kubernetes-apps#3678) -- and no head start fixes inaction. What the move
+  # does do is take its measured consumption from 64s to 33s of 180s, which is worth stating
+  # plainly as a side effect rather than as the reason.
+  #
+  # home-assistant stays last on both keys. It is the slowest measured (T0+210) and it is the
+  # one workload here that consumes the database, so it must not be promoted past it.
   - name: Validate nanomq
     use:
       template: ./validate-nanomq.yaml
+
+  - name: Validate piper + whisper
+    use:
+      template: ./validate-piper-whisper.yaml
 
   - name: Validate database
     use:
@@ -72,6 +120,6 @@ spec:
     use:
       template: ./validate-home-assistant.yaml
 
-  - name: Validate piper + whisper
+  - name: Report readiness ordering
     use:
-      template: ./validate-piper-whisper.yaml
+      template: ../chainsaw/steps/report-readiness.yaml
