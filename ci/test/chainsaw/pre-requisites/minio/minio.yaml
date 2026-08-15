@@ -1,0 +1,94 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pre-requisites-minio
+  namespace: flux-system
+spec:
+  interval: 15m0s
+  # The component directory, not ./infrastructure/subsystems/storage-core -- which would also
+  # bring longhorn, csi-driver-nfs and garage.
+  path: ./infrastructure/subsystems/storage-core/minio
+  postBuild:
+    substitute:
+      # The only variable the built output still references, from the chart's two Ingress
+      # hostnames. The module's `secret_store` / `minio_admin_*_key` variables belong to the
+      # ExternalSecret the first patch below removes, and go with it.
+      domain_name: cluster.example.com
+  prune: false
+  # Flux defaults retryInterval to `interval` when unset, so with `interval: 15m0s` a single
+  # health-check overshoot below would park this Kustomization in a failed state for a quarter
+  # of an hour -- far longer than the suite that depends on it runs. Confirmed against the
+  # v2.9.4 CRD schema, and corroborated in run logs: after the health check expired, this
+  # object was still reporting False 3m32s after its own HelmRelease had gone Ready, with no
+  # retry in between.
+  retryInterval: 1m0s
+  sourceRef:
+    kind: GitRepository
+    name: test-source
+    namespace: flux-system
+  # Health-check budget (`wait: true` below). Was 2m0s; measured 28.1/82.1/94.1s on green
+  # runs, i.e. 78% consumed on a bad-but-passing day -- and those are WARM re-reconciles,
+  # so the cold path this has to survive is not even in the sample.
+  timeout: 4m0s
+  # The one fixture here that waits, because a consumer may wait on this Kustomization rather
+  # than on the HelmRelease inside it (infra-database does exactly that). The budget above is
+  # measured; see ../README.md, "Waiting", for why the other five do not carry one.
+  wait: true
+  patches:
+  # minio's admin credential is supplied directly by minio-admin-credentials.yaml in this
+  # fixture, so the module's ExternalSecret for it is removed. See that file for why this
+  # is scaffolding rather than a loss of coverage: it decouples minio's install from
+  # external-secrets becoming ready, which was gating it by roughly two minutes.
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      $patch: delete
+      apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      metadata:
+        name: minio-admin-credentials
+        namespace: minio
+    target:
+      group: external-secrets.io
+      kind: ExternalSecret
+      name: minio-admin-credentials
+      namespace: minio
+  # The minio 5.4.0 chart defaults persistence.size to 500Gi (checked, not assumed). Nothing
+  # using minio as scaffolding stores more than a few objects. kind's local-path provisioner
+  # ignores the requested capacity, so this is not what makes the PVC bind -- it is what stops
+  # the fixture from making a claim no real storage class would satisfy.
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: minio-release
+        namespace: minio
+      spec:
+        values:
+          persistence:
+            enabled: true
+            size: 1Gi
+    target:
+      group: helm.toolkit.fluxcd.io
+      kind: HelmRelease
+      name: minio-release
+      namespace: minio
+  # storage-core's own Prometheus scrape configuration for minio. A `Probe` does nothing
+  # unless a Prometheus instance is selecting it, and a suite using minio as scaffolding is
+  # not monitoring minio -- in infra-observability, where a Prometheus *is* present, it would
+  # add a scrape target for a component that is not the subject of the test. Carried across
+  # from the per-suite fixtures this replaces (#1476), where the deletion is recorded without
+  # a reason; the above is why it is kept, not why it was first written.
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      $patch: delete
+      apiVersion: monitoring.coreos.com/v1
+      kind: Probe
+      metadata:
+        name: irrelevant
+        namespace: minio
+    target:
+      group: monitoring.coreos.com
+      kind: Probe
+      namespace: minio
