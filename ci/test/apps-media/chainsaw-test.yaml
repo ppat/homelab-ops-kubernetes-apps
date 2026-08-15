@@ -31,29 +31,35 @@ spec:
     - events:
         namespace: flux-system
 
-  # Validate steps are ordered ascending by measured readiness. Flux creates all five
-  # Deployments within ~1s of the module being applied and they converge in parallel, so
-  # this changes only which assert absorbs the wait -- not how long the suite takes.
+  # Validate steps are ordered ascending by measured pod readiness. Flux creates all five
+  # Deployments within ~1s of the module being applied and they converge in parallel, so this
+  # changes only which assert absorbs the wait -- not how long the suite takes. The five
+  # validate steps summed to 118s before this reorder and are predicted to sum to 117s after.
   #
-  # Readiness, in seconds after the module is applied, measured as (assert DONE - apply
-  # DONE) over 5 green runs: agregarr 45-51 . freetube 53-86 . tautulli censored at <=84-122
-  # . plex 84-121 . jellyfin 95-124. These are readiness, not object creation: every one of
-  # them except tautulli had to wait, so the assert's own completion is the moment the
-  # component became Ready.
+  # Readiness now comes from this suite's own `Report readiness ordering` step rather than
+  # from assert durations, in seconds after the first pod in the cluster went Ready (T0), with
+  # the first validate step beginning at T0+50:
   #
-  # Only tautulli's is censored -- it returned in 0s every time, so all that is proven is
-  # "ready by then". It is also the smallest image in the suite (~72MB) so both sources
-  # agree it is fast, which is why it is the one step promoted here. plex moves behind it.
+  #   freetube 105 . tautulli 135 . agregarr 140 . jellyfin 163 . plex 167
   #
-  # Note the byte census does NOT predict this order: freetube (~976MB) and agregarr
-  # (~670MB) are the two heaviest images yet become Ready first, because all five pods pull
-  # concurrently from t+1s and what plex and jellyfin wait on is their own boot. Where
-  # readiness is directly measured it outranks the pull-cost prediction; the census only
-  # gets the last word on components whose readiness is censored.
-  - name: Validate agregarr
-    use:
-      template: ./validate-agregarr.yaml
-
+  # This corrects the previous order, which was derived from assert durations and was
+  # circular: agregarr appeared to be the first component Ready because it ran first and
+  # absorbed everyone's convergence (90s), and tautulli appeared instant because it did not.
+  # Measured, agregarr is third and freetube -- which had looked free at 0s -- is first, so it
+  # takes the head of the suite and the 55s of module convergence that goes with it. Predicted
+  # per-step: freetube 55s, tautulli 30s, agregarr 5s, plex 27s, jellyfin 0s. If agregarr does
+  # not collapse to a few seconds in its new slot, its readiness is not what the report says.
+  #
+  # jellyfin and plex are NOT reordered against each other. They are 4s apart in one report,
+  # which is inside the run-to-run noise this instrument can resolve; five earlier green runs
+  # put jellyfin last (95-124s against plex's 84-121s) and the image census agrees (~661MB
+  # against ~159MB). One 4s inversion does not outweigh that, so the tie is broken by the
+  # older, larger sample and the order stands.
+  #
+  # The byte census does not predict this order at all: freetube (~976MB) and agregarr
+  # (~670MB) are the two heaviest images and are Ready first and third, because all five pods
+  # pull concurrently from t+1s and what plex and jellyfin wait on is their own boot. Where
+  # readiness is directly measured it outranks the pull-cost prediction.
   - name: Validate freetube
     use:
       template: ./validate-freetube.yaml
@@ -61,6 +67,10 @@ spec:
   - name: Validate tautulli
     use:
       template: ./validate-tautulli.yaml
+
+  - name: Validate agregarr
+    use:
+      template: ./validate-agregarr.yaml
 
   - name: Validate plex
     use:

@@ -13,12 +13,10 @@ spec:
       - name: namespace
         value: media
       file: ../chainsaw/assertions/deployment-ready.yaml
-      # Was the inherited 60s default. tautulli is the one component in this suite whose
-      # readiness is censored -- its assert returned in 0s on all 5 green runs, which proves
-      # only that it was ready by the ~84-122s at which its step started, not when. It moves
-      # one place earlier in this suite's reorder, so it loses that head start and may now be
-      # the step that waits. Promoting a censored component onto a budget nobody chose is how
-      # a reorder turns into a flake; 3m covers it even asserted at t+0.
+      # tautulli's readiness used to be censored -- its assert returned in 0s on all 5 green
+      # runs, proving only "ready by then". The readiness report measures it directly at
+      # T0+135, second in the suite behind freetube, so it moves to second and is predicted to
+      # wait ~30s. 3m, as for every workload here.
       timeout: 3m
   catch:
   - describe:
