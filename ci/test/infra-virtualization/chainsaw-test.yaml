@@ -70,3 +70,14 @@ spec:
   - name: Validate test-vmi-cirros
     use:
       template: ./validate-test-vmi-cirros.yaml
+
+  # Asserts nothing; prints the readiness ordering of everything this suite started. Note
+  # that the steps above are NOT ordered by measured readiness and must not be: they are a
+  # lifecycle sequence -- label the node, apply, reconcile, wait for the operator, then boot
+  # a VM on what it produced. virt-api/virt-controller/virt-handler returning in 0.1s is
+  # genuine dependency gating, not parallel startup, so promoting them would make them slow.
+  # This suite has no failed runs in the last 100, so this is the only way it will ever
+  # report what it did.
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml

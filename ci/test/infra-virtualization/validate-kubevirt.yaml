@@ -18,7 +18,22 @@ spec:
       # virt-operator only creates virt-api/virt-controller/virt-handler once it has
       # reconciled the KubeVirt CR, which itself has to wait on its own CRD (shipped in
       # the same manifest) becoming Established -- longer than the default 1m.
+      #
+      # This is also the suite's first-position budget, the one that absorbs the module's
+      # initial convergence rather than its own component's startup, and it is already sized
+      # from that: the 104-128s measured here is the absorption. No change.
       timeout: 5m
+  # The three assertions below run on the shared 1m default rather than a budget of their
+  # own. `phase: Deployed` above is virt-operator's own statement that it has finished
+  # rolling these three out, so by the time chainsaw reaches them they necessarily exist and
+  # are available -- measured at 0.1-0.2s on every green run, after the assert above has
+  # already spent 104-128s. They each used to declare 3m, which is 1800x the worst thing
+  # ever observed: a budget nothing can approach says nothing about what the step should
+  # cost and cannot detect it regressing.
+  #
+  # They are still asserted, and deliberately so. Helm and operator "deployed" conditions
+  # check `numberReady`, while the shared assertions here also require `numberAvailable`,
+  # which the workload controllers set on a later resync.
   - description: Assert deployment/virt-api
     assert:
       bindings:
@@ -27,7 +42,6 @@ spec:
       - name: namespace
         value: kubevirt
       file: ../chainsaw/assertions/deployment-ready.yaml
-      timeout: 3m
   - description: Assert deployment/virt-controller
     assert:
       bindings:
@@ -36,7 +50,6 @@ spec:
       - name: namespace
         value: kubevirt
       file: ../chainsaw/assertions/deployment-ready.yaml
-      timeout: 3m
   - description: Assert daemonset/virt-handler
     assert:
       bindings:
@@ -45,7 +58,6 @@ spec:
       - name: namespace
         value: kubevirt
       file: ../chainsaw/assertions/daemonset-ready.yaml
-      timeout: 3m
   catch:
   - describe:
       apiVersion: kubevirt.io/v1
