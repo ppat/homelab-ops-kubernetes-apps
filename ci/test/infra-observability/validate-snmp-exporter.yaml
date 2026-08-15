@@ -5,6 +5,12 @@ metadata:
   name: validate-snmp-exporter
 spec:
   try:
+  # 2m rather than the inherited 60s, and the reason is a consequence of the reordering
+  # rather than of anything about snmp-exporter: whichever step runs early now absorbs the
+  # module's initial convergence, which the front-most step used to absorb on everyone
+  # else's behalf. Measured at 1s and 31s across the two runs since the reorder -- the 31s
+  # is 0.52 of the old default, on the slower of the two. Cheap to hold, and the step is
+  # early precisely because it is not expected to be the one waiting.
   - description: Assert deployment/prometheus-snmp-exporter
     assert:
       bindings:
@@ -13,6 +19,7 @@ spec:
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 2m
   - description: Assert helmrelease/prometheus-snmp-exporter-release
     assert:
       bindings:
