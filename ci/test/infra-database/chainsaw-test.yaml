@@ -29,11 +29,15 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
         timeout: 2m
+    # Waits on the minio Kustomization's own health check, whose budget lives in
+    # pre-requisites/minio.yaml and is now 4m; this has to exceed it, or the script gives up
+    # first and reports a deadline instead of the health-check failure that explains it.
+    # Measured 28.1/82.1/94.1s green against the previous 3m.
     - description: Reconcile kustomization/minio
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=minio --namespace=flux-system --timeout=3m
-        timeout: 3m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=minio --namespace=flux-system --timeout=5m
+        timeout: 5m
 
   - name: Apply infra-database modules
     try:

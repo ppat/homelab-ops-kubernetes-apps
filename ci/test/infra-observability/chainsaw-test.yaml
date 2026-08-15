@@ -19,16 +19,25 @@ spec:
 
   - name: Reconcile pre-requisites
     try:
+    # These two reconciles are a causal chain, not two independent waits: minio's
+    # HelmRelease resolves its admin credentials through an ExternalSecret, so it cannot
+    # complete until external-secrets is serving. minio's budget therefore has to absorb
+    # external-secrets' variance on top of its own, which is why it is the larger of the
+    # two despite minio being much the smaller install.
     - description: Reconcile helmrelease/external-secrets-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=3m
-        timeout: 3m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=5m
+        timeout: 5m
+    # Was 2m, and expired at exactly 120.0s on 4 of the 6 re-run-proven flakes in this
+    # suite -- the single largest failure bucket here. Green observations run 54.3-86.1s,
+    # so a good day already consumed 72% of it. Note this step is upstream of every module,
+    # so no amount of validate-step reordering can buy it headroom; only the number can.
     - description: Reconcile helmrelease/minio-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=minio-release --namespace=minio --timeout=2m
-        timeout: 2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=minio-release --namespace=minio --timeout=4m
+        timeout: 4m
 
   # Applied before the modules rather than after, for two reasons: it costs the suite
   # nothing (the fixture is Ready long before Loki is), and it means the fixture has
@@ -83,9 +92,41 @@ spec:
     - events:
         namespace: flux-system
 
-  - name: Validate Prometheus
+  # Validation order below is measured, not arbitrary: ascending by when each component
+  # actually became ready, taken from the `kubectl get` dumps of failed runs (creation
+  # offsets from module apply, across five dumps). Flux applies the whole module at once
+  # and every pod starts in parallel, but chainsaw asserts sequentially -- so a step's
+  # budget only starts counting when chainsaw reaches it, and a late-validated component
+  # has already spent most of its startup before its own clock starts. Asserting the
+  # slowest thing first, as this suite used to, is the one arrangement that guarantees the
+  # slowest component the least time.
+  #
+  # Measured tiers: syslog-ng / unifi-poller / node-problem-detector / grafana / goldilocks
+  # at T0+1..8s; loki at T0+6..11s; snmp + blackbox at T0+15..43s; alloy at T0+10..171s;
+  # kube-prometheus-stack at T0+52..>120s.
+  #
+  # Be careful what this is worth. In THIS suite the reordering is worth only ~18-30s,
+  # because the twenty non-Prometheus validate steps take about 18s combined -- it is a
+  # supplement to the budgets in validate-prometheus.yaml and validate-alloy.yaml, not a
+  # substitute for them. Reordering pays where several steps are slow; here one dominates.
+  #
+  # The tail of this list is constrained and must stay put: the Loki/Prometheus query steps
+  # further down read from Prometheus and Loki, so those two have to be validated first.
+  - name: Validate goldilocks
     use:
-      template: ./validate-prometheus.yaml
+      template: ./validate-goldilocks.yaml
+
+  - name: Validate Syslog-NG
+    use:
+      template: ./validate-syslog-ng.yaml
+
+  - name: Validate UniFi Poller
+    use:
+      template: ./validate-unifi-poller.yaml
+
+  - name: Validate Node Problem Detector
+    use:
+      template: ./validate-node-problem-detector.yaml
 
   - name: Validate Grafana
     use:
@@ -115,14 +156,6 @@ spec:
         name: loki-release
         namespace: logging
 
-  - name: Validate goldilocks
-    use:
-      template: ./validate-goldilocks.yaml
-
-  - name: Validate Alloy
-    use:
-      template: ./validate-alloy.yaml
-
   - name: Validate SNMP Exporter
     use:
       template: ./validate-snmp-exporter.yaml
@@ -131,17 +164,16 @@ spec:
     use:
       template: ./validate-blackbox-exporter.yaml
 
-  - name: Validate UniFi Poller
+  # Last two, and in this order, because they are the two slowest and they swap places
+  # between runs: alloy was ready before kube-prometheus-stack in some dumps and 50s after
+  # it in others. Whichever loses the race needs the larger budget, so both carry one.
+  - name: Validate Alloy
     use:
-      template: ./validate-unifi-poller.yaml
+      template: ./validate-alloy.yaml
 
-  - name: Validate Node Problem Detector
+  - name: Validate Prometheus
     use:
-      template: ./validate-node-problem-detector.yaml
-
-  - name: Validate Syslog-NG
-    use:
-      template: ./validate-syslog-ng.yaml
+      template: ./validate-prometheus.yaml
 
   # The first assertion in this repo that looks at a pipeline's OUTPUT rather than at
   # resource status. Everything above proves Alloy and Loki are running; only this
@@ -301,3 +333,9 @@ spec:
           value: 'loki_ruler_canary:log_lines:count1m{namespace="logging"}'
         - name: prometheus_diagnostic_match
           value: '{__name__=~"loki_ruler.*"}'
+
+  # Asserts nothing; prints the readiness ordering this suite's step order is derived from,
+  # so the next person to tune it has current data instead of an archaeology exercise.
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml
