@@ -21,3 +21,17 @@ spec:
       content: |
         echo '--- pod Ready transitions, ascending (offsets relative to first pod ready) ---'
         kubectl get pods -A -o go-template='{{range .items}}{{$p := printf "%s/%s" .metadata.namespace .metadata.name}}{{range .status.conditions}}{{if eq .type "Ready"}}{{printf "%s %s %s\n" .lastTransitionTime .status $p}}{{end}}{{end}}{{end}}' | sort | awk '{ cmd = "date -d " $1 " +%s"; cmd | getline t; close(cmd); if (base == "") base = t; printf "T0+%-6d %-8s %s\n", t - base, $2, $3 }'
+  # Restarts on a run that PASSED. A container that crashes and recovers inside its
+  # assertion's budget is invisible everywhere else: the catch block never fires, and the
+  # assertion itself only reports the end state. That is the exact blind spot created by
+  # sizing a budget to ride out a known crash-restart cycle - see infra-storage's
+  # longhorn-manager, which converges only after 2-4 restarts (#3643). Tolerating something
+  # is defensible; tolerating it silently is not, so a green run says so out loud.
+  #
+  # Prints nothing when nothing restarted, which is the common case.
+  - description: Report container restarts
+    script:
+      timeout: 1m
+      content: |
+        echo '--- container restarts on a passing run (empty = none) ---'
+        kubectl get pods -A -o go-template='{{range .items}}{{$p := printf "%s/%s" .metadata.namespace .metadata.name}}{{range .status.containerStatuses}}{{if gt .restartCount 0}}{{printf "%-6d %s [%s]\n" .restartCount $p .name}}{{end}}{{end}}{{end}}' | sort -rn
