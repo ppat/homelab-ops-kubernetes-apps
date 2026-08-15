@@ -28,7 +28,7 @@ spec:
     # all. Note the failure shape: flux-reconcile.sh passes this same duration to `flux
     # reconcile --timeout`, so blowing it surfaces as a script exit 1 from flux, not as a
     # chainsaw assert timeout.
-    - description: Reconcile helmrelease/infra-security-core
+    - description: Reconcile helmrelease/external-secrets-release
       script:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=5m
