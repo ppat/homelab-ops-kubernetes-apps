@@ -13,6 +13,10 @@ spec:
       - name: namespace
         value: media
       file: ../chainsaw/assertions/deployment-ready.yaml
+      # Was the inherited 60s default. freetube is Ready 53-86s after module apply and its
+      # step starts at ~45-51s, so its worst observed wait is 35s -- 0.58 of a budget nobody
+      # chose, on the heaviest image in the suite (~976MB). 3m, as for every workload here.
+      timeout: 3m
   catch:
   - describe:
       apiVersion: apps/v1

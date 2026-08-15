@@ -5,7 +5,7 @@ metadata:
   name: validate-harbor-redis
 spec:
   try:
-  - description: Assert dragonfly/authentik-cache
+  - description: Assert dragonfly/harbor-redis
     assert:
       bindings:
       - name: name

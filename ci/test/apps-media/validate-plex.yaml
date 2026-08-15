@@ -13,6 +13,11 @@ spec:
       - name: namespace
         value: media
       file: ../chainsaw/assertions/deployment-ready.yaml
+      # Was the inherited 60s default and the tightest operation in the whole apps scope:
+      # 20/31/57s observed, 0.95 of it. plex is Ready 84-121s after module apply -- second
+      # slowest here -- while its image is only ~159MB, so what it waits on is its own boot,
+      # not its pull. 3m, as for every workload in this suite.
+      timeout: 3m
   - podLogs:
       selector: app.kubernetes.io/name=plex
       namespace: media

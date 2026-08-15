@@ -13,6 +13,13 @@ spec:
       - name: namespace
         value: harbor
       file: ../chainsaw/assertions/deployment-ready.yaml
+      # Was the inherited 60s default, at 0.70 of it: 31/34/42s over 5 green runs, and the
+      # slowest measured component in this suite (Ready 76-92s after module apply). It is
+      # late for a structural reason, not an image-size one -- jobservice blocks on the CNPG
+      # cluster and on harbor-redis before it can pass its own probes -- so it stays where it
+      # is and takes the budget rather than a later slot. 3m is three times the worst
+      # observation and also covers the full 92s readiness if it were ever asserted at t+0.
+      timeout: 3m
   catch:
   - describe:
       apiVersion: apps/v1
