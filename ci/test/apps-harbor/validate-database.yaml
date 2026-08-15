@@ -5,7 +5,7 @@ metadata:
   name: validate-database
 spec:
   try:
-  - description: Assert cluster.postgresql.cnpg.io/home-automation-db
+  - description: Assert cluster.postgresql.cnpg.io/harbor-db-test
     assert:
       bindings:
       - name: name
