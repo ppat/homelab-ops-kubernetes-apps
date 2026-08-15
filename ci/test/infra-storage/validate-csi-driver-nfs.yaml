@@ -5,10 +5,20 @@ metadata:
   name: validate-csi-driver-nfs
 spec:
   try:
-  # A five-container pod on the inherited 1m default: 17.8/32.6/34.1s (min/med/max) over
-  # five green runs, 0.57 of the budget on the worst. It has already been observed expiring
-  # at 60s of 60s with the Deployment created only 5s before its own window opened. 2m is
-  # the sizing rule against the 34.1s maximum.
+  # A five-container pod, and the clearest demonstration in this repo of why a budget sized
+  # from green runs is sized from a truncated sample.
+  #
+  # Five green runs gave 17.8/32.6/34.1s (min/med/max), which by the x3 rule set this to 2m -
+  # already a raise from the inherited 1m default it had been observed expiring at. Then a
+  # genuinely slow runner turned up and it took **108s**: 0.90 of the new budget, more than
+  # three times the green maximum, and nearly double the old default it would have failed at.
+  # The same run had csi-attacher at 80s against its own 1m default.
+  #
+  # So the tail is far longer than five green runs could show, which is the general hazard:
+  # every timeout failure is censored at its own budget, so the sample that survives is the
+  # sample that fit. 6m is the rule applied to the 108s now observed. It costs nothing on a
+  # healthy run - this assertion returns in ~18s there - and it is the difference between a
+  # slow runner and a red build.
   - description: Assert deployment/csi-nfs-controller
     assert:
       bindings:
@@ -17,7 +27,7 @@ spec:
       - name: namespace
         value: csi-driver-nfs
       file: ../chainsaw/assertions/deployment-ready.yaml
-      timeout: 2m
+      timeout: 6m
   - description: Assert daemonset/csi-nfs-node
     assert:
       bindings:
