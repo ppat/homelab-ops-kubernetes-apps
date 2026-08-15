@@ -31,6 +31,25 @@ spec:
     - events:
         namespace: flux-system
 
+  # Validate steps are ordered ascending by measured readiness. Flux creates all five
+  # Deployments within ~1s of the module being applied and they converge in parallel, so
+  # this changes only which assert absorbs the wait -- not how long the suite takes.
+  #
+  # Readiness, in seconds after the module is applied, measured as (assert DONE - apply
+  # DONE) over 5 green runs: agregarr 45-51 . freetube 53-86 . tautulli censored at <=84-122
+  # . plex 84-121 . jellyfin 95-124. These are readiness, not object creation: every one of
+  # them except tautulli had to wait, so the assert's own completion is the moment the
+  # component became Ready.
+  #
+  # Only tautulli's is censored -- it returned in 0s every time, so all that is proven is
+  # "ready by then". It is also the smallest image in the suite (~72MB) so both sources
+  # agree it is fast, which is why it is the one step promoted here. plex moves behind it.
+  #
+  # Note the byte census does NOT predict this order: freetube (~976MB) and agregarr
+  # (~670MB) are the two heaviest images yet become Ready first, because all five pods pull
+  # concurrently from t+1s and what plex and jellyfin wait on is their own boot. Where
+  # readiness is directly measured it outranks the pull-cost prediction; the census only
+  # gets the last word on components whose readiness is censored.
   - name: Validate agregarr
     use:
       template: ./validate-agregarr.yaml
@@ -39,14 +58,18 @@ spec:
     use:
       template: ./validate-freetube.yaml
 
-  - name: Validate plex
-    use:
-      template: ./validate-plex.yaml
-
   - name: Validate tautulli
     use:
       template: ./validate-tautulli.yaml
 
+  - name: Validate plex
+    use:
+      template: ./validate-plex.yaml
+
   - name: Validate jellyfin
     use:
       template: ./validate-jellyfin.yaml
+
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml

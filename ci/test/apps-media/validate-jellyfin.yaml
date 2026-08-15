@@ -13,6 +13,11 @@ spec:
       - name: namespace
         value: media
       file: ../chainsaw/assertions/deployment-ready.yaml
+      # Was the inherited 60s default. jellyfin is the slowest component this suite measures
+      # (Ready 95-124s after module apply) and the second-heaviest image (~661MB), so it is
+      # the one step that must keep the last slot and the one that would hurt most if a
+      # reorder ever exposed it. 3m, as for every workload in this suite.
+      timeout: 3m
   - podLogs:
       selector: app.kubernetes.io/name=jellyfin
       namespace: media

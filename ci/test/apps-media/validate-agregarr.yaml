@@ -13,6 +13,12 @@ spec:
       - name: namespace
         value: media
       file: ../chainsaw/assertions/deployment-ready.yaml
+      # Was the inherited 60s default, which nobody chose: 45/49/51s observed over 5 green
+      # runs, i.e. 0.85 of it. agregarr is genuinely the first component in this suite to
+      # become Ready, so no ordering can relieve it -- something has to go first. 3m is the
+      # same number every workload in this suite now carries: the slowest measured readiness
+      # here is 124s after module apply, so 3m covers any of them even with no head start.
+      timeout: 3m
   catch:
   - describe:
       apiVersion: apps/v1
