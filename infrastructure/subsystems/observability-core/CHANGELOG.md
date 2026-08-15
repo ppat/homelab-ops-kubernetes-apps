@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.29.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.29.2...infra-observability-core-v0.29.3) (2026-08-15)
+
+
+### 🛠 Improvements
+
+* **infra-observability-core:** document bounded event loss on alloy-events restart ([#3663](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3663)) ([ed5113b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ed5113b9c9f088471d12b746db4f524b66a92d43))
+
+
+### ✨ Features
+
+* **infra-observability-core:** add a Kubernetes Events dashboard for the event export ([#3662](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3662)) ([651c486](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/651c48608823c5d6c6b4644c5adb2c0c118ee3bc))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** raise alloy-events memory request to measured steady-state usage ([#3667](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3667)) ([4ab0da3](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4ab0da300aa02b88478a816bae0217e63209e063))
+
 ## [0.29.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.29.1...infra-observability-core-v0.29.2) (2026-08-14)
 
 
