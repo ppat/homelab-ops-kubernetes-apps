@@ -8,6 +8,7 @@ resources:
 - minio/
 - ../../infra-security/infra-security-core.yaml
 - fake-secret-store.yaml
+- minio-admin-credentials.yaml
 - minio.yaml
 
 patches:
