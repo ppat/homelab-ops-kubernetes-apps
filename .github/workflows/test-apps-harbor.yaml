@@ -8,6 +8,7 @@ on:
     - '.github/workflows/test-apps-harbor.yaml'
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/apps-harbor/**'
+    - 'ci/test/chainsaw/**'
     - 'apps/subsystems/harbor/**'
     - '!apps/subsystems/harbor/**.md'
   workflow_dispatch:

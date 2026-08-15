@@ -11,21 +11,39 @@ spec:
     cleanup: 30s
     delete: 15s
     error: 30s
-    exec: 5s
+    # Bounds `script` operations that declare no timeout of their own -- in practice only
+    # the diagnostic scripts below. At the previous 5s this budget was killing the catch
+    # block mid-output on the loaded runs it exists to explain (observed on 4 of 9 sampled
+    # failures: `signal: killed` after the `flux get` half, no workload table). Every script
+    # doing real work sets its own timeout, so this only ever bounds diagnostics.
+    exec: 1m
 
   execution:
     failFast: true
     parallel: 1  # Run tests sequentially since they have dependencies
 
   error:
+    # Three separate scripts rather than one, deliberately: each operation gets its own
+    # `exec` budget, so a slow `flux get` on a contended cluster can no longer consume the
+    # budget for the workload table behind it. Diagnostics that only survive on healthy
+    # runs are worth very little.
     catch:
     - script:
         content: |
-          echo -----------------------------------------------------------------------
+          echo --------------------------------- flux ---------------------------------
           flux get all --all-namespaces
-          echo -----------------------------------------------------------------------
+    - script:
+        content: |
+          echo ------------------------------ resources -------------------------------
           kubectl get -A crd,cm,secret,po,svc,ing,ingressroutes,deploy,ds,sts,cj,job,sc,pv,pvc,volumes,es,cert,ipaddresspools,cluster,dragonfly
-          echo -----------------------------------------------------------------------
+    # Pod `Ready` transition times, ascending. `kubectl get -A po` above reports AGE, which
+    # is creation, not readiness -- and the gap between the two is precisely the quantity
+    # that determines what order validate steps should be asserted in. Reconstructing it
+    # from creation times is what made this suite's step order guesswork for so long.
+    - script:
+        content: |
+          echo ---------------------------- ready timeline ----------------------------
+          kubectl get pods -A -o go-template='{{range .items}}{{$p := printf "%s/%s" .metadata.namespace .metadata.name}}{{range .status.conditions}}{{if eq .type "Ready"}}{{printf "%-24s %-8s %s\n" .lastTransitionTime .status $p}}{{end}}{{end}}{{end}}' | sort
 
   cleanup:
     skipDelete: true

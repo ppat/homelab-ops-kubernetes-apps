@@ -8,6 +8,7 @@ on:
     - '.github/workflows/test-apps-ai.yaml'
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/apps-ai/**'
+    - 'ci/test/chainsaw/**'
     - 'apps/subsystems/ai/**'
     - '!apps/subsystems/ai/**.md'
   workflow_dispatch:

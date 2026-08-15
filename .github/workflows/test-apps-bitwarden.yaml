@@ -8,6 +8,7 @@ on:
     - '.github/workflows/test-apps-bitwarden.yaml'
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/apps-bitwarden/**'
+    - 'ci/test/chainsaw/**'
     - 'apps/subsystems/bitwarden/**'
     - '!apps/subsystems/bitwarden/**.md'
   workflow_dispatch:

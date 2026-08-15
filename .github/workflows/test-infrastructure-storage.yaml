@@ -8,6 +8,7 @@ on:
     - '.github/workflows/test-infrastructure-storage.yaml'
     - '.github/kind-cluster-multi-node.yaml'
     - 'ci/test/infra-storage/**'
+    - 'ci/test/chainsaw/**'
     - 'infrastructure/subsystems/storage-core/**'
     - '!infrastructure/subsystems/storage-core/**.md'
   workflow_dispatch:
