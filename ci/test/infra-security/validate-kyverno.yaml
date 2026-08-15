@@ -5,6 +5,52 @@ metadata:
   name: validate-kyverno
 spec:
   try:
+  # This step used to run third, behind external-secrets, and every assertion in it returned
+  # in ~0.1s. It now runs second, and it inherits the pressure external-secrets was holding:
+  # that step measured 73.4s in this position, and the kyverno namespace's last pod becomes
+  # Ready at 175s against an arrival at ~107s (180 - 73.4). So this step has to absorb ~68s
+  # that it has never had to absorb before, on assertions that all carry the shared 1m
+  # default. Reordering moves pressure rather than removing it; this is the move's cost,
+  # priced before the run rather than after a red one.
+  #
+  # 68.0 x 3 = 204s, which takes the 4m rung. Two assertions carry it rather than all ten,
+  # because the module's structure says where the wait lands: the four controllers below are
+  # one chart and one image and become Ready together at the FRONT of the window (something
+  # in this namespace is already Ready at 104s, before chainsaw even arrives), while
+  # policy-reporter is a second HelmRelease with `dependsOn: kyverno-release` and so cannot
+  # start until that release has finished waiting for those four - which is what puts the
+  # BACK of the window at 175s.
+  #
+  # The falsifier, and it is worth watching for: if some other assertion in this step is the
+  # one that expires, that structural argument is wrong and the budget belongs on the step
+  # rather than on two of its assertions.
+  #
+  # Half of that structural argument was then refuted by the first green run under this
+  # order, and the refutation is the reason both assertions carry a budget instead of one.
+  # The step measured 72s, of which **58s landed on the assertion below** and only 7s on
+  # policy-reporter. The four controllers are NOT all at the front of the window:
+  # kyverno-admission-controller runs three replicas and they do not converge together -
+  # 105s, 158s, 159s on that run, 102/144/149 on another - and this assertion waits for the
+  # Deployment to be Available, so it waits for the last of them. The back of the 104-175
+  # window is shared between that third replica and policy-reporter, and which of the two
+  # holds the wait varies run to run: the run before this one had all three replicas up and
+  # failed at policy-reporter instead.
+  #
+  # 58s against the 1m default this used to inherit is 0.97. Budgeting only the assertion
+  # the structural argument pointed at would have left that one red.
+  #
+  # One gotcha, recorded because it will otherwise be blamed on the ordering. This step can
+  # fail at deployment/policy-reporter with `actual resource not found` while every kyverno
+  # controller above it is healthy, when kyverno-policy-reporter-release is left holding a
+  # stale `dependency 'kyverno/kyverno-release' is not ready` - the dependency was evaluated
+  # before kyverno-release went Ready and had not been re-evaluated by the end of the suite.
+  # It is not caused by validating kyverno early: on the run where it was first seen,
+  # external-secrets-release was stalled the same way on cert-manager-release, with no
+  # external-secrets Deployments in the cluster at all, so the previous ordering would have
+  # failed one step sooner on the same cluster. `flux get all -A` in the catch dump is what
+  # distinguishes the two - a release reading Ready=False with a DependencyNotReady message
+  # against a dependency that is plainly Ready is this, not a budget and not an order.
+  #
   # Kyverno Resources
   - description: Assert deployment/kyverno-admission-controller
     assert:
@@ -14,6 +60,7 @@ spec:
       - name: namespace
         value: kyverno
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 4m
   - description: Assert deployment/kyverno-background-controller
     assert:
       bindings:
@@ -55,6 +102,12 @@ spec:
           name: kyverno:cleanup-controller:additional
 
   # Kyverno Policy Reporter Resources
+  #
+  # The far end of the 104-175s readiness window, and the second of the two assertions
+  # carrying this step's 4m (see the header for the derivation). Gated behind
+  # `dependsOn: kyverno-release`, so nothing here can start until the four controllers above
+  # are Ready and helm-controller has reported that release - which is why these three pods,
+  # not the controllers, are what this step actually ends up waiting on.
   - description: Assert deployment/policy-reporter
     assert:
       bindings:
@@ -63,6 +116,7 @@ spec:
       - name: namespace
         value: kyverno
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 4m
   - description: Assert deployment/policy-reporter-kyverno-plugin
     assert:
       bindings:

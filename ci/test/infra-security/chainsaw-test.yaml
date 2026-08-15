@@ -47,29 +47,60 @@ spec:
     - events:
         namespace: flux-system
 
-  # Not reordered, and that is a decision. Measured readiness from module apply runs
-  # cert-manager 11-48s, external-secrets 92s, kyverno (all four controllers plus policy
-  # reporter) censored at <=122s, authentik 234s -- the suite is already ascending, and the
-  # slowest component is already validated last. What is wrong here is the budgets, not the
-  # sequence: three of the four steps carry an at-risk operation and every one of them is
-  # fixed in its own file.
+  # Measured pod Ready transitions from the readiness report this suite emits as its last
+  # step, in seconds after the first pod in the cluster became Ready. A step is placed by
+  # the LAST of the pods it asserts:
+  #
+  #   cert-manager (before 104) . kyverno 104-175 (four controllers + policy reporter)
+  #   . external-secrets 147-180 (+ trust-manager, bitwarden-sdk-server)
+  #   . authentik-worker 227 . authentik-server 267-287
+  #
+  # kyverno moves ahead of external-secrets on that data. The earlier ordering here was
+  # inferred rather than measured: every step between cert-manager and authentik returned
+  # in ~0.1s, which records only that a component was ready by the time chainsaw arrived,
+  # so external-secrets was placed second on an upper bound of <=92s that the reporter has
+  # now replaced with a real transition at 147-180s.
+  #
+  # Worth being honest about the size: the two overlap at the top (175 vs 180), so the
+  # separation is clean at the front of the distribution and marginal at the back. It is
+  # free, though, and it hands external-secrets -- the step carrying this suite's
+  # worst-provisioned Deployment assert, 8.8/47.8/61.1s over four green runs -- the whole
+  # of kyverno's elapsed time as head start rather than the reverse.
+  #
+  # No dependency is crossed. kyverno-release declares no dependsOn; only
+  # kyverno-policy-reporter-release does, on kyverno-release, and both are inside this one
+  # step in that order. external-secrets-release and trust-manager-release both dependsOn
+  # cert-manager-release, which stays first. The kyverno step asserts no ExternalSecret,
+  # Certificate or Bundle, so nothing in it needs external-secrets to have converged.
+  #
+  # authentik stays last: it is the slowest by a wide margin and its step is where this
+  # suite's known CNPG failure lives (#3678).
+  #
+  # Measured on the first green run under this order, against a run of the previous order on
+  # the same runner pool: `Validate external-secrets` 116s -> 13s, `Validate kyverno`
+  # 0s -> 72s. That is the whole of the claim - the wait moved, it did not shrink. What it
+  # bought concretely is that external-secrets-cert-controller, the assertion that actually
+  # holds that step's time, fell from 87s of its 2m (0.73) to 9s (0.08); and kyverno's step
+  # now carries a budget for the wait it holds instead of the 1m default it would have
+  # inherited. Three runs now agree on the direction: kyverno's last pod at 169/175/186s
+  # against external-secrets' at 182/180/246s.
   - name: Validate cert-manager
     use:
       template: ./validate-cert-manager.yaml
-  - name: Validate external-secrets
-    use:
-      template: ./validate-external-secrets.yaml
   - name: Validate kyverno
     use:
       template: ./validate-kyverno.yaml
+  - name: Validate external-secrets
+    use:
+      template: ./validate-external-secrets.yaml
 
   - name: Validate authentik
     use:
       template: ./validate-authentik.yaml
 
   # Asserts nothing; prints the readiness ordering the step order above is derived from.
-  # Everything between external-secrets and authentik currently returns in 0.1s, so its
-  # true readiness is censored and the ordering claim above rests on upper bounds.
+  # It is what corrected that order: the intermediate steps return in ~0.1s, so their true
+  # readiness is censored and the ordering used to rest on upper bounds.
   - name: Report readiness ordering
     use:
       template: ../chainsaw/steps/report-readiness.yaml

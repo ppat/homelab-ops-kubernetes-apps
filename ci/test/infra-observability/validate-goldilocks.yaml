@@ -5,6 +5,15 @@ metadata:
   name: validate-goldilocks
 spec:
   try:
+  # First assertion after the module is applied, so this is where the module's initial
+  # convergence lands -- image pulls for thirteen HelmReleases, on a runner that is also
+  # still installing minio. What this step measures is therefore not goldilocks (a 2-pod,
+  # ~60MB component) but whatever the suite has to get through before anything at all is
+  # Ready, and the budget has to be sized for that instead: measured at 25.0s, so 90s by the
+  # x3 rule. It inherited the shared 1m default, which was never chosen for this job.
+  #
+  # This number belongs to the position, not to goldilocks. If the step order above changes
+  # so that something else is first, the budget moves with the position.
   - description: Assert deployment/goldilocks-controller
     assert:
       bindings:
@@ -13,6 +22,7 @@ spec:
       - name: namespace
         value: goldilocks
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 90s
   - description: Assert deployment/goldilocks-dashboard
     assert:
       bindings:

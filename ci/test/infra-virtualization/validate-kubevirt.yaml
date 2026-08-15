@@ -18,6 +18,10 @@ spec:
       # virt-operator only creates virt-api/virt-controller/virt-handler once it has
       # reconciled the KubeVirt CR, which itself has to wait on its own CRD (shipped in
       # the same manifest) becoming Established -- longer than the default 1m.
+      #
+      # This is also the suite's first-position budget, the one that absorbs the module's
+      # initial convergence rather than its own component's startup, and it is already sized
+      # from that: the 104-128s measured here is the absorption. No change.
       timeout: 5m
   # The three assertions below run on the shared 1m default rather than a budget of their
   # own. `phase: Deployed` above is virt-operator's own statement that it has finished
