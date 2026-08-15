@@ -19,6 +19,12 @@ spec:
   # sample that fit. 6m is the rule applied to the 108s now observed. It costs nothing on a
   # healthy run - this assertion returns in ~18s there - and it is the difference between a
   # slow runner and a red build.
+  #
+  # Unchanged by the step reorder, deliberately. This step is no longer first (garage and
+  # minio are measured Ready at 118s and 132s against csi-nfs-controller's 139s), which
+  # hands it ~21s of head start it previously had none of - but ~21s against a 108s
+  # observation is not a reason to cut a budget sized from that observation. Reordering
+  # redistributes slack; it does not shorten the thing being waited for.
   - description: Assert deployment/csi-nfs-controller
     assert:
       bindings:

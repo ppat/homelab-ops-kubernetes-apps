@@ -10,6 +10,19 @@ spec:
   # pre-requisites (pre-requisites/pvc/), not here -- they must exist before
   # infra-storage-core itself is applied, since its Deployment references them
   # from the moment it's applied.
+  #
+  # This is now the suite's FIRST assertion after the module is applied, so it is where the
+  # module's initial convergence lands, and its budget is sized for that position rather
+  # than for a PVC. Measured absorption in this position: 35.0s (as observed on the step
+  # that used to hold it, csi-driver-nfs), so 2m by the x3 rule; it inherited the shared 1m
+  # default, which was never chosen for this job.
+  #
+  # These two PVCs are the specific hazard the reorder had to answer. They declare no
+  # storageClassName, so they take kind's default WaitForFirstConsumer class and cannot bind
+  # until the garage pod is scheduled -- which under the old order had already happened long
+  # before chainsaw arrived. What they now wait on is Flux applying the Deployment, not
+  # garage becoming Ready; the readiness report puts the garage pod Ready at 118s, first of
+  # anything in the suite, and binding precedes readiness. The budget covers the difference.
   - description: Assert pvc/garage-metadata-test and pvc/garage-data-test
     assert:
       bindings:
@@ -18,6 +31,10 @@ spec:
       - name: namespace
         value: garage
       file: ../chainsaw/assertions/pvc-bound.yaml
+      timeout: 2m
+  # Stays on the shared default: both PVCs are volumes of the same garage pod, so the
+  # scheduler binds them in one event and this one is already bound once the assert above
+  # returns.
   - assert:
       bindings:
       - name: name
