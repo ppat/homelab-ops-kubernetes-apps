@@ -5,14 +5,16 @@ metadata:
   name: validate-alloy
 spec:
   try:
-  - description: Assert daemonset/alloy
-    assert:
-      bindings:
-      - name: name
-        value: alloy
-      - name: namespace
-        value: logging
-      file: ../chainsaw/assertions/daemonset-ready.yaml
+  # HelmRelease before DaemonSet, carrying the convergence budget -- see the equivalent
+  # comment in validate-prometheus.yaml for the general reasoning.
+  #
+  # Alloy is sized off its creation spread rather than off green assert durations, because
+  # the latter are censored: on passing runs this assert returns in ~0.1s and so records
+  # nothing about how long alloy took. The DaemonSet's own creation time was measured at
+  # T0+10, 33, 45, 54 and 171s across five failure dumps -- a 17x spread, on the same chart
+  # and repo as alloy-events, which was created at T0+27s in the run where alloy took 171s.
+  # Nothing in the module orders the two; observability-core/extra declare no `dependsOn`
+  # at all, so helm-controller worker scheduling decides, and the tail is wide.
   - description: Assert helmrelease/alloy-release
     assert:
       bindings:
@@ -21,6 +23,15 @@ spec:
       - name: namespace
         value: logging
       file: ../chainsaw/assertions/helmrelease-ready.yaml
+      timeout: 4m
+  - description: Assert daemonset/alloy
+    assert:
+      bindings:
+      - name: name
+        value: alloy
+      - name: namespace
+        value: logging
+      file: ../chainsaw/assertions/daemonset-ready.yaml
 
   # Everything below pins a value whose failure mode is a green, Ready, error-free
   # collector that silently collects nothing or drops a label. None of it is observable
@@ -96,14 +107,6 @@ spec:
   # The Kubernetes Event singleton. A second Alloy instance in the same namespace, with
   # its own ConfigMap, its own ServiceAccount and no host access at all.
   # ------------------------------------------------------------------------------------
-  - description: Assert deployment/alloy-events
-    assert:
-      bindings:
-      - name: name
-        value: alloy-events
-      - name: namespace
-        value: logging
-      file: ../chainsaw/assertions/deployment-ready.yaml
   - description: Assert helmrelease/alloy-events-release
     assert:
       bindings:
@@ -112,6 +115,15 @@ spec:
       - name: namespace
         value: logging
       file: ../chainsaw/assertions/helmrelease-ready.yaml
+      timeout: 4m
+  - description: Assert deployment/alloy-events
+    assert:
+      bindings:
+      - name: name
+        value: alloy-events
+      - name: namespace
+        value: logging
+      file: ../chainsaw/assertions/deployment-ready.yaml
   - description: Assert deployment/alloy-events is a singleton with no host access
     assert:
       resource:

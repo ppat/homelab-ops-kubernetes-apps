@@ -5,6 +5,18 @@ metadata:
   name: validate-node-problem-detector
 spec:
   try:
+  # 3m rather than the inherited 60s, and this is the third time the same pattern has been
+  # caught in this suite: reordering the validate steps does not remove pressure, it moves it.
+  # NPD used to be validated near the end, by which point it had long been ready and its
+  # assert returned in ~0s. It is now fourth, where it no longer inherits anyone's head start
+  # and has to wait for its own DaemonSet to pull across three nodes.
+  #
+  # A bandwidth-shaped reproduction rig makes this the FIRST budget in the suite to expire:
+  # 60s (failed), 59s, 50s, 42s across four runs -- two of the passes cleared the old default
+  # by 1s and 10s. Unshaped it is 21-31s, so this is exposure under load rather than a live
+  # regression, which is why the number is sized against real CI observations and not against
+  # the rig. The rig is a detector for WHICH budget is tightest; it is deliberately harsher
+  # than reality and must not be used to set the value.
   - description: Assert daemonset/node-problem-detector
     assert:
       bindings:
@@ -13,6 +25,7 @@ spec:
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/daemonset-ready.yaml
+      timeout: 3m
   - description: Assert helmrelease/node-problem-detector-release
     assert:
       bindings:
