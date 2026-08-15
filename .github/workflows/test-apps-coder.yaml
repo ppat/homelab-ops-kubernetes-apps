@@ -11,6 +11,7 @@ on:
     - 'ci/test/chainsaw/**'
     - 'apps/subsystems/coder/**'
     - '!apps/subsystems/coder/**.md'
+    - '!ci/test/chainsaw/**.md'
   workflow_dispatch:
 
 concurrency:

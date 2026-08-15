@@ -11,6 +11,7 @@ on:
     - 'ci/test/chainsaw/**'
     - 'infrastructure/subsystems/database-core/**'
     - '!infrastructure/subsystems/database-core/**.md'
+    - '!ci/test/chainsaw/**.md'
   workflow_dispatch:
 
 concurrency:

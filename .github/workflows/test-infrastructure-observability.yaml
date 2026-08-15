@@ -13,6 +13,7 @@ on:
     - 'infrastructure/subsystems/observability-extra/**'
     - '!infrastructure/subsystems/observability-core/**.md'
     - '!infrastructure/subsystems/observability-extra/**.md'
+    - '!ci/test/chainsaw/**.md'
   workflow_dispatch:
 
 concurrency:
