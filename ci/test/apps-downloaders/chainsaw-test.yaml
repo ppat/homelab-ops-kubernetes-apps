@@ -75,58 +75,83 @@ spec:
           value: downloaders
         file: ../chainsaw/assertions/externalsecret-ready.yaml
 
-  # Deliberately not reordered, and this is the suite where reordering looks most tempting:
-  # it has the highest real failure rate in the repo (44%) and twelve validate steps behind
-  # one CNPG Cluster. It would not help. All ten *arr Deployments are created within 3s of
-  # the module being applied, and in 26 sampled failure dumps the seven that mount the
-  # `downloaders-db-test-app` secret are Ready in 0 of 26 while the three that do not touch
-  # the database are Ready in 26 of 26. One dependency gates everything; no permutation of
-  # validate steps changes that.
+  # Validate steps are ordered ascending by measured pod readiness, subject to the module's
+  # one real dependency. Flux creates all ten *arr Deployments within 3s of the module being
+  # applied and they converge in parallel, so this changes which assert absorbs the wait, not
+  # how long the suite takes: the eleven validate steps summed to 122s before and are
+  # predicted to sum to 122s after.
   #
-  # The CNPG Cluster's budget is untouched for the same reason it must not be raised: those
-  # 25 failures show an empty `Status:`, `Events: <none>` and no instance pod after the full
-  # 180s, while flux reports cloudnative-pg Ready and the operator pod up 4m37s. The absence
-  # of the obligatory SettingUp/CreatingInstance events proves the operator never acted. A
-  # bigger number cannot fix inaction; it can only make the report slower, or hide it.
-  - name: Validate database
+  # Readiness from this suite's own `Report readiness ordering` step, in seconds after the
+  # first pod in the cluster went Ready (T0), with the first validate step beginning at T0+117:
+  #
+  #   qbittorrent 150 . bazarr 155 . sabnzbd 155 . downloaders-db-test 203 . lidarr 207 .
+  #   radarr 207 . prowlarr 209 . sonarr 211 . autobrr 218 . seerr 236 . qui 239
+  #
+  # The dependency is the primary key and it is not crossed. Seven of the ten *arr apps mount
+  # the `downloaders-db-test-app` secret (radarr, lidarr, sonarr, prowlarr, autobrr, seerr,
+  # qui) and all seven stay behind `Validate database`; the three that have no reference to
+  # the database anywhere in the module (qbittorrent, bazarr, sabnzbd) move ahead of it. The
+  # readiness measurement and the dependency graph agree exactly -- the three DB-free apps are
+  # the three fastest, and every DB-consumer is Ready after the Cluster -- which is the
+  # strongest evidence available that this ordering is not accidental.
+  #
+  # This reverses the previous "deliberately not reordered" note, and the reason it was
+  # written still holds: no permutation helps the seven apps gated on the Cluster, and 26
+  # sampled failure dumps show them Ready in 0 of 26 while the three DB-free apps are Ready in
+  # 26 of 26. What that note missed is the other half -- those three DB-free apps were being
+  # asserted *behind* an 86s database step they do not depend on, so the module's convergence
+  # was charged to the Cluster assert instead of to them. Predicted per-step now: qbittorrent
+  # 33s, bazarr 5s, sabnzbd 0s, database 48s, radarr 4s, lidarr 0s, prowlarr 2s, sonarr 2s,
+  # autobrr 7s, seerr 18s, qui 3s.
+  #
+  # The CNPG Cluster's budget is untouched and the 86s -> ~48s drop is a side effect, not the
+  # goal: those 25 failures show an empty `Status:`, `Events: <none>` and no instance pod
+  # after the full 180s while flux reports cloudnative-pg Ready and the operator pod up 4m37s
+  # (ppat/homelab-ops-kubernetes-apps#3678). The absence of the obligatory
+  # SettingUp/CreatingInstance events proves the operator never acted, and no head start and
+  # no bigger number can fix inaction.
+  #
+  # lidarr and radarr are both Ready at T0+207 and prowlarr/sonarr are within 2s of them;
+  # treat those four as tied and do not read precision into their order.
+  - name: Validate qbittorrent
     use:
-      template: ./validate-database.yaml
-
-  - name: Validate radarr
-    use:
-      template: ./validate-radarr.yaml
-
-  - name: Validate sabnzbd
-    use:
-      template: ./validate-sabnzbd.yaml
-
-  - name: Validate sonarr
-    use:
-      template: ./validate-sonarr.yaml
-
-  - name: Validate lidarr
-    use:
-      template: ./validate-lidarr.yaml
-
-  - name: Validate seerr
-    use:
-      template: ./validate-seerr.yaml
-
-  - name: Validate prowlarr
-    use:
-      template: ./validate-prowlarr.yaml
+      template: ./validate-qbittorrent.yaml
 
   - name: Validate bazarr
     use:
       template: ./validate-bazarr.yaml
 
-  - name: Validate qbittorrent
+  - name: Validate sabnzbd
     use:
-      template: ./validate-qbittorrent.yaml
+      template: ./validate-sabnzbd.yaml
+
+  - name: Validate database
+    use:
+      template: ./validate-database.yaml
+
+  - name: Validate lidarr
+    use:
+      template: ./validate-lidarr.yaml
+
+  - name: Validate radarr
+    use:
+      template: ./validate-radarr.yaml
+
+  - name: Validate prowlarr
+    use:
+      template: ./validate-prowlarr.yaml
+
+  - name: Validate sonarr
+    use:
+      template: ./validate-sonarr.yaml
 
   - name: Validate autobrr
     use:
       template: ./validate-autobrr.yaml
+
+  - name: Validate seerr
+    use:
+      template: ./validate-seerr.yaml
 
   - name: Validate qui
     use:
