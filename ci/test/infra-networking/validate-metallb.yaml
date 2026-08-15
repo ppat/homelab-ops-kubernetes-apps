@@ -5,6 +5,10 @@ metadata:
   name: validate-metallb
 spec:
   try:
+  # First workload validated after the module is applied, so it gets no head start from any
+  # step ahead of it -- everything later in this suite is reached having already spent this
+  # step's duration starting up, and this one has not. Measured 29.4/30.2/32.9s against the
+  # inherited 1m default; 2m is the sizing rule against the 32.9s maximum.
   - description: Assert deployment/metallb-controller
     assert:
       bindings:
@@ -13,6 +17,7 @@ spec:
       - name: namespace
         value: metallb-system
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 2m
   - description: Assert daemonset/metallb-speaker
     assert:
       bindings:

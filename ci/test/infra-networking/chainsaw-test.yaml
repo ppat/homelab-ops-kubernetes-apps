@@ -52,6 +52,14 @@ spec:
     - events:
         namespace: flux-system
 
+  # Not reordered, and that is a decision. The three steps that wait -- MetalLB (30s),
+  # Traefik (36s), External-DNS (40-95s) -- are validated in that order because they are
+  # ordered that way in reality: traefik-release declares `dependsOn: metallb-release`, and
+  # Whoami, Pi-hole and Freeradius all assert LoadBalancer or Ingress status that cannot be
+  # populated until MetalLB and Traefik are serving. The instant steps therefore cannot be
+  # promoted ahead of them, and the only permutation left (External-DNS after Freeradius)
+  # would buy External-DNS 0.4s. Ordering pays where several steps are slow; here the slow
+  # ones are the dependency chain itself, so the budgets below are the whole fix.
   - name: Validate MetalLB
     use:
       template: ./validate-metallb.yaml
@@ -75,3 +83,11 @@ spec:
   - name: Validate Freeradius
     use:
       template: ./validate-freeradius.yaml
+
+  # Asserts nothing; prints the readiness ordering this suite's step order is derived from,
+  # so the next person to tune it has current data rather than an archaeology exercise. The
+  # existing failure dumps are all one content bug on `renovate/traefik-41.x`, which makes
+  # every late-stage workload in them unrepresentative.
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml
