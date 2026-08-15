@@ -6,6 +6,7 @@ resources:
 - helm-release-alloy.yaml
 - helm-release-alloy-events.yaml
 - prometheusrule-alloy.yaml
+- dashboards/
 
 configMapGenerator:
 # The node collector's config directory. Every key here is loaded by every alloy pod on
