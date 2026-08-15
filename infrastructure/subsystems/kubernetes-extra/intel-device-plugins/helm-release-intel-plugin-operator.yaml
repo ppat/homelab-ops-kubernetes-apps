@@ -23,7 +23,11 @@ spec:
     createNamespace: false
     remediation:
       retries: 3
-  interval: 15m0s
+  # 1m, not 15m: `HelmRelease` has no `retryInterval`, so `interval` is also how long this
+  # release waits before re-checking a dependency that was not ready when it first looked.
+  # Only paid on a cold cluster, which is bootstrap and disaster recovery. See #3685 and the
+  # fuller note in security-core/external-secrets/helm-release-external-secrets.yaml.
+  interval: 1m0s
   releaseName: intel-plugin-operator
   targetNamespace: intel-device-plugins
   upgrade:
