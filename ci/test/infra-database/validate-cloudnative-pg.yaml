@@ -5,6 +5,15 @@ metadata:
   name: validate-cloudnative-pg
 spec:
   try:
+  # First assertion after the module is applied, so this is where the module's initial
+  # convergence lands rather than cloudnative-pg's own startup, and the budget belongs to
+  # the position. Measured absorption 18.0s, which the x3 rule puts at 54s and so on the 60s
+  # rung -- the same value this was inheriting from the shared default.
+  #
+  # Stated explicitly anyway, because an inherited default and a measured one are
+  # indistinguishable in the file and only one of them can detect a regression. If this
+  # absorption grows past ~20s the number here is wrong and should be moved up a rung; the
+  # default would have said nothing either way.
   - description: Assert deployment/cloudnative-pg
     assert:
       bindings:
@@ -13,6 +22,7 @@ spec:
       - name: namespace
         value: cnpg-system
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 60s
   - description: Assert helmrelease/cloudnative-pg-release
     assert:
       bindings:

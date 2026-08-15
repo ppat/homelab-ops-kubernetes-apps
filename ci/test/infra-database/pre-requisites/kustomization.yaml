@@ -4,32 +4,33 @@ kind: Kustomization
 
 resources:
 - ../../../../infrastructure/bootstrap/crds/
-- namespaces.yaml
+# This suite's own minio data -- the buckets/users/policies ConfigMap and the
+# `minio-user-credentials` Secret the module's backups authenticate with. Deliberately not
+# part of the minio fixture: the bucket names and access keys are per-suite.
 - minio/
-- ../../infra-security/infra-security-core.yaml
+# Three shared fixtures in place of the whole security-core module and this suite's own
+# copy of the minio prerequisite.
+#
+# cert-manager IS needed here, and not for a reason visible in the module's manifests:
+# database-core installs the Barman Cloud plugin, whose chart issues its own gRPC TLS
+# certificates through cert-manager. `infrastructure/subsystems/database-core/README.md`
+# states it in both its component table and its `Depends On` section. Grepping the module
+# for `kind: Certificate` finds nothing, because the objects are rendered by the chart --
+# so the audit question has to be asked of the charts a module installs, not only of the
+# YAML it checks in.
+#
+# `Namespace/minio` now comes from the fixture, so this suite's namespaces.yaml is deleted
+# rather than trimmed -- minio was the only namespace in it, and kustomize refuses to build
+# a duplicate resource id (it surfaces as `Assert kustomization/pre-requisites` failing).
+#
+# The fixture's Kustomization is named `pre-requisites-minio`, not `minio`; the reconcile
+# step and its catch block in chainsaw-test.yaml are renamed to match.
+#
+# See ../../chainsaw/pre-requisites/README.md.
+- ../../chainsaw/pre-requisites/cert-manager/
+- ../../chainsaw/pre-requisites/external-secrets/
+- ../../chainsaw/pre-requisites/minio/
 - fake-secret-store.yaml
-- minio.yaml
-
-patches:
-# yamllint disable-line rule:indentation
-- patch: |-
-    - op: add
-      path: /spec/patches
-      value:
-        - patch: |-
-            $patch: delete
-            apiVersion: helm.toolkit.fluxcd.io/v2
-            kind: HelmRelease
-            metadata:
-              name: kyverno-policy-reporter-release
-              namespace: kyverno
-          target:
-            kind: HelmRelease
-            name: kyverno-policy-reporter-release
-            namespace: kyverno
-  target:
-    kind: Kustomization
-    name: infra-security-core
 
 sortOptions:
   order: fifo

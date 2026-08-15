@@ -19,21 +19,28 @@ spec:
 
   - name: Reconcile pre-requisites
     try:
+    # 2m -> 3m, and the reason is the fixture switch rather than a new measurement. Until
+    # now `external-secrets-release` declared `dependsOn: cert-manager-release`, so the two
+    # installs were serialised and cert-manager had the runner to itself while it ran. The
+    # external-secrets fixture removes that dependency -- which is most of what makes it
+    # fast -- so the two now install concurrently on four cores and cert-manager's own
+    # install can only get slower, not faster. 3m is infra-storage's number for the
+    # identical operation, sized there against 36.1s on four of five green runs and 106.1s
+    # on the fifth. Raising it is free on any run that passes.
+    #
+    # This wait is not optional here even though nothing in database-core's checked-in YAML
+    # references cert-manager: the Barman Cloud plugin's chart issues its own gRPC TLS
+    # certificates through cert-manager. See pre-requisites/kustomization.yaml.
     - description: Reconcile helmrelease/cert-manager-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cert-manager-release --namespace=cert-manager --timeout=2m
-        timeout: 2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cert-manager-release --namespace=cert-manager --timeout=3m
+        timeout: 3m
     - description: Reconcile helmrelease/external-secrets-release
       script:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
         timeout: 2m
-    - description: Reconcile kustomization/minio
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=minio --namespace=flux-system --timeout=3m
-        timeout: 3m
 
   - name: Apply infra-database modules
     try:
@@ -86,6 +93,34 @@ spec:
   # Layer the db-backups component onto the SAME cluster (in-place update,
   # not a new cluster) to prove backups can be added to a running database.
   # ------------------------------------------------------------------
+  # minio is waited for here rather than as a prerequisite, because here is where it is
+  # first needed: it is the S3 backend for the backup this next step configures. Nothing
+  # earlier in the suite touches it, it ships no CRDs, and the module creates no minio
+  # resources - so waiting for it up front simply held the cnpg install, the postgres
+  # cluster and their image pulls behind an unrelated component. By the time the suite
+  # reaches this point minio has had the whole cnpg rollout to converge in, so this step
+  # should normally cost nothing at all. If it starts costing seconds again, that is the
+  # signal that minio has genuinely got slower rather than merely been waited for early.
+  #
+  # 5m has to exceed the minio Kustomization's own 4m health-check budget (set in the
+  # shared minio fixture), or this script gives up first and reports a deadline
+  # instead of the health-check failure that explains it. Measured 28.1/82.1/94.1s green.
+  - name: Reconcile kustomization/pre-requisites-minio
+    try:
+    - description: Reconcile kustomization/pre-requisites-minio
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=kustomization --resource-name=pre-requisites-minio --namespace=flux-system --timeout=5m
+        timeout: 5m
+    catch:
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: pre-requisites-minio
+        namespace: flux-system
+    - events:
+        namespace: minio
+
   - name: Enable backups on postgres cluster
     try:
     - description: Apply test-postgres-db (with db-backups component)
@@ -154,3 +189,15 @@ spec:
   - name: Validate test-dragonfly-db
     use:
       template: ./validate-test-dragonfly-db.yaml
+
+  # Asserts nothing; prints pod Ready transitions and restart counts. Added here rather than
+  # inherited: infra-database was the only one of the sixteen suites that #3679 left without
+  # it, so it is the only suite whose step order and budgets still rest entirely on assert
+  # durations -- the circular metric, since a step measures 0s precisely when the step ahead
+  # of it absorbed the wait. It is also what makes the fixture switch above checkable in the
+  # direction that matters: the pods this suite should no longer be starting (kyverno,
+  # policy-reporter, trust-manager, bitwarden-sdk-server) must be absent from this report,
+  # and absence of an obligatory artifact is evidence in a way that a green run is not.
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml
