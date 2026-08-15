@@ -6,7 +6,7 @@ on:
   pull_request:
     paths:
     - '.github/workflows/test-apps-downloaders.yaml'
-    - '.github/kind-cluster-multi-node.yaml'
+    - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/apps-downloaders/**'
     - 'ci/test/chainsaw/**'
     - 'apps/subsystems/downloaders/**'
@@ -32,4 +32,15 @@ jobs:
       git_ref: ${{ github.head_ref || github.ref_name }}
       test_path: ./ci/test/apps-downloaders
       chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
-      kind_config: .github/kind-cluster-multi-node.yaml
+      # Single node. Three kind nodes on one 4-vCPU runner add two more kubelets, kube-proxies
+      # and image stores without adding any capacity -- they are containers sharing the same
+      # CPUs. Measured over 60 runs per arm, `Setup kind cluster` costs 44.2s on three nodes
+      # against 40.2s on one, and the spread narrows (sd 4.1 -> 2.5, p90 51s -> 45s).
+      #
+      # Audited 2026-08-15 and nothing here needs a second node: every Deployment is
+      # replicas: 1, the CNPG cluster runs db_replicas: 1, the module ships no DaemonSet, and
+      # no workload -- module, prerequisite fixture or chart -- declares a required pod
+      # anti-affinity, a DoNotSchedule topology spread, a hostPort/hostNetwork or a
+      # nodeSelector. Every chainsaw assertion is relative (replicas == readyReplicas), so
+      # none of them encodes a node or replica count.
+      kind_config: .github/kind-cluster-single-node.yaml
