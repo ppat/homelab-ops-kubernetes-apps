@@ -1,0 +1,37 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: logging
+
+# Deliberately its own kustomization rather than a third configMapGenerator entry in
+# ../kustomization.yaml. generatorOptions below is file-global and kustomize merges its
+# labels into every entry, so in the parent it would also label alloy-config and
+# alloy-events-config as dashboards -- handing the sidecar two Alloy River configs to
+# parse as dashboard JSON.
+configMapGenerator:
+- name: dashboard-kubernetes-events
+  files:
+  - kubernetes-events.json
+
+generatorOptions:
+  # Flux prune is disabled cluster-wide, so a content-hashed name would strand the
+  # previous ConfigMap as an orphan on every dashboard edit -- and the sidecar would then
+  # serve both copies under the same dashboard uid.
+  disableNameSuffixHash: true
+  labels:
+    # Watched by the Grafana chart's dashboard sidecar
+    # (../../grafana/helm-release-grafana.yaml: sidecar.dashboards label/labelValue,
+    # searchNamespace ALL -- so this is picked up from the logging namespace without
+    # needing to live alongside Grafana).
+    grafana_dashboard: "1"
+  annotations:
+    # Consumed by that same sidecar's folderAnnotation (paired with
+    # provider.foldersFromFilesStructure, which is enabled).
+    grafana_folder: Kubernetes
+    # Mandatory, not defensive. Flux's postBuild substitution expands bare $name as well
+    # as ${name}, and this dashboard is full of bare $datasource, $namespace, $search,
+    # $__interval and $__range references -- without this annotation every one of them
+    # would be substituted away to an empty string, leaving queries that parse but select
+    # nothing.
+    kustomize.toolkit.fluxcd.io/substitute: disabled

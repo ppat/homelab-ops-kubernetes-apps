@@ -28,6 +28,7 @@ The observability-core module provides these capabilities:
 3. Observability Platform
    - Unified metrics and logs visualization
    - Automated dashboard discovery
+   - Kubernetes Event history over ranges the Event API's TTL cannot cover
    - Alert management and notification
    - User authentication and authorization
 
@@ -90,6 +91,7 @@ flowchart TB
 
     %% Visualization
     grafana[Grafana]:::viz
+    events_dashboard[Kubernetes Events Dashboard]:::viz
 
     %% Storage
     subgraph storage[Storage]
@@ -118,6 +120,7 @@ flowchart TB
     grafana --> loki
     grafana -- "persists users, service accounts, dashboard history" --> grafana_pvc
     k3s_dashboards --> grafana
+    events_dashboard --> grafana
 
     %% Simple legend
     subgraph Legend[" "]
@@ -143,7 +146,7 @@ flowchart TB
 | Prometheus | Metrics collection and storage | • Collects metrics via ServiceMonitors and PodMonitors<br>• Stores metrics in persistent storage with configurable retention<br>• Evaluates alerting rules and sends alerts to AlertManager<br>• Provides query interface for metrics access<br>• Accepts remote-write from Loki's ruler |
 | AlertManager | Alert routing and management | • Receives alerts from Prometheus rule evaluations<br>• Receives alerts from Loki rule evaluations<br>• Routes and groups alerts based on defined rules<br>• Manages notification delivery to configured channels |
 | Grafana Alloy (node collector) | Node-local log collection agent | • Discovers and tails container log files on every node<br>• Attaches labels to log streams based on Kubernetes metadata<br>• Reads the systemd journal from both `/run/log/journal` and `/var/log/journal`<br>• Ships logs to Loki for storage<br>• Accepts additional collection jobs injected by the consuming cluster<br>• Exposes its own metrics via ServiceMonitor and alerts via PrometheusRule |
-| Grafana Alloy (event singleton) | Cluster-wide Kubernetes Event export | • Watches Events in every namespace from a single replica<br>• Derives a `severity` label from each event's type<br>• Ships events to Loki under the `kubernetes-events` job<br>• Runs with its own ServiceAccount, granted core-group `events` only<br>• Needs no host access, so it mounts no node paths<br>• Exposes its own metrics via ServiceMonitor |
+| Grafana Alloy (event singleton) | Cluster-wide Kubernetes Event export | • Watches Events in every namespace from a single replica<br>• Derives a `severity` label from each event's type<br>• Ships events to Loki under the `kubernetes-events` job<br>• Runs with its own ServiceAccount, granted core-group `events` only<br>• Needs no host access, so it mounts no node paths<br>• Exposes its own metrics via ServiceMonitor<br>• Ships the Kubernetes Events dashboard that reads what it exports |
 | Loki | Log aggregation and storage | • Receives logs from the Grafana Alloy agents<br>• Stores logs in S3-compatible storage<br>• Evaluates log-based alerting rules<br>• Evaluates LogQL recording rules and remote-writes the results to Prometheus<br>• Provides LogQL query interface |
 | K3s Monitoring | K3s-specific monitoring | • Collects metrics from K3s unified binary<br>• Provides custom alerting rules for K3s components<br>• Includes specialized dashboards for K3s architecture<br>• Replaces standard Kubernetes monitoring |
 | Grafana | Observability platform | • Provides unified visualization of metrics and logs<br>• Auto-discovers and provisions dashboards from ConfigMaps<br>• Manages alert rules and notifications<br>• Supports SSO integration and user management |
@@ -299,6 +302,15 @@ flowchart TB
   Alloy does send the label - as the empty string - and Loki discards empty-valued labels on ingest, before
   the stream hash is computed, so no such series is ever stored (`syntax.ParseLabels`; grafana/loki#7355,
   every release since 2.7.0).
+- **The Kubernetes Events dashboard ships with the exporter, not with the other dashboards.**
+  `alloy/dashboards/kubernetes-events.json` is filed under the component that produces the data because its
+  panels are a contract with `events.d/events.alloy`: the `kubernetes-events` job name, the `severity` mapping
+  and the logfmt field names are read straight out of that file, so changing one without the other empties the
+  dashboard rather than erroring. Kubernetes event data has several properties that make an obvious panel
+  return a plausible wrong number instead of an error - the reason a stuck object shows three different totals
+  depending on how it is counted, and why the panels rank on none of the two a reader reaches for first. Those
+  are set out in [the dashboard's own notes](./alloy/dashboards/MAINTAINER.md), with
+  [a reader's guide](./alloy/dashboards/README.md) alongside it.
 - **An event carries its own timestamp, which bounds how much a restart can recover - and, at that same
   boundary, can drop events outright rather than merely replay them.** Entries are stamped with the event's
   `LastTimestamp`, not the ingest time, and Loki accepts an out-of-order entry only while it is within

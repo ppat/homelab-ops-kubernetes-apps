@@ -1,0 +1,1374 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Kubernetes Events, read from Loki rather than from the Event API.\n\nThe Event API keeps roughly one hour of history, so `kubectl get events` structurally cannot answer \"what happened last Tuesday\" or \"has this been flaky all week\". Every panel here is built for the long horizon instead; the default range is 24h and the interesting ranges are longer.\n\nTwo measured properties of the data drive the whole layout.\n\nFirst, signal is rare. 76% of events on this cluster are Kyverno `PolicyViolation` (Audit mode, deliberate, with a backlog to work through) and another 12% is Flux success chatter, leaving what matters at well under 1% of volume. Any chart drawn on magnitude hides it, so the scan panels at the top render *that a reason fired*, not how often -- a single occurrence is exactly as visible as a thousand.\n\nSecond, and less obvious: the API server deduplicates a repeating event by incrementing a `count` field on the existing object rather than writing a new one. So the number of log lines measures how often the API re-emitted, while `count` measures how many times the thing actually happened -- and the two differ by three orders of magnitude on the worst offenders here. The history and hygiene panels are therefore built on how much `count` *changed* inside the query window. The raw value is a lifetime total and says how bad something has ever been, not whether it is still happening; one 24h window had `overseerr-data` at 13,783 lifetime, 200 occurrences in the window, and 10 log lines -- three numbers for one fault, and only the middle one answers the question these panels ask.\n\nSeverity is used as a visual split at the top and deliberately as a filter nowhere else. Once the Kyverno flood is excluded, almost every remaining event is type Normal, including the chronic problems -- so filtering the lower panels on Warning would empty exactly the panels meant to find them.\n\nThe noise floor is the `Noisy reasons excluded` variable, not a hardcoded filter, so it is self-documenting, can be emptied to inspect what it hides, and shrinks as the Kyverno backlog is fixed. A second variable, `Known healthy reasons`, hides success outcomes from the ranking panels alone, so an ordinary deploy cannot outrank a fault there.\n\nPolicy compliance is deliberately absent. Kyverno emits PolicyReport custom resources, which carry current state and are the right source for that question; rebuilding it here would mean re-importing the 76% this dashboard exists to exclude.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "panels": [],
+      "title": "Is anything wrong I haven't noticed?",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "description": "Event lines written to Loki in the last 15 minutes. A number in green means the export is alive; a red SILENT means it is not.\n\nRead this before anything else. If it is SILENT, the empty panels below are empty because nothing is arriving -- not because the cluster is calm. The two look identical everywhere else on this dashboard.\n\nIgnores every dashboard variable, so it stays trustworthy however the rest is filtered.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "SILENT"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 1
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum(count_over_time({job=\"kubernetes-events\"}[15m])) or vector(0)",
+          "instant": true,
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Event pipeline (last 15m)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "description": "Age of the newest event in Loki. Reads as \"a few seconds ago\" on a healthy pipeline.\n\nSays how stale, where the panel to the left only says whether. \"No data\" is the stronger warning of the two: nothing arrived in the dashboard's whole time range.\n\nIgnores every dashboard variable, like the panel to the left.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "text",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "dateTimeFromNow"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 1
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^Time$/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "{job=\"kubernetes-events\"}",
+          "maxLines": 1,
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Last event received",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "description": "How many event lines the `Noisy reasons excluded` variable is removing from every other panel, over the dashboard's time range. It does not count the separate `Known healthy reasons` tier, which applies to the ranking panels only.\n\nThose exclusions are what make the scan panels readable, and they are also the one thing here that can hide a real problem, so the size of the suppression is shown rather than hidden. To see what is behind it, clear the variable: this reads 0 and every other panel shows everything.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "text",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 1
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum(count_over_time({job=\"kubernetes-events\", namespace=~\"$namespace\"} | logfmt | reason =~ \"^(${excluded_reasons:regex})$\" [$__range])) or vector(0)",
+          "instant": true,
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Events hidden by noise exclusions",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "description": "One row per Warning reason, one block per time bucket in which it fired at all.\n\nRead it for novelty, not for size. A row that was not here yesterday is the finding; the count behind each block is in the tooltip and deliberately not drawn, so a single `BackOff` is exactly as visible as a reason with a hundred occurrences.\n\nNearly empty is the normal, healthy state -- one measured hour left three reasons and seven events after exclusions. Treat any new row as worth a look precisely because the baseline is this quiet.\n\nNothing is ranked, truncated or hidden here, and the `Kind` and `Search` variables do not reach this panel: a filter someone forgot they set must not be able to make the cluster look quiet.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "semi-dark-red",
+            "mode": "fixed"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1
+          },
+          "mappings": [],
+          "noValue": "No Warning events outside the exclusion list. Confirm 'Event pipeline' above is green before reading this as calm.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 5,
+      "maxDataPoints": 120,
+      "options": {
+        "colWidth": 0.9,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum by (reason) (count_over_time({job=\"kubernetes-events\", severity=\"warning\", namespace=~\"$namespace\"} | logfmt | reason !~ \"^(${excluded_reasons:regex})$\" [$__interval]))",
+          "legendFormat": "{{reason}}",
+          "queryType": "range",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Warning reasons -- when did each fire?",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "order",
+          "options": {
+            "orderBy": [
+              {
+                "desc": false,
+                "type": "name"
+              }
+            ],
+            "orderByMode": "auto"
+          }
+        }
+      ],
+      "type": "status-history"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "description": "The same scan for Normal events, and where nearly all the signal actually lives.\n\n`Killing`, `Preempted` and `DependencyNotReady` are all type Normal, and on this cluster every one of the standing faults worth fixing -- a PVC stuck on `WaitForFirstConsumer`, a storage replica `Stop`-cycling, a Kustomization blocked on `DependencyNotReady` -- arrives as severity `info`. A Warning-only view would show none of them.\n\nBusier than the panel above by design: pod lifecycle (`Pulled`, `Created`, `Started`, `Scheduled`) lives here too. If a lifecycle reason is drowning the view, add it to `Noisy reasons excluded` -- that variable exists to be tuned.\n\nRead the same way as the panel above: novelty, not size.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "semi-dark-blue",
+            "mode": "fixed"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1
+          },
+          "mappings": [],
+          "noValue": "No Normal events outside the exclusion list. Confirm 'Event pipeline' above is green before reading this as calm.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "id": 6,
+      "maxDataPoints": 120,
+      "options": {
+        "colWidth": 0.9,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum by (reason) (count_over_time({job=\"kubernetes-events\", severity=\"info\", namespace=~\"$namespace\"} | logfmt | reason !~ \"^(${excluded_reasons:regex})$\" [$__interval]))",
+          "legendFormat": "{{reason}}",
+          "queryType": "range",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Normal reasons -- when did each fire?",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "order",
+          "options": {
+            "orderBy": [
+              {
+                "desc": false,
+                "type": "name"
+              }
+            ],
+            "orderByMode": "auto"
+          }
+        }
+      ],
+      "type": "status-history"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
+      "id": 7,
+      "panels": [],
+      "title": "Has this been flaky, and for how long? (healthy reasons hidden)",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "description": "Read this one left-to-right rather than by height. One line per object/reason pair, the ten most active, showing occurrences per bucket -- not log lines -- over a fixed 7 days.\n\nA band reaching the right-hand edge means it is *still* happening now. A band that stops partway is resolved, and where it stops is roughly when. Where a band starts is roughly how long it has been going on. Height is intensity, and is the least interesting of the three: the ranking panels below answer what is worst, this one answers whether it is still going, and since when.\n\nPinned to 7 days, so the dashboard's time picker does not move it. A blank stretch at the left-hand edge means the export was not running yet, not that the cluster was quiet.\n\nHides the `Known healthy reasons` set on top of the noise floor, so an ordinary deploy does not crowd the real offenders out of the top ten. The scan panels at the top still show every reason.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "noValue": "No events with a count field outside the exclusion list in the last 7 days.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": true,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "topk(10, ((max by (namespace, kind, name, reason) (max_over_time({job=\"kubernetes-events\", namespace=~\"$namespace\"} | logfmt | reason !~ \"^(${excluded_reasons:regex})$\" | reason !~ \"^(${healthy_reasons:regex})$\" | kind =~ \"^($kind)$\" | label_format count=\"{{ if .count }}{{ .count }}{{ else }}1{{ end }}\" | unwrap count [$__interval]))) - (min by (namespace, kind, name, reason) (min_over_time({job=\"kubernetes-events\", namespace=~\"$namespace\"} | logfmt | reason !~ \"^(${excluded_reasons:regex})$\" | reason !~ \"^(${healthy_reasons:regex})$\" | kind =~ \"^($kind)$\" | label_format count=\"{{ if .count }}{{ .count }}{{ else }}1{{ end }}\" | unwrap count [$__interval]))) + 1))",
+          "legendFormat": "{{namespace}} {{kind}}/{{name}} {{reason}}",
+          "queryType": "range",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "7d",
+      "title": "Ongoing offenders over 7 days -- occurrences per bucket",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "id": 9,
+      "panels": [],
+      "title": "Which parts are unhealthy? (healthy reasons hidden)",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "description": "Namespaces ranked by event occurrences inside the dashboard's time range -- every object in the namespace, summed.\n\nHides the `Known healthy reasons` set on top of the noise floor, so a namespace that simply runs a lot of pods does not outrank one that is struggling. The scan panels at the top still show every reason.\n\nThe unnamed bar, if present, is everything cluster-scoped: a Node or a PersistentVolume belongs to no namespace. Those are broken out properly in the section below.\n\nUnfiltered by severity on purpose -- the top offenders here are all type Normal, so a Warning filter would empty the panel.\n\nThe number counts occurrences, not log lines: a repeating event is folded into a single object with a rising `count`, so one stuck PVC scored 200 here from 10 log lines.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-BlYlRd"
+          },
+          "mappings": [],
+          "noValue": "No events with a count field outside the exclusion list in this range.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 36
+      },
+      "id": 10,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "topk(15, sum by (namespace) (((max by (namespace, kind, name, reason) (max_over_time({job=\"kubernetes-events\", namespace=~\"$namespace\"} | logfmt | reason !~ \"^(${excluded_reasons:regex})$\" | reason !~ \"^(${healthy_reasons:regex})$\" | kind =~ \"^($kind)$\" | label_format count=\"{{ if .count }}{{ .count }}{{ else }}1{{ end }}\" | unwrap count [$__range]))) - (min by (namespace, kind, name, reason) (min_over_time({job=\"kubernetes-events\", namespace=~\"$namespace\"} | logfmt | reason !~ \"^(${excluded_reasons:regex})$\" | reason !~ \"^(${healthy_reasons:regex})$\" | kind =~ \"^($kind)$\" | label_format count=\"{{ if .count }}{{ .count }}{{ else }}1{{ end }}\" | unwrap count [$__range]))) + 1)))",
+          "instant": true,
+          "legendFormat": "{{namespace}}",
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Namespaces by occurrences in range",
+      "transformations": [
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "desc": true,
+                "field": "Value #A"
+              }
+            ]
+          }
+        }
+      ],
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "description": "Individual object and reason pairs ranked by how many times the thing actually happened inside the dashboard's time range. The most directly actionable panel here: a PVC stuck on `WaitForFirstConsumer` or a storage replica `Stop`-cycling is a real, ongoing fault that produces only a handful of log lines, so anything ranking by line volume puts it near the bottom.\n\nHides the `Known healthy reasons` set on top of the noise floor, so a pod restarting normally does not outrank the object that is actually stuck. The scan panels at the top still show every reason.\n\nRanks on activity inside the window, so something that has since been fixed drops off here while still visible in the 7-day panel above. A brand-new fault that has fired once scores 1 and will not reach a top-15 whose floor is in the hundreds -- the scan panels are what catch that case, and this panel is the complement, not a replacement.\n\nUnfiltered by severity, like the panel to the left.\n\nThe number counts occurrences, not log lines: a repeating event is folded into a single object with a rising `count`, so one stuck PVC scored 200 here from 10 log lines.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-BlYlRd"
+          },
+          "mappings": [],
+          "noValue": "No events with a count field outside the exclusion list in this range.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 36
+      },
+      "id": 11,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "topk(15, ((max by (namespace, kind, name, reason) (max_over_time({job=\"kubernetes-events\", namespace=~\"$namespace\"} | logfmt | reason !~ \"^(${excluded_reasons:regex})$\" | reason !~ \"^(${healthy_reasons:regex})$\" | kind =~ \"^($kind)$\" | label_format count=\"{{ if .count }}{{ .count }}{{ else }}1{{ end }}\" | unwrap count [$__range]))) - (min by (namespace, kind, name, reason) (min_over_time({job=\"kubernetes-events\", namespace=~\"$namespace\"} | logfmt | reason !~ \"^(${excluded_reasons:regex})$\" | reason !~ \"^(${healthy_reasons:regex})$\" | kind =~ \"^($kind)$\" | label_format count=\"{{ if .count }}{{ .count }}{{ else }}1{{ end }}\" | unwrap count [$__range]))) + 1))",
+          "instant": true,
+          "legendFormat": "{{namespace}} {{kind}}/{{name}} {{reason}}",
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Objects by occurrences in range",
+      "transformations": [
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "desc": true,
+                "field": "Value #A"
+              }
+            ]
+          }
+        }
+      ],
+      "type": "bargauge"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 45
+      },
+      "id": 12,
+      "panels": [],
+      "title": "Why did this node or volume misbehave? (healthy reasons hidden)",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "description": "Events about objects that belong to no namespace -- Nodes, PersistentVolumes, StorageClasses, ClusterPolicies, ClusterSecretStores -- one row per kind and reason.\n\nThey need their own panel because the `Namespace` variable cannot reach them. Selecting namespaces above does not narrow this, which is correct: a Node belongs to no namespace. `Kind` is the way to narrow it to just Nodes or just PersistentVolumes.\n\nBoth severities, because a Node telling you something is as likely to be Normal (`NodeReady`, `Rebooted`) as Warning. Hides the `Known healthy reasons` set on top of the noise floor, so routine `NodeReady`/`Synced` chatter does not crowd out the reasons worth investigating.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "semi-dark-orange",
+            "mode": "fixed"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1
+          },
+          "mappings": [],
+          "noValue": "No cluster-scoped events outside the exclusion list in this range.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 46
+      },
+      "id": 13,
+      "maxDataPoints": 120,
+      "options": {
+        "colWidth": 0.9,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum by (kind, reason) (count_over_time({job=\"kubernetes-events\", namespace=\"\"} | logfmt | reason !~ \"^(${excluded_reasons:regex})$\" | reason !~ \"^(${healthy_reasons:regex})$\" | kind =~ \"^($kind)$\" [$__interval]))",
+          "legendFormat": "{{kind}} / {{reason}}",
+          "queryType": "range",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Cluster-scoped objects -- when did each reason fire?",
+      "type": "status-history"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 54
+      },
+      "id": 14,
+      "panels": [],
+      "title": "Something broke -- what happened?",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "description": "Every object and reason pair in range with the number of times it occurred, sortable by any column. The bridge between the charts above and the raw lines below.\n\nSort by Occurrences to rank by how often something actually happened, or by Object to group one object's reasons together -- neither is possible in the log stream below, where a fault that fired hundreds of times and a one-off look identical. A pair that fired exactly once appears with a count of 1; rows are never dropped for being infrequent. Narrow it with `Namespace`, `Kind` and `Search`; capped at 50 rows, because this is a drill-down and not an inventory.\n\nClick an object name to narrow the event stream below to that object -- it sets the `Search` variable, so this table narrows with it. Clear `Search` to come back.\n\nThe Occurrences column counts occurrences, not log lines: a repeating event is folded into a single object with a rising `count`, so one stuck PVC read 200 here while producing 10 log lines whose own `count` field said 13,783 -- three numbers for one fault, and this column is the one that answers \"is it happening now\".",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "inspect": false
+          },
+          "mappings": [],
+          "noValue": "No events matched. Widen the range, or clear the Kind and Search variables. Rows are never omitted for having fired only once -- a single occurrence shows as 1.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "severity"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "info": {
+                        "color": "text",
+                        "index": 1
+                      },
+                      "warning": {
+                        "color": "orange",
+                        "index": 0
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "gauge"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "gauge"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Object"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": false,
+                    "title": "Focus the event stream on this object",
+                    "url": "/d/${__dashboard.uid}?${__url_time_range}&var-search=${__data.fields[\"Object\"]}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 55
+      },
+      "id": 16,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Occurrences"
+          }
+        ]
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "topk(50, ((max by (namespace, kind, name, reason, severity) (max_over_time({job=\"kubernetes-events\", namespace=~\"$namespace\"} |= \"$search\" | logfmt | reason !~ \"^(${excluded_reasons:regex})$\" | kind =~ \"^($kind)$\" | label_format count=\"{{ if .count }}{{ .count }}{{ else }}1{{ end }}\" | unwrap count [$__range]))) - (min by (namespace, kind, name, reason, severity) (min_over_time({job=\"kubernetes-events\", namespace=~\"$namespace\"} |= \"$search\" | logfmt | reason !~ \"^(${excluded_reasons:regex})$\" | kind =~ \"^($kind)$\" | label_format count=\"{{ if .count }}{{ .count }}{{ else }}1{{ end }}\" | unwrap count [$__range]))) + 1))",
+          "instant": true,
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Objects and reasons, by occurrences in range",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "Value": 5,
+              "Value #A": 5,
+              "kind": 1,
+              "name": 2,
+              "namespace": 0,
+              "reason": 3,
+              "severity": 4
+            },
+            "renameByName": {
+              "Value": "Occurrences",
+              "Value #A": "Occurrences",
+              "kind": "Kind",
+              "name": "Object",
+              "namespace": "Namespace",
+              "reason": "Reason",
+              "severity": "Severity"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "$datasource"
+      },
+      "description": "The chronological feed, newest first, and the only panel that shows an event's message.\n\nArrive from a row in the table above -- clicking an object name narrows this to that object -- or from a block in the charts, then narrow further with `Namespace`, `Kind` and `Search`. `Search` is a plain substring filter over the whole event line, so it takes an object name, a controller name or any phrase from the message.\n\nExpand a row to see every field, `count` included. Consecutive lines about the same object are re-emissions of one event with a rising `count`, not separate occurrences -- read the field, not the number of lines.\n\nBoth severities interleaved, unlike the scan panels, and that is the point: the story of a failure is usually Scheduled, Pulled, Created, Started, BackOff, Killing in order, and most of those are Normal.",
+      "gridPos": {
+        "h": 15,
+        "w": 24,
+        "x": 0,
+        "y": 66
+      },
+      "id": 15,
+      "options": {
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": true,
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "{job=\"kubernetes-events\", namespace=~\"$namespace\"} |= \"$search\" | logfmt | reason !~ \"^(${excluded_reasons:regex})$\" | kind =~ \"^($kind)$\"",
+          "maxLines": 1000,
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Event stream",
+      "type": "logs"
+    }
+  ],
+  "preload": false,
+  "refresh": "5m",
+  "schemaVersion": 41,
+  "tags": [
+    "kubernetes",
+    "events",
+    "loki",
+    "observability-core"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": "Loki",
+          "value": "loki"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Datasource",
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "loki",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "$datasource"
+        },
+        "definition": "label_values({job=\"kubernetes-events\"}, namespace)",
+        "description": "Slices most panels by the involved object's namespace. Events about cluster-scoped objects -- Nodes, PersistentVolumes, ClusterPolicies -- carry no namespace and cannot be reached from here; they have their own panel further down.",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Namespace",
+        "multi": true,
+        "name": "namespace",
+        "options": [],
+        "query": "label_values({job=\"kubernetes-events\"}, namespace)",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allowCustomValue": true,
+        "current": {
+          "text": [
+            "PolicyViolation",
+            "ReconciliationSucceeded",
+            "ArtifactUpToDate",
+            "GitOperationSucceeded"
+          ],
+          "value": [
+            "PolicyViolation",
+            "ReconciliationSucceeded",
+            "ArtifactUpToDate",
+            "GitOperationSucceeded"
+          ]
+        },
+        "description": "The noise floor, applied to every panel except the two freshness stats. Every default here is either Kyverno audit output or Flux success chatter, and together they were 88% of this cluster's event volume when measured. The failure-side reasons stay visible: `ReconciliationFailed`, `ArtifactFailed` and `GitOperationFailed` are different strings and are not excluded by these entries.\n\nDrop entries as the Kyverno backlog is worked through, type any other reason to add one, or clear the field entirely to see everything it is hiding.",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Noisy reasons excluded",
+        "multi": true,
+        "name": "excluded_reasons",
+        "options": [
+          {
+            "selected": true,
+            "text": "PolicyViolation",
+            "value": "PolicyViolation"
+          },
+          {
+            "selected": true,
+            "text": "ReconciliationSucceeded",
+            "value": "ReconciliationSucceeded"
+          },
+          {
+            "selected": true,
+            "text": "ArtifactUpToDate",
+            "value": "ArtifactUpToDate"
+          },
+          {
+            "selected": true,
+            "text": "GitOperationSucceeded",
+            "value": "GitOperationSucceeded"
+          }
+        ],
+        "query": "PolicyViolation,ReconciliationSucceeded,ArtifactUpToDate,GitOperationSucceeded",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "allowCustomValue": true,
+        "current": {
+          "text": [
+            "nodeAssigned",
+            "Pulled",
+            "Valid",
+            "Synced",
+            "Created",
+            "Started",
+            "Scheduled",
+            "Completed",
+            "SuccessfulCreate",
+            "SuccessfulDelete",
+            "SuccessfulAttachVolume",
+            "GarbageCollectionSucceeded",
+            "Create",
+            "Update",
+            "Updated",
+            "SawCompletedJob",
+            "ChartPullSucceeded",
+            "InstallSucceeded",
+            "PluginRegistered"
+          ],
+          "value": [
+            "nodeAssigned",
+            "Pulled",
+            "Valid",
+            "Synced",
+            "Created",
+            "Started",
+            "Scheduled",
+            "Completed",
+            "SuccessfulCreate",
+            "SuccessfulDelete",
+            "SuccessfulAttachVolume",
+            "GarbageCollectionSucceeded",
+            "Create",
+            "Update",
+            "Updated",
+            "SawCompletedJob",
+            "ChartPullSucceeded",
+            "InstallSucceeded",
+            "PluginRegistered"
+          ]
+        },
+        "description": "Reasons that mean a thing *worked* -- pod and controller lifecycle: `Scheduled`, `Pulled`, `Created`, `Started`, `Synced` and the like. Applied to the ranking panels only, where a fault firing constantly and an ordinary deploy would otherwise look identical. Left alone everywhere else, because the scan panels, the drill-down table and the event stream need that same sequence to tell the story of a failure.\n\nDeliberately absent from this list, so they stay visible in the rankings: `Killing` (what a crash loop looks like from the kubelet), the volume-cycling reasons `Stop`/`Start`/`Attached`/`Detached`, `Reloaded`, `WaitForFirstConsumer`, and anything matching `*Failed`.\n\nClear the field to see everything the ranking panels would otherwise rank, healthy outcomes included.",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Known healthy reasons",
+        "multi": true,
+        "name": "healthy_reasons",
+        "options": [
+          {
+            "selected": true,
+            "text": "nodeAssigned",
+            "value": "nodeAssigned"
+          },
+          {
+            "selected": true,
+            "text": "Pulled",
+            "value": "Pulled"
+          },
+          {
+            "selected": true,
+            "text": "Valid",
+            "value": "Valid"
+          },
+          {
+            "selected": true,
+            "text": "Synced",
+            "value": "Synced"
+          },
+          {
+            "selected": true,
+            "text": "Created",
+            "value": "Created"
+          },
+          {
+            "selected": true,
+            "text": "Started",
+            "value": "Started"
+          },
+          {
+            "selected": true,
+            "text": "Scheduled",
+            "value": "Scheduled"
+          },
+          {
+            "selected": true,
+            "text": "Completed",
+            "value": "Completed"
+          },
+          {
+            "selected": true,
+            "text": "SuccessfulCreate",
+            "value": "SuccessfulCreate"
+          },
+          {
+            "selected": true,
+            "text": "SuccessfulDelete",
+            "value": "SuccessfulDelete"
+          },
+          {
+            "selected": true,
+            "text": "SuccessfulAttachVolume",
+            "value": "SuccessfulAttachVolume"
+          },
+          {
+            "selected": true,
+            "text": "GarbageCollectionSucceeded",
+            "value": "GarbageCollectionSucceeded"
+          },
+          {
+            "selected": true,
+            "text": "Create",
+            "value": "Create"
+          },
+          {
+            "selected": true,
+            "text": "Update",
+            "value": "Update"
+          },
+          {
+            "selected": true,
+            "text": "Updated",
+            "value": "Updated"
+          },
+          {
+            "selected": true,
+            "text": "SawCompletedJob",
+            "value": "SawCompletedJob"
+          },
+          {
+            "selected": true,
+            "text": "ChartPullSucceeded",
+            "value": "ChartPullSucceeded"
+          },
+          {
+            "selected": true,
+            "text": "InstallSucceeded",
+            "value": "InstallSucceeded"
+          },
+          {
+            "selected": true,
+            "text": "PluginRegistered",
+            "value": "PluginRegistered"
+          }
+        ],
+        "query": "nodeAssigned,Pulled,Valid,Synced,Created,Started,Scheduled,Completed,SuccessfulCreate,SuccessfulDelete,SuccessfulAttachVolume,GarbageCollectionSucceeded,Create,Update,Updated,SawCompletedJob,ChartPullSucceeded,InstallSucceeded,PluginRegistered",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {
+          "text": ".*",
+          "value": ".*"
+        },
+        "description": "Regex over the involved object's kind, matched whole -- `Node`, or `Node|PersistentVolume|Replica` to slice the cluster-scoped panel to storage. Leave at `.*` for everything. Reaches the ranking panels, the cluster-scoped panel, the drill-down table and the event stream, but deliberately not the two scan panels at the top: a filter someone forgot they set must not be able to make the cluster look quiet.",
+        "hide": 0,
+        "label": "Kind",
+        "name": "kind",
+        "options": [],
+        "query": ".*",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "description": "Substring filter over the whole event line, applied to the drill-down table and the event stream only. Clicking an object name in the table sets it; clear it to widen back out. Deliberately not applied to the scan panels: a forgotten search term must never be able to make the cluster look quiet.",
+        "hide": 0,
+        "label": "Search",
+        "name": "search",
+        "options": [],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Kubernetes Events",
+  "uid": "kubernetes-events",
+  "version": 1,
+  "weekStart": ""
+}
