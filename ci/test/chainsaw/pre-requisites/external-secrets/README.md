@@ -82,7 +82,15 @@ consumer may not realise it had: a suite that waited only on `external-secrets-r
 **transitively** waiting on cert-manager too, because external-secrets would not go Ready until
 cert-manager had. That guarantee disappears with the dependency.
 
-So if the module under test ships a `Certificate` or `Issuer`, adopting this fixture means:
+The trigger is **"does the module under test, or any chart it installs, need cert-manager?"** — not
+"does the module ship a `Certificate`". Those differ, and the narrower reading is wrong.
+
+`infra-database` is the case that proves it: `database-core` ships no `Certificate` at all, yet needs
+cert-manager, because the **Barman Cloud plugin's chart** issues its own gRPC TLS certificates through
+it. Grepping the module's manifests would have said no, and `Validate plugin-barman-cloud` would have
+gone red. **Check the module's own README `Dependencies` / `Prerequisites` section**, which states it.
+
+Where the answer is yes, adopting this fixture means:
 
 1. compose `../cert-manager` as well, **and**
 2. add an explicit reconcile-and-wait step for `cert-manager-release`, which the suite previously
