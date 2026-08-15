@@ -5,15 +5,17 @@ metadata:
   name: garage-admin
   namespace: garage
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: garage-admin.${domain_name}
+    external-dns.alpha.kubernetes.io/hostname: garage.${domain_name}
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   # setting tls to [], so that default certificate will be assigned -- same as
-  # ingress-s3.yaml/ingress-web.yaml.
+  # ingress-s3.yaml. Unlike ingress-web.yaml, this hostname is a single label
+  # (garage.${domain_name}), so Traefik's cluster-wide default *.${domain_name}
+  # certificate already covers it; no dedicated Certificate is needed here.
   tls: []
   rules:
-  - host: garage-admin.${domain_name}
+  - host: garage.${domain_name}
     http:
       paths:
       # Only /v2 is routed -- deliberately NOT `path: /` like the other two
@@ -39,7 +41,7 @@ spec:
       # /check and /metrics have no matching rule and simply 404 through this
       # Ingress (Traefik has no default backend configured), while every
       # existing and future /v2/* admin call keeps working unchanged.
-      # Falsifiable check: `curl https://garage-admin.${domain_name}/metrics`
+      # Falsifiable check: `curl https://garage.${domain_name}/metrics`
       # must 404, while a Bearer-authenticated call to
       # /v2/GetBucketInfo?... must reach Garage and get a real answer.
       #
