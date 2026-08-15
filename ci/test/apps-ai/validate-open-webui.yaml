@@ -21,7 +21,34 @@ spec:
       - name: namespace
         value: ai
       file: ../chainsaw/assertions/statefulset-ready.yaml
-      timeout: 5m
+      # 5m -> 10m. Unusually for this repo, the tail here is not a guess: this assert has
+      # taken 208/238/270s on green runs (0.90 of 5m) and has also burned the full 300s and
+      # failed on three separate runs, with `status.(replicas == readyReplicas)` false and no
+      # CrashLoop, image-pull or Helm-failure artifact to blame. Those three failures are
+      # censored at 300s, so they say nothing about how much longer it would have needed --
+      # which is the case the x3 sizing rule exists for. The image is ~1.77GB and a 4m12s
+      # pull has been observed for it.
+      #
+      # This step now runs LAST rather than first, which is the whole point of the reorder in
+      # chainsaw-test.yaml: the component with the widest spread gets the suite's full elapsed
+      # time working for it instead of none of it. Measured, that means this assert starts at
+      # T0+443 with open-webui already Ready since T0+388 and returns in 0s. The budget stays
+      # at 10m anyway -- it is sized for the censored failures, which are the runs where the
+      # pull is slow and no amount of head start helps.
+      #
+      # Ceiling arithmetic, because this budget is a fifth of the job: apps-ai runs at 25m
+      # (1500s). Nothing but the readiness report follows this step now, so the binding sum is
+      # the ~443s of everything ahead of it plus this 600s: ~1043s, inside the ceiling with
+      # room. It is the largest single budget in the apps scope and it fits; do not add to it
+      # without redoing that sum.
+      #
+      # The HelmRelease assert stays behind the StatefulSet rather than in front of it with
+      # this budget. The reason that pattern helps elsewhere is that helm creates nothing
+      # until the release completes, so a workload asserted first reports `actual resource
+      # not found` and describes an installing release as a missing object. That is not what
+      # happens here -- all three recorded failures name this StatefulSet and its real
+      # status, so the object exists and the message is already the precise one.
+      timeout: 10m
   - description: Assert openwebui-release
     assert:
       bindings:
