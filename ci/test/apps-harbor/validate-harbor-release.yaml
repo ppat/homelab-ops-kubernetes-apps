@@ -5,6 +5,16 @@ metadata:
   name: validate-harbor-release
 spec:
   try:
+  # 3m rather than the inherited 60s. This step is the suite's aggregate check - it asserts the
+  # whole HelmRelease is Ready after every individual workload has already been asserted - so
+  # it must stay last, and that position is exactly what makes the default wrong for it: the
+  # release's own Ready condition lags its workloads, and this assertion inherits none of the
+  # slack the workload steps ahead of it consumed.
+  #
+  # Observed failing at 60s of 60s with `status: Unknown` - reconciling, not failed - on a run
+  # where all ten workload asserts had already passed. That is the signature of a budget that
+  # is too small rather than a release that is broken; a broken release reports False with a
+  # reason, not Unknown.
   - description: Assert helmrelease/harbor-release
     assert:
       bindings:
@@ -13,6 +23,7 @@ spec:
       - name: namespace
         value: harbor
       file: ../chainsaw/assertions/helmrelease-ready.yaml
+      timeout: 3m
   catch:
   - describe:
       apiVersion: helm.toolkit.fluxcd.io/v2
