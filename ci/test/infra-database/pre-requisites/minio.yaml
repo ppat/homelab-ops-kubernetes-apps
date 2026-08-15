@@ -32,6 +32,23 @@ spec:
   timeout: 4m0s
   wait: true
   patches:
+  # minio's admin credential is supplied directly by minio-admin-credentials.yaml in this
+  # fixture, so the module's ExternalSecret for it is removed. See that file for why this
+  # is scaffolding rather than a loss of coverage: it decouples minio's install from
+  # external-secrets becoming ready, which was gating it by roughly two minutes.
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      $patch: delete
+      apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      metadata:
+        name: minio-admin-credentials
+        namespace: minio
+    target:
+      group: external-secrets.io
+      kind: ExternalSecret
+      name: minio-admin-credentials
+      namespace: minio
   # yamllint disable-line rule:indentation
   - patch: |-
       apiVersion: helm.toolkit.fluxcd.io/v2
