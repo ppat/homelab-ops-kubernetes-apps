@@ -29,6 +29,27 @@ up a fixture to run a 15s test.
 Component subdirectories of a module are standalone kustomizations, so a fixture can point a Flux
 `Kustomization` at a *component* path directly and skip everything else in the module.
 
+## What a suite gives up by adopting these
+
+Eleven suites reached cert-manager and external-secrets by deploying the whole `security-core` module, so
+adopting these fixtures also stops them deploying kyverno, policy-reporter and trust-manager. Per component,
+what that costs:
+
+- **kyverno** acts on resources only through `Policy`/`ClusterPolicy` objects, and there are none anywhere in
+  this repository — every policy in this homelab lives in the sibling clusters repo under `policies/`, applied
+  by cluster-level Flux `Kustomization`s that CI never deploys. So in CI kyverno runs with an empty policy set
+  and its mutating webhook configuration is generated with no rules: it intercepts nothing. Outside
+  `ci/test/infra-security/`, no suite asserts anything about it.
+- **policy-reporter** reports on kyverno policies, of which there are none — and all eleven suites already
+  patch-deleted it before these fixtures existed, so nothing changes for it at all.
+- **trust-manager** provides the `Bundle` API. Exactly one assertion in the repo reads a `Bundle`
+  (`infra-security/validate-external-secrets.yaml`, via `assertions/bundle-synced.yaml`), and it is in the
+  suite that still deploys trust-manager.
+
+So what the eleven stop exercising is "these three install cleanly alongside the module under test", which
+`ci/test/infra-security/` covers as its own subject. A suite needing a `Bundle` of its own cannot use the
+`external-secrets` fixture; see its README.
+
 ## Conventions every fixture follows
 
 Read these once here rather than six times in the individual READMEs.
