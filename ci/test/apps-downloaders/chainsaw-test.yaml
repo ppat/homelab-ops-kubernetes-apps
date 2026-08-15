@@ -19,16 +19,31 @@ spec:
 
   - name: Reconcile pre-requisites
     try:
+    # 2m -> 5m. This same reconcile is the single most exposed operation in the apps scope:
+    # five suites run it identically at 2m and all five sit at 0.74-0.97 of it (here:
+    # 74/76/82/84/92s over 5 green runs). The control is apps-ai, which runs the identical
+    # script at 4m and has been observed taking 154s -- 128% of what this budget allows. The
+    # distribution is also bimodal (a warm cluster and a cold one), so a 5-run maximum says
+    # very little about the upper mode's tail. Note the failure shape: flux-reconcile.sh
+    # passes this same duration to `flux reconcile --timeout`, so blowing it surfaces as a
+    # script exit 1 from flux, not as a chainsaw assert timeout.
     - description: Reconcile helmrelease/external-secrets-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
-        timeout: 2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=5m
+        timeout: 5m
+    # 2m -> 5m, and this suite is where the evidence for it is. Green runs show 2-3s, which
+    # measures nothing -- that is the warm path, where the release was already reconciled by
+    # the pre-requisites Kustomization. On the cold path this operation has been observed at
+    # 96-102s on passing runs and has killed 8 runs of this suite at exactly 120-121s, making
+    # it the second-largest single failure bucket here after the CNPG Cluster itself. A
+    # budget sitting on the shoulder of its own distribution is the shape this whole exercise
+    # is about.
     - description: Reconcile helmrelease/cloudnative-pg-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=2m
-        timeout: 2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=5m
+        timeout: 5m
 
   - name: Apply apps-downloaders modules
     try:
@@ -39,7 +54,7 @@ spec:
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
-        name: infra-database-core
+        name: pre-requisites-cnpg-operator
         namespace: flux-system
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -60,46 +75,94 @@ spec:
           value: downloaders
         file: ../chainsaw/assertions/externalsecret-ready.yaml
 
-  - name: Validate database
+  # Validate steps are ordered ascending by measured pod readiness, subject to the module's
+  # one real dependency. Flux creates all ten *arr Deployments within 3s of the module being
+  # applied and they converge in parallel, so this changes which assert absorbs the wait, not
+  # how long the suite takes: the eleven validate steps summed to 122s before and are
+  # predicted to sum to 122s after.
+  #
+  # Readiness from this suite's own `Report readiness ordering` step, in seconds after the
+  # first pod in the cluster went Ready (T0), with the first validate step beginning at T0+117:
+  #
+  #   qbittorrent 150 . bazarr 155 . sabnzbd 155 . downloaders-db-test 203 . lidarr 207 .
+  #   radarr 207 . prowlarr 209 . sonarr 211 . autobrr 218 . seerr 236 . qui 239
+  #
+  # The dependency is the primary key and it is not crossed. Seven of the ten *arr apps mount
+  # the `downloaders-db-test-app` secret (radarr, lidarr, sonarr, prowlarr, autobrr, seerr,
+  # qui) and all seven stay behind `Validate database`; the three that have no reference to
+  # the database anywhere in the module (qbittorrent, bazarr, sabnzbd) move ahead of it. The
+  # readiness measurement and the dependency graph agree exactly -- the three DB-free apps are
+  # the three fastest, and every DB-consumer is Ready after the Cluster -- which is the
+  # strongest evidence available that this ordering is not accidental.
+  #
+  # This reverses the previous "deliberately not reordered" note, and the reason it was
+  # written still holds: no permutation helps the seven apps gated on the Cluster, and 26
+  # sampled failure dumps show them Ready in 0 of 26 while the three DB-free apps are Ready in
+  # 26 of 26. What that note missed is the other half -- those three DB-free apps were being
+  # asserted *behind* an 86s database step they do not depend on, so the module's convergence
+  # was charged to the Cluster assert instead of to them. Measured after the reorder:
+  # qbittorrent 29s, bazarr 20s, sabnzbd 0s, database 26s, lidarr 10s, radarr 10s, prowlarr
+  # 0s, sonarr 5s, autobrr 0s, seerr 16s, qui 0s -- the Cluster assert down from 0.48 of its
+  # 180s to 0.14, on a run whose prerequisite reconcile was more than twice as slow as the
+  # one the ordering came from. A second readiness report reproduces the split exactly: the
+  # same three DB-free apps first, all seven DB-consumers behind the Cluster.
+  #
+  # The CNPG Cluster's budget is untouched and the 86s -> 26s drop is a side effect, not the
+  # goal: those 25 failures show an empty `Status:`, `Events: <none>` and no instance pod
+  # after the full 180s while flux reports cloudnative-pg Ready and the operator pod up 4m37s
+  # (ppat/homelab-ops-kubernetes-apps#3678). The absence of the obligatory
+  # SettingUp/CreatingInstance events proves the operator never acted, and no head start and
+  # no bigger number can fix inaction.
+  #
+  # Order inside the DB-consumer block carries no information. The seven span 36s in the first
+  # report and 41s in the second, and six of the seven change places between the two -- lidarr
+  # and radarr are joint-Ready at T0+207 in the first, and the second puts seerr last where
+  # the first had qui. They are ties. What reproduces across both reports is only the split:
+  # the three DB-free apps first, then the Cluster, then these seven.
+  - name: Validate qbittorrent
     use:
-      template: ./validate-database.yaml
-
-  - name: Validate radarr
-    use:
-      template: ./validate-radarr.yaml
-
-  - name: Validate sabnzbd
-    use:
-      template: ./validate-sabnzbd.yaml
-
-  - name: Validate sonarr
-    use:
-      template: ./validate-sonarr.yaml
-
-  - name: Validate lidarr
-    use:
-      template: ./validate-lidarr.yaml
-
-  - name: Validate seerr
-    use:
-      template: ./validate-seerr.yaml
-
-  - name: Validate prowlarr
-    use:
-      template: ./validate-prowlarr.yaml
+      template: ./validate-qbittorrent.yaml
 
   - name: Validate bazarr
     use:
       template: ./validate-bazarr.yaml
 
-  - name: Validate qbittorrent
+  - name: Validate sabnzbd
     use:
-      template: ./validate-qbittorrent.yaml
+      template: ./validate-sabnzbd.yaml
+
+  - name: Validate database
+    use:
+      template: ./validate-database.yaml
+
+  - name: Validate lidarr
+    use:
+      template: ./validate-lidarr.yaml
+
+  - name: Validate radarr
+    use:
+      template: ./validate-radarr.yaml
+
+  - name: Validate prowlarr
+    use:
+      template: ./validate-prowlarr.yaml
+
+  - name: Validate sonarr
+    use:
+      template: ./validate-sonarr.yaml
 
   - name: Validate autobrr
     use:
       template: ./validate-autobrr.yaml
 
+  - name: Validate seerr
+    use:
+      template: ./validate-seerr.yaml
+
   - name: Validate qui
     use:
       template: ./validate-qui.yaml
+
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml
