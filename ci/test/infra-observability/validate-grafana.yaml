@@ -13,6 +13,21 @@ spec:
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/externalsecret-ready.yaml
+  # HelmRelease before the workloads, carrying the convergence budget -- same reasoning as
+  # validate-prometheus.yaml. Grafana is the second-heaviest image in the module (~392MB),
+  # and it is the component this suite's step reordering nearly caught out: with the slow
+  # step moved off the front, grafana became the new long pole at 50s against the inherited
+  # 60s default, having previously been free-riding on the wait ahead of it. Displacing
+  # pressure is not removing it. 3m is the sizing rule against that 50s.
+  - description: Assert helmrelease/grafana-release
+    assert:
+      bindings:
+      - name: name
+        value: grafana-release
+      - name: namespace
+        value: monitoring
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+      timeout: 3m
   - description: Assert deployment/grafana
     assert:
       bindings:
@@ -49,14 +64,6 @@ spec:
             spec:
               (volumes[?name == 'storage'] | [0].persistentVolumeClaim.claimName): grafana-data
               (containers[?name == 'grafana'] | [0].volumeMounts[?name == 'storage'] | [0].mountPath): /var/lib/grafana
-  - description: Assert helmrelease/grafana-release
-    assert:
-      bindings:
-      - name: name
-        value: grafana-release
-      - name: namespace
-        value: monitoring
-      file: ../chainsaw/assertions/helmrelease-ready.yaml
 
   catch:
   - describe:

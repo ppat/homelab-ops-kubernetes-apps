@@ -101,9 +101,18 @@ spec:
   # slowest thing first, as this suite used to, is the one arrangement that guarantees the
   # slowest component the least time.
   #
-  # Measured tiers: syslog-ng / unifi-poller / node-problem-detector / grafana / goldilocks
-  # at T0+1..8s; loki at T0+6..11s; snmp + blackbox at T0+15..43s; alloy at T0+10..171s;
-  # kube-prometheus-stack at T0+52..>120s.
+  # Measured readiness, in seconds after the module is applied, from the readiness report
+  # this suite now emits at the end of every passing run:
+  #
+  #   unifi-poller +6 . node-problem-detector +11 . syslog-ng +17 . goldilocks +22
+  #   . snmp +30 . blackbox +31 . loki +67 . grafana +72 . alloy +76
+  #   . kube-prometheus-stack +106
+  #
+  # Note grafana's position, because the first cut of this ordering got it wrong. Derived
+  # from object CREATION times in failure dumps, grafana looked like a T0+1..8s component
+  # and was placed fifth; it is actually among the slowest to become READY, because it is
+  # the second-heaviest image in the module. Creation is not readiness, and the gap between
+  # them is the whole quantity this ordering depends on.
   #
   # Be careful what this is worth. In THIS suite the reordering is worth only ~18-30s,
   # because the twenty non-Prometheus validate steps take about 18s combined -- it is a
@@ -128,9 +137,13 @@ spec:
     use:
       template: ./validate-node-problem-detector.yaml
 
-  - name: Validate Grafana
+  - name: Validate SNMP Exporter
     use:
-      template: ./validate-grafana.yaml
+      template: ./validate-snmp-exporter.yaml
+
+  - name: Validate Blackbox Exporter
+    use:
+      template: ./validate-blackbox-exporter.yaml
 
   - name: Validate Loki
     use:
@@ -156,13 +169,9 @@ spec:
         name: loki-release
         namespace: logging
 
-  - name: Validate SNMP Exporter
+  - name: Validate Grafana
     use:
-      template: ./validate-snmp-exporter.yaml
-
-  - name: Validate Blackbox Exporter
-    use:
-      template: ./validate-blackbox-exporter.yaml
+      template: ./validate-grafana.yaml
 
   # Last two, and in this order, because they are the two slowest and they swap places
   # between runs: alloy was ready before kube-prometheus-stack in some dumps and 50s after
