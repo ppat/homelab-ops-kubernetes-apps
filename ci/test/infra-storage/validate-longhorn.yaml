@@ -79,6 +79,15 @@ spec:
         value: longhorn-system
       file: ../chainsaw/assertions/deployment-ready.yaml
       timeout: 3m
+  # The four CSI workloads behind csi-attacher used to inherit the 60s default, on the
+  # reasoning that csi-attacher absorbs the creation wait and they then complete in 0.1-8.3s.
+  # That holds only while longhorn-manager starts cleanly. When it loses the startup race
+  # above and restarts, the whole driver-deployer chain shifts late together and the
+  # followers run out first: observed failing at `longhorn-csi-plugin` with the manager
+  # showing restarts 0/2/2 and csi-attacher itself surviving on its 3m.
+  #
+  # So they carry the same 3m as csi-attacher rather than a budget that is only correct on
+  # the happy path. Free on a clean run, where these still return in under 9s.
   - description: Assert deployment/csi-provisioner
     assert:
       bindings:
@@ -87,6 +96,7 @@ spec:
       - name: namespace
         value: longhorn-system
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 3m
   - description: Assert deployment/csi-resizer
     assert:
       bindings:
@@ -95,6 +105,7 @@ spec:
       - name: namespace
         value: longhorn-system
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 3m
   - description: Assert deployment/csi-snapshotter
     assert:
       bindings:
@@ -103,6 +114,7 @@ spec:
       - name: namespace
         value: longhorn-system
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 3m
   - description: Assert daemonset/longhorn-csi-plugin
     assert:
       bindings:
@@ -111,6 +123,7 @@ spec:
       - name: namespace
         value: longhorn-system
       file: ../chainsaw/assertions/daemonset-ready.yaml
+      timeout: 3m
 
   - description: Assert helmrelease/longhorn-release
     assert:
