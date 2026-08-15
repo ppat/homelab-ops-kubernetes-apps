@@ -13,6 +13,15 @@ spec:
       - name: namespace
         value: bitwarden
       file: ../chainsaw/assertions/deployment-ready.yaml
+      # Was the inherited 60s default. The green numbers understate this one badly: four runs
+      # returned in 0s and the fifth took 33s, which reads as 0.55 and is really the same
+      # quantisation as bitwarden-self-host-api. This container's readinessProbe is
+      # initialDelaySeconds 60, periodSeconds 120, timeoutSeconds 60, failureThreshold 3, so
+      # its Ready lands at 60s, 180s or 300s after the container starts and nowhere between.
+      # A budget of 60s therefore covers exactly one of the three outcomes; one missed first
+      # probe costs 120s and cannot be absorbed at any position in the step order. 5m covers
+      # all three, given the ~40-110s the container is already old when this step is reached.
+      timeout: 5m
   catch:
   - describe:
       apiVersion: apps/v1

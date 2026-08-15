@@ -13,7 +13,18 @@ spec:
       - name: namespace
         value: bitwarden
       file: ../chainsaw/assertions/statefulset-ready.yaml
-      timeout: 2m
+      # 2m -> 4m, against 68/75/89s over 5 green runs (0.74). This is the first workload the
+      # suite asserts and the whole chart is serialised behind it: helm runs two pre-install
+      # hook Jobs before any Deployment exists, then a post-install migrator that the app
+      # pods cannot pass their probes without.
+      #
+      # Worth recording, because the chart reads otherwise: the chart ships a startupProbe
+      # with initialDelaySeconds 120, which would put a hard 120s floor under this assert --
+      # but the module's HelmRelease postRenderer removes it from the StatefulSet, leaving a
+      # tcpSocket readinessProbe at delay 5s / period 2s. So there is no probe cliff here and
+      # nothing special near 4m; what this budget covers is a 551MB image pull plus SQL
+      # Server's own boot.
+      timeout: 4m
   catch:
   - describe:
       apiVersion: apps/v1
