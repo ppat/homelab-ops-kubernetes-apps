@@ -10,22 +10,10 @@ resources:
 - pvc/
 
 patches:
-# yamllint disable-line rule:indentation
-- patch: |-
-    - op: add
-      path: /spec/patches
-      value:
-        - patch: |-
-            $patch: delete
-            apiVersion: helm.toolkit.fluxcd.io/v2
-            kind: HelmRelease
-            metadata:
-              name: kyverno-policy-reporter-release
-              namespace: kyverno
-          target:
-            kind: HelmRelease
-            name: kyverno-policy-reporter-release
-            namespace: kyverno
+# Trim the security-core fixture to cert-manager + external-secrets, which is all any suite
+# other than infra-security depends on. The patch file states what goes and why each removal
+# leaves nothing untested.
+- path: ../../chainsaw/patches/trim-infra-security-core.yaml
   target:
     kind: Kustomization
     name: infra-security-core
