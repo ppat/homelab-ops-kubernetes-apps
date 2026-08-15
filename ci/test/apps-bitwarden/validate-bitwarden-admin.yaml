@@ -13,6 +13,12 @@ spec:
       - name: namespace
         value: bitwarden
       file: ../chainsaw/assertions/deployment-ready.yaml
+      # Was the inherited 60s default, at 0.77 of it: 27/40/46s over 5 green runs. Those were
+      # taken from second place in the step order, where admin absorbed the convergence of
+      # everything Ready before it; the readiness report puts admin ninth at T0+250 and it now
+      # sits ninth, with ~2s predicted. 3m stays: its own probe is a 5s/5s httpGet so nothing
+      # about it is quantised, and the budget has to hold if the order ever changes again.
+      timeout: 3m
   catch:
   - describe:
       apiVersion: apps/v1

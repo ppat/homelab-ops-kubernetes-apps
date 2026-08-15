@@ -13,7 +13,21 @@ spec:
       - name: namespace
         value: bitwarden
       file: ../chainsaw/assertions/deployment-ready.yaml
-      timeout: 2m
+      # 2m -> 5m. The headroom number (65/85/101s over 5 green runs, 0.84) is the weaker half
+      # of the reason. The stronger half is the probe geometry, read off the rendered chart:
+      # this container's readinessProbe is initialDelaySeconds 120, periodSeconds 120,
+      # timeoutSeconds 180, failureThreshold 5. So the pod cannot report Ready before 120s
+      # after the CONTAINER starts, and if the first probe misses -- or merely runs slowly,
+      # since a 180s timeout exceeds the 120s period -- the next chance is 120s later. Its
+      # readiness is quantised onto a ~120s grid: 120s, 240s, 360s, and nothing in between.
+      #
+      # The assert does not start when the container does, which is why 101s of a 120s budget
+      # is observable at all: the container is already 40-110s old by the time this step is
+      # reached. What that means for sizing is that 2m covered the first grid point and could
+      # never cover the second, so a single missed probe was an automatic suite failure. 5m
+      # covers the second (~150-200s of assert time) and most of the third. It predicts a
+      # bimodal failure distribution 120s apart, which is testable against the reporter.
+      timeout: 5m
   catch:
   - describe:
       apiVersion: apps/v1

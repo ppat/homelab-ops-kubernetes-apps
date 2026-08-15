@@ -19,11 +19,20 @@ spec:
 
   - name: Reconcile pre-requisites
     try:
-    - description: Reconcile helmrelease/infra-security-core
+    # 2m -> 5m, and this is the tightest operation measured anywhere in the apps scope:
+    # 61/62/66/98/116s over 5 green runs, i.e. 0.97 of the budget with 4 seconds to spare.
+    # Five suites run this same reconcile at 2m and all five sit at 0.74-0.97; the control is
+    # apps-ai, which runs the identical script at 4m and has been observed taking 154s --
+    # 128% of what this budget allows. The distribution here is visibly bimodal (three runs
+    # at 61-66s, two at 98-116s), so a 5-run maximum characterises the upper mode barely at
+    # all. Note the failure shape: flux-reconcile.sh passes this same duration to `flux
+    # reconcile --timeout`, so blowing it surfaces as a script exit 1 from flux, not as a
+    # chainsaw assert timeout.
+    - description: Reconcile helmrelease/external-secrets-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
-        timeout: 2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=5m
+        timeout: 5m
 
   - name: Apply apps-bitwarden module
     try:
@@ -50,41 +59,75 @@ spec:
           value: bitwarden
         file: ../chainsaw/assertions/externalsecret-ready.yaml
 
-  - name: Validate bitwarden mssql
+  # Validate steps are ordered ascending by measured pod readiness. helm-controller installs
+  # the whole chart in one release and every workload converges in parallel, so this changes
+  # which assert absorbs the wait, not how long the suite takes: the eleven validate steps
+  # summed to 214s before and are predicted to sum to 214s after.
+  #
+  # Readiness from this suite's own `Report readiness ordering` step, in seconds after the
+  # first pod in the cluster went Ready (T0), with the first validate step beginning at T0+126:
+  #
+  #   web 162 . attachments 166 . notifications 179 . icons 182 . events 192 . mssql 207 .
+  #   identity 241 . sso 248 . admin 250 . api 325
+  #
+  # This replaces a claim that the order was already ascending. It was not: that claim read
+  # "mssql 72-90s, admin 104-130s, identity 105-137s, api 188-229s" off assert durations, and
+  # an assert duration is circular here -- mssql measured 81s and admin 43s because they ran
+  # first and second and absorbed the convergence of the five components that were actually
+  # Ready before mssql, each of which then measured 0s. Measured after the reorder: web 29s,
+  # attachments 18s, notifications 6s, icons 0s, events 10s, mssql 24s, identity 25s, sso 0s,
+  # admin 3s, api 101s. A second readiness report reproduces this ordering, with
+  # icons/notifications and sso/identity swapping inside 5-6s of each other -- those two pairs
+  # are ties and their order carries no information.
+  #
+  # There is no dependency to cross. Every step asserts one Deployment's own readiness, so
+  # asserting `web` before `mssql` cannot pass because mssql has not been checked yet -- the
+  # runtime dependency between the pods is unaffected by the order the asserts are read in.
+  # What the reorder costs is that five steps still on the inherited 60s (attachments,
+  # notifications, icons, events, sso) go from absorbing 0s to absorbing up to 18s. That is
+  # 0.30 of the default -- higher than the 3-13s this reorder was predicted to move onto them,
+  # and measured on attachments. Still short of the exposure threshold, but they are the steps
+  # to look at first if this suite starts failing somewhere new: the reorder put time on them.
+  #
+  # `Validate bitwarden api` stays second-to-last on measurement (T0+325, 118s clear of
+  # anything else) and `Validate bitwarden release` stays last on principle -- it asserts the
+  # whole HelmRelease after every workload in it, so sorting it by its 15s cost would put it
+  # first, where it could only ever fail.
+  - name: Validate bitwarden web
     use:
-      template: ./validate-bitwarden-mssql.yaml
-
-  - name: Validate bitwarden admin
-    use:
-      template: ./validate-bitwarden-admin.yaml
+      template: ./validate-bitwarden-web.yaml
 
   - name: Validate bitwarden attachments
     use:
       template: ./validate-bitwarden-attachments.yaml
 
-  - name: Validate bitwarden events
+  - name: Validate bitwarden notifications
     use:
-      template: ./validate-bitwarden-events.yaml
+      template: ./validate-bitwarden-notifications.yaml
 
   - name: Validate bitwarden icons
     use:
       template: ./validate-bitwarden-icons.yaml
 
+  - name: Validate bitwarden events
+    use:
+      template: ./validate-bitwarden-events.yaml
+
+  - name: Validate bitwarden mssql
+    use:
+      template: ./validate-bitwarden-mssql.yaml
+
   - name: Validate bitwarden identity
     use:
       template: ./validate-bitwarden-identity.yaml
-
-  - name: Validate bitwarden notifications
-    use:
-      template: ./validate-bitwarden-notifications.yaml
 
   - name: Validate bitwarden sso
     use:
       template: ./validate-bitwarden-sso.yaml
 
-  - name: Validate bitwarden web
+  - name: Validate bitwarden admin
     use:
-      template: ./validate-bitwarden-web.yaml
+      template: ./validate-bitwarden-admin.yaml
 
   - name: Validate bitwarden api
     use:
@@ -93,3 +136,7 @@ spec:
   - name: Validate bitwarden release
     use:
       template: ./validate-bitwarden-release.yaml
+
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml
