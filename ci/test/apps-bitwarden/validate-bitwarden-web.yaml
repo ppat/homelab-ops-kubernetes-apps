@@ -13,6 +13,13 @@ spec:
       - name: namespace
         value: bitwarden
       file: ../chainsaw/assertions/deployment-ready.yaml
+      # 60s (inherited) -> 2m. web is the first component in this chart to become Ready
+      # (T0+162, against attachments 166 and mssql 207), so it now leads the suite and absorbs
+      # the release's convergence instead of returning in 0s from ninth place. Predicted 36s
+      # from a first validate step that begins at T0+126 -- 0.60 of the default it was on,
+      # which is over the exposure threshold this exercise uses. 36 x 3 = 108s, rounded up to
+      # the next rung.
+      timeout: 2m
   catch:
   - describe:
       apiVersion: apps/v1

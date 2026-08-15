@@ -73,33 +73,48 @@ spec:
           value: home-automation
         file: ../chainsaw/assertions/externalsecret-ready.yaml
 
-  # Validate steps are ordered ascending by measured readiness. Flux creates every workload
-  # here within 1-2s of the module being applied and they converge in parallel, so this
-  # changes which assert absorbs the wait, not how long the suite takes.
+  # Validate steps are ordered ascending by measured pod readiness. Flux creates every
+  # workload here within 1-2s of the module being applied and they converge in parallel, so
+  # this changes which assert absorbs the wait, not how long the suite takes: the four
+  # validate steps summed to 78s before and are predicted to sum to 79s after.
   #
-  # Readiness, seconds after the module is applied, over 5 green runs: nanomq 12 . the CNPG
-  # cluster 35-90 . wyoming-piper/whisper censored at <=79-117 . home-assistant 79-117. Only
-  # home-assistant is measured at the tail; piper and whisper are censored, so their true
-  # order against it is unknown from a green run. The byte census breaks the tie the same
-  # way -- home-assistant is ~977MB across two containers against ~402MB and ~448MB -- so
-  # both available sources agree it is the last thing to be ready, and it takes the last
-  # slot. Revisit once the readiness report at the end of this suite has run.
+  # Readiness from this suite's own `Report readiness ordering` step, in seconds after the
+  # first pod in the cluster went Ready (T0), with the first validate step beginning at T0+131:
   #
-  # The CNPG Cluster stays third and keeps its budget untouched. Its failures in this suite
-  # are the operator never acting at all -- empty `Status:`, `Events: <none>` and no instance
-  # pod after the full budget -- and neither a bigger number nor a later position can fix
-  # that. Moving it would only delay a failure that is already correct.
+  #   nanomq 142 . wyoming-whisper 176 . wyoming-piper 187 . home-automation-db-test 207 .
+  #   home-assistant 210
+  #
+  # `Validate piper + whisper` moves ahead of `Validate database`, which is the one change
+  # here. Their readiness was censored when this order was last set and the CNPG Cluster was
+  # assumed faster; measured, both are Ready ~20-30s before it. Neither wyoming Deployment has
+  # any secret, config or service reference to the database (they are wyoming voice services
+  # with no env or volume references at all), so nothing is asserted before something it
+  # depends on. Measured after the reorder: nanomq 11s, piper + whisper 42s, database 33s,
+  # home-assistant 1s -- the Cluster assert down from 0.36 of its 180s to 0.18. The second
+  # report also puts home-assistant (T0+198) ahead of the Cluster (T0+219), inverted from the
+  # first; it stays last anyway, because it is the one workload here that consumes the
+  # database and the dependency is the primary key.
+  #
+  # The CNPG Cluster's 3m budget is untouched, and moving it later is not an attempt to
+  # relieve it: its failures in this suite are the operator never acting at all -- empty
+  # `Status:`, `Events: <none>`, no instance pod after the full budget
+  # (ppat/homelab-ops-kubernetes-apps#3678) -- and no head start fixes inaction. What the move
+  # does do is take its measured consumption from 64s to 33s of 180s, which is worth stating
+  # plainly as a side effect rather than as the reason.
+  #
+  # home-assistant stays last on both keys. It is the slowest measured (T0+210) and it is the
+  # one workload here that consumes the database, so it must not be promoted past it.
   - name: Validate nanomq
     use:
       template: ./validate-nanomq.yaml
 
-  - name: Validate database
-    use:
-      template: ./validate-database.yaml
-
   - name: Validate piper + whisper
     use:
       template: ./validate-piper-whisper.yaml
+
+  - name: Validate database
+    use:
+      template: ./validate-database.yaml
 
   - name: Validate home-assistant
     use:

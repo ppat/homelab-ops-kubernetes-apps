@@ -13,6 +13,12 @@ spec:
       - name: namespace
         value: home-automation
       file: ../chainsaw/assertions/deployment-ready.yaml
+      # This is the suite's first validate step, so it absorbs whatever the module has left to
+      # converge after `Validate secrets`. Measured at 11s -- nanomq is Ready at T0+142 and
+      # the step starts at T0+131 -- because the prerequisite reconcile ahead of it has
+      # already paid for most of the cluster. x3 sizing lands below the smallest rung, so this
+      # is the inherited 60s made explicit and measured rather than a raise.
+      timeout: 60s
   catch:
   - describe:
       apiVersion: apps/v1
