@@ -31,7 +31,7 @@ The coder subsystem consists of three main capability groups:
 ### Component Details
 
 | Component | Type | Primary Role | Key Features | Integration Points |
-|-----------|------|--------------|--------------|-------------------|
+| ----------- | ------ | -------------- | -------------- | ------------------- |
 | Coder Server | Core | Platform Control | • Workspace provisioning<br>• Template management<br>• Access control<br>• Resource orchestration | • PostgreSQL state storage<br>• OIDC authentication<br>• Prometheus metrics<br>• Kubernetes API |
 | PostgreSQL | Infrastructure | State Storage | • Platform state persistence<br>• User data management<br>• Workspace metadata<br>• High availability support | • Coder server integration<br>• Automated failover<br>• Metrics collection |
 | OIDC Provider | Security | Authentication | • Identity management<br>• Session control<br>• Token handling<br>• User authorization | • Coder server integration<br>• External provider support<br>• Session management |
@@ -41,22 +41,22 @@ The coder subsystem consists of three main capability groups:
 
 1. Persistent Storage
 
-   | PVC Name | Purpose | Access Mode |
-   |----------|---------|-------------|
-   | coder-db-data | PostgreSQL data | RWO |
-   | workspace-data | Per-workspace storage | RWX |
+   | PVC Name       | Purpose               | Access Mode |
+   |----------------|-----------------------|-------------|
+   | coder-db-data  | PostgreSQL data       | RWO         |
+   | workspace-data | Per-workspace storage | RWX         |
 
 2. Required Secrets
 
-   | Secret Name | Purpose | Required Keys |
-   |-------------|---------|---------------|
-   | coder-db-app | Database connection | uri |
-   | coder-sso-credentials | OIDC configuration | clientId, clientSecret |
+   | Secret Name           | Purpose             | Required Keys          |
+   |-----------------------|---------------------|------------------------|
+   | coder-db-app          | Database connection | uri                    |
+   | coder-sso-credentials | OIDC configuration  | clientId, clientSecret |
 
 3. Required Variables
 
    | Variable | Purpose | Used By |
-   |----------|---------|---------|
+   | ---------- | --------- | --------- |
    | domain_name | External access URL | Coder server |
    | db_storage_size | Database storage | PostgreSQL |
    | db_storage_class | Storage class | PostgreSQL |
@@ -64,6 +64,10 @@ The coder subsystem consists of three main capability groups:
 4. RBAC Requirements
 
    | Resource | Access | Purpose |
-   |----------|---------|---------|
+   | ---------- | --------- | --------- |
    | configmaps | create, delete, get, list, update, watch | Workspace management |
    | deployments | create, delete, get, list, update | Workspace provisioning |
+
+## Notes
+
+- **First issuance of the apex-plus-wildcard `coder-tls-cert` Certificate is slow, and if a consuming Kustomization health-checks it, a red status for several minutes is expected during that first issuance — not a fault.** An apex plus a nested wildcard (`coder.${domain_name}` and `*.coder.${domain_name}`) produces two ACME DNS-01 challenges that share one `_acme-challenge.coder.${domain_name}` TXT name; cert-manager won't run them concurrently, since they'd collide on that record, so the second challenge doesn't even start until the first reaches `valid`. Each challenge's own DNS self-check backs off between retries, and the first attempt typically fires before the record has propagated, so cert-manager sits `pending` waiting out its own backoff rather than being stuck. If you're watching and want it to finish sooner, restarting the cert-manager controller short-circuits that backoff. Do **not** delete the Certificate or its Order to try to unstick it — that forces a fresh failed validation, and Let's Encrypt rate-limits failed validations at 5 per account per hostname per hour, turning a slow issuance into an hour-long block. Renewals are unaffected: the Certificate stays `Ready: True` throughout, and renewal starts 30 days before expiry.
