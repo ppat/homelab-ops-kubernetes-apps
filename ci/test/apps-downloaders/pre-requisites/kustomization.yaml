@@ -6,38 +6,28 @@ resources:
 - ../../../../infrastructure/bootstrap/crds/
 - namespaces.yaml
 - pvc/
-- ../../infra-database/infra-database-core.yaml
-- ../../infra-security/infra-security-core.yaml
+# Two shared fixtures in place of the whole security-core module and the path-patched
+# database-core one.
+#
+# Audited against the module: `apps/subsystems/downloaders` ships one `Cluster` and one
+# `ExternalSecret`, and no `Certificate` or `Issuer` -- nothing under it references
+# cert-manager.io or `${cert_issuer}` -- so cert-manager is deliberately not composed even
+# though security-core was installing it. That is the check that caught the apps-misc
+# scoping error, asked here rather than inferred from what the suite reconciles today.
+#
+# It follows that no explicit `cert-manager-release` wait is needed either: this suite was
+# never depending on cert-manager, only inheriting it through `external-secrets-release`'s
+# `dependsOn`, which the fixture removes.
+#
+# The cnpg-operator fixture omits the Barman Cloud plugin. The `Cluster` declares no
+# plugins and this suite applies neither components/db-backups nor components/db-restore,
+# so nothing here reaches the barmancloud.cnpg.io API. It replaces the path patch that
+# already narrowed database-core to its cloudnative-pg component.
+#
+# See ../../chainsaw/pre-requisites/README.md.
+- ../../chainsaw/pre-requisites/cnpg-operator/
+- ../../chainsaw/pre-requisites/external-secrets/
 - fake-secret-store.yaml
-
-patches:
-# yamllint disable-line rule:indentation
-- patch: |-
-    - op: add
-      path: /spec/patches
-      value:
-        - patch: |-
-            $patch: delete
-            apiVersion: helm.toolkit.fluxcd.io/v2
-            kind: HelmRelease
-            metadata:
-              name: kyverno-policy-reporter-release
-              namespace: kyverno
-          target:
-            kind: HelmRelease
-            name: kyverno-policy-reporter-release
-            namespace: kyverno
-  target:
-    kind: Kustomization
-    name: infra-security-core
-# yamllint disable-line rule:indentation
-- patch: |-
-    - op: replace
-      path: /spec/path
-      value: ./infrastructure/subsystems/database-core/cloudnative-pg
-  target:
-    kind: Kustomization
-    name: infra-database-core
 
 sortOptions:
   order: fifo
