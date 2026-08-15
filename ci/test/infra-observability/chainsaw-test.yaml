@@ -133,12 +133,22 @@ spec:
   # slowest thing first, as this suite used to, is the one arrangement that guarantees the
   # slowest component the least time.
   #
-  # Measured readiness, in seconds after the module is applied, from the readiness report
-  # this suite now emits at the end of every passing run:
+  # Measured pod Ready transitions from the readiness report this suite emits as its last
+  # step, in seconds after the first pod in the cluster became Ready. A step is placed by
+  # the LAST of the pods it asserts, because that is what its assertion waits for:
   #
-  #   unifi-poller +6 . node-problem-detector +11 . syslog-ng +17 . goldilocks +22
-  #   . snmp +30 . blackbox +31 . loki +67 . grafana +72 . alloy +76
-  #   . kube-prometheus-stack +106
+  #   unpoller 191 . syslog 204 . node-problem-detector 196-206 . blackbox 220
+  #   . snmp 233 . loki 247-248 (chunks/results caches 210, canary 224-231)
+  #   . grafana 254 . alloy 253-264 . node-exporter 274-275
+  #
+  # goldilocks is not in that list and is first anyway: it is the step that absorbs the
+  # module's initial convergence, and its budget is sized for that rather than for its own
+  # component (see validate-goldilocks.yaml).
+  #
+  # Two swaps came out of this data, each worth ~13s of head start to the step it demotes:
+  # unpoller (191) ahead of syslog (204), and blackbox (220) ahead of snmp (233). Both had
+  # been the other way round. node-problem-detector and syslog are NOT swapped -- 196-206
+  # straddles 204, so the data does not separate them and the existing order stands.
   #
   # Note grafana's position, because the first cut of this ordering got it wrong. Derived
   # from object CREATION times in failure dumps, grafana looked like a T0+1..8s component
@@ -157,25 +167,25 @@ spec:
     use:
       template: ./validate-goldilocks.yaml
 
-  - name: Validate Syslog-NG
-    use:
-      template: ./validate-syslog-ng.yaml
-
   - name: Validate UniFi Poller
     use:
       template: ./validate-unifi-poller.yaml
+
+  - name: Validate Syslog-NG
+    use:
+      template: ./validate-syslog-ng.yaml
 
   - name: Validate Node Problem Detector
     use:
       template: ./validate-node-problem-detector.yaml
 
-  - name: Validate SNMP Exporter
-    use:
-      template: ./validate-snmp-exporter.yaml
-
   - name: Validate Blackbox Exporter
     use:
       template: ./validate-blackbox-exporter.yaml
+
+  - name: Validate SNMP Exporter
+    use:
+      template: ./validate-snmp-exporter.yaml
 
   - name: Validate Loki
     use:
