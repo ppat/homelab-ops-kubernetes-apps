@@ -93,7 +93,37 @@ moment the module is applied — but a validate step's timeout only starts count
 chainsaw *reaches that step*. A component validated late has therefore already absorbed most
 of its startup before its own clock starts; one validated first gets none of that head start.
 
-Two conventions follow, and they only work together.
+The conventions below follow from that one fact, and they only work together.
+
+### A budget is only meaningful relative to what runs before it
+
+This is the idea underneath everything else here, and it is the one most often missed. A step
+that returns in 0.1s is not necessarily cheap — it may be cheap *because the step ahead of it
+already waited out the whole rollout*. Move it earlier, or delete the step in front of it, and
+it becomes the one that waits.
+
+Two consequences:
+
+- **Whatever runs first absorbs the module's initial convergence**, whichever component it
+  happens to assert. So the first validate step is structurally the most exposed in any suite,
+  and should be budgeted for that absorption rather than for its own component's typical time.
+  A suite's first step inheriting the shared default is almost always wrong.
+- **Reordering displaces pressure; it does not remove it.** After any reorder, check what the
+  change exposed — the newly-first step, and anything that used to sit behind a long wait.
+
+### Move a wait to where the dependency actually is
+
+The largest wins available are not budgets or ordering at all: they are waits placed earlier
+than the thing that needs them. A prerequisite waited for at the top of a suite blocks *every*
+workload behind it from even starting to pull.
+
+The criterion for moving one safely: **a prerequisite may be waited for late if, and only if,
+it provides no CRD and no admission webhook that the module's own manifests need at apply
+time.** A component supplying only a runtime endpoint — object storage, say — can be waited on
+immediately before the first step that uses it. A component supplying a CRD cannot.
+
+This composes with ordering, but the two are closer to substitutes than complements: moving a
+wait creates slack for everyone, and ordering only decides who pays for whatever is left.
 
 ### Order validate steps by readiness, not by source order
 
@@ -112,7 +142,12 @@ Three things this ordering must not do:
   `actual resource not found` — a release in progress, reported as if the module were missing
   an object. Where the release does not set `install.disableWait`, helm-controller waits for
   the workloads anyway, so asserting the `HelmRelease` first both subsumes those assertions
-  and gives the failure a self-explanatory message.
+  and gives the failure a self-explanatory message. Since the step asserts both, its total
+  duration is unchanged either way; only the message and the budget's placement move.
+  Note the exception: where a chart runs a **post-install hook Job** — an API-readiness check,
+  a migration — the release goes Ready long after its workloads do, rather than the usual few
+  seconds. Keep the workload assertions in that case; the release condition is no longer a
+  near-proxy for them.
 - **Be expected to do the work alone.** Ordering is free, but it is only worth the elapsed
   time of the steps it moves past. Where one component dominates a suite it is nearly
   worthless on its own and must be paired with a budget that fits.
@@ -124,16 +159,22 @@ nothing about what the step should cost, so it cannot detect that step regressin
 delays the signal on the failure mode where it *is* consumed. Right-sizing runs both ways —
 raising the under-budgeted and cutting the unreachable.
 
+- **Raising a budget is free on runs that pass.** A satisfied assertion returns the instant its
+  condition holds, so a larger number costs nothing unless the run was going to be red anyway.
+  This is what makes speed and flakiness far less opposed than they look: the trade-off only
+  bites if the timeout number is the only lever you reach for.
 - **Prefer a measured maximum with a wide multiplier over a round number.** Every timeout
   failure is censored at its own budget — an assert that dies at 60.0s of 60s tells you
   nothing about how long it needed — so the tail cannot be measured and the multiplier has to
   come from the cost asymmetry instead. A tight budget costs a full re-run; a generous one
-  costs extra minutes only on runs that are already broken, and **nothing at all on runs that
-  pass**, since a satisfied assertion returns immediately.
-- **Do not size from an assertion that returned instantly.** That is a censored observation —
-  the component was ready by then, which is not the same as knowing when it became ready. Use
-  the readiness ordering reported at the end of each suite, or the `catch` dump from a failed
-  run.
+  costs extra minutes only on runs that are already broken. Expect a genuinely slow runner to
+  exceed a maximum drawn from green runs by more than you would guess: the sample of runs that
+  finished is, by construction, the sample that fit.
+- **Readiness is not creation, not image size, and not assert duration.** All three are
+  tempting proxies and each has been measurably wrong here. `AGE` in a dump is *creation*;
+  image bytes predict pull time but not dependency waits; and assert duration is circular,
+  because a step measures 0s precisely when the step ahead of it absorbed the wait. Use the
+  pod `Ready` transition times the suites report at the end of every passing run.
 - **Record the measurement next to the number**, in the suite. What it was, what was observed,
   and why the new value. A budget without that is indistinguishable from a guess, and the next
   maintainer will "tidy" it back to the default.
