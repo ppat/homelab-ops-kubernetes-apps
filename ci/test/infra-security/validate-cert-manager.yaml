@@ -27,6 +27,11 @@ spec:
   # 3m is the sizing rule, three times the 52.5s maximum. The downside if the subsumption
   # claim is wrong is bounded: the three Deployment asserts wait on the shared default, which
   # is what they do today, against a measured 21.5s worst case.
+  #
+  # It is also this suite's first-position budget -- the one that absorbs the module's
+  # initial convergence rather than its own component's startup -- and it is already large
+  # enough for that job: the absorption measures 39.0s, which the x3 rule would put at 2m.
+  # The 3m above is sized from the larger of the two quantities, so it stands unchanged.
   - description: Assert helmrelease/cert-manager-release
     assert:
       bindings:
