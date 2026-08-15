@@ -19,16 +19,29 @@ spec:
 
   - name: Reconcile pre-requisites
     try:
+    # 2m -> 5m. This same reconcile is the single most exposed operation in the apps scope:
+    # five suites run it identically at 2m and all five sit at 0.74-0.97 of it (here:
+    # 79/80/84/88/89s over 5 green runs). The control is apps-ai, which runs the identical
+    # script at 4m and has been observed taking 154s -- 128% of what this budget allows. The
+    # distribution is also bimodal (a warm cluster and a cold one), so a 5-run maximum says
+    # very little about the upper mode's tail. Note the failure shape: flux-reconcile.sh
+    # passes this same duration to `flux reconcile --timeout`, so blowing it surfaces as a
+    # script exit 1 from flux, not as a chainsaw assert timeout.
     - description: Reconcile helmrelease/external-secrets-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
-        timeout: 2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=5m
+        timeout: 5m
+    # 2m -> 5m. Green runs show this taking 2s, which measures nothing: it is the warm path,
+    # where the release was already reconciled by the pre-requisites Kustomization. The cold
+    # path is what the budget has to survive, and it has been observed at 96-102s on passing
+    # runs and killed 8 apps-downloaders runs at exactly 120-121s. The operation is textually
+    # identical in all four suites that run it, so the evidence transfers.
     - description: Reconcile helmrelease/cloudnative-pg-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=2m
-        timeout: 2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=5m
+        timeout: 5m
 
   - name: Apply apps-home-automation modules
     try:
@@ -60,6 +73,22 @@ spec:
           value: home-automation
         file: ../chainsaw/assertions/externalsecret-ready.yaml
 
+  # Validate steps are ordered ascending by measured readiness. Flux creates every workload
+  # here within 1-2s of the module being applied and they converge in parallel, so this
+  # changes which assert absorbs the wait, not how long the suite takes.
+  #
+  # Readiness, seconds after the module is applied, over 5 green runs: nanomq 12 . the CNPG
+  # cluster 35-90 . wyoming-piper/whisper censored at <=79-117 . home-assistant 79-117. Only
+  # home-assistant is measured at the tail; piper and whisper are censored, so their true
+  # order against it is unknown from a green run. The byte census breaks the tie the same
+  # way -- home-assistant is ~977MB across two containers against ~402MB and ~448MB -- so
+  # both available sources agree it is the last thing to be ready, and it takes the last
+  # slot. Revisit once the readiness report at the end of this suite has run.
+  #
+  # The CNPG Cluster stays third and keeps its budget untouched. Its failures in this suite
+  # are the operator never acting at all -- empty `Status:`, `Events: <none>` and no instance
+  # pod after the full budget -- and neither a bigger number nor a later position can fix
+  # that. Moving it would only delay a failure that is already correct.
   - name: Validate nanomq
     use:
       template: ./validate-nanomq.yaml
@@ -68,10 +97,14 @@ spec:
     use:
       template: ./validate-database.yaml
 
+  - name: Validate piper + whisper
+    use:
+      template: ./validate-piper-whisper.yaml
+
   - name: Validate home-assistant
     use:
       template: ./validate-home-assistant.yaml
 
-  - name: Validate piper + whisper
+  - name: Report readiness ordering
     use:
-      template: ./validate-piper-whisper.yaml
+      template: ../chainsaw/steps/report-readiness.yaml

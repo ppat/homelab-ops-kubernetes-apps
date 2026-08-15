@@ -13,6 +13,15 @@ spec:
       - name: namespace
         value: home-automation
       file: ../chainsaw/assertions/deployment-ready.yaml
+      # Was the inherited 60s default. Both of these were censored on all 5 green runs --
+      # they returned in 0s from a step that started 79-117s after module apply, so the log
+      # proves only "ready by then". This step now runs before home-assistant instead of
+      # after it, which means it, not home-assistant, absorbs the module's convergence, and a
+      # censored component on a budget nobody chose is exactly how a reorder creates a new
+      # flake. 3m exceeds the slowest readiness measured anywhere in this suite (117s), so it
+      # holds even if these were asserted at t+0. Revisit once the readiness report below has
+      # produced real numbers for them.
+      timeout: 3m
   - description: Assert deployment/wyoming-whisper
     assert:
       bindings:
@@ -21,6 +30,8 @@ spec:
       - name: namespace
         value: home-automation
       file: ../chainsaw/assertions/deployment-ready.yaml
+      # Same reasoning and same evidence as wyoming-piper above.
+      timeout: 3m
   catch:
   - describe:
       apiVersion: apps/v1
