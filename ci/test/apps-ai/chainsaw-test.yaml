@@ -165,29 +165,6 @@ spec:
     use:
       template: ./validate-mcp-kubernetes-sandbox.yaml
 
-  - name: Verify mcp-kubernetes-sandbox write boundary
-    try:
-    # Runs only once the Deployment above is Ready: this calls the deployed pod's own
-    # /mcp endpoint (not kubectl auth can-i, which the earlier "Verify mcp-kubernetes
-    # RBAC posture" step already showed is a "yes" to everything for this identity --
-    # see check-mcp-kubernetes-rbac.sh's check_sandbox_identity for why). This is what
-    # actually proves the write boundary: a real write through the running server, and a
-    # real, refused read of a Secret through it despite read_only = false.
-    - description: Create/delete through the pod, and confirm Secret reads stay denied
-      script:
-        content: ./scripts/check-mcp-kubernetes-rbac.sh --sandbox-write-boundary
-        timeout: 2m
-    catch:
-    - describe:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: mcp-kubernetes-sandbox
-        namespace: ai
-    - podLogs:
-        selector: app.kubernetes.io/name=mcp-kubernetes-sandbox
-        namespace: ai
-        tail: 200
-
   - name: Validate mcp-unifi-protect
     use:
       template: ./validate-mcp-unifi-protect.yaml
@@ -277,6 +254,45 @@ spec:
   - name: Validate open-webui
     use:
       template: ./validate-open-webui.yaml
+
+  # Deliberately last, and not on readiness grounds. This is not an assertion about a
+  # component being up - the Deployment assert above already covers that - it drives a live
+  # request through the running pod to the Kubernetes API and back. That makes it an
+  # end-to-end check, and those belong at the end regardless of what they cost, for the same
+  # reason `Validate bitwarden release` does in its suite.
+  #
+  # It was briefly moved up with the rest of the mcp block and failed there:
+  #
+  #   failed to create or update resources: Get "https://kubernetes.default.svc/api?timeout=10s":
+  #   context deadline exceeded
+  #
+  # The pod was Ready; the cluster was not quiet. The MCP server's own client gives the API
+  # ten seconds, and roughly ninety seconds into a module rollout on a four-core runner that
+  # is not always enough. Its previous position happened to be safe only because the step
+  # ahead of it used to absorb 240s of convergence - which is exactly the kind of accidental
+  # protection this whole reordering exercise keeps uncovering.
+  - name: Verify mcp-kubernetes-sandbox write boundary
+    try:
+    # Runs only once the Deployment above is Ready: this calls the deployed pod's own
+    # /mcp endpoint (not kubectl auth can-i, which the earlier "Verify mcp-kubernetes
+    # RBAC posture" step already showed is a "yes" to everything for this identity --
+    # see check-mcp-kubernetes-rbac.sh's check_sandbox_identity for why). This is what
+    # actually proves the write boundary: a real write through the running server, and a
+    # real, refused read of a Secret through it despite read_only = false.
+    - description: Create/delete through the pod, and confirm Secret reads stay denied
+      script:
+        content: ./scripts/check-mcp-kubernetes-rbac.sh --sandbox-write-boundary
+        timeout: 2m
+    catch:
+    - describe:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: mcp-kubernetes-sandbox
+        namespace: ai
+    - podLogs:
+        selector: app.kubernetes.io/name=mcp-kubernetes-sandbox
+        namespace: ai
+        tail: 200
 
   - name: Report readiness ordering
     use:
