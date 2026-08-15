@@ -29,11 +29,16 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
         timeout: 2m
+    # 2m -> 5m. Green runs show this taking 2-3s, which measures nothing: it is the warm
+    # path, where the release was already reconciled by the pre-requisites Kustomization. The
+    # cold path is what the budget has to survive, and it has been observed at 96-102s on
+    # passing runs and killed 8 apps-downloaders runs at exactly 120-121s. The operation is
+    # textually identical in all four suites that run it, so the evidence transfers.
     - description: Reconcile helmrelease/cloudnative-pg-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=2m
-        timeout: 2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=5m
+        timeout: 5m
 
   - name: Apply apps-coder modules
     try:
@@ -57,6 +62,11 @@ spec:
     - events:
         namespace: flux-system
 
+  # Order is left alone: only two workloads, both measured, both well inside their budgets
+  # (coder-db-test Ready 33-42s after apply at 0.23, coder itself 39-55s at 0.22). The CNPG
+  # Cluster stays first and keeps its budget: its 5 failures in this suite are the operator
+  # never acting -- empty `Status:`, `Events: <none>`, no instance pod after the full budget
+  # -- which no larger number can fix and a larger number would only make slower to report.
   - name: Validate coder database
     use:
       template: ./validate-coder-database.yaml
@@ -68,3 +78,7 @@ spec:
   - name: Validate coder application
     use:
       template: ./validate-coder-application.yaml
+
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml

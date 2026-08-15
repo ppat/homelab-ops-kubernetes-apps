@@ -19,16 +19,31 @@ spec:
 
   - name: Reconcile pre-requisites
     try:
+    # 2m -> 5m. This same reconcile is the single most exposed operation in the apps scope:
+    # five suites run it identically at 2m and all five sit at 0.74-0.97 of it (here:
+    # 74/76/82/84/92s over 5 green runs). The control is apps-ai, which runs the identical
+    # script at 4m and has been observed taking 154s -- 128% of what this budget allows. The
+    # distribution is also bimodal (a warm cluster and a cold one), so a 5-run maximum says
+    # very little about the upper mode's tail. Note the failure shape: flux-reconcile.sh
+    # passes this same duration to `flux reconcile --timeout`, so blowing it surfaces as a
+    # script exit 1 from flux, not as a chainsaw assert timeout.
     - description: Reconcile helmrelease/external-secrets-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
-        timeout: 2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=5m
+        timeout: 5m
+    # 2m -> 5m, and this suite is where the evidence for it is. Green runs show 2-3s, which
+    # measures nothing -- that is the warm path, where the release was already reconciled by
+    # the pre-requisites Kustomization. On the cold path this operation has been observed at
+    # 96-102s on passing runs and has killed 8 runs of this suite at exactly 120-121s, making
+    # it the second-largest single failure bucket here after the CNPG Cluster itself. A
+    # budget sitting on the shoulder of its own distribution is the shape this whole exercise
+    # is about.
     - description: Reconcile helmrelease/cloudnative-pg-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=2m
-        timeout: 2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=5m
+        timeout: 5m
 
   - name: Apply apps-downloaders modules
     try:
@@ -60,6 +75,19 @@ spec:
           value: downloaders
         file: ../chainsaw/assertions/externalsecret-ready.yaml
 
+  # Deliberately not reordered, and this is the suite where reordering looks most tempting:
+  # it has the highest real failure rate in the repo (44%) and twelve validate steps behind
+  # one CNPG Cluster. It would not help. All ten *arr Deployments are created within 3s of
+  # the module being applied, and in 26 sampled failure dumps the seven that mount the
+  # `downloaders-db-test-app` secret are Ready in 0 of 26 while the three that do not touch
+  # the database are Ready in 26 of 26. One dependency gates everything; no permutation of
+  # validate steps changes that.
+  #
+  # The CNPG Cluster's budget is untouched for the same reason it must not be raised: those
+  # 25 failures show an empty `Status:`, `Events: <none>` and no instance pod after the full
+  # 180s, while flux reports cloudnative-pg Ready and the operator pod up 4m37s. The absence
+  # of the obligatory SettingUp/CreatingInstance events proves the operator never acted. A
+  # bigger number cannot fix inaction; it can only make the report slower, or hide it.
   - name: Validate database
     use:
       template: ./validate-database.yaml
@@ -103,3 +131,7 @@ spec:
   - name: Validate qui
     use:
       template: ./validate-qui.yaml
+
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml
