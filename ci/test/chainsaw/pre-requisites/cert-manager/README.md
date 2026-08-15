@@ -22,6 +22,28 @@ module that templates an issuer name has a working one to point at.
 
 Nothing. This fixture is the component directory as-is; there is nothing in it a consumer would not want.
 
+### Do not disable `startupapicheck` to make this faster
+
+It is the obvious thing to strip — a Job that only *checks*, adding roughly 37s between cert-manager's own
+Deployments going Ready and the release going Ready — and stripping it would break consumers
+nondeterministically.
+
+That Job is `helm.sh/hook: post-install`, so Helm waits for it and the `HelmRelease` does not go Ready until it
+passes. What it runs is `cert-manager ctl check api --wait=1m`, which **creates a real `CertificateRequest`
+through the API server**. So it does not test that the webhook Deployment is Ready — it tests that the webhook
+is *admitting writes*, and the gap between those two is exactly what the 37s is.
+
+Every consumer of this fixture waits on `helmrelease/cert-manager-release` being Ready and then applies a
+module containing `Certificate` or `Issuer` objects. The validating webhook matches `CREATE`/`UPDATE` on all
+`cert-manager.io` and `acme.cert-manager.io` v1 resources with `failurePolicy: Fail`, so an apply that lands
+in that gap is rejected outright rather than merely delayed. With `retryInterval: 1m0s` the recovery costs
+longer than the check saves, and it is intermittent, which is worse — it would surface as suite flakiness with
+no obvious cause.
+
+Verified by rendering the chart at the pinned v1.21.1 rather than from documentation: the hook annotation, the
+`check api` argument, the `certificaterequests: ["create"]` RBAC the Job is granted, and the webhook's
+`failurePolicy`.
+
 ## Consumer must supply
 
 - `infrastructure/bootstrap/crds/`, which is where the `cert-manager.io` CRDs come from. Without them the
