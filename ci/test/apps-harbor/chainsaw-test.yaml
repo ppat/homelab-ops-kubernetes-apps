@@ -19,16 +19,29 @@ spec:
 
   - name: Reconcile pre-requisites
     try:
+    # 2m -> 5m. This same reconcile is the single most exposed operation in the apps scope:
+    # five suites run it identically at 2m and all five sit at 0.74-0.97 of it (here:
+    # 82/82/94/96/98s over 5 green runs). The control is apps-ai, which runs the identical
+    # script at 4m and has been observed taking 154s -- 128% of what this budget allows. The
+    # distribution is also bimodal (a warm cluster and a cold one), so a 5-run maximum says
+    # very little about the upper mode's tail. Note the failure shape: flux-reconcile.sh
+    # passes this same duration to `flux reconcile --timeout`, so blowing it surfaces as a
+    # script exit 1 from flux, not as a chainsaw assert timeout.
     - description: Reconcile helmrelease/external-secrets-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
-        timeout: 2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=5m
+        timeout: 5m
+    # 2m -> 5m. Green runs show this taking 2s, which measures nothing: it is the warm path,
+    # where the release was already reconciled by the pre-requisites Kustomization. The cold
+    # path is what the budget has to survive, and it has been observed at 96-102s on passing
+    # runs and killed 8 apps-downloaders runs at exactly 120-121s. The operation is textually
+    # identical in all four suites that run it, so the evidence transfers.
     - description: Reconcile helmrelease/cloudnative-pg-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=2m
-        timeout: 2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=5m
+        timeout: 5m
     - description: Reconcile helmrelease/dragonfly-operator-release
       script:
         # yamllint disable-line rule:line-length
@@ -44,7 +57,12 @@ spec:
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
-        name: infra-database-core
+        name: pre-requisites-cnpg-operator
+        namespace: flux-system
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: pre-requisites-dragonfly-operator
         namespace: flux-system
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -65,6 +83,16 @@ spec:
           value: harbor
         file: ../chainsaw/assertions/externalsecret-ready.yaml
 
+  # Step order is deliberately left as it is, and jobservice is deliberately NOT moved behind
+  # portal and trivy. Its 0.70 headroom is fixed by its own budget instead (see
+  # validate-harbor-jobservice.yaml) because the two candidate steps to promote are the two
+  # this suite knows least about: portal and trivy both return in 0s, so their readiness is
+  # censored at "<= the 76-92s at which their step starts", and trivy is the second-heaviest
+  # image in the module (~157MB) against jobservice's ~94MB. Measured readiness says
+  # jobservice is last; pull cost says trivy could be. When the two sources disagree the
+  # conservative move is to change no order and take the budget instead. The readiness report
+  # at the end of this suite settles it on the next green run -- apps-harbor has produced no
+  # failure dump at all in the last 100 runs, so this is the first data it will ever have.
   - name: Validate database
     use:
       template: ./validate-database.yaml
@@ -98,3 +126,7 @@ spec:
   - name: Validate docker.io mirror
     use:
       template: ./validate-dockerio-mirror.yaml
+
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml
