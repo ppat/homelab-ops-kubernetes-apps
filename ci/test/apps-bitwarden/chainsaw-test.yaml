@@ -59,50 +59,72 @@ spec:
           value: bitwarden
         file: ../chainsaw/assertions/externalsecret-ready.yaml
 
-  # Step order is left alone. It already runs ascending by measured readiness -- mssql 72-90s
-  # after module apply, admin 104-130s, identity 105-137s, api 188-229s, the HelmRelease last
-  # -- and the six Deployments in between return in 0s. Nothing here would gain from a
-  # different position; every one of the changes below is a budget.
+  # Validate steps are ordered ascending by measured pod readiness. helm-controller installs
+  # the whole chart in one release and every workload converges in parallel, so this changes
+  # which assert absorbs the wait, not how long the suite takes: the eleven validate steps
+  # summed to 214s before and are predicted to sum to 214s after.
   #
-  # The last step must stay last for a reason unrelated to speed: it asserts the HelmRelease
-  # itself, which cannot go Ready until helm has seen every workload in the chart go Ready.
-  # It costs 0 bytes and 12-24s, so any sort by cost would put it first, where it could only
-  # ever fail.
-  - name: Validate bitwarden mssql
+  # Readiness from this suite's own `Report readiness ordering` step, in seconds after the
+  # first pod in the cluster went Ready (T0), with the first validate step beginning at T0+126:
+  #
+  #   web 162 . attachments 166 . notifications 179 . icons 182 . events 192 . mssql 207 .
+  #   identity 241 . sso 248 . admin 250 . api 325
+  #
+  # This replaces a claim that the order was already ascending. It was not: that claim read
+  # "mssql 72-90s, admin 104-130s, identity 105-137s, api 188-229s" off assert durations, and
+  # an assert duration is circular here -- mssql measured 81s and admin 43s because they ran
+  # first and second and absorbed the convergence of the five components that were actually
+  # Ready before mssql, each of which then measured 0s. Predicted per-step now: web 36s,
+  # attachments 4s, notifications 13s, icons 3s, events 10s, mssql 15s, identity 34s, sso 7s,
+  # admin 2s, api 75s.
+  #
+  # There is no dependency to cross. Every step asserts one Deployment's own readiness, so
+  # asserting `web` before `mssql` cannot pass because mssql has not been checked yet -- the
+  # runtime dependency between the pods is unaffected by the order the asserts are read in.
+  # What the reorder costs is that five steps still on the inherited 60s (attachments,
+  # notifications, icons, events, sso) go from absorbing 0s to absorbing 3-13s. At 0.22 of
+  # that default in the worst case they are not exposed, but they are the steps to look at
+  # first if this suite starts failing somewhere new: the reorder is what put time on them.
+  #
+  # `Validate bitwarden api` stays second-to-last on measurement (T0+325, 118s clear of
+  # anything else) and `Validate bitwarden release` stays last on principle -- it asserts the
+  # whole HelmRelease after every workload in it, so sorting it by its 15s cost would put it
+  # first, where it could only ever fail.
+  - name: Validate bitwarden web
     use:
-      template: ./validate-bitwarden-mssql.yaml
-
-  - name: Validate bitwarden admin
-    use:
-      template: ./validate-bitwarden-admin.yaml
+      template: ./validate-bitwarden-web.yaml
 
   - name: Validate bitwarden attachments
     use:
       template: ./validate-bitwarden-attachments.yaml
 
-  - name: Validate bitwarden events
+  - name: Validate bitwarden notifications
     use:
-      template: ./validate-bitwarden-events.yaml
+      template: ./validate-bitwarden-notifications.yaml
 
   - name: Validate bitwarden icons
     use:
       template: ./validate-bitwarden-icons.yaml
 
+  - name: Validate bitwarden events
+    use:
+      template: ./validate-bitwarden-events.yaml
+
+  - name: Validate bitwarden mssql
+    use:
+      template: ./validate-bitwarden-mssql.yaml
+
   - name: Validate bitwarden identity
     use:
       template: ./validate-bitwarden-identity.yaml
-
-  - name: Validate bitwarden notifications
-    use:
-      template: ./validate-bitwarden-notifications.yaml
 
   - name: Validate bitwarden sso
     use:
       template: ./validate-bitwarden-sso.yaml
 
-  - name: Validate bitwarden web
+  - name: Validate bitwarden admin
     use:
-      template: ./validate-bitwarden-web.yaml
+      template: ./validate-bitwarden-admin.yaml
 
   - name: Validate bitwarden api
     use:
