@@ -1,0 +1,45 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: assert-object-store-wrong-key
+# Proves the object-store fixture (../fixtures/object-store) rejects a WRONG access key
+# with 403/AccessDenied - see ../scripts/object-store-wrong-key.sh for why this needs its
+# own check: every other assertion that touches the fixture proves the CORRECT key works,
+# none of them prove a wrong one is refused.
+#
+#   namespace  Namespace the fixture was applied into.
+#   bucket     Any bucket the fixture created - the check only exercises credential
+#              validation, so which one doesn't matter.
+spec:
+  bindings:
+  - name: service
+    value: object-store
+  try:
+  - description: Assert a wrong access key is rejected with 403/AccessDenied
+    script:
+      env:
+      - name: NAMESPACE
+        value: ($namespace)
+      - name: SERVICE
+        value: ($service)
+      - name: BUCKET
+        value: ($bucket)
+      # yamllint disable-line rule:indentation
+      content: |
+        ../chainsaw/scripts/object-store-wrong-key.sh \
+          --namespace="${NAMESPACE}" \
+          --service="${SERVICE}" \
+          --bucket="${BUCKET}"
+      timeout: 2m
+
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: object-store
+      namespace: ($namespace)
+  - podLogs:
+      selector: app.kubernetes.io/name=object-store
+      namespace: ($namespace)
+      tail: 100

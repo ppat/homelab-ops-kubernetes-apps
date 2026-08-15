@@ -5,6 +5,25 @@ metadata:
   name: validate-prometheus
 spec:
   try:
+  # kube-prometheus-stack is by far the largest chart this suite installs (CRDs, operator,
+  # Prometheus, Alertmanager, Grafana, kube-state-metrics, an admission-webhook Job) and
+  # takes minutes, not seconds, to reach Ready in kind. Every other HelmRelease this suite
+  # waits on is asserted well after it has had time to install; this one previously got
+  # that same head start only by accident, from the old MinIO test fixture's own ~2m Flux
+  # health-check timeout stalling the step before this one long enough for the chart to
+  # finish installing in the background. The MinIO fixture is gone (#3627) and its
+  # replacement is fast, so that accidental wait no longer exists - assert the HelmRelease
+  # itself first, with a timeout sized to the chart, rather than let the smaller per-resource
+  # asserts below race an install that's still in progress and fail on NotFound.
+  - description: Assert helmrelease/kube-prometheus-stack-release
+    assert:
+      bindings:
+      - name: name
+        value: kube-prometheus-stack-release
+      - name: namespace
+        value: monitoring
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+      timeout: 5m
   - description: Assert daemonset/kube-prometheus-stack-prometheus-node-exporter
     assert:
       bindings:
@@ -46,14 +65,6 @@ spec:
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/statefulset-ready.yaml
-  - description: Assert helmrelease/kube-prometheus-stack-release
-    assert:
-      bindings:
-      - name: name
-        value: kube-prometheus-stack-release
-      - name: namespace
-        value: monitoring
-      file: ../chainsaw/assertions/helmrelease-ready.yaml
 
   catch:
   - describe:

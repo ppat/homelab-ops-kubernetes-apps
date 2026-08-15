@@ -1,0 +1,51 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: object-store-config
+  namespace: object-store
+data:
+  garage.toml: |
+    # A test double for infrastructure/subsystems/storage-core's Garage, not a copy of it
+    # - db_engine is the one setting deliberately different from the production module:
+    #
+    # - db_engine "sqlite" with metadata_dir/data_dir on emptyDir, vs. the production
+    #   module's "lmdb" + metadataFsync: true. A throwaway single-node instance that gets
+    #   torn down with the test namespace wants fast startup, not crash durability. Do not
+    #   "align" this with production - that trades away the only thing this fixture is
+    #   optimizing for, in exchange for a guarantee it doesn't need.
+    #
+    # s3_region "us-east-1" matches production (infrastructure/subsystems/storage-core/
+    # garage's garage_s3_region postBuild variable, set to us-east-1 for this estate) -
+    # deliberately not a difference. Garage enforces an EXACT match between the region a
+    # client signs into its request and this value (a mismatch fails with
+    # "AuthorizationHeaderMalformed"), unlike MinIO, which accepts any region. Loki signs
+    # every request it sends - including the compactor's retention/delete-store calls -
+    # with its own configured loki_s3_region and does NOT auto-detect the bucket's region
+    # via GetBucketLocation, so a mismatch is fatal with no client-side recovery (botocore's
+    # S3RegionRedirectorv2 can mask a mismatch on some other calls, which is what made a
+    # wrong value look tolerant before it was tested against a real compactor
+    # delete-store init). us-east-1 is the value settled by that experiment for this
+    # estate (#3611, comment 5282296514); this fixture and the infra-observability
+    # suite's loki_s3_region are both set to it to match production, not by coincidence.
+    metadata_dir = "/data/meta"
+    data_dir = "/data/data"
+    db_engine = "sqlite"
+
+    replication_factor = 1
+
+    rpc_bind_addr = "[::]:3901"
+    rpc_public_addr = "127.0.0.1:3901"
+    # Fixture-only value, not a real secret. Shared with job-bootstrap.yaml's --rpc-secret
+    # (the only way the bootstrap Job, which has no filesystem in common with this pod, can
+    # authenticate its layout/bucket/key admin calls).
+    rpc_secret = "cafecafecafecafecafecafecafecafecafecafecafecafecafecafecafecafe"
+
+    [s3_api]
+    s3_region = "us-east-1"
+    api_bind_addr = "[::]:9000"
+
+    [admin]
+    api_bind_addr = "[::]:3903"
+    admin_token = "fixture-admin-token-not-a-real-secret"
+    metrics_token = "fixture-metrics-token-not-a-real-secret"
