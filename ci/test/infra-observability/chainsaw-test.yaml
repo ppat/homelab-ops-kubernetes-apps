@@ -17,27 +17,19 @@ spec:
         - name: prerequisites_path
           value: ./ci/test/infra-observability/pre-requisites
 
+  # Only external-secrets is waited for here, and that is deliberate -- see the minio step
+  # below the module apply for why the other one moved.
+  #
+  # This one cannot move: the module's own manifests contain `ExternalSecret` objects, so
+  # the CRD has to be established and the validating webhook has to be serving before the
+  # module Kustomization can be applied at all.
   - name: Reconcile pre-requisites
     try:
-    # These two reconciles are a causal chain, not two independent waits: minio's
-    # HelmRelease resolves its admin credentials through an ExternalSecret, so it cannot
-    # complete until external-secrets is serving. minio's budget therefore has to absorb
-    # external-secrets' variance on top of its own, which is why it is the larger of the
-    # two despite minio being much the smaller install.
     - description: Reconcile helmrelease/external-secrets-release
       script:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=5m
         timeout: 5m
-    # Was 2m, and expired at exactly 120.0s on 4 of the 6 re-run-proven flakes in this
-    # suite -- the single largest failure bucket here. Green observations run 54.3-86.1s,
-    # so a good day already consumed 72% of it. Note this step is upstream of every module,
-    # so no amount of validate-step reordering can buy it headroom; only the number can.
-    - description: Reconcile helmrelease/minio-release
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=minio-release --namespace=minio --timeout=4m
-        timeout: 4m
 
   # Applied before the modules rather than after, for two reasons: it costs the suite
   # nothing (the fixture is Ready long before Loki is), and it means the fixture has
@@ -91,6 +83,46 @@ spec:
         namespace: flux-system
     - events:
         namespace: flux-system
+
+  # Deliberately AFTER the module apply, which is the single biggest change to this suite's
+  # wall-clock. minio was previously waited for as a prerequisite, and the readiness data
+  # shows what that cost: external-secrets became ready at T0+117s, minio at T0+188s, and
+  # the module was only applied at T0+202s -- so thirteen HelmReleases sat idle for eighty
+  # seconds, not pulling a single byte, waiting on something none of them needs in order to
+  # be applied. minio ships no CRDs and the module creates no minio resources; what the
+  # module wants from it is an S3 endpoint, and only Loki wants that, minutes later.
+  #
+  # Moving the wait here lets the module's images pull while minio finishes installing, and
+  # the validate steps still cannot start until minio is confirmed, so nothing downstream
+  # loses a guarantee.
+  #
+  # The falsifier, stated because it is not a certainty: this raises peak contention by
+  # overlapping minio's install with thirteen concurrent image pulls on a four-core runner.
+  # If the suite gets *slower* or the minio reconcile starts approaching its budget again,
+  # that is this change, and it should go back.
+  - name: Reconcile helmrelease/minio-release
+    try:
+    # 4m: was 2m, which expired at exactly 120.0s on 4 of the 6 re-run-proven flakes in this
+    # suite -- the largest single failure bucket here. Green observations ran 54.3-86.1s, so
+    # a good day already consumed 72% of it, and one run on this branch took 126s.
+    - description: Reconcile helmrelease/minio-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=minio-release --namespace=minio --timeout=4m
+        timeout: 4m
+    catch:
+    - describe:
+        apiVersion: helm.toolkit.fluxcd.io/v2
+        kind: HelmRelease
+        name: minio-release
+        namespace: minio
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: minio
+        namespace: flux-system
+    - events:
+        namespace: minio
 
   # Validation order below is measured, not arbitrary: ascending by when each component
   # actually became ready, taken from the `kubectl get` dumps of failed runs (creation
