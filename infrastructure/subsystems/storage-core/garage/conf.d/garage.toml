@@ -54,13 +54,21 @@ s3_region = "${garage_s3_region}"
 
 [s3_web]
 bind_addr = "[::]:3902"
-# No leading dot / wildcard subdomain: this only ever resolves a bucket named
-# exactly "garage-web.${domain_name}" (Garage matches a bucket's own name
-# against the Host header directly, not only as a root_domain suffix -- see
-# https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#web_root_domain).
-# A cluster that wants additional per-bucket vhost subdomains needs its own
-# Ingress/TLS for that subdomain; bucket provisioning is out of this module's
-# scope (see README).
+# Garage resolves a bucket from the Host header via two independent
+# mechanisms (src/web/web_server.rs, host_to_bucket in
+# src/api/common/helpers.rs), and a leading dot on root_domain changes
+# neither: host_to_bucket unconditionally trim_start_matches('.') on it
+# before comparing, so "garage-web.${domain_name}" and
+# ".garage-web.${domain_name}" behave identically here. Don't add one, it's
+# a no-op.
+#   1. Suffix match: a Host with an extra label beyond root_domain, e.g.
+#      "<bucket>.garage-web.${domain_name}", resolves to bucket "<bucket>".
+#   2. Whole-host fallback: a Host equal to root_domain itself (no extra
+#      label) has host_to_bucket return None, and the caller falls back to
+#      looking up the entire Host string as a bucket name/global alias.
+# ingress-web.yaml's wildcard rule + certificate-web.yaml's Certificate are
+# what make mechanism 1 actually reachable with a valid cert; without them
+# only mechanism 2 -- one bucket aliased to this exact hostname -- works.
 root_domain = "garage-web.${domain_name}"
 index = "index.html"
 

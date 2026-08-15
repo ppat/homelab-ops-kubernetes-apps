@@ -9,14 +9,30 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
-  # setting tls to [], so that default certificate will be assigned -- same as
-  # MinIO's ingresses. This only covers this exact host, not a wildcard
-  # subdomain, which is why conf.d/garage.toml's [s3_web] root_domain has no
-  # leading dot: a bucket-name-per-subdomain vhost would need its own
-  # Ingress+TLS, out of this module's scope (see README).
-  tls: []
+  # Garage resolves a bucket from the Host header itself (host_to_bucket,
+  # unrelated to root_domain's leading-dot-or-not -- see conf.d/garage.toml's
+  # [s3_web] comment): the apex host falls back to looking up the whole Host
+  # string as a bucket name/alias, and any '<bucket>.garage-web.${domain_name}'
+  # is matched by suffix. Both hosts need to actually reach this Service and
+  # be covered by a cert for that to work, which is what the wildcard rule
+  # and certificate-web.yaml's Certificate provide.
+  tls:
+  - secretName: garage-web-tls-cert
+    hosts:
+    - 'garage-web.${domain_name}'
+    - '*.garage-web.${domain_name}'
   rules:
   - host: garage-web.${domain_name}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: garage
+            port:
+              number: 3902
+  - host: '*.garage-web.${domain_name}'
     http:
       paths:
       - path: /

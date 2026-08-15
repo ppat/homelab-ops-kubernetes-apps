@@ -105,6 +105,14 @@ spec:
           annotations:
             grafana_folder: Garage
             kustomize.toolkit.fluxcd.io/substitute: disabled
+  - description: Assert certificate/garage-web-tls-cert
+    assert:
+      bindings:
+      - name: name
+        value: garage-web-tls-cert
+      - name: namespace
+        value: garage
+      file: ../chainsaw/assertions/certificate-ready.yaml
   # ../chainsaw/assertions/ingress-ready.yaml doesn't apply here: it asserts
   # status.loadBalancer.ingress, but this suite (like the pre-existing MinIO
   # ingresses it never asserted for the same reason) deliberately installs no
@@ -149,8 +157,23 @@ spec:
             traefik.ingress.kubernetes.io/router.entrypoints: websecure
             traefik.ingress.kubernetes.io/router.tls: "true"
         spec:
+          tls:
+          - secretName: garage-web-tls-cert
+            hosts:
+            - garage-web.cluster.example.com
+            - '*.garage-web.cluster.example.com'
           rules:
           - host: garage-web.cluster.example.com
+            http:
+              paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: garage
+                    port:
+                      number: 3902
+          - host: '*.garage-web.cluster.example.com'
             http:
               paths:
               - path: /
@@ -163,11 +186,16 @@ spec:
   # deployment/garage reporting Available (asserted above) already implies
   # --single-node committed a layout, since readinessProbe is httpGet
   # /health and Garage would otherwise have failed to start at all -- but
-  # that only proves the process is up, not that the S3 API is actually
-  # serving requests as a result. See ../chainsaw/scripts/garage-s3-roundtrip.sh.
-  - description: Assert the S3 API actually serves requests (round-trip + wrong-key rejection)
+  # that only proves the process is up, not that the S3 API and website
+  # endpoint are actually serving requests as a result. See
+  # ../chainsaw/scripts/garage-roundtrip.sh -- note its own header comment on
+  # what the website-endpoint part does and does not prove (Garage's own Host
+  # resolution, not Traefik's wildcard routing or the certificate in front of
+  # it, since this suite installs no ingress controller).
+  # yamllint disable-line rule:line-length
+  - description: Assert the S3 API and website endpoint actually serve requests (round-trip + wrong-key rejection; Host-header suffix match + 404 falsification)
     script:
-      content: ../chainsaw/scripts/garage-s3-roundtrip.sh
+      content: ../chainsaw/scripts/garage-roundtrip.sh
       timeout: 5m
 
   catch:
@@ -185,6 +213,11 @@ spec:
       apiVersion: external-secrets.io/v1
       kind: ExternalSecret
       name: garage-credentials
+      namespace: garage
+  - describe:
+      apiVersion: cert-manager.io/v1
+      kind: Certificate
+      name: garage-web-tls-cert
       namespace: garage
   - describe:
       apiVersion: apps/v1

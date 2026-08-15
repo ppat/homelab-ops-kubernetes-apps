@@ -6,6 +6,7 @@ resources:
 - secrets.yaml
 - service.yaml
 - deployment.yaml
+- certificate-web.yaml
 - ingress-s3.yaml
 - ingress-web.yaml
 - ingress-admin.yaml
