@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.6.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.5.1...infra-storage-core-v0.6.0) (2026-08-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-storage-core:** this module now requires a `cert_issuer` post-build variable (a cert-manager ClusterIssuer name), consumed by the new garage-web-tls-cert Certificate. A consuming cluster must add cert_issuer to its infra-storage-core Kustomization's postBuild.substitute before bumping ref.tag to a release containing this change, or issuerRef.name renders empty, the Certificate fails validation, and the entire infra-storage-core Kustomization goes red -- taking Longhorn and MinIO down with it.
+
+### 🛠 Improvements
+
+* **infra-storage-core:** document Garage's admin Ingress and fix stale variable/secret contract ([#3657](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3657)) ([94cfb48](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/94cfb48456214ca2831a46e9249cbd8ca76f791d))
+
+
+### ✨ Features
+
+* **infra-storage-core:** serve every garage bucket by subdomain via wildcard cert+ingress ([#3681](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3681)) ([51972c7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/51972c7e2d217f9898d0a8e27a2a4c33b3be03df))
+
 ## [0.5.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.5.0...infra-storage-core-v0.5.1) (2026-08-13)
 
 
