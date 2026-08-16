@@ -5,6 +5,42 @@ metadata:
   name: validate-cert-manager
 spec:
   try:
+  # The HelmRelease goes first deliberately, and carries the whole convergence budget.
+  #
+  # It is the worst-provisioned operation measured anywhere in the infra suites: 9.3/28.8/
+  # 52.5s (min/med/max) over four green runs against the inherited 1m default -- 0.88 of it
+  # on the worst run, eight seconds of absolute slack -- and it has already been observed
+  # expiring at 60s of 60s with the release reading `Ready="Unknown"`, i.e. still
+  # installing.
+  #
+  # It is also the slowest thing in this step by a wide margin, because the chart sets no
+  # `install.disableWait` or `disableWaitForJobs`: helm-controller waits for the three
+  # Deployments *and* for the chart's `startupapicheck` hook Job, which is why the release
+  # reports Ready some 37s after the Deployments it contains are already Available.
+  #
+  # That condition therefore subsumes every assertion below it, which then return
+  # near-instantly on the shared 1m default. It matters here more than elsewhere because
+  # this is the first step after a cold module apply: assert a Deployment first and a
+  # still-installing release reports `actual resource not found`, describing an install in
+  # progress as if the module were missing an object.
+  #
+  # 3m is the sizing rule, three times the 52.5s maximum. The downside if the subsumption
+  # claim is wrong is bounded: the three Deployment asserts wait on the shared default, which
+  # is what they do today, against a measured 21.5s worst case.
+  #
+  # It is also this suite's first-position budget -- the one that absorbs the module's
+  # initial convergence rather than its own component's startup -- and it is already large
+  # enough for that job: the absorption measures 39.0s, which the x3 rule would put at 2m.
+  # The 3m above is sized from the larger of the two quantities, so it stands unchanged.
+  - description: Assert helmrelease/cert-manager-release
+    assert:
+      bindings:
+      - name: name
+        value: cert-manager-release
+      - name: namespace
+        value: cert-manager
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+      timeout: 3m
   - description: Assert deployment/cert-manager
     assert:
       bindings:
@@ -35,14 +71,6 @@ spec:
       - name: name
         value: selfsigned-issuer
       file: ../chainsaw/assertions/clusterissuer-ready.yaml
-  - description: Assert helmrelease/cert-manager-release
-    assert:
-      bindings:
-      - name: name
-        value: cert-manager-release
-      - name: namespace
-        value: cert-manager
-      file: ../chainsaw/assertions/helmrelease-ready.yaml
   catch:
   - describe:
       apiVersion: helm.toolkit.fluxcd.io/v2

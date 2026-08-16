@@ -36,3 +36,10 @@ jobs:
       test_path: ./ci/test/infra-security
       chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
       kind_config: .github/kind-cluster-multi-node.yaml
+      # The job ceiling has to stay clear of the sum of the chainsaw budgets it bounds. A run
+      # killed by this ceiling emits no chainsaw catch dump at all, which is strictly worse
+      # than the named assertion failure it replaces -- and it becomes reachable exactly when
+      # the runner is loaded, which is when the diagnosis matters. This suite's worst case
+      # moved most: authentik-server went 3m -> 6m, and a failure there is reached ~310s in,
+      # leaving under a minute of the old 15m once the catch block has run.
+      timeout: 25
