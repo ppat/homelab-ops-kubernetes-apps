@@ -13,6 +13,15 @@ spec:
       - name: namespace
         value: media
       file: ../chainsaw/assertions/deployment-ready.yaml
+      # 3m, the same number every workload in this suite carries, so that any of these steps
+      # survives being first with no head start at all.
+      #
+      # The 45/49/51s this used to cite were not agregarr's readiness. They were the duration
+      # of the first assert in the suite, which is the module's convergence charged to
+      # whichever step happens to lead; the readiness report puts agregarr third at T0+140,
+      # behind freetube (105) and tautulli (135). It moves to third and is predicted to fall
+      # to ~5s here.
+      timeout: 3m
   catch:
   - describe:
       apiVersion: apps/v1

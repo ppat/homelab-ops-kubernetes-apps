@@ -13,6 +13,17 @@ spec:
       - name: namespace
         value: media
       file: ../chainsaw/assertions/deployment-ready.yaml
+      # Was the inherited 60s default and the tightest operation in the whole apps scope:
+      # 20/31/57s observed, 0.95 of it. plex is Ready at T0+155-168, last in this suite, while
+      # its image is only ~159MB, so what it waits on is its own boot, not its pull. 3m, as for
+      # every workload in this suite.
+      #
+      # plex takes the last slot on the only direct measurement of the two: three readiness
+      # reports put plex 4s behind jellyfin (167/168/155 against 163/164/151). The gap is not
+      # resolvable but its sign is reproducible, and both steps carry the same 3m, so the
+      # choice costs nothing either way. See validate-jellyfin.yaml for the older evidence
+      # that pointed the other way and why it does not settle it.
+      timeout: 3m
   - podLogs:
       selector: app.kubernetes.io/name=plex
       namespace: media
