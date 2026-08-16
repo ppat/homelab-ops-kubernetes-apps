@@ -1,0 +1,200 @@
+---
+# Every assertion in every one of the sixteen suites means what chainsaw's assertion-tree
+# matcher says it means, and that matcher is pinned by CHAINSAW_VERSION in
+# ppat/github-workflows -- a repository this one does not control, where Renovate bumps it.
+# Assertion-tree behaviour is still v1alpha1. Without this suite a minor release that changed
+# matching semantics would land underneath all sixteen suites in silence, and every assertion
+# in the repo would quietly start meaning something slightly different.
+#
+# Each Test pairs a positive control with the semantic under test:
+#   - the assert proves the object exists, the field path is right, and matching can succeed;
+#   - the error proves the specific looser semantic is NOT in force.
+# Without the paired control an `error` that passed for the wrong reason (typo'd name, wrong
+# path) would read as a green result.
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: maps-are-subset-matched
+spec:
+  description: |
+    Maps match by subset -- an assertion names only the fields it cares about and ignores the
+    rest. This is the single most load-bearing semantic in the repo: every shared assertion in
+    ci/test/chainsaw/assertions/ is a partial object.
+  steps:
+  - try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cm-subset
+          data:
+            a: "1"
+            b: "2"
+            c: "3"
+    - assert:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cm-subset
+          data:
+            a: "1"
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: absent-fields-compare-equal
+spec:
+  description: |
+    Two fields that are both absent compare EQUAL inside an expression. This is why an
+    expression assertion over status fields that a controller has not populated yet can pass
+    vacuously -- `(x == y): true` is true when neither x nor y exists. Assertions written as
+    expressions must therefore also assert that the operands exist.
+  steps:
+  - try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cm-absent
+          data:
+            present: "1"
+    - assert:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cm-absent
+          data:
+            present: "1"
+    - assert:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cm-absent
+          data:
+            (absentA == absentB): true
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: scalars-do-not-glob-match
+spec:
+  description: |
+    Scalars compare by strict equality; `*` in an expected value is a literal asterisk, not a
+    wildcard. Kyverno *policies* glob-match, so the instinct transfers wrongly -- do not import
+    it. If this Test ever fails, every scalar assertion in the repo has become weaker than its
+    author intended.
+  steps:
+  - try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cm-glob
+          data:
+            schedule: "0 */15 * * *"
+    - assert:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cm-glob
+          data:
+            schedule: "0 */15 * * *"
+    - error:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cm-glob
+          data:
+            schedule: "*/15 * * * *"
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: arrays-require-equal-length
+spec:
+  description: |
+    Arrays are NOT subset-matched: an expected list shorter than the actual list fails. A
+    LITERAL list-shaped assertion therefore already notices an extra element and needs no
+    `(length(x)): n` guard beside it. That does not generalise to an array probed by
+    expression selectors -- a filter picking one named element says nothing about the rest of
+    the array, so there the length check is the only thing pinning the count (see the
+    `(length(volumes)): 2` line in ci/test/infra-observability/validate-alloy.yaml).
+  steps:
+  - try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: sa-length
+          imagePullSecrets:
+          - name: first
+          - name: second
+          - name: third
+    - assert:
+        resource:
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: sa-length
+          imagePullSecrets:
+          - name: first
+          - name: second
+          - name: third
+    - error:
+        resource:
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: sa-length
+          imagePullSecrets:
+          - name: first
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: arrays-match-index-wise
+spec:
+  description: |
+    Arrays of equal length match element-by-element at the same index, so reordering an actual
+    list fails an assertion that was written in the old order. The cost is brittleness, not
+    vacuity: a list-shaped assertion produces a false red when a chart reorders its output.
+    The expected and actual lists here are the same length, so the length check cannot fire
+    first and mask the ordering question.
+  steps:
+  - try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: sa-order
+          imagePullSecrets:
+          - name: first
+          - name: second
+    - assert:
+        resource:
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: sa-order
+          imagePullSecrets:
+          - name: first
+          - name: second
+    - error:
+        resource:
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: sa-order
+          imagePullSecrets:
+          - name: second
+          - name: first
