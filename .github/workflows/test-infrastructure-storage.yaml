@@ -6,7 +6,7 @@ on:
   pull_request:
     paths:
     - '.github/workflows/test-infrastructure-storage.yaml'
-    - '.github/kind-cluster-multi-node.yaml'
+    - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/infra-storage/**'
     - 'ci/test/chainsaw/**'
     - 'infrastructure/subsystems/storage-core/**'
@@ -33,7 +33,29 @@ jobs:
       git_ref: ${{ github.head_ref || github.ref_name }}
       test_path: ./ci/test/infra-storage
       chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
-      kind_config: .github/kind-cluster-multi-node.yaml
+      # Single node, and the reason is reliability rather than speed.
+      #
+      # This suite was held at three nodes on the belief that longhorn requires them. It does
+      # not: on one node the suite passes green, every longhorn pod is Ready, and the test
+      # volume simply runs degraded -- which is why numberOfReplicas in test-pvc.yaml is now 1.
+      #
+      # Measured over 8 paired dispatches (both arms started within ~2s of each other): one node
+      # is 26s faster (-9.5%), single winning 5 of 6 comparable pairs, t=-2.0 -- sign-consistent
+      # but short of the significance bar this work uses, so speed alone would not justify the
+      # change. Essentially all of the delta is inside the chainsaw phase; `kind create` is worth
+      # about 3s and is inside the noise.
+      #
+      # What justifies it: the three-node arm failed 1 of 8 and the single-node arm 0 of 8, and
+      # the failure was #3643 -- three longhorn-manager pods initialising concurrently, colliding
+      # on the same Setting's resourceVersion, and the losers calling log.Fatal. That race needs
+      # at least two manager pods, so one node does not make it rarer; it makes it impossible.
+      #
+      # What this gives up: replica placement across nodes is no longer exercised. That is
+      # deliberate -- a kind cluster's topology resembles no real cluster's, so asserting it here
+      # would produce a green that means nothing, and it is upstream's property to test. What the
+      # suite is for is that OUR installation is configured correctly and can do its job. See
+      # #3718 for the real limit on that: attach/mount cannot be tested in kind at all today.
+      kind_config: .github/kind-cluster-single-node.yaml
       # The job ceiling has to stay clear of the sum of the chainsaw budgets it bounds. A run
       # killed by this ceiling emits no chainsaw catch dump at all, which is strictly worse
       # than the named assertion failure it replaces -- and it becomes reachable exactly when
