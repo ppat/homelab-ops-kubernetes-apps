@@ -264,7 +264,7 @@ spec:
       patches:
       - target:
           kind: DaemonSet
-          name: kube-prometheus-stack-release-prometheus-node-exporter
+          name: kube-prometheus-stack-prometheus-node-exporter
         # yamllint disable-line rule:indentation
         patch: |-
           - op: add
