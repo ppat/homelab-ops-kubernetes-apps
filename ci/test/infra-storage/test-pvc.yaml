@@ -27,3 +27,67 @@ spec:
   resources:
     requests:
       storage: 50Mi
+---
+# Proves the module's longhorn actually *serves* block storage, rather than only
+# provisioning it. Until this pod existed the suite created the PVC, asserted `Bound`, and
+# stopped -- which proves the provisioner answered and nothing more. The volume was never
+# attached, so the CSI attach/mount path was never exercised: no node plugin staging, no
+# device, no filesystem. That is the half most likely to break on a longhorn version bump
+# or a change to our own longhorn values, and it was the half CI did not touch.
+#
+# Deliberately *not* a test of longhorn's internals. Replica placement, anti-affinity and
+# rebuild behaviour are upstream's to test, and a kind cluster's topology does not resemble
+# any real cluster's, so asserting them here would produce a green that means nothing. What
+# this suite is for is the premise underneath: **our installation is configured correctly
+# and can fulfil its role as a block-storage provider**, checked across upgrades and config
+# changes.
+#
+# Load-bearing details:
+#
+# - The container **writes and reads back** rather than merely mounting. A mount that
+#   succeeds but whose filesystem is unusable would otherwise pass; the round trip is what
+#   makes "provides block storage" an observation instead of an assumption.
+# - `readinessProbe` re-checks the same file, so the pod only reports Ready while the data
+#   is genuinely readable from the volume -- and the suite asserts Ready, so a volume that
+#   detaches underneath would show up rather than being masked by a container that already
+#   exited successfully.
+# - `restartPolicy: Never` keeps a failure loud. A restarting pod would retry the write and
+#   could eventually pass, converting a real storage fault into a slow flake.
+# - The image is the same digest-pinned busybox the observability suite already uses, so
+#   this adds no new image to pull anywhere in the fleet.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pvc-consumer
+  namespace: default
+  labels:
+    app.kubernetes.io/name: test-pvc-consumer
+spec:
+  restartPolicy: Never
+  containers:
+  - name: consumer
+    image: busybox@sha256:dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616
+    command:
+    - /bin/sh
+    - -c
+    - |
+        set -e
+        echo longhorn-block-storage-roundtrip > /data/probe
+        sync
+        grep -q longhorn-block-storage-roundtrip /data/probe
+        exec sleep 3600
+    readinessProbe:
+      exec:
+        command:
+        - /bin/sh
+        - -c
+        - grep -q longhorn-block-storage-roundtrip /data/probe
+      initialDelaySeconds: 2
+      periodSeconds: 5
+    volumeMounts:
+    - name: data
+      mountPath: /data
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: test-pvc

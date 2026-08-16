@@ -153,6 +153,49 @@ spec:
         value: default
       file: ../chainsaw/assertions/pvc-bound.yaml
       timeout: 3m
+  # `Bound` above proves the provisioner answered. It does not prove the volume can be
+  # attached, mounted or written to -- and before this step nothing in the suite attached it
+  # at all, so the CSI attach/mount path went unexercised on every run. See test-pvc.yaml
+  # for why this is the right depth for the suite and replica placement is not.
+  #
+  # The pod is asserted Ready rather than Succeeded: its readinessProbe re-reads the file it
+  # wrote, so Ready means the data is still readable from the volume at assert time.
+  #
+  # PROVISIONAL 5m -- deliberately generous so the first runs can measure what attach costs.
+  # Must be right-sized from those runs before this lands; a budget nobody measured is the
+  # anti-pattern TESTING.md exists to prevent.
+  - description: Assert pod/test-pvc-consumer has the volume attached and readable
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test-pvc-consumer
+          namespace: default
+        status:
+          phase: Running
+          (conditions[?type == 'Ready']):
+          - status: 'True'
+      timeout: 5m
+  # Attachment as longhorn itself reports it, which is what makes the pod's Ready above
+  # attributable to the volume rather than to a container that happens to be running.
+  # Unnamed because the longhorn Volume is named after the generated PV.
+  #
+  # Deliberately asserts `attached` and NOT `robustness: healthy`: robustness depends on how
+  # many nodes the cluster has, and this suite's node count is an open question (#3680). Once
+  # that is settled, align `numberOfReplicas` in test-storage-class with the node count and
+  # tighten this to `healthy` -- on a single node with 2 replicas the volume attaches and
+  # serves while permanently degraded, which is a green that hides a real state.
+  - description: Assert the longhorn volume is attached
+    assert:
+      resource:
+        apiVersion: longhorn.io/v1beta2
+        kind: Volume
+        metadata:
+          namespace: longhorn-system
+        status:
+          state: attached
+      timeout: 2m
 
   catch:
   - describe:
