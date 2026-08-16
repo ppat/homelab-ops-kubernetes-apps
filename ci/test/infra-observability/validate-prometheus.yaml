@@ -37,6 +37,20 @@ spec:
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/daemonset-ready.yaml
+  # The assert above cannot see a node dropping out of node-exporter's target set: both
+  # sides of `numberReady == desiredNumberScheduled` shrink together, so a chart bump that
+  # narrows the subchart's default `tolerations: [{operator: Exists, effect: NoSchedule}]`
+  # would leave kind's tainted control-plane node unscraped and still report green. This
+  # suite runs on the multi-node kind config, which is what makes that state reachable
+  # here at all.
+  - description: Assert daemonset/kube-prometheus-stack-prometheus-node-exporter covers every node
+    script:
+      # yamllint disable-line rule:indentation
+      content: |
+        ../chainsaw/scripts/daemonset-node-coverage.sh \
+          --namespace=monitoring \
+          --daemonset=kube-prometheus-stack-prometheus-node-exporter
+      timeout: 90s
   - description: Assert deployment/kube-prometheus-stack-kube-state-metrics
     assert:
       bindings:

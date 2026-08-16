@@ -4,6 +4,17 @@ kind: StatefulSet
 metadata:
   name: ($name)
   namespace: ($namespace)
+# See deployment-ready.yaml: without this the assert reports on whatever spec the
+# controller last acted on, so an in-place mutation passes instantly on the previous
+# spec's status.
+(status.observedGeneration == metadata.generation): true
+# The only check here that reads intent. `status.replicas` counts pods the controller has
+# CREATED, not pods wanted, so an OrderedReady StatefulSet that cannot create pod-1 at all
+# (quota denial, or the sync window after pod-0 turns Ready) reports
+# {replicas:1, readyReplicas:1, currentReplicas:1} and satisfies both status-vs-status
+# checks below at 1 of N. Measured: with a pods=1 ResourceQuota, a replicas: 2 StatefulSet
+# passes those two and fails this one.
+(status.readyReplicas == spec.replicas): true
 status:
   # All replicas should be ready and current
   (replicas == readyReplicas): true

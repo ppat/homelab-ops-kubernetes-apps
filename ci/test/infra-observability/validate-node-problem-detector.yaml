@@ -26,6 +26,20 @@ spec:
         value: monitoring
       file: ../chainsaw/assertions/daemonset-ready.yaml
       timeout: 3m
+  # A node-health detector that is not on a node reports nothing about that node forever,
+  # and the assert above cannot tell that apart from full coverage: `desiredNumberScheduled`
+  # counts only the nodes the DaemonSet currently targets, so it shrinks along with the
+  # coverage. The module's single `node-role.kubernetes.io/control-plane` toleration is the
+  # whole reason this lands on kind's tainted control-plane node; losing it would be silent
+  # without this check.
+  - description: Assert daemonset/node-problem-detector covers every node
+    script:
+      # yamllint disable-line rule:indentation
+      content: |
+        ../chainsaw/scripts/daemonset-node-coverage.sh \
+          --namespace=monitoring \
+          --daemonset=node-problem-detector
+      timeout: 90s
   - description: Assert helmrelease/node-problem-detector-release
     assert:
       bindings:

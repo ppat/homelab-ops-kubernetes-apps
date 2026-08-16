@@ -144,12 +144,20 @@ spec:
             type: Recreate
           template:
             spec:
-              # This pod reads the Kubernetes API and nothing else. Asserted as an
-              # exact count plus the identity of each volume rather than "no hostPath",
-              # because chainsaw matches arrays by subset - a check phrased as a list
-              # would not notice a third volume being added. Any host mount appearing
-              # here means the singleton has quietly acquired the node-level access the
-              # split exists to keep off it.
+              # This pod reads the Kubernetes API and nothing else. Any host mount
+              # appearing here means the singleton has quietly acquired the node-level
+              # access the split exists to keep off it, so the count is pinned as well as
+              # the identity of each volume.
+              #
+              # The count is load-bearing HERE because the two checks under it are
+              # expression selectors: a filter that picks one named element out of an
+              # array says nothing about what else is in that array. It is NOT here
+              # because chainsaw subset-matches arrays - it does not. Measured on v0.2.15,
+              # the version CI pins: an assert phrased as a literal list of one element
+              # against a three-element array fails with "lengths of slices don't match".
+              # So do not read this line as a reason to add length() guards to the
+              # list-shaped asserts elsewhere in these suites (the NetworkPolicy rules,
+              # for one); those already fail on an appended element.
               (length(volumes)): 2
               (volumes[?name == 'config'] | [0].configMap.name): alloy-events-config
               (volumes[?name == 'storage'] | [0].emptyDir != null): true

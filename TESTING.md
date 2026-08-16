@@ -84,6 +84,57 @@ flowchart TD
   scans. It is chainsaw-only scaffolding, not part of the module's own manifest -
   `pre-requisites/` and the module's own Flux `Kustomization` files are still diffed
   normally.
+- **Re-asserting a condition after mutating an object in place is vacuous on its own.** The
+  object still carries the previous spec's `Ready=True` when the step begins, so the assert
+  returns instantly and its budget can never be consumed. Gate the step on something the new
+  spec necessarily creates - `validate-test-postgres-db-backup.yaml` waits for the
+  sidecar-injected Pod for exactly this reason - or on
+  `observedGeneration == metadata.generation` where the CRD maintains it.
+
+## Assertions compare status to intent, not status to status
+
+A workload's status only ever describes **the spec the controller last acted on**, so an
+assertion built entirely out of status fields can be fully satisfied by a spec nobody asked
+for. Three properties of the assertion engine, all measured on the chainsaw version CI pins
+(v0.2.15), make that easy to write by accident:
+
+- **Absent compares equal to absent.** `(a == b): true` passes when both fields are missing,
+  so `(replicas == readyReplicas)` is satisfied by an empty status.
+- **Whether a field renders at zero is a serialisation detail, not a design.**
+  `DaemonSetStatus.numberReady` carries no `omitempty` and renders `0`; `numberAvailable`
+  carries one and disappears. Every field of `DeploymentStatus` is omitempty. So whether a
+  status-vs-status check happens to catch an empty status is an accident of Go struct tags,
+  and it differs between kinds.
+- **A condition that was True stays True** until the controller revisits it.
+
+The shared workload assertions therefore carry two things no status-only check can provide:
+
+- `(status.observedGeneration == metadata.generation)` - the controller has seen *this*
+  spec. It closes the fresh-object window and the stale-status-after-mutation case in one
+  line, and costs nothing on a green run. Only add it where the field is genuinely
+  maintained: apps/v1 `Deployment`, `StatefulSet` and `DaemonSet` all maintain it; verify
+  before relying on it for a CRD, because a controller that never sets it makes the
+  assertion permanently red.
+- **a comparison against `spec`.** Without `(status.readyReplicas == spec.replicas)` a
+  StatefulSet that cannot create pod-1 at all reports `{replicas:1, readyReplicas:1,
+  currentReplicas:1}` and passes at 1 of N, and a Deployment scaled to zero passes with no
+  pods running at all.
+
+Two gaps are deliberately left to scripts and separate assertions, because the quantity they
+need is not in the object being asserted:
+
+- **DaemonSet node coverage.** `desiredNumberScheduled` counts the nodes the DaemonSet
+  *currently targets*, so it shrinks along with the regression - a dropped toleration passes
+  at 2 == 2 with a node uncovered. `ci/test/chainsaw/scripts/daemonset-node-coverage.sh`
+  compares it to the node count; apply it on multi-node suites whose DaemonSet is meant to
+  run everywhere.
+- **Service to pod wiring.** `service-clusterip-ready.yaml` cannot go red for any live
+  ClusterIP Service - it is an existence check. Where a Service actually resolving is part
+  of what the suite claims to prove, add `service-endpoints-ready.yaml`.
+
+The rule underneath all of it: **an assertion that cannot go red is worse than no
+assertion**, because it consumes a budget and reads as coverage. Before believing a new
+assertion works, construct the state it is meant to catch and watch it fail.
 
 ## Timeout Budgets and Validation Order
 

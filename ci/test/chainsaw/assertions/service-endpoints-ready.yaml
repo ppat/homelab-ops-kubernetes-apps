@@ -1,0 +1,28 @@
+---
+# Asserts that a Service's selector actually resolves to at least one READY pod.
+#
+# This is the check `service-clusterip-ready.yaml` cannot make. That file asserts
+# `spec.type` and an empty `status.loadBalancer`, and for any existing, correctly-typed
+# ClusterIP Service there is no cluster state that fails it - a ClusterIP Service never
+# acquires load-balancer status, so it is an existence check. The failure it is read as
+# covering, and does not, is a selector that matches no ready pods: a chart bump renaming
+# pod labels leaves the workload green, the Service present, and every consumer resolving
+# to nothing.
+#
+# Selected by label rather than by name because EndpointSlice names are generated
+# (`<service>-xxxxx`). Chainsaw fails a label-selected assert when nothing matches, so a
+# Service with no EndpointSlice at all fails here too.
+#
+# Bindings: $name (the Service name), $namespace.
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  namespace: ($namespace)
+  labels:
+    kubernetes.io/service-name: ($name)
+# The empty-list fallback is load-bearing, not defensive style. A Service whose selector
+# matches nothing gets an EndpointSlice with the `endpoints` key absent entirely, and
+# length(null) is a chainsaw evaluation ERROR rather than a false - which aborts the step
+# instead of retrying it, so without the fallback this would fail even during normal
+# endpoint programming, before the first pod is ready.
+(length(endpoints[?conditions.ready == `true`] || `[]`) >= `1`): true

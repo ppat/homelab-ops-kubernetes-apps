@@ -4,7 +4,23 @@ kind: DaemonSet
 metadata:
   name: ($name)
   namespace: ($namespace)
+# See deployment-ready.yaml: without this the assert reports on whatever spec the
+# controller last acted on, so an in-place mutation passes instantly on the previous
+# spec's status.
+(status.observedGeneration == metadata.generation): true
 status:
-  # All desired pods should be ready and available
+  # All desired pods should be ready and available.
+  #
+  # `desiredNumberScheduled` is not intent - it is the controller's count of the nodes the
+  # DaemonSet CURRENTLY targets. A regression that removes nodes from that set (a chart
+  # bump dropping a toleration, a new nodeSelector) shrinks the denominator and these two
+  # pass at 2 == 2 with a whole node uncollected. Total loss of coverage is caught, but
+  # only by accident: at desiredNumberScheduled 0, `numberReady` renders 0 (not omitempty)
+  # while `numberAvailable` is absent (omitempty), so the second check compares absent to 0
+  # and fails. PARTIAL loss - the alloy incident, where the chart's default
+  # `tolerations: []` left CI's tainted control-plane node uncollected while the DaemonSet
+  # showed green - passes both. Node count is not in the DaemonSet object at all, so the
+  # check for it is ../scripts/daemonset-node-coverage.sh, invoked by the validate steps of
+  # multi-node suites whose DaemonSets are meant to run on every node.
   (numberReady == desiredNumberScheduled): true
   (numberAvailable == desiredNumberScheduled): true
