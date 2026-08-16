@@ -41,6 +41,12 @@ jobs:
   # infra-<x>). Anything broader (the workflow itself, or a `components/*` consumed
   # by an arbitrary/varying set of modules via spec.components) falls back to testing
   # every module, since it can't be attributed to a single one cheaply/reliably.
+  #
+  # A module suite is recognised by being named after its module (apps-*/infra-*) rather
+  # than by not appearing on a list of exceptions. ci/test also holds directories with no
+  # Flux objects in them at all - the shared chainsaw harness, and assertion-semantics,
+  # which asserts on bare ConfigMaps - and flux-local exits non-zero rather than rendering
+  # an empty diff when handed a tree containing none of the resource type it was asked for.
   affected-modules:
     needs: [detect-changes]
     runs-on: ubuntu-24.04
@@ -63,11 +69,11 @@ jobs:
       run: |
         if echo "${CHANGED_FILES}" | tr ' ' '\n' | grep -qE '^(\.github/workflows/diff-changes\.yaml|components/)'; then
           echo "Broad change detected (workflow or shared component) - testing all modules..."
-          mapfile -t modules < <(find ci/test -mindepth 1 -maxdepth 1 -type d ! -name chainsaw -printf '%f\n' | sort)
+          mapfile -t modules < <(find ci/test -mindepth 1 -maxdepth 1 -type d \( -name 'apps-*' -o -name 'infra-*' \) -printf '%f\n' | sort)
         else
           echo "Testing modules affected by changed files..."
           mapfile -t modules < <(echo "${CHANGED_FILES}" | tr ' ' '\n' | awk -F/ '
-            $1 == "ci" && $2 == "test" && $3 != "chainsaw" { print $3 }
+            $1 == "ci" && $2 == "test" && $3 ~ /^(apps|infra)-/ { print $3 }
             $1 == "apps" && $2 == "subsystems" { print "apps-" $3 }
             $1 == "infrastructure" && $2 == "subsystems" { sub(/-core$/, "", $3); sub(/-extra$/, "", $3); print "infra-" $3 }
           ' | sort -u)

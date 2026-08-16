@@ -1,0 +1,29 @@
+---
+# Deliberately NOT ci/test/chainsaw/.chainsaw.yaml. Two reasons, both load-bearing:
+#   - this suite exists to protect the shared harness, so it must not be configured by it;
+#   - a suite placed under ci/test/chainsaw/ would be edited by anyone touching the harness,
+#     and non-markdown edits there are a fleet-wide trigger.
+# The shared catch handler also assumes Flux and module CRDs, neither of which exists here.
+apiVersion: chainsaw.kyverno.io/v1alpha2
+kind: Configuration
+metadata:
+  name: assertion-semantics
+spec:
+  timeouts:
+    apply: 30s
+    assert: 30s
+    cleanup: 30s
+    delete: 15s
+    error: 30s
+    exec: 30s
+
+  execution:
+    failFast: false
+    parallel: 1
+
+  error:
+    catch:
+    - script:
+        content: |
+          echo '--- objects the failing assertion was matched against ---'
+          kubectl get -n $NAMESPACE configmap,serviceaccount -o yaml

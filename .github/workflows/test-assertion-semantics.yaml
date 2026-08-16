@@ -1,0 +1,34 @@
+---
+# yamllint disable rule:line-length
+name: test-assertion-semantics
+
+on:
+  pull_request:
+    paths:
+    # Deliberately includes this workflow's own path. chainsaw's matching semantics are pinned
+    # by CHAINSAW_VERSION inside ppat/github-workflows, which reaches this repo only as a
+    # Renovate bump of the `uses:` sha below -- so that bump is the event this suite must run
+    # on, and the self-path filter is what makes it run on it.
+    - '.github/workflows/test-assertion-semantics.yaml'
+    - '.github/kind-cluster-single-node.yaml'
+    - 'ci/test/assertion-semantics/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test-assertion-semantics:
+    uses: ppat/github-workflows/.github/workflows/chainsaw-test.yaml@1e8ca1b00b6e69bdf5aef8b33111c594c051ff65 # v4.4.0
+    with:
+      # github.ref_name rather than github.ref: bare branch name on every event type.
+      git_ref: ${{ github.head_ref || github.ref_name }}
+      test_path: ./ci/test/assertion-semantics
+      # not the shared ci/test/chainsaw config -- see the header of that file for why
+      chainsaw_config: ./ci/test/assertion-semantics/.chainsaw.yaml
+      kind_config: .github/kind-cluster-single-node.yaml
+      timeout: 10

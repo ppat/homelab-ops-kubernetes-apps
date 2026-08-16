@@ -136,6 +136,29 @@ The rule underneath all of it: **an assertion that cannot go red is worse than n
 assertion**, because it consumes a budget and reads as coverage. Before believing a new
 assertion works, construct the state it is meant to catch and watch it fail.
 
+## What an Assertion Actually Means
+
+The section above turns on how chainsaw's assertion-tree matcher reads an assertion, and those
+rules are not obvious. Four of them are load-bearing here, and `ci/test/assertion-semantics/`
+holds each one under test so a chainsaw bump cannot move one in silence:
+
+| behaviour | consequence for an assertion you write |
+| --- | --- |
+| maps match by **subset** | naming a field asserts it; unnamed fields are ignored |
+| absent fields compare **equal** inside an expression | `(a == b): true` passes when *neither* exists, so an expression over status a controller has not populated yet passes vacuously — the root of the vacuity family above |
+| scalars use **strict equality**, never globbing | `*` is a literal asterisk. Kyverno *policies* glob-match; chainsaw assertions do not, so do not carry that instinct across |
+| arrays require **equal length** and match **index-wise** | a **literal** list-shaped assertion already notices an added element and needs no `(length(x)): n` guard — but reordering produces a false red. Beside **expression selectors** (`(items[?name == 'x'] \| [0]...)`) a `length()` guard is load-bearing, not redundant: a filter that picks one named element says nothing about the rest of the array (see `validate-alloy.yaml`) |
+
+These are pinned by `CHAINSAW_VERSION`, which lives in `ppat/github-workflows` and is bumped
+there by Renovate. That bump reaches this repository only as a Renovate PR moving the `uses:`
+sha in `.github/workflows/test-*.yaml`, so `ci/test/assertion-semantics/` runs on exactly that
+PR — a release that changed matching semantics would otherwise land underneath all sixteen
+suites in silence, and every assertion in the repo would quietly start meaning something else.
+
+The suite pairs each negative check with a positive control on the same object, so an `error`
+that passed for the wrong reason (wrong name, wrong field path) cannot read as a green result.
+It needs any cluster, no Flux, and finishes in well under a minute.
+
 ## Timeout Budgets and Validation Order
 
 Assertions in a suite run **sequentially**; the workloads underneath them do not. Flux applies
