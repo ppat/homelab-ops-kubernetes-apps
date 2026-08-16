@@ -44,8 +44,17 @@ spec:
         value: openclaw
       file: ../chainsaw/assertions/deployment-ready.yaml
       # Generous: openclaw's startupProbe budget is up to 5m (failureThreshold 30 x 10s) before
-      # readiness can even begin; by this last validate step the pod has usually long since
-      # settled, but keep headroom so a slow image pull/boot doesn't false-fail.
+      # readiness can even begin; by the time this step is reached the pod has usually long
+      # since settled, but keep headroom so a slow image pull/boot doesn't false-fail.
+      #
+      # openclaw is Ready at T0+400-407, second-slowest measured in this suite, and it is the
+      # step that pays for the two ordering exceptions in chainsaw-test.yaml -- open-webui and
+      # n8n both asserted behind litellm. It is the only step in the tail that waits, and with
+      # both exceptions in place it inherits the gap from obsidian's readiness to its own:
+      # 123s measured, 0.34 of this 6m, and the longest step in the suite. It is a plain
+      # Deployment assert, which is the point -- with n8n and open-webui both moved behind
+      # litellm the tail's whole wait is parked on the widest budget available rather than on
+      # a capped one.
       timeout: 6m
   catch:
   - describe:
