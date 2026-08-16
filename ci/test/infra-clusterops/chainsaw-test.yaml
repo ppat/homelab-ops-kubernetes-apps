@@ -39,6 +39,21 @@ spec:
     use:
       template: ./validate-system-upgrade-controller.yaml
 
+  # Step order is left as-is, and that is a decision rather than an omission: reloader is the
+  # only component in this suite whose readiness has ever been measured (25s from module
+  # apply, the only assertion here that polls) and it is already validated last. The two
+  # steps ahead of it return in 0.2s and 2.9s, which bounds their readiness from above
+  # without measuring it -- but that is enough to rule out the one arrangement that matters,
+  # a slow step sitting in front of instant ones. So no permutation buys headroom.
   - name: Validate reloader
     use:
       template: ./validate-reloader.yaml
+
+  # Asserts nothing; prints the readiness ordering the step order above is derived from.
+  # This suite has no failed runs in the last 100, so the shared catch-block dump has never
+  # fired for it and its ordering rests entirely on green timings -- which are censored for
+  # every component that was already ready when chainsaw arrived. This is how that gap gets
+  # closed without waiting for a failure.
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml
