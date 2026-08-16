@@ -13,6 +13,13 @@ spec:
       - name: namespace
         value: home-automation
       file: ../chainsaw/assertions/deployment-ready.yaml
+      # Was the inherited 60s default, set when both of these were censored -- they returned
+      # in 0s on all 5 green runs, proving only "ready by then". The readiness report has now
+      # produced the real numbers: wyoming-whisper T0+176, wyoming-piper T0+187, both ahead of
+      # the CNPG Cluster at T0+207. So this step moves ahead of `Validate database` and is the
+      # step that waits. piper is the later of the two, so this assert absorbs the whole gap
+      # -- ~45s predicted, 0.25 of 3m -- and the whisper assert below it then returns in 0s.
+      timeout: 3m
   - description: Assert deployment/wyoming-whisper
     assert:
       bindings:
@@ -21,6 +28,8 @@ spec:
       - name: namespace
         value: home-automation
       file: ../chainsaw/assertions/deployment-ready.yaml
+      # Same reasoning and same evidence as wyoming-piper above.
+      timeout: 3m
   catch:
   - describe:
       apiVersion: apps/v1
