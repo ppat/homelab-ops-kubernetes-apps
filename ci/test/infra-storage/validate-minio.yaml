@@ -21,6 +21,12 @@ spec:
       - name: namespace
         value: minio
       file: ../chainsaw/assertions/deployment-ready.yaml
+  # This is what the step reorder exposed, and it is the fourth instance of the same shape:
+  # an aggregate HelmRelease assert that runs after its own workloads, so the release's Ready
+  # condition lags them and the step inherits none of the slack ahead of it. Measured 21s on
+  # the first run after the reorder, against 1s for the whole step before it - the deployment
+  # assert above took 5s, so the release condition alone accounted for the other 21s.
+  # 21 x 3 = 63s, so 90s.
   - description: Assert helmrelease/minio-release
     assert:
       bindings:
@@ -29,6 +35,7 @@ spec:
       - name: namespace
         value: minio
       file: ../chainsaw/assertions/helmrelease-ready.yaml
+      timeout: 90s
 
   catch:
   - describe:

@@ -33,3 +33,11 @@ jobs:
       test_path: ./ci/test/infra-storage
       chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
       kind_config: .github/kind-cluster-multi-node.yaml
+      # The job ceiling has to stay clear of the sum of the chainsaw budgets it bounds. A run
+      # killed by this ceiling emits no chainsaw catch dump at all, which is strictly worse
+      # than the named assertion failure it replaces -- and it becomes reachable exactly when
+      # the runner is loaded, which is when the diagnosis matters. Here the budgets that moved
+      # are the external-secrets reconcile (3m -> 5m) and csi-attacher (1m -> 3m), either of
+      # which puts a failing run within about three quarters of the old 15m default once the
+      # catch block has run.
+      timeout: 25
