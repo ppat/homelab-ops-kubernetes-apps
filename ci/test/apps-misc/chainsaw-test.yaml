@@ -19,11 +19,42 @@ spec:
 
   - name: Reconcile pre-requisites
     try:
+    # New with the fixture switch, and required by it rather than optional. Until now this
+    # suite waited only on external-secrets and got cert-manager for free, because
+    # `external-secrets-release` declared `dependsOn: cert-manager-release` and so could not
+    # go Ready before it. The external-secrets fixture removes that dependency (see its
+    # README), which is most of what makes it fast -- the two now install concurrently
+    # instead of in series. maddy's `Certificate/smtp-tls` and the Secret its Deployment
+    # mounts therefore need cert-manager waited for explicitly; without this step the only
+    # thing standing between an un-issued Certificate and a red run is the shared 1m assert
+    # default in validate-maddy.yaml.
+    #
+    # 3m is infra-storage's number for the identical operation, sized there against 36.1s on
+    # four of five green runs and 106.1s on the fifth. Measured here over three green runs on
+    # this branch: 26/27/16s, i.e. 0.15 of the budget -- so it is not what this step costs.
+    # The external-secrets wait behind it is (12/82/88s over the same three runs), and the
+    # two together came to 38/109/104s against a baseline of 60-70s on twelve runs of
+    # fix/chainsaw-timing-and-order. The two waits run in series, as all chainsaw operations
+    # do, but the two installs no longer do, so the step costs whichever release converges
+    # last rather than their sum -- which is the whole point of dropping the dependency.
+    - description: Reconcile helmrelease/cert-manager-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cert-manager-release --namespace=cert-manager --timeout=3m
+        timeout: 3m
+    # 2m -> 5m. This same reconcile is the single most exposed operation in the apps scope:
+    # five suites run it identically at 2m and all five sit at 0.74-0.97 of it (here:
+    # 62/66/67/96/100s over 5 green runs). The control is apps-ai, which runs the identical
+    # script at 4m and has been observed taking 154s -- 128% of what this budget allows. The
+    # distribution is also bimodal (a warm cluster and a cold one), so a 5-run maximum says
+    # very little about the upper mode's tail. Note the failure shape: flux-reconcile.sh
+    # passes this same duration to `flux reconcile --timeout`, so blowing it surfaces as a
+    # script exit 1 from flux, not as a chainsaw assert timeout.
     - description: Reconcile helmrelease/external-secrets-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
-        timeout: 2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=5m
+        timeout: 5m
 
   - name: Apply apps-misc module
     try:
@@ -39,6 +70,12 @@ spec:
     - events:
         namespace: flux-system
 
+  # One workload, so there is nothing to order. maddy's smtp Deployment is Ready 13-19s after
+  # the module is applied, on the inherited 60s default at 0.28 -- left alone.
   - name: Validate maddy
     use:
       template: ./validate-maddy.yaml
+
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml
