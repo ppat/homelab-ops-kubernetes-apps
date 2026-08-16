@@ -1,16 +1,28 @@
 ---
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
-# See kind-cluster-single-node.yaml for the mechanism and the measurement. A cluster-level
-# patch does reach worker kubelets -- confirmed by reading /configz on all three nodes, not by
-# checking that the YAML parsed. Three kubelets on one runner is where extra sync work would
-# show up first if it were going to: measured across all three at once, 16.7 -> 21.8 kubelet
-# CPU-seconds per 300s, i.e. +1.7% of one core between them, and the arm carrying the higher
-# figure also carried twelve more pods.
+# See kind-cluster-single-node.yaml for both mechanisms, both measurements, and why the three
+# keys share one patch entry rather than sitting in two.
+#
+# A cluster-level patch does reach worker kubelets -- confirmed by reading /configz on all three
+# nodes, not by checking that the YAML parsed, since workers take their kubelet config from the
+# kubelet-config ConfigMap during `kubeadm join`, a different path from the control plane's.
+#
+# syncFrequency: three kubelets on one runner is where extra sync work would show up first if it
+# were going to. Measured across all three at once, 16.7 -> 21.8 kubelet CPU-seconds per 300s,
+# i.e. +1.7% of one core between them, and the arm carrying the higher figure also carried
+# twelve more pods.
+#
+# Pull parallelism: three nodes already gave three independent serial pull queues, so the
+# headroom here is smaller. On apps-downloaders, 12 paired dispatches, queued pull time
+# 97.6s -> 0.1s (12/12) but the latest-finishing pull only 31.3s -> 28.3s (t=-1.47, not
+# significant).
 kubeadmConfigPatches:
 - |
     kind: KubeletConfiguration
     syncFrequency: 10s
+    serializeImagePulls: false
+    maxParallelImagePulls: 4
 nodes:
 - role: control-plane
 - role: worker
