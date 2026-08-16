@@ -11,6 +11,11 @@
 #   - the error proves the specific looser semantic is NOT in force.
 # Without the paired control an `error` that passed for the wrong reason (typo'd name, wrong
 # path) would read as a green result.
+#
+# One semantic -- `length()` over an absent key -- cannot be established that way, because the
+# evaluation error it raises fails an `error` operation exactly as it fails an `assert`. That
+# arm runs the negative half out-of-band instead, through `chainsaw assert`; see its own
+# description for why, and for the control that keeps it from passing vacuously.
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
@@ -198,3 +203,81 @@ spec:
           imagePullSecrets:
           - name: second
           - name: first
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: length-of-a-missing-list-does-not-evaluate
+spec:
+  description: |
+    `length()` over a key that is absent does not evaluate to anything -- it is an evaluation
+    ERROR, not a false. An erroring expression ABORTS the step instead of retrying it, so an
+    assertion that can observe a list before its controller has populated it must write
+    `|| []`. ci/test/chainsaw/assertions/service-endpoints-ready.yaml load-bears on exactly
+    this: an EndpointSlice whose Service selects no ready pod has no `endpoints` key at all,
+    and without the fallback that assertion would abort during normal endpoint programming
+    rather than retry until the first pod is ready.
+
+    Unlike the other arms, the negative half runs out-of-band through `chainsaw assert`, which
+    evaluates one assertion against one literal resource with no cluster involved. It has to:
+    an evaluation error propagates out of an in-band `error` operation exactly as it does out
+    of an in-band `assert` -- both report ERROR and fail the step -- so an in-band arm would
+    go red in precisely the world where this semantic still holds.
+
+    The out-of-band expression compares `length()` with itself rather than with a constant
+    because any value `length()` could return equals itself: a non-zero exit therefore means
+    the expression produced no value at all, and a release that made `length(null)` return `0`
+    *or* `null` would exit zero and turn this arm red. The first script is the control for
+    the out-of-band mechanism itself -- without it, a missing binary or a renamed flag would
+    also exit non-zero and read as green.
+  steps:
+  - try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: sa-no-list
+    - assert:
+        resource:
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: sa-no-list
+          (length(imagePullSecrets || `[]`) == `0`): true
+    - script:
+        content: |
+          set -eu
+          d="$(mktemp -d)"
+          cat > "${d}/resource.yaml" <<'EOF'
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata: {name: sa-no-list}
+          EOF
+          cat > "${d}/assertion.yaml" <<'EOF'
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata: {name: sa-no-list}
+          (length(imagePullSecrets || `[]`) == `0`): true
+          EOF
+          chainsaw assert --no-color -f "${d}/assertion.yaml" -r "${d}/resource.yaml"
+        check:
+          ($error == null): true
+    - script:
+        content: |
+          set -eu
+          d="$(mktemp -d)"
+          cat > "${d}/resource.yaml" <<'EOF'
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata: {name: sa-no-list}
+          EOF
+          cat > "${d}/assertion.yaml" <<'EOF'
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata: {name: sa-no-list}
+          (length(imagePullSecrets) == length(imagePullSecrets)): true
+          EOF
+          chainsaw assert --no-color -f "${d}/assertion.yaml" -r "${d}/resource.yaml"
+        check:
+          ($error != null): true
