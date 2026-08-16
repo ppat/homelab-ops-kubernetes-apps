@@ -85,9 +85,11 @@ jobs:
         {
           echo "### Baseline slot $(date -u '+%Y-%m-%d %H:%M') UTC"
           echo
-          echo "| suite | topology |"
-          echo "| --- | --- |"
-          echo "${matrix}" | jq -r '.include[] | "| \(.suite) | \(.topology) |"'
+          echo "| suite | topology | ceiling |"
+          echo "| --- | --- | --- |"
+          # "default" rather than the number: restating 15 in a third place is one more thing
+          # to keep in sync with the pinned reusable workflow, for a display-only field.
+          echo "${matrix}" | jq -r '.include[] | "| \(.suite) | \(.topology) | \(if .timeout then "\(.timeout)m" else "default" end) |"'
         } >> "$GITHUB_STEP_SUMMARY"
 
   baseline:
@@ -108,3 +110,14 @@ jobs:
       test_path: ${{ matrix.test_path }}
       chainsaw_config: ${{ matrix.chainsaw_config }}
       kind_config: ${{ matrix.kind_config }}
+      # 15 is chainsaw-test.yaml's own default for `timeout` at the sha pinned above, where it
+      # becomes the job's timeout-minutes. It has to be restated because `with:` cannot be
+      # built dynamically and an input cannot be conditionally omitted, so a suite that
+      # declares no ceiling has no other way to land on the upstream one. Re-read it when
+      # Renovate bumps that sha -- the two must agree, and nothing else checks them.
+      #
+      # Suites that DO declare a ceiling have it read from their own test-*.yaml by the
+      # planner; six declare 25. Carrying it is what keeps the sample honest: a baseline job
+      # killed at a ceiling its suite does not use is a failure the suite would never have
+      # had, biasing the rate high in exactly the 15-25m band this instrument measures (#3732).
+      timeout: ${{ matrix.timeout || 15 }}
