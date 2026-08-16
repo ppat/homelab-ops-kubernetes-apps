@@ -422,6 +422,43 @@ Both queries were confident and both were structurally blind, so confidence is n
 category you are counting is among them** — then, where it is cheap, verify one known-positive
 example actually appears in the output.
 
+### The harvest job — where the instrument lines go
+
+The lines above are stdout in a job log, and job logs expire at 90 days. The `harvest` job in
+`scheduled-baseline.yaml` gives them somewhere to live: after the slot's suites are terminal it
+reads their logs back through the Actions API, greps the published grammar, and writes
+
+- **a step summary on the run page** — one row per sampled suite, so a slot can be read without
+  running anything, and a `> [!WARNING]` block naming any job whose lines are missing or
+  unreadable. A suite that succeeded but did not emit its obligatory `CONTENTION start`,
+  `CONTENTION end` and `READY` lines is reported as broken *instrumentation*, because that is
+  what it is;
+- **a `harvest-*` artifact** holding one TSV row per instrument line, kept for 90 days — the same
+  window as the logs it came from, since nothing is gained by outliving the source.
+
+On scheduled slots it also sweeps the other workflow runs since the previous slot. That is where
+the `UNCENSORED` lines actually live: they exist on failures only, and failures are overwhelmingly
+on PR-triggered runs rather than on a slot's five jobs. **Swept rows are not rate samples** — a PR
+run measures whatever that PR changed, which is the contaminated measurement this whole instrument
+exists to replace. The TSV carries `event` and `branch` columns so the two populations are never
+joined by accident.
+
+```bash
+ci/scripts/baseline-harvest.sh collect          # every slot's lines from the last 30 days
+ci/scripts/baseline-harvest.sh collect 90       # the whole retained window
+ci/scripts/baseline-harvest.sh harvest --run <id> [--sweep]   # one run, on demand
+```
+
+Two properties are deliberate and worth not undoing. The harvester **cannot gate anything**: it is
+downstream of every suite, no job depends on it, and it is `continue-on-error`. And it never
+touches a run while that run is measuring — the boundary-only rule that makes `CONTENTION` mean
+anything applies to the reader as much as to the probes.
+
+It parses the prefix of each line and keeps the rest verbatim, so a suite that adds a field to
+`CONTENTION` costs a column in the summary rather than a slot of retention. That is the entire
+contract between the two repos: the sixteen `test-*.yaml` workflows own no steps of their own, so
+the published grammar is all the producer and the consumer share.
+
 ## Resource Validation
 
 - Uses `kubeconform` to validate all Kubernetes manifests
