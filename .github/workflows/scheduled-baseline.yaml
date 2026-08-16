@@ -6,8 +6,14 @@
 # Why it exists: every flake number this repo has came from reds that happened to appear on
 # PRs which changed nothing a suite runs. That is one sample per suite under one set of load
 # conditions, and reading a rate off it has produced contradictory answers. This workflow
-# replaces that with a real instrument -- unchanging content (main), a fixed and published
+# replaces that with a real instrument -- content pinned at each sample, a fixed and published
 # cadence, and n that grows without anyone doing anything.
+#
+# What it is NOT is a constant-content series: Renovate merges into main most days, so a month
+# of samples spans dozens of different fleets. The rate is an average over all of them unless
+# it is windowed, which is what baseline-census.sh's --since/--until and its printed revision
+# count are for. What makes this an instrument is that nobody chooses when a sample is taken --
+# not that the thing being sampled holds still.
 #
 # It is also the only source of data on time of day, which is where contention actually
 # varies and which no PR-triggered run can ever see.
