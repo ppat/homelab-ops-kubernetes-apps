@@ -21,10 +21,11 @@ spec:
   try:
   - description: Report readiness, restarts and image pulls
     script:
-      # 3m: five kubectl calls each capped at --request-timeout=30s inside the script, so the
-      # construction's own ceiling is 150s. Free on a passing run -- the script returns when it
-      # is done, not when the budget expires.
-      timeout: 3m
+      # 5m: nine kubectl calls each capped at --request-timeout=30s inside the script, so the
+      # construction's own ceiling is 270s. Free on a passing run -- the script returns when it
+      # is done, not when the budget expires. Was 3m against five calls, raised with the four
+      # that carry the MODE/ESOCERT/ESOLOG capture.
+      timeout: 5m
       content: ../chainsaw/scripts/report-readiness.sh
   # Closes the pair opened in bootstrap-flux.yaml. Two readings, not one, because the quantity
   # wanted is whether the runner was contended *during* this suite; a single sample at t=0

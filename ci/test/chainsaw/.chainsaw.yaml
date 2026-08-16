@@ -67,10 +67,14 @@ spec:
     # sample -- the one biased toward slow runs, hence the one budgets get sized from -- was
     # missing the restart counts that separate "late" from "crash-looping".
     #
-    # 3m: five kubectl calls each capped at --request-timeout=30s, so 150s is the construction's
-    # hard ceiling; the rest is ~100 `date` forks.
+    # 5m: nine kubectl calls each capped at --request-timeout=30s, so 270s is the
+    # construction's hard ceiling; the rest is ~100 `date` forks. Was 3m against five calls,
+    # raised with the four that carry the MODE/ESOCERT/ESOLOG capture. Raising it is free on
+    # a healthy run -- the script returns when it is done -- and the entry behind it,
+    # report-uncensored.sh, clamps its own watch against the wall clock already spent, so an
+    # over-run here shortens that watch rather than pushing the job over its timeout.
     - script:
-        timeout: 3m
+        timeout: 5m
         content: ../chainsaw/scripts/report-readiness.sh
     # Silent unless a CNPG Cluster exists and is not Ready. See the script header and #3678.
     - script:
