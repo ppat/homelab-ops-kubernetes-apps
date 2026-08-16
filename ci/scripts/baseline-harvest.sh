@@ -179,9 +179,14 @@ load_suite_map() {
 harvest_run() {
   local run_id="$1" attempt="$2" event="$3" branch="$4" wf_path="$5" own="$6"
   local retries=0 jobs job_id name conclusion started duration suite topology
-  local logf linesf code n status payload
+  local logf linesf code n status payload parsed
 
-  [[ "${own}" == "true" ]] && retries="${OWN_LOG_RETRIES}"
+  # An `if`, not `[[ ... ]] && x=y`. The AND-list form is exempt from `set -e` only because the
+  # test is not the list's final command, which is a rule worth not depending on in a script
+  # whose whole job is to not fail quietly.
+  if [[ "${own}" == "true" ]]; then
+    retries="${OWN_LOG_RETRIES}"
+  fi
 
   jobs="$(gh api --paginate "repos/${REPO}/actions/runs/${run_id}/attempts/${attempt}/jobs?per_page=100" \
     --jq '.jobs[]
