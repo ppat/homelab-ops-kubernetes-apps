@@ -5,6 +5,15 @@ metadata:
   name: validate-coredns
 spec:
   try:
+  # No first-position budget here, deliberately, against the rule applied to the other infra
+  # suites. Elsewhere the first validate step absorbs the module's initial convergence and
+  # is budgeted for that (25-57s). This one absorbs 1.0s: the module ships coredns no
+  # workload, only a `coredns-custom` ConfigMap and a PDB alongside kind's own already-Ready
+  # coredns Deployment, so nothing here waits on an image pull or a rollout.
+  #
+  # x3 on 1.0s is 3s, below every rung available; the shared 1m default is already 60x the
+  # observation. A number written here for symmetry would look measured and would be
+  # arbitrary.
   - description: Assert configmap/coredns-custom
     assert:
       resource:
