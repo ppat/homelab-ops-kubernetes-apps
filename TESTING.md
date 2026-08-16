@@ -45,17 +45,15 @@ flowchart TD
    - Apply necessary patches
 
 3. Resource Validation
-
-   ```yaml
-   # Example validation checks
-   - kubectl wait --for=condition=Ready pod -l app=dependency-app
-   - kubectl wait --for=condition=Ready helmrelease/app-release
-   - kubectl get deploy app-deployment -o jsonpath='{.status.readyReplicas}'
-   ```
+   - `validate-*.yaml` steps, one per component, each asserting that component's
+     `HelmRelease` and the workloads underneath it
+   - shared readiness assertions from `ci/test/chainsaw/assertions/`, reused rather than
+     restated per suite — a fix to one of them reaches every suite at once
 
 ## Test Data
 
-- Located in `ci/test/<module>/pre-requisites/`
+- Located in `ci/test/<module>/pre-requisites/`, or `ci/test/chainsaw/pre-requisites/<name>/`
+  for a fixture more than one suite needs
 - Contains test configurations and secrets
 - No production data or credentials
 - Example:
@@ -91,7 +89,7 @@ flowchart TD
   sidecar-injected Pod for exactly this reason - or on
   `observedGeneration == metadata.generation` where the CRD maintains it.
 
-## Assertions compare status to intent, not status to status
+## Assertions Compare Status to Intent, Not Status to Status
 
 A workload's status only ever describes **the spec the controller last acted on**, so an
 assertion built entirely out of status fields can be fully satisfied by a spec nobody asked
@@ -157,7 +155,10 @@ suites in silence, and every assertion in the repo would quietly start meaning s
 
 The suite pairs each negative check with a positive control on the same object, so an `error`
 that passed for the wrong reason (wrong name, wrong field path) cannot read as a green result.
-It needs any cluster, no Flux, and finishes in well under a minute.
+It needs any cluster and no Flux, and it costs one job: **27–33s of chainsaw time inside a
+90–114s job** (five CI runs). Both numbers get quoted for this suite and they are not in
+conflict — see *Say which duration you mean* below; the difference is almost entirely
+`kind create` and the Flux install the shared workflow performs whether a suite needs it or not.
 
 ## Timeout Budgets and Validation Order
 
@@ -255,27 +256,6 @@ raising the under-budgeted and cutting the unreachable.
   and why the new value. A budget without that is indistinguishable from a guess, and the next
   maintainer will "tidy" it back to the default.
 
-### What every run emits, and how to read it
-
-Every suite emits the same grep-able lines whether it passes or fails — passing runs from
-`ci/test/chainsaw/steps/report-readiness.yaml` (the last step), failing runs from the shared
-`catch` in `ci/test/chainsaw/.chainsaw.yaml`. Both call the same scripts under
-`ci/test/chainsaw/scripts/`, so the two outcomes cannot drift into different formats again.
-
-| prefix | what it answers |
-| --- | --- |
-| `READY T0+<s> <ts> <status> <kind>/<ns>/<name>` | when each pod, `Kustomization` and `HelmRelease` became Ready, one ascending timeline. This is the input to validate-step ordering. |
-| `RESTART <n> <pod> [<container>]` | which containers crashed and recovered *inside* an assertion's budget — invisible everywhere else. |
-| `PULL <pull_s> <incl_wait_s> <pod> <image>` | kubelet's own pull duration. The second number includes time queued behind containerd's concurrent-download limit; the gap is the multi-node pull-parallelism argument. |
-| `CONTENTION <start\|end> nproc= loadavg= calib_ms= net_mbps= fsync_us= elapsed_s=` | how loaded the runner was, at the two boundaries only. Lets a historical run be conditioned on contention after the fact instead of re-running both arms serially. Four axes because CPU is the one measurably *not* implicated; `net_mbps` is, and `fsync_us` is the untested candidate for the prerequisite phase's bimodality. `elapsed_s` on the `end` line is the whole chainsaw phase. |
-| `UNCENSORED +<s>\|never\|gone <kind>/<ns>/<name>` | **failing runs only.** How much longer each not-Ready object actually needed after the suite went red. `never` on a CNPG `Cluster` is #3678. |
-| `UNCENSORED-SUMMARY watched= ready= notready= max_extra_s=` | one line to grep a fleet of failures for. |
-
-Two readings that are not what they look like: `T0` is the earliest transition in that run's own
-list, not the suite start, so offsets compare between runs of a suite and not against job
-duration; and `calib_ms` is a relative index tied to a fixed iteration count, not a benchmark —
-changing that count silently rebases the whole series.
-
 ### The anti-pattern this exists to prevent
 
 **Raising a timeout to turn a red run green, without first establishing what the step needs.**
@@ -284,6 +264,86 @@ every future regression. Before changing a budget, confirm the component was *la
 than *broken* — a broken component leaves obligatory evidence behind (`CrashLoopBackOff`,
 non-zero restarts, `Helm install failed`, an Error event), and the absence of that evidence is
 what distinguishes the two. If a component never started at all, no budget can fix it.
+
+## What Every Run Emits, and How to Read It
+
+Every suite emits the same grep-able lines whether it passes or fails — passing runs from
+`ci/test/chainsaw/steps/report-readiness.yaml` (the last step), failing runs from the shared
+`catch` in `ci/test/chainsaw/.chainsaw.yaml`. Both call the same scripts under
+`ci/test/chainsaw/scripts/`, so the two outcomes cannot drift into different formats again.
+
+It is the evidence base every convention above runs on — budgets, validation order, and the test
+for whether a component was late or broken all read these same lines — which is why it belongs to
+none of them in particular.
+
+There is one exception, and it is the case with the most to explain: **a job killed by
+`timeout-minutes` emits none of this.** Chainsaw buffers a script's stdout until the script
+exits, so a run that dies at the ceiling loses the whole block rather than truncating it. Two
+jobs have died there (`test-apps-ai`, 915s of a 900s ceiling), which is why the watch bound in
+the shared `catch` is set well inside the cliff rather than near it.
+
+| prefix | what it answers |
+| --- | --- |
+| `READY T0+<s> <ts> <status> <kind>/<ns>/<name>` | when each pod, `Kustomization` and `HelmRelease` became Ready, one ascending timeline. This is the input to validate-step ordering. |
+| `RESTART <n> <pod> [<container>]` | which containers crashed and recovered *inside* an assertion's budget — invisible everywhere else. |
+| `PULL <pull_s> <incl_wait_s> <pod> <image>` | kubelet's own pull duration. The second number includes time queued behind containerd's concurrent-download limit; the gap is the multi-node pull-parallelism argument. |
+| `CONTENTION <start\|end> nproc= loadavg= calib_ms= net_mbps= fsync_us= uptime_s= elapsed_s=` | how loaded the runner was, at the two boundaries only. Lets a historical run be conditioned on contention after the fact instead of re-running both arms serially. Four axes because CPU is the one measurably *not* implicated; `net_mbps` is, and `fsync_us` is the untested candidate for the prerequisite phase's bimodality. `uptime_s` is the runner's own uptime at that boundary; `elapsed_s` on the `end` line is the whole chainsaw phase. |
+| `UNCENSORED +<s>\|~<s>\|never\|gone <Ready\|NotReady\|Deleted> <kind>/<ns>/<name>` | **failing runs only.** How much longer each not-Ready object actually needed after the suite went red. `never` on a CNPG `Cluster` is #3678. `~` in place of `+` marks a figure taken from when the watch noticed, for an object carrying no Ready `lastTransitionTime`. |
+| `UNCENSORED-SUMMARY watched= ready= notready= gone= max_extra_s= bound_s=` | one line to grep a fleet of failures for. A trailing `skipped=no-wall-clock-left` means the watch never ran because the job had no headroom left. |
+
+The same scripts emit four secondary lines that a parser has to expect even though nobody greps
+for them by hand: `UNCENSORED-SNAPSHOT at= not_ready=` (the census taken at failure time, before
+the dumps), `UNCENSORED-CLAMP requested= remaining_wall_s=` when the watch is shortened against
+the job's remaining wall clock, `UNCENSORED-PENDING t+<s> <keys>` progress lines while it waits,
+and `PULL-CACHED <n> image(s) already present on machine`. A kubelet message the `PULL` parser
+cannot read is emitted as `PULL ? ? <pod> :: <message>` and sorted to the top rather than
+dropped. `ci/test/chainsaw/scripts/report-cnpg.sh` adds `--- CNPG: ... ---` blocks on a failure
+with a CNPG `Cluster` not Ready; those are diagnostics to read, not a grammar to parse.
+
+Two readings that are not what they look like: `T0` is the earliest transition in that run's own
+list, not the suite start, so offsets compare between runs of a suite and not against job
+duration; and `calib_ms` is a relative index tied to a fixed iteration count, not a benchmark —
+changing that count silently rebases the whole series.
+
+### Say which duration you mean
+
+Three measures nest — **prerequisite ⊂ chainsaw ⊂ job** — and they differ by enough to reverse a
+comparison, so a number quoted without saying which one it is cannot be checked.
+
+| measure | what it covers | where it comes from |
+| --- | --- | --- |
+| prerequisite | the `Reconcile pre-requisites` step alone | chainsaw step timings |
+| chainsaw | the whole chainsaw test, prerequisites included | chainsaw step timings, and `elapsed_s` on the `CONTENTION end` line |
+| job | chainsaw *plus* checkout, mise, `kind create`, `flux install`, teardown | the **jobs** API — `updated_at` on the *runs* API is corrupt in this repository and must not be used for durations |
+
+`job − chainsaw` is fixed overhead that no change inside a suite can touch, which makes it a free
+sanity check on any measurement: an intervention that appears to move it is measuring something
+it did not intend to.
+
+## Kind Cluster Topology
+
+Each suite chooses a `kind_config` — one node, or three. This looks like a capacity decision and
+is not: **extra kind nodes add no CPU.** They are containers on a single runner sharing the same
+cores. What they do add is **image-pull parallelism**, because each node runs its own containerd
+with its own concurrent-download limit.
+
+So the question for a new suite is not "how much work does it do" but **"is this suite's cost many
+distinct images, or the same image on every node?"** Many distinct images favour more nodes,
+because the pulls proceed in parallel. Per-node duplication — DaemonSets above all — favours one
+node, because the extra copies are bytes already fetched.
+
+The trap is treating "no duplicated bytes to recover" as making single-node safe by default. It
+does not: with nothing to recover, the only remaining effect is the parallelism that is being
+given up. `apps-downloaders` measured **10% slower** on a single node for exactly that reason,
+reversing a decision that had already been taken.
+
+The rule underneath: **a node count must be justified by something a test can observe.**
+`infra-storage` was held at three nodes on the belief that longhorn requires three to function.
+It does not — asked for two replicas on one node, longhorn places what it can and runs the
+volume degraded, and because a missing replica has no pod-layer signature at all (see Known
+Limitations) the suite passed green on either topology. Nothing in it ever checked, which is
+exactly why the belief survived unchallenged. Record the measurement in the suite's workflow
+beside the `kind_config`, the same way a budget records its own.
 
 ## Scheduled Baseline Runs
 
@@ -313,6 +373,24 @@ ci/scripts/baseline-census.sh          # per-suite rate, 95% interval, and the s
 ci/scripts/baseline-census.sh --raw    # one TSV row per sampled job
 ```
 
+### Enumerate the conclusions your census can return
+
+Any rate computed off the GitHub API is only as good as the filter that selected the runs, and
+two filters here have silently excluded the exact category they were asked to count:
+
+- **`gh run list` returns only the *latest* attempt of a run**, so a failure that was later
+  re-run green is invisible to a `--status=failure` census — which is precisely the sample a
+  flake census exists to find.
+- **A `timeout-minutes` kill is reported as `cancelled`, not `failure`.** A failure-filtered
+  census of job-ceiling kills therefore returned zero and was recorded as settled fact, when
+  jobs had in fact been dying at exactly the ceiling all along — reversing a correct earlier
+  belief on the strength of a query that could never have found them.
+
+Both queries were confident and both were structurally blind, so confidence is no defence.
+**Before trusting a census, enumerate the conclusions the query can return and confirm the
+category you are counting is among them** — then, where it is cheap, verify one known-positive
+example actually appears in the output.
+
 ## Resource Validation
 
 - Uses `kubeconform` to validate all Kubernetes manifests
@@ -329,3 +407,18 @@ ci/scripts/baseline-census.sh --raw    # one TSV row per sampled job
   cluster's data plane. Chainsaw assertions for these resources are therefore structural only
   (the object exists and is shaped as expected); real enforcement must be verified on a
   cluster whose CNI implements NetworkPolicy (e.g. k3s's bundled controller).
+- **Longhorn attach and mount**: `iscsiadm` is present in the kind node image but `iscsid` is
+  **inactive**, so `AttachVolume` fails with `DeadlineExceeded` and any consumer pod sits in
+  `ContainerCreating` indefinitely. This is why `infra-storage` asserts `PVC → Bound` and stops
+  there — a limit of the environment, not an oversight, and worth stating because the missing
+  assertion otherwise reads as a gap somebody should close. `Bound` proves only that the
+  provisioner answered; it implies nothing about attach, mount, or a readable filesystem, so CI
+  cannot catch an attach-path regression on a longhorn upgrade. Tracked as
+  [#3718](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3718).
+- **Replica placement across nodes**: not asserted, and deliberately so. A kind cluster's
+  topology resembles no real cluster's, so a green "the replicas landed on distinct nodes" would
+  mean nothing about production. The storage suite exists to prove *our installation is
+  configured correctly and can fulfil its role* across longhorn upgrades and changes to our own
+  values — not to re-test longhorn's own scheduler. Note also that longhorn replicas are
+  processes inside `instance-manager`, not pods, so a replica that fails to place leaves no
+  pod-layer signature for a pod-oriented suite to find.
