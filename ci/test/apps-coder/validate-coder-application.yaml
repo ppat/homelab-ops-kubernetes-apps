@@ -21,6 +21,32 @@ spec:
       - name: namespace
         value: coder
       file: ../chainsaw/assertions/helmrelease-ready.yaml
+  # No shared assertions/prometheusrule-*.yaml exists yet to reuse (same gap noted in
+  # infra-storage/validate-garage.yaml, the first suite to hit it) -- this is the second
+  # PrometheusRule this repo validates. Asserting the exact group/rule shape proves the
+  # Prometheus Operator CRD (installed cluster-wide by bootstrap/crds/prometheus-operator)
+  # accepted the resource as written, not just that it passed kubeconform's static schema
+  # check.
+  - description: Assert prometheusrule/coder loaded with its expected rule groups
+    assert:
+      resource:
+        apiVersion: monitoring.coreos.com/v1
+        kind: PrometheusRule
+        metadata:
+          name: coder
+          namespace: coder
+        spec:
+          groups:
+          - name: coder.coderd
+            rules:
+            - record: coder:coderd_pod
+            - alert: CoderdRestarts
+            - alert: CoderdWorkspaceBuildFailures
+          - name: coder.postgres
+            rules:
+            - alert: CoderPostgresInstanceDown
+            - alert: CoderPostgresClusterDown
+            - alert: CoderPostgresConnectionsRunningLow
   catch:
   - describe:
       apiVersion: helm.toolkit.fluxcd.io/v2
