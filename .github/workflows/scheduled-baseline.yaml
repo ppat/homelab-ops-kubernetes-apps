@@ -22,7 +22,9 @@
 # precisely so that a serial CI experiment can be scheduled around them: a stray fleet
 # dispatch landing in the middle of one has already invalidated a measurement here.
 #
-# Reading the results: ci/scripts/baseline-census.sh
+# Reading the results: the harvest job's own step summary is the per-slot dashboard;
+# ci/scripts/baseline-census.sh is the rate across the whole series; and
+# ci/scripts/baseline-harvest.sh collect accumulates every slot's instrument lines.
 name: scheduled-baseline
 
 on:
@@ -31,10 +33,12 @@ on:
   pull_request:
     # This instrument only ever runs unattended, and a scheduled run that fails on main
     # notifies nobody -- "no samples" would look exactly like "nothing to report". So a PR
-    # touching the planner or this file proves the whole chain end to end, on one cheap suite.
+    # touching the planner, the harvester or this file proves the whole chain end to end, on
+    # one cheap suite.
     paths:
     - '.github/workflows/scheduled-baseline.yaml'
     - 'ci/scripts/baseline-plan.sh'
+    - 'ci/scripts/baseline-harvest.sh'
   workflow_dispatch:
     inputs:
       suites:
@@ -127,3 +131,77 @@ jobs:
       # killed at a ceiling its suite does not use is a failure the suite would never have
       # had, biasing the rate high in exactly the 15-25m band this instrument measures (#3732).
       timeout: ${{ matrix.timeout || 15 }}
+
+  harvest:
+    needs: [baseline]
+    # Runs whether the suites passed, failed, or never started. A slot where every suite was
+    # killed at its ceiling is the slot most worth reading, and `success()` -- the default -- is
+    # exactly the condition that would skip it.
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # THE HARVESTER MUST NEVER GATE ANYTHING. Three independent reasons it cannot: it is
+    # downstream of every suite so it can change no measured run; no job declares `needs: harvest`;
+    # and this makes its own red inert at the run level. What it must NOT do is fail quietly --
+    # the step summary carries the anomalies, so a broken harvester says so on the page a reader
+    # is already looking at rather than in a conclusion nobody checks.
+    continue-on-error: true
+    permissions:
+      contents: read
+      # Reads the sibling jobs' logs through the API. This is the whole reason the harvester lives
+      # in this workflow: the sixteen test-*.yaml workflows own no steps of their own -- they call
+      # ppat/github-workflows -- so nothing can be attached to them from this repo. This one owns
+      # plain jobs, so a job here can read what they printed after they are terminal, and producer
+      # and consumer stay coupled only through the line grammar TESTING.md publishes.
+      actions: read
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: 1
+        persist-credentials: false
+
+    - name: Harvest instrument lines
+      id: harvest
+      continue-on-error: true
+      env:
+        GH_TOKEN: ${{ github.token }}
+        # The wider sweep reads other workflows' runs since the previous slot. Off on the
+        # pull_request validation run, which exists to prove the chain end to end on one cheap
+        # suite and should stay cheap and deterministic; on for real slots, where it is the only
+        # place the UNCENSORED lines live -- they exist on failures only, and failures are
+        # overwhelmingly on PR-triggered runs rather than on these five jobs.
+        SWEEP: ${{ github.event_name != 'pull_request' }}
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        mkdir -p harvest
+        # An `if`, not `[[ ... ]] && cmd`: this shell runs with -e, where a false test on the
+        # last line of a step is itself a step failure. Same trap baseline-plan.sh documents.
+        if [[ "${SWEEP}" == "true" ]]; then
+          ./ci/scripts/baseline-harvest.sh harvest --sweep > harvest/harvest.tsv
+        else
+          ./ci/scripts/baseline-harvest.sh harvest > harvest/harvest.tsv
+        fi
+
+    - name: Write the slot summary
+      # Unconditional, and reads whatever the previous step managed to write. A harvest that died
+      # halfway still has rows worth showing, and one that wrote nothing at all has to say so --
+      # an empty summary is indistinguishable from a quiet slot, which is the failure this whole
+      # instrument exists to avoid.
+      if: always()
+      shell: bash
+      run: ./ci/scripts/baseline-harvest.sh summarize harvest/harvest.tsv >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Upload the slot's lines
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: harvest-${{ github.run_id }}-${{ github.run_attempt }}
+        path: harvest/
+        # The job logs these lines came from expire at 90 days, so nothing is gained by keeping
+        # the artifact longer than its source. Beyond that the intended path is a monthly
+        # owner-landed snapshot PR into research/: aggregates are tiny, and CI committing to the
+        # repo needs contents: write and inverts this repo's review posture.
+        retention-days: 90
+        if-no-files-found: warn
