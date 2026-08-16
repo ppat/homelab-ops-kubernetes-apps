@@ -19,27 +19,44 @@ spec:
 
   - name: Reconcile pre-requisites
     try:
+    # 2m -> 3m, and this wait now stands alone rather than behind external-secrets. The
+    # external-secrets fixture drops `dependsOn: cert-manager-release`, so cert-manager is
+    # no longer serialised with anything -- but this suite does not compose that fixture at
+    # all (see pre-requisites/kustomization.yaml), so what changes here is only that this is
+    # the first thing the step waits on rather than the second. 3m is infra-storage's number
+    # for the identical operation, sized there against 36.1s on four of five green runs and
+    # 106.1s on the fifth.
     - description: Reconcile helmrelease/cert-manager-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cert-manager-release --namespace=cert-manager --timeout=2m
-        timeout: 2m
-    - description: Reconcile helmrelease/external-secrets-release
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
-        timeout: 2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cert-manager-release --namespace=cert-manager --timeout=3m
+        timeout: 3m
+    # The `Reconcile helmrelease/external-secrets-release` step that stood here is deleted
+    # rather than re-budgeted: this module has no `ExternalSecret` and this suite has no
+    # `fake` ClusterSecretStore, so the operator was standing only because security-core
+    # contained it. See pre-requisites/kustomization.yaml.
+    #
+    # 2m -> 5m. Green runs show this taking 2-3s, which measures nothing: it is the warm
+    # path, where the release was already reconciled by the pre-requisites Kustomization. The
+    # cold path is what the budget has to survive, and it has been observed at 96-102s on
+    # passing runs and killed 8 apps-downloaders runs at exactly 120-121s. The operation is
+    # textually identical in all four suites that run it, so the evidence transfers.
     - description: Reconcile helmrelease/cloudnative-pg-release
       script:
         # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=2m
-        timeout: 2m
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=5m
+        timeout: 5m
 
+  # `Apply infra-database-core` is gone from this step, and it has to be: the pre-requisites
+  # Kustomization no longer creates `infra-database-core` for it to re-apply, and applying
+  # the file here would create a second Kustomization managing the same
+  # `cloudnative-pg-release` the cnpg-operator fixture owns. It was never doing useful work
+  # anyway -- the file it applied is the *unpatched* infra-database-core, so it silently
+  # widened the prerequisite the suite had already reconciled (path
+  # database-core/cloudnative-pg) back to the whole database-core module, pulling in
+  # Dragonfly and the Barman Cloud plugin that nothing in this suite touches.
   - name: Apply apps-coder modules
     try:
-    - description: Apply infra-database-core
-      apply:
-        file: ../infra-database/infra-database-core.yaml
     - description: Apply apps-coder
       apply:
         file: ./apps-coder.yaml
@@ -47,7 +64,7 @@ spec:
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
-        name: infra-database-core
+        name: pre-requisites-cnpg-operator
         namespace: flux-system
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -57,6 +74,11 @@ spec:
     - events:
         namespace: flux-system
 
+  # Order is left alone: only two workloads, both measured, both well inside their budgets
+  # (coder-db-test Ready 33-42s after apply at 0.23, coder itself 39-55s at 0.22). The CNPG
+  # Cluster stays first and keeps its budget: its 5 failures in this suite are the operator
+  # never acting -- empty `Status:`, `Events: <none>`, no instance pod after the full budget
+  # -- which no larger number can fix and a larger number would only make slower to report.
   - name: Validate coder database
     use:
       template: ./validate-coder-database.yaml
@@ -68,3 +90,7 @@ spec:
   - name: Validate coder application
     use:
       template: ./validate-coder-application.yaml
+
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml
