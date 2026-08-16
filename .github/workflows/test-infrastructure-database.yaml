@@ -34,3 +34,7 @@ jobs:
       test_path: ./ci/test/infra-database
       chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
       kind_config: .github/kind-cluster-multi-node.yaml
+      # See the equivalent note in test-infrastructure-observability.yaml. This suite has
+      # the highest ceiling utilisation in the repo (p90 0.53) before any change, and its
+      # minio reconcile budget has gone 3m -> 5m, so it has the least margin to give.
+      timeout: 25
