@@ -353,11 +353,20 @@ landing mid-experiment has already invalidated a measurement here. The times are
 published for exactly that reason.
 
 `scheduled-baseline.yaml` measures the fleet's single-run failure rate by designed sampling —
-unchanging content, a published cadence, and *n* that grows without anyone doing anything. It
-exists because a red that happens to appear on a PR which changed nothing a suite runs is one
-sample under one set of load conditions, and rates read off those have contradicted each other.
-It is also the only source of data on time of day, which is where contention varies and which
-no PR-triggered run can see.
+content pinned at each sample, a published cadence, and *n* that grows without anyone doing
+anything. It exists because a red that happens to appear on a PR which changed nothing a suite
+runs is one sample under one set of load conditions, and rates read off those have contradicted
+each other. It is also the only source of data on time of day, which is where contention varies
+and which no PR-triggered run can see.
+
+**The series does not sample constant content.** Renovate merges into `main` most days, so a
+month of samples spans dozens of different fleets and a pooled rate is an average over all of
+them — content drift and time are confounded, which is why the pooled number on its own can
+neither confirm nor refute "did that change lower the rate". What makes it an instrument is
+that nobody chooses when a sample is taken, not that the thing sampled holds still. So the
+census counts **only the first attempt of a `schedule` run**: a manual dispatch and a re-run
+are both somebody choosing, and a re-run is chosen *because* the first attempt was red. Both
+still appear in `--raw` and in the printed denominator; they are only kept out of the rate.
 
 Each slot runs a quarter of the fleet, rotating so that every suite visits every slot over four
 days; `infra-observability` and `apps-downloaders` ride every slot because they are the
@@ -369,9 +378,15 @@ its kind topology cannot go on producing samples under the old one.
 Read the series with:
 
 ```bash
-ci/scripts/baseline-census.sh          # per-suite rate, 95% interval, and the same by hour
-ci/scripts/baseline-census.sh --raw    # one TSV row per sampled job
+ci/scripts/baseline-census.sh                     # per-suite rate, 95% interval, and by hour
+ci/scripts/baseline-census.sh --raw               # one TSV row per sampled job
+ci/scripts/baseline-census.sh --since 2026-09-01  # window it: jobs started on or after a date
+ci/scripts/baseline-census.sh --until 2026-09-30  # ... and/or on or before one
 ```
+
+Read the denominator line it prints, not only the table: it names the window, how many of the
+sampled jobs were counted, and how many revisions of `main` the rate pools. A before/after
+comparison is two windowed runs, never one pooled number.
 
 ### Enumerate the conclusions your census can return
 

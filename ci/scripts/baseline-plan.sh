@@ -131,6 +131,16 @@ case "${selector}" in
     hour="${BASELINE_HOUR:-$((10#$(date -u +%H)))}"
     # The latest slot at or before now, wrapping to the last slot before midnight. A
     # scheduled run that GitHub delays therefore still resolves to the slot it belongs to.
+    #
+    # The rotation below does not wrap with it: a 20:23 slot delayed past 00:00 UTC picks the
+    # right slot_index but a `day` that has advanced, so it samples the suites the NEXT day
+    # owes that slot. Left alone deliberately. It costs coverage, not correctness -- the jobs
+    # that run are still first-attempt scheduled samples of main at a known hour, and the
+    # census reads the hour from the job, not from the slot -- and it self-heals, because the
+    # affected suites come round again on the following day. Delay of that size is real (the
+    # first firing was 11 minutes late), so the case is reachable; carrying the intended slot
+    # date through would mean the planner reasoning about how late GitHub is, which is a
+    # larger and more fragile thing than the bias it would remove.
     slot_index=$(( ${#SLOT_HOURS[@]} - 1 ))
     for i in "${!SLOT_HOURS[@]}"; do
       if [[ ${hour} -ge ${SLOT_HOURS[i]} ]]; then
