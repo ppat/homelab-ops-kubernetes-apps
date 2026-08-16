@@ -21,6 +21,33 @@ spec:
       - name: namespace
         value: longhorn-system
       file: ../chainsaw/assertions/deployment-ready.yaml
+  # 1.9/4.1/30.4s over five green runs -- a 7.4x spread on a median of four seconds, which is
+  # the signature of a race rather than of a slow start. It is one, and this is the error,
+  # captured by this step's catch block (#3643):
+  #
+  #   level=fatal msg="Error starting manager: Operation cannot be fulfilled on
+  #   settings.longhorn.io \"default-replica-count\": the object has been modified"
+  #
+  # Three managers start at once because this is a DaemonSet on a three-node cluster (which
+  # Longhorn requires, to schedule replicas). They write the same Setting objects during
+  # init, collide on resourceVersion, and the losers call log.Fatal instead of re-reading and
+  # retrying. The kubelet restarts them.
+  #
+  # 6m, and the reasoning is not the usual headroom rule. The restart IS Longhorn's retry
+  # here: the pods do converge, after 2-4 restarts, so this is slow rather than broken and a
+  # budget that rides it out is legitimate. But CrashLoopBackOff compounds -- 10s, 20s, 40s,
+  # 80s -- so four restarts costs roughly 150s of pure backoff on top of startup, which is
+  # why 2m was not enough and why this is sized against the restart loop rather than against
+  # the 30.4s a clean start takes.
+  #
+  # What that tolerates, stated plainly: a green run here no longer proves the conflict did
+  # not happen. That is only acceptable because it stays visible anyway -- the final
+  # `Report readiness ordering` step prints container restart counts on PASSING runs, so a
+  # tolerated crash still shows up as `longhorn-manager` with a non-zero count. Tolerating
+  # something is defensible; tolerating it silently is not.
+  #
+  # The real fix is upstream: a conflict on a write is an ordinary outcome and the response
+  # should be to re-read and retry, not to abort the process.
   - description: Assert daemonset/longhorn-manager
     assert:
       bindings:
@@ -29,7 +56,20 @@ spec:
       - name: namespace
         value: longhorn-system
       file: ../chainsaw/assertions/daemonset-ready.yaml
+      timeout: 6m
 
+  # The five CSI workloads below are not created by the Helm chart: longhorn-driver-deployer
+  # creates them at runtime, and only once longhorn-manager reports ready. So this budget
+  # has to cover creation as well as readiness -- across six failure dumps they first exist
+  # between t+76s and t+125s after module apply, and every longhorn-manager restart above
+  # pushes that later. It also means the HelmRelease-Ready condition asserted further down
+  # cannot stand in for these assertions the way it can for a chart-owned workload; helm
+  # never waited for objects it did not create.
+  #
+  # csi-attacher carries the budget for all five because it is asserted first and therefore
+  # absorbs the creation wait: 9.1/46.4/51.8s green (0.86 of the 1m default it used to
+  # inherit, the second-worst headroom in the infra suites), while the four behind it then
+  # complete in 0.1-8.3s. 3m is the sizing rule against 51.8s.
   - description: Assert deployment/csi-attacher
     assert:
       bindings:
@@ -38,6 +78,16 @@ spec:
       - name: namespace
         value: longhorn-system
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 3m
+  # The four CSI workloads behind csi-attacher used to inherit the 60s default, on the
+  # reasoning that csi-attacher absorbs the creation wait and they then complete in 0.1-8.3s.
+  # That holds only while longhorn-manager starts cleanly. When it loses the startup race
+  # above and restarts, the whole driver-deployer chain shifts late together and the
+  # followers run out first: observed failing at `longhorn-csi-plugin` with the manager
+  # showing restarts 0/2/2 and csi-attacher itself surviving on its 3m.
+  #
+  # So they carry the same 3m as csi-attacher rather than a budget that is only correct on
+  # the happy path. Free on a clean run, where these still return in under 9s.
   - description: Assert deployment/csi-provisioner
     assert:
       bindings:
@@ -46,6 +96,7 @@ spec:
       - name: namespace
         value: longhorn-system
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 3m
   - description: Assert deployment/csi-resizer
     assert:
       bindings:
@@ -54,6 +105,7 @@ spec:
       - name: namespace
         value: longhorn-system
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 3m
   - description: Assert deployment/csi-snapshotter
     assert:
       bindings:
@@ -62,6 +114,7 @@ spec:
       - name: namespace
         value: longhorn-system
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 3m
   - description: Assert daemonset/longhorn-csi-plugin
     assert:
       bindings:
@@ -70,6 +123,7 @@ spec:
       - name: namespace
         value: longhorn-system
       file: ../chainsaw/assertions/daemonset-ready.yaml
+      timeout: 3m
 
   - description: Assert helmrelease/longhorn-release
     assert:
@@ -165,6 +219,28 @@ spec:
   - podLogs:
       selector: app=longhorn-ui
       namespace: longhorn-system
+  # The CSI Deployments above are created by longhorn-driver-deployer only once
+  # longhorn-manager reports ready, so a csi-* assertion failing is very often a
+  # longhorn-manager crash wearing a downstream costume - see #3643, where three different
+  # CSI components failed interchangeably and the shared cause was
+  # `level=fatal Error starting manager: Operation cannot be fulfilled`.
+  #
+  # `podLogs` fetches the CURRENT container, which after a restart is the one that has not
+  # crashed yet, so the message that explains the failure is exactly the one the dump loses.
+  # This grabs the previous container's logs and the restart counts, which is what
+  # distinguishes "late" from "crash-looping" - the distinction that decides whether a
+  # budget is the right fix or a mask.
+  # yamllint disable rule:line-length
+  - script:
+      timeout: 1m
+      content: |
+        echo '--- longhorn-manager restarts + previous-container logs ---'
+        kubectl get pods -n longhorn-system -l app=longhorn-manager -o custom-columns=NAME:.metadata.name,READY:.status.containerStatuses[*].ready,RESTARTS:.status.containerStatuses[*].restartCount
+        for p in $(kubectl get pods -n longhorn-system -l app=longhorn-manager -o name); do
+        echo "=== $p (previous) ==="
+        kubectl logs -n longhorn-system "$p" -c longhorn-manager --previous --tail=50 2>&1 || true
+        done
+  # yamllint enable rule:line-length
   - events:
       namespace: longhorn-system
   - events:
