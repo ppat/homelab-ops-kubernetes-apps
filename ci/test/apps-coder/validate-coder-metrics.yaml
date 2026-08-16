@@ -1,0 +1,69 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-coder-metrics
+# Proves the metrics path exists and actually resolves to the coder Pod - not just that
+# the manifests applied. The coder chart's own `coder` Service only exposes ports 80/443
+# (see service-coder-metrics.yaml's comment), so a selector typo on the dedicated metrics
+# Service would apply cleanly and pass a plain `assert:` on the Service spec while
+# leaving it with zero endpoints - only the Endpoints check below would catch that. This
+# suite has no Prometheus (that's infra-observability-core, a different module), so it
+# cannot prove the ServiceMonitor is actually scraped; it can only prove the two
+# resources exist with the port names lined up.
+spec:
+  try:
+  - description: Assert service/coder-metrics
+    assert:
+      bindings:
+      - name: name
+        value: coder-metrics
+      - name: namespace
+        value: coder
+      file: ../chainsaw/assertions/service-clusterip-ready.yaml
+  - description: Assert service/coder-metrics has a live endpoint on port 2112
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Endpoints
+        metadata:
+          name: coder-metrics
+          namespace: coder
+        (subsets[?length(addresses) > `0`]):
+        - ports:
+          - name: prometheus-http
+            port: 2112
+            protocol: TCP
+  - description: Assert servicemonitor/coder targets the metrics service by port name
+    assert:
+      resource:
+        apiVersion: monitoring.coreos.com/v1
+        kind: ServiceMonitor
+        metadata:
+          name: coder
+          namespace: coder
+        spec:
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: coder
+              app.kubernetes.io/component: metrics
+          endpoints:
+          - port: prometheus-http
+  catch:
+  - describe:
+      apiVersion: v1
+      kind: Service
+      name: coder-metrics
+      namespace: coder
+  - describe:
+      apiVersion: v1
+      kind: Endpoints
+      name: coder-metrics
+      namespace: coder
+  - describe:
+      apiVersion: monitoring.coreos.com/v1
+      kind: ServiceMonitor
+      name: coder
+      namespace: coder
+  - events:
+      namespace: coder

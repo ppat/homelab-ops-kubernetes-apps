@@ -91,6 +91,10 @@ spec:
     use:
       template: ./validate-coder-application.yaml
 
+  - name: Validate coder metrics
+    use:
+      template: ./validate-coder-metrics.yaml
+
   - name: Report readiness ordering
     use:
       template: ../chainsaw/steps/report-readiness.yaml
