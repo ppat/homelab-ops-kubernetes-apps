@@ -13,6 +13,13 @@ spec:
       - name: namespace
         value: downloaders
       file: ../chainsaw/assertions/deployment-ready.yaml
+      # 60s (inherited) -> 2m. qbittorrent is the first component in this suite to become
+      # Ready (T0+150, against bazarr and sabnzbd at 155 and the CNPG Cluster at 203), so it
+      # now leads the suite and absorbs the module's convergence instead of returning in 0s
+      # behind an 86s database step it does not depend on. Predicted 33s from a first validate
+      # step that begins at T0+117 -- 0.55 of the default it was on, which is the exposure
+      # threshold this exercise uses. 33 x 3 = 99s, rounded up to the next rung.
+      timeout: 2m
   catch:
   - describe:
       apiVersion: apps/v1
