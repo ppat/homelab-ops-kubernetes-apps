@@ -30,12 +30,56 @@ WEIGHTED=(infra-observability apps-downloaders)
 
 selector="${1:-slot}"
 
+# Every input a suite may declare, and what this planner does with it. Reading the suite's
+# inputs by name is only half the job: an input this list does not mention is one the baseline
+# would drop, and the sample would then be of a differently-configured run wearing the suite's
+# name. So the list is enforced below rather than merely consulted -- an unrecognised input is
+# a hard error, not a silent omission. That is the same failure the whole script exists to
+# avoid, and it was live here once: `timeout` went uncarried, so the six suites declaring
+# `timeout: 25` were sampled at the reusable workflow's 15m default (#3732).
+#
+#   carried   -> reaches the baseline job, so the sample is run as the suite is
+#   overridden -> the baseline sets its own value on purpose
+CARRIED_INPUTS=(test_path chainsaw_config kind_config timeout)
+# git_ref is deliberately not carried: a suite resolves it from its own triggering event, and
+# the baseline resolves it from its own (main, or the PR head that touches the planner).
+OVERRIDDEN_INPUTS=(git_ref)
+
+# Pulls `key<TAB>value` for every key inside the reusable-workflow call's `with:` block.
+# Block-scoped rather than grepping the whole file for `^\s+<name>:`, so a key that happens to
+# share a name with something elsewhere in the workflow cannot be picked up, and so unknown
+# keys are enumerable at all.
+extract_with_block() {
+  awk '
+    /^[[:space:]]*with:[[:space:]]*$/ && !inblock { ind = match($0, /[^[:space:]]/) - 1; inblock = 1; next }
+    inblock {
+      if ($0 ~ /^[[:space:]]*$/) { next }
+      li = match($0, /[^[:space:]]/) - 1
+      if (li <= ind) { inblock = 0; next }
+      line = $0; sub(/^[[:space:]]+/, "", line)
+      if (line ~ /^#/) { next }
+      if (line ~ /^[A-Za-z_][A-Za-z0-9_]*:/) {
+        k = line; sub(/:.*$/, "", k)
+        v = line; sub(/^[^:]*:[[:space:]]*/, "", v); sub(/[[:space:]]+$/, "", v)
+        print k "\t" v
+      }
+    }
+  ' "$1"
+}
+
 # --- discover the suites, and their real inputs -------------------------------------
 declare -a suites=() rows=()
 for wf in "${WORKFLOW_DIR}"/test-*.yaml; do
-  test_path="$(sed -nE 's/^[[:space:]]+test_path:[[:space:]]*(\S+)[[:space:]]*$/\1/p' "${wf}" | head -1)"
-  chainsaw_config="$(sed -nE 's/^[[:space:]]+chainsaw_config:[[:space:]]*(\S+)[[:space:]]*$/\1/p' "${wf}" | head -1)"
-  kind_config="$(sed -nE 's/^[[:space:]]+kind_config:[[:space:]]*(\S+)[[:space:]]*$/\1/p' "${wf}" | head -1)"
+  unset input
+  declare -A input=()
+  while IFS=$'\t' read -r k v; do
+    input["${k}"]="${v}"
+  done < <(extract_with_block "${wf}")
+
+  test_path="${input[test_path]:-}"
+  chainsaw_config="${input[chainsaw_config]:-}"
+  kind_config="${input[kind_config]:-}"
+  timeout="${input[timeout]:-}"
   [[ -n "${test_path}" ]] || continue
 
   suite="$(basename "${test_path}")"
@@ -48,9 +92,26 @@ for wf in "${WORKFLOW_DIR}"/test-*.yaml; do
     exit 1
   fi
 
+  known=" ${CARRIED_INPUTS[*]} ${OVERRIDDEN_INPUTS[*]} "
+  for k in "${!input[@]}"; do
+    if [[ "${known}" != *" ${k} "* ]]; then
+      echo "baseline-plan: ${wf} declares input '${k}', which the baseline does not carry." >&2
+      echo "  A baseline sample must run under the same inputs as the suite's own workflow." >&2
+      echo "  Add '${k}' to CARRIED_INPUTS here and to the with: block of" >&2
+      echo "  .github/workflows/scheduled-baseline.yaml, or to OVERRIDDEN_INPUTS with a reason." >&2
+      exit 1
+    fi
+  done
+
+  # An unparseable ceiling must not become a silent 0 or a shell error downstream.
+  if [[ -n "${timeout}" && ! "${timeout}" =~ ^[1-9][0-9]*$ ]]; then
+    echo "baseline-plan: ${wf} declares a non-numeric timeout '${timeout}'" >&2
+    exit 1
+  fi
+
   topology="$(basename "${kind_config}" .yaml | sed 's/^kind-cluster-//')"
   suites+=("${suite}")
-  rows+=("${suite}"$'\t'"${topology}"$'\t'"${test_path}"$'\t'"${chainsaw_config}"$'\t'"${kind_config}")
+  rows+=("${suite}"$'\t'"${topology}"$'\t'"${test_path}"$'\t'"${chainsaw_config}"$'\t'"${kind_config}"$'\t'"${timeout}")
 done
 
 if [[ ${#suites[@]} -eq 0 ]]; then
@@ -118,7 +179,11 @@ esac
   done
 } | jq -R -s -c '
   {include: (
-    split("\n") | map(select(length > 0)) | map(split("\t")) | map({
-      suite: .[0], topology: .[1], test_path: .[2], chainsaw_config: .[3], kind_config: .[4]
-    })
+    split("\n") | map(select(length > 0)) | map(split("\t")) | map(
+      {suite: .[0], topology: .[1], test_path: .[2], chainsaw_config: .[3], kind_config: .[4]}
+      # The key is omitted, not set to null or 0, when the suite declares no timeout: the
+      # caller falls back only on an absent value, and an emitted 0 would be a valid number
+      # that silently becomes a job with no time to run at all.
+      + (if .[5] == "" then {} else {timeout: (.[5] | tonumber)} end)
+    )
   )}'
