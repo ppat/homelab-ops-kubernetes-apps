@@ -237,6 +237,23 @@ spec:
     use:
       template: ./validate-prometheus.yaml
 
+  # node-exporter's stock --collector.vmstat.fields regex
+  # (^(oom_kill|pgpg|pswp|pg.*fault).*) deliberately excludes pgscan_*/pgsteal_* -
+  # the counters that distinguish background reclaim (kswapd) from synchronous direct
+  # reclaim, which is a real latency cost invisible from node_memory_* alone. This is
+  # the only thing in the suite that would catch that widened regex regressing back to
+  # the stock default - a healthy node-exporter DaemonSet (asserted just above) says
+  # nothing about which vmstat fields it was told to collect.
+  - name: Validate node-exporter collects reclaim scan/steal counters
+    use:
+      template: ../chainsaw/steps/assert-prometheus-query.yaml
+      with:
+        bindings:
+        - name: prometheus_query
+          value: 'node_vmstat_pgscan_direct'
+        - name: prometheus_diagnostic_match
+          value: '{__name__=~"node_vmstat_pg(scan|steal).*"}'
+
   # The first assertion in this repo that looks at a pipeline's OUTPUT rather than at
   # resource status. Everything above proves Alloy and Loki are running; only this
   # proves a line written by a pod is retrievable from Loki afterwards.
