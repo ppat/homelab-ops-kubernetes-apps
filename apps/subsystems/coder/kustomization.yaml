@@ -13,6 +13,7 @@ resources:
 - rbac.yaml
 - service-coder-metrics.yaml
 - servicemonitor-coder.yaml
+- prometheusrule-coder.yaml
 
 
 sortOptions:

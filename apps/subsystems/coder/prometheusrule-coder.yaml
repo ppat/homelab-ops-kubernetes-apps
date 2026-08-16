@@ -1,0 +1,197 @@
+---
+# Ported from coder/observability's coder-observability Helm chart (chart
+# 0.7.3, coder-observability/templates/_prometheus-alerts.tpl at
+# github.com/coder/observability). We do not deploy that chart -- it bundles
+# a parallel Prometheus/Grafana/Loki/Tempo/Pyroscope/Alertmanager/Grafana-Agent
+# stack, ships zero prometheus-operator CRDs, and relies on Grafana Agent's
+# annotation-based discovery instead, none of which fits this repo's
+# prometheus-operator-native stack. Its alert *conditions* encode real
+# failure modes worth having, so this file ports them as a native
+# PrometheusRule, dropping or rewriting anything that doesn't apply here.
+#
+# No AlertManager receiver/route is configured anywhere in this repo --
+# alerting is deliberately unwired until AI-driven triage exists -- but a
+# PrometheusRule is not "alerting": it defines a condition, evaluates in
+# Prometheus, and produces a queryable ALERTS{alertname=...} series that
+# shows up in the Prometheus/Grafana UI. With no receiver it routes nowhere
+# and generates no noise.
+#
+# Dropped entirely (not ported at all):
+#   - enterprise-prometheus-alerts (coderd_license_active_users /
+#     coderd_license_limit_users): we run free OSS Coder, so these metrics
+#     never appear and the rule would be permanently inert.
+#   - IneligiblePrebuilds / UnprovisionedPrebuiltWorkspaces
+#     (coderd_prebuilt_workspaces_*): prebuilds are licence-gated
+#     (enterprise/coderd/prebuilds/, returns ErrAGPLDoesNotSupportPrebuilt
+#     WorkspacesOnOSS) -- same reasoning as the enterprise group.
+#   - provisionerd-prometheus-alerts (Replicas): we don't run external
+#     provisioners. coderd's built-in provisioner runs in-process; there is
+#     no separate provisioner Deployment/pod in this namespace for
+#     coderd_provisionerd_num_daemons to describe.
+#   - Postgres/Notifications (PostgresNotificationQueueFillingUp): keys off
+#     pg_pubsub_usage, a metric the upstream chart's own bundled sql_exporter
+#     synthesizes from a hand-written SQL query. We don't run sql_exporter,
+#     and CNPG's own exporter (see the coder.postgres group below) has no
+#     equivalent series.
+#
+# Selector gotcha (verified live against Prometheus, 2026-08-16): the
+# upstream chart's default coderd-selector is
+# `pod=~"coder.*", pod!~".*provisioner.*"`. That's wrong here: coderd and
+# workspace pods share this namespace, and workspace pods are named
+# `coder-<workspace-uuid>-...`, so `coder.*` matches them too -- a coderd
+# CPU/restarts/etc. rule using it would fire on a user's workspace. The
+# obvious fix is joining on the `app.kubernetes.io/part-of` pod label
+# (`coder` for coderd, `coder-workspace` for workspace pods, set by the
+# workspace template's common_labels), but that doesn't work against this
+# Prometheus: kube-state-metrics here runs with no metric-labels-allowlist,
+# so kube_pod_labels/kube_deployment_labels carry no series at all --
+# confirmed live, `count(kube_pod_labels)` returns no data. What does work,
+# also confirmed live: coderd is the only pod owned (via its ReplicaSet) by
+# the Deployment literally named "coder" -- each workspace gets its own
+# per-workspace Deployment named "coder-<uuid>", so an *exact* match on the
+# owning Deployment's name separates them where a `coder.*` prefix regex
+# cannot. The coder:coderd_pod recording rule below does that two-hop
+# owner-chain join (pod -> ReplicaSet -> Deployment) once so every coderd
+# alert can reuse it via `and on (pod) coder:coderd_pod`.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: coder
+  namespace: coder
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+  - name: coder.coderd
+    rules:
+    # Must come first in this group (same pattern as
+    # infra-storage-core/garage/prometheusrule-garage.yaml's
+    # object_store:garage_up): rules within one PrometheusRule group see
+    # earlier rules' recorded output from the same evaluation cycle; rules in
+    # a later *group* are not guaranteed to.
+    - record: coder:coderd_pod
+      expr: |
+        kube_pod_owner{namespace="coder", owner_kind="ReplicaSet"}
+        * on (owner_name) group_left()
+        label_replace(
+        kube_replicaset_owner{namespace="coder", owner_kind="Deployment", owner_name="coder"},
+        "owner_name", "$1", "replicaset", "(.*)"
+        )
+    # CoderdCPUUsage / CoderdMemoryUsage (upstream: container usage as a
+    # fraction of its CPU/memory *limit*) are not portable as written:
+    # coderd's HelmRelease (helm-release-coder.yaml) sets only
+    # resources.requests (32m CPU / 256Mi memory), no limits -- confirmed
+    # live, kube_pod_container_resource_limits has zero series for this pod,
+    # so the upstream ratio is permanently absent/NaN, never a real number.
+    # Rebasing the ratio on *requests* instead would be a different, worse
+    # signal: 32m is a deliberately tiny request floor for the scheduler, not
+    # a usage ceiling, so "usage > 80% of request" would fire continuously
+    # under perfectly ordinary load rather than signalling a problem.
+    #
+    # CoderdReplicas (upstream: sum(up{coderd-selector}) below a threshold)
+    # can't be ported at all as written: there is no ServiceMonitor/PodMonitor
+    # scraping coderd's own metrics endpoint (see CoderdWorkspaceBuildFailures
+    # below), so no "up" series for it exists in this Prometheus. The intent
+    # -- "is the coderd Deployment below its desired replica count" -- is
+    # already covered generically for every Deployment in every namespace,
+    # this one included, by KubeDeploymentReplicasMismatch in
+    # observability-core/k3s-monitoring/prometheusrule-k3s.yaml (confirmed
+    # live: kube_deployment_status_replicas_available{namespace="coder",
+    # deployment="coder"} == 1, i.e. already tracked). replicaCount is 1 in
+    # helm-release-coder.yaml, so there's no multi-replica nuance here for
+    # upstream's notify/warning/critical tiers to add on top of that.
+    - alert: CoderdRestarts
+      expr: |
+        (
+        sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace="coder"}[10m]))
+        and on (pod) coder:coderd_pod
+        ) > 1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: The coderd pod has restarted multiple times in the last 10 minutes.
+        description: >-
+          {{ $labels.pod }} has restarted {{ $value }} time(s) in the last 10m, which
+          may indicate a CrashLoop. Scoped to the coderd control-plane pod via
+          coder:coderd_pod above, not the upstream chart's coder.* pod-name pattern --
+          that pattern also matches this namespace's workspace pods.
+    # Dormant for now, but not for the reason it looks like: the scrape path
+    # this alert depends on already exists in-repo. service-coder-metrics.yaml
+    # + servicemonitor-coder.yaml expose coderd's :2112 /metrics endpoint
+    # (CODER_PROMETHEUS_ENABLE=true, set in helm-release-coder.yaml) and scrape
+    # it, so coderd_workspace_builds_total will start flowing once that config
+    # actually reaches the cluster. It hasn't yet: this is a module-library
+    # repo, so merging to main doesn't deploy anything by itself -- that
+    # requires release-please to cut an apps-coder-vX.Y.Z tag containing the
+    # scrape config, and the clusters repo's apps-coder GitRepository pin to
+    # be bumped to that tag. Confirmed live against Prometheus (2026-08-16):
+    # `coderd_.*`/`coder_.*` still matches zero metric names -- the latest
+    # released tag, apps-coder-v0.0.54, predates both the scrape config and
+    # this rule. This is the single highest-value condition in the whole
+    # upstream chart (a broken template silently failing every workspace
+    # build) so it's kept here rather than dropped; it starts resolving once
+    # a release ships and the clusters repo picks it up.
+    - alert: CoderdWorkspaceBuildFailures
+      expr: |
+        sum(increase(coderd_workspace_builds_total{namespace="coder", status="failed"}[30m])) > 2
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: Workspace builds have failed multiple times in the last 30 minutes.
+        description: >-
+          {{ $value }} workspace build(s) failed in the last 30m, which may indicate a
+          broken Coder template. Dormant until a released apps-coder tag containing the
+          coderd metrics scrape reaches this cluster -- see the comment above.
+  # coder-db is backed by CloudNativePG (postgres.yaml sets
+  # spec.monitoring.enablePodMonitor: true, which makes the CNPG operator
+  # create a PodMonitor for it automatically -- confirmed live,
+  # job="coder/coder-db-v20260310" is being scraped today with a full
+  # cnpg_pg_stat_*/cnpg_collector_* metric set). That's CNPG's own exporter,
+  # not the postgres_exporter/sql_exporter vocabulary the upstream chart's
+  # rules are written against, so these are translated, not copied:
+  # pg_up -> cnpg_collector_up, pg_stat_activity_count -> cnpg_backends_total,
+  # pg_settings_max_connections -> cnpg_pg_settings_setting{name=
+  # "max_connections"}. Basic and Connections both have a CNPG equivalent and
+  # are ported below (Basic split into a per-instance and an all-instances
+  # rule to fit coder-db's multi-instance HA topology, which the upstream
+  # chart's single postgres_exporter target didn't have to consider).
+  - name: coder.postgres
+    rules:
+    - alert: CoderPostgresInstanceDown
+      expr: cnpg_collector_up{namespace="coder"} == 0
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: A coder-db Postgres instance's exporter can't reach Postgres.
+        description: >-
+          {{ $labels.pod }}'s CNPG metrics exporter has been unable to collect from
+          Postgres for 5+ minutes. coder-db runs multiple instances (see
+          postgres.yaml's db_replicas), so one instance down is degraded, not an
+          outage -- see CoderPostgresClusterDown for the all-instances case.
+    - alert: CoderPostgresClusterDown
+      expr: sum(cnpg_collector_up{namespace="coder"}) == 0
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: No coder-db Postgres instance is reachable.
+        description: >-
+          Every CNPG-managed instance backing coder-db is down -- coderd has no
+          database and is unusable.
+    - alert: CoderPostgresConnectionsRunningLow
+      expr: |
+        sum by (pod) (cnpg_backends_total{namespace="coder"})
+        / on (pod)
+        cnpg_pg_settings_setting{namespace="coder", name="max_connections"}
+        > 0.8
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: A coder-db Postgres instance is using over 80% of max_connections.
+        description: >-
+          {{ $labels.pod }} has been above 80% of max_connections for 15+ minutes,
+          which may start rejecting new connections.
