@@ -6,7 +6,7 @@ on:
   pull_request:
     paths:
     - '.github/workflows/test-apps-home-automation.yaml'
-    - '.github/kind-cluster-multi-node.yaml'
+    - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/apps-home-automation/**'
     - 'ci/test/chainsaw/**'
     - 'apps/subsystems/home-automation/**'
@@ -33,4 +33,23 @@ jobs:
       git_ref: ${{ github.head_ref || github.ref_name }}
       test_path: ./ci/test/apps-home-automation
       chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
-      kind_config: .github/kind-cluster-multi-node.yaml
+      # Single node. Three kind nodes on one 4-vCPU runner add two more kubelets, kube-proxies and
+      # containerd instances without adding capacity -- they are containers sharing the same CPUs.
+      #
+      # Measured by dispatching this suite's single-node and multi-node arms at the same instant,
+      # six times: job total 245s against 249s, which is a tie (t=-0.17). What does move is the
+      # spread -- sd 55.5s -> 17.8s -- because the multi-node arm occasionally lands in the slow
+      # prerequisite mode and the single-node arm did not. The case for one node here is variance
+      # and hygiene, not seconds off the mean; do not claim a mean saving for it.
+      #
+      # `kind create` is NOT the lever it looks like: paired over 26 runs it is worth ~2s and is
+      # not significant. An unpaired comparison of historical runs says 4.0s and is confounded by
+      # which suites happen to be single-node.
+      #
+      # Audited 2026-08-15 and nothing here needs a second node: every Deployment is
+      # replicas: 1, the CNPG cluster runs db_replicas: 1, the module ships no DaemonSet, and
+      # no workload -- module, prerequisite fixture or chart -- declares a required pod
+      # anti-affinity, a DoNotSchedule topology spread, a hostPort/hostNetwork or a
+      # nodeSelector. Every chainsaw assertion is relative (replicas == readyReplicas), so
+      # none of them encodes a node or replica count.
+      kind_config: .github/kind-cluster-single-node.yaml
