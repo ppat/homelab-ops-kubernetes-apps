@@ -51,7 +51,10 @@ WORKFLOW="${WORKFLOW:-scheduled-baseline.yaml}"
 # UNCENSORED alone has four marks in the emitter (`+`, `~`, `never`, `gone`) where TESTING.md
 # lists three, and the `--- UNCENSORED: ... ---` banner has already been reworded once between
 # two runs eight minutes apart. Retention must not depend on either.
-INSTRUMENT_RE='^(READY|RESTART|PULL[A-Z-]*|CONTENTION|UNCENSORED[A-Z-]*|MODE) '
+# ADDING A PREFIX TO TESTING.md's TABLE MEANS ADDING IT HERE, or the line is retained nowhere.
+# That obligation is stated beside the table too, because this is the one coupling a prefix
+# allowlist cannot detect on its own: an unlisted prefix does not error, it just never arrives.
+INSTRUMENT_RE='^(READY|RESTART|PULL[A-Z-]*|CONTENTION|UNCENSORED[A-Z-]*|MODE|ESO[A-Z]*) '
 
 # The baseline job's own name, set by scheduled-baseline.yaml as "<suite> [<topology>]". In-repo,
 # so this coupling is ours. It is what separates the sampled suites from the plan/harvest jobs.

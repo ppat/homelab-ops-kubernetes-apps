@@ -316,6 +316,11 @@ list, not the suite start, so offsets compare between runs of a suite and not ag
 duration; and `calib_ms` is a relative index tied to a fixed iteration count, not a benchmark —
 changing that count silently rebases the whole series.
 
+**Adding a row to this table means adding its prefix to `ci/scripts/baseline-harvest.sh`.** That
+script is what keeps these lines past the 90 days their job logs last, and it matches on a prefix
+allowlist — an unlisted prefix does not error, it simply never arrives, and the omission is
+invisible until someone goes looking for data that was never kept.
+
 ### Say which duration you mean
 
 Three measures nest — **prerequisite ⊂ chainsaw ⊂ job** — and they differ by enough to reverse a
