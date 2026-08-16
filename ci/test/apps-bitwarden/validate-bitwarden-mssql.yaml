@@ -13,7 +13,22 @@ spec:
       - name: namespace
         value: bitwarden
       file: ../chainsaw/assertions/statefulset-ready.yaml
-      timeout: 2m
+      # 2m -> 4m, against 68/75/89s over 5 green runs (0.74). Those numbers were taken while
+      # this was the first workload the suite asserted, so most of them were the chart's
+      # convergence rather than mssql's: the readiness report puts mssql sixth at T0+207,
+      # behind web, attachments, notifications, icons and events, and it now sits sixth in the
+      # step order with ~15s predicted. The budget stays at 4m -- it is sized for the chart's
+      # serialisation behind this StatefulSet (helm runs two pre-install hook Jobs before any
+      # Deployment exists, then a post-install migrator the app pods cannot pass their probes
+      # without), and that is a property of the chart, not of the step's position.
+      #
+      # Worth recording, because the chart reads otherwise: the chart ships a startupProbe
+      # with initialDelaySeconds 120, which would put a hard 120s floor under this assert --
+      # but the module's HelmRelease postRenderer removes it from the StatefulSet, leaving a
+      # tcpSocket readinessProbe at delay 5s / period 2s. So there is no probe cliff here and
+      # nothing special near 4m; what this budget covers is a 551MB image pull plus SQL
+      # Server's own boot.
+      timeout: 4m
   catch:
   - describe:
       apiVersion: apps/v1

@@ -6,29 +6,27 @@ resources:
 - ../../../../infrastructure/bootstrap/crds/
 - namespaces.yaml
 - pvc/
-- ../../infra-security/infra-security-core.yaml
+# One shared fixture in place of the whole security-core module.
+#
+# external-secrets alone, and cert-manager deliberately not composed: `apps/subsystems/
+# bitwarden` ships exactly one `ExternalSecret` and no `Certificate` or `Issuer` --
+# nothing in the module references cert-manager.io or `${cert_issuer}`, and both its
+# Ingress objects set `tls: []`. That is the audit that caught the apps-misc scoping
+# error, so it was checked here rather than assumed from what the suite reconciles today.
+#
+# It follows that this suite needs no explicit `cert-manager-release` wait either: it was
+# never depending on cert-manager, only inheriting it through `external-secrets-release`'s
+# `dependsOn`, which the fixture removes.
+#
+# What goes: kyverno, policy-reporter, trust-manager, cert-manager, and the Bitwarden
+# certificate chain plus the bitwarden-sdk-server subchart. Note the last one is not
+# ironic -- this suite tests the Bitwarden *application*, while bitwarden-sdk-server is
+# security-core's External Secrets provider for it. This suite's `ExternalSecret` objects
+# resolve through the `fake` ClusterSecretStore below, not through that provider.
+#
+# See ../../chainsaw/pre-requisites/README.md.
+- ../../chainsaw/pre-requisites/external-secrets/
 - fake-secret-store.yaml
-
-patches:
-# yamllint disable-line rule:indentation
-- patch: |-
-    - op: add
-      path: /spec/patches
-      value:
-        - patch: |-
-            $patch: delete
-            apiVersion: helm.toolkit.fluxcd.io/v2
-            kind: HelmRelease
-            metadata:
-              name: kyverno-policy-reporter-release
-              namespace: kyverno
-          target:
-            kind: HelmRelease
-            name: kyverno-policy-reporter-release
-            namespace: kyverno
-  target:
-    kind: Kustomization
-    name: infra-security-core
 
 sortOptions:
   order: fifo
