@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.55](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.54...apps-coder-v0.0.55) (2026-08-16)
+
+
+### 🛠 Improvements
+
+* **apps-coder:** note first-issuance behavior of the apex+wildcard coder-tls-cert Certificate ([#3689](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3689)) ([ce8acbe](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ce8acbed9e14c247a52f82ea32842ca31ba17d36)), closes [#3611](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3611)
+
+
+### ✨ Features
+
+* **apps-coder:** add PrometheusRule ported from coder-observability alert conditions ([#3737](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3737)) ([e507b72](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e507b729ab5450f88c0b6823832c03bc7d346ffb))
+* **apps-coder:** scrape coderd's prometheus metrics ([#3733](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3733)) ([c866289](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c866289b364a7d9647e9b0b6441868c6e08f7407))
+
 ## [0.0.54](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.53...apps-coder-v0.0.54) (2026-08-11)
 
 
