@@ -5,6 +5,30 @@ metadata:
   name: validate-prometheus
 spec:
   try:
+  # The HelmRelease goes first deliberately, and carries the whole convergence budget.
+  #
+  # kube-prometheus-stack sets no `install.disableWait`, so helm-controller waits for its
+  # workloads before reporting Ready -- this one condition subsumes every assertion below
+  # it, which then return near-instantly on the shared 1m default. Asserting a workload
+  # first instead made the suite's most common failure report `actual resource not found`
+  # on a DaemonSet, because helm creates nothing until the release completes: a symptom of
+  # the release still installing, described as if the module were missing an object. This
+  # step timed out on 5 of 13 sampled runs and that message is what every one of them said.
+  #
+  # 6m is the sizing rule (3x an observed green max of 114.6s). It costs nothing when the
+  # release converges normally -- a passing assert returns the moment its condition holds.
+  - description: Assert helmrelease/kube-prometheus-stack-release
+    assert:
+      bindings:
+      - name: name
+        value: kube-prometheus-stack-release
+      - name: namespace
+        value: monitoring
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+      timeout: 6m
+  # Not redundant with the HelmRelease above: helm's own wait checks `numberReady`, while
+  # daemonset-ready.yaml also requires `numberAvailable`, which the DaemonSet controller
+  # updates on a later resync. The default budget covers that residual gap.
   - description: Assert daemonset/kube-prometheus-stack-prometheus-node-exporter
     assert:
       bindings:
@@ -13,7 +37,6 @@ spec:
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/daemonset-ready.yaml
-      timeout: 2m
   - description: Assert deployment/kube-prometheus-stack-kube-state-metrics
     assert:
       bindings:
@@ -46,14 +69,6 @@ spec:
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/statefulset-ready.yaml
-  - description: Assert helmrelease/kube-prometheus-stack-release
-    assert:
-      bindings:
-      - name: name
-        value: kube-prometheus-stack-release
-      - name: namespace
-        value: monitoring
-      file: ../chainsaw/assertions/helmrelease-ready.yaml
 
   catch:
   - describe:

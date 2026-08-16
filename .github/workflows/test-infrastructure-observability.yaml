@@ -36,3 +36,9 @@ jobs:
       test_path: ./ci/test/infra-observability
       chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
       kind_config: .github/kind-cluster-multi-node.yaml
+      # The job ceiling has to stay clear of the sum of the chainsaw budgets it bounds, and
+      # this suite's were re-sized from measurement and roughly doubled on the critical
+      # path. A run killed by this ceiling emits no chainsaw catch dump at all, which is a
+      # strictly worse outcome than the named assertion failure it replaces - so the margin
+      # matters more than the number. Green runs are ~376s and unaffected either way.
+      timeout: 25

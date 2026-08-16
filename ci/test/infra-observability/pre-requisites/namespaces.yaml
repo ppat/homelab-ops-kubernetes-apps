@@ -4,11 +4,10 @@ kind: Namespace
 metadata:
   name: logging
 ---
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: minio
----
+# No `minio` here: the minio fixture owns that namespace, and kustomize refuses to build a
+# duplicate resource id -- which would surface as `Assert kustomization/pre-requisites`
+# failing rather than as anything to do with minio. See
+# ../../chainsaw/pre-requisites/README.md, "Namespaces".
 apiVersion: v1
 kind: Namespace
 metadata:
