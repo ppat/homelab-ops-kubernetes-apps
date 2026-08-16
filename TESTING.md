@@ -286,7 +286,7 @@ the shared `catch` is set well inside the cliff rather than near it.
 | --- | --- |
 | `READY T0+<s> <ts> <status> <kind>/<ns>/<name>` | when each pod, `Kustomization` and `HelmRelease` became Ready, one ascending timeline. This is the input to validate-step ordering. |
 | `RESTART <n> <pod> [<container>]` | which containers crashed and recovered *inside* an assertion's budget — invisible everywhere else. |
-| `PULL <pull_s> <incl_wait_s> <pod> <image>` | kubelet's own pull duration. The second number includes time queued behind containerd's concurrent-download limit; the gap is the multi-node pull-parallelism argument. |
+| `PULL <pull_s> <incl_wait_s> <pod> <image>` | kubelet's own pull duration. The second number includes time spent queued behind the kubelet's own pull queue, so the gap is the whole pull-parallelism argument — and since `serializeImagePulls: false` it should be ~0 on most suites. A gap that reappears means a node is running more than `maxParallelImagePulls` pods wanting images at once. |
 | `CONTENTION <start\|end> nproc= loadavg= calib_ms= net_mbps= fsync_us= uptime_s= elapsed_s=` | how loaded the runner was, at the two boundaries only. Lets a historical run be conditioned on contention after the fact instead of re-running both arms serially. Four axes because CPU is the one measurably *not* implicated; `net_mbps` is, and `fsync_us` is the untested candidate for the prerequisite phase's bimodality. `uptime_s` is the runner's own uptime at that boundary; `elapsed_s` on the `end` line is the whole chainsaw phase. |
 | `UNCENSORED +<s>\|~<s>\|never\|gone <Ready\|NotReady\|Deleted> <kind>/<ns>/<name>` | **failing runs only.** How much longer each not-Ready object actually needed after the suite went red. `never` on a CNPG `Cluster` is #3678. `~` in place of `+` marks a figure taken from when the watch noticed, for an object carrying no Ready `lastTransitionTime`. |
 | `UNCENSORED-SUMMARY watched= ready= notready= gone= max_extra_s= bound_s=` | one line to grep a fleet of failures for. A trailing `skipped=no-wall-clock-left` means the watch never ran because the job had no headroom left. |
@@ -324,18 +324,25 @@ it did not intend to.
 
 Each suite chooses a `kind_config` — one node, or three. This looks like a capacity decision and
 is not: **extra kind nodes add no CPU.** They are containers on a single runner sharing the same
-cores. What they do add is **image-pull parallelism**, because each node runs its own containerd
-with its own concurrent-download limit.
+cores. What they used to add was **image-pull parallelism** — and the layer that mattered was the
+**kubelet, not containerd**. `kindest/node` ships `serializeImagePulls: true`, so a node pulled one
+image at a time whatever containerd was configured to do; three nodes meant three independent
+serial queues. (containerd 2.3.1 in that image sets `use_local_image_pull: false`, so a CRI pull
+never consults the CRI plugin's `max_concurrent_downloads` at all — a patch aimed there is accepted
+and silently ignored, which is the trap this cost a session to find.)
 
-So the question for a new suite is not "how much work does it do" but **"is this suite's cost many
-distinct images, or the same image on every node?"** Many distinct images favour more nodes,
-because the pulls proceed in parallel. Per-node duplication — DaemonSets above all — favours one
-node, because the extra copies are bytes already fetched.
+Both kind configs now set `serializeImagePulls: false` and `maxParallelImagePulls: 4`, so **that
+reason for a second and third node is gone**: measured over 12 paired dispatches, `apps-downloaders`
+went from +11.4s on the latest-finishing pull on one node (t=+3.24) to +0.2s (t=0.22). Node count is
+therefore now justified only by things a *test* needs — DaemonSet node coverage, Loki's 3-replica
+mode — not by pull throughput. The measurement lives beside each `kind_config`.
 
-The trap is treating "no duplicated bytes to recover" as making single-node safe by default. It
-does not: with nothing to recover, the only remaining effect is the parallelism that is being
-given up. `apps-downloaders` measured **10% slower** on a single node for exactly that reason,
-reversing a decision that had already been taken.
+The trap this replaces is worth keeping in view, because it was right until the config changed:
+treating "no duplicated bytes to recover" as making single-node safe by default. With nothing to
+recover, the only remaining effect was the parallelism being given up, and `apps-downloaders`
+measured **10% slower** on a single node for exactly that reason — reversing a decision that had
+already been taken. The general form survives the fix: **ask what a topology is buying, not what it
+is costing.**
 
 The rule underneath: **a node count must be justified by something a test can observe.**
 `infra-storage` was held at three nodes on the belief that longhorn requires three to function.
