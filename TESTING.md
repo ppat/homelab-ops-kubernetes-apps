@@ -237,21 +237,44 @@ raising the under-budgeted and cutting the unreachable.
   condition holds, so a larger number costs nothing unless the run was going to be red anyway.
   This is what makes speed and flakiness far less opposed than they look: the trade-off only
   bites if the timeout number is the only lever you reach for.
-- **Prefer a measured maximum with a wide multiplier over a round number.** Every timeout
-  failure is censored at its own budget — an assert that dies at 60.0s of 60s tells you
-  nothing about how long it needed — so the tail cannot be measured and the multiplier has to
-  come from the cost asymmetry instead. A tight budget costs a full re-run; a generous one
-  costs extra minutes only on runs that are already broken. Expect a genuinely slow runner to
-  exceed a maximum drawn from green runs by more than you would guess: the sample of runs that
-  finished is, by construction, the sample that fit.
+- **Prefer a measured maximum with a wide multiplier over a round number.** A tight budget
+  costs a full re-run; a generous one costs extra minutes only on runs that are already broken.
+  Expect a genuinely slow runner to exceed a maximum drawn from green runs by more than you
+  would guess: the sample of runs that finished is, by construction, the sample that fit.
+  Historically the multiplier had to come from that cost asymmetry alone, because every timeout
+  failure is censored at its own budget — an assert dying at 60.0s of 60s says nothing about
+  what it needed. **`UNCENSORED` lines in a failed run's log now report what it needed**, so
+  prefer that number over the multiplier whenever the failure produced one.
 - **Readiness is not creation, not image size, and not assert duration.** All three are
   tempting proxies and each has been measurably wrong here. `AGE` in a dump is *creation*;
   image bytes predict pull time but not dependency waits; and assert duration is circular,
   because a step measures 0s precisely when the step ahead of it absorbed the wait. Use the
-  pod `Ready` transition times the suites report at the end of every passing run.
+  `READY` lines below instead — and for pull time specifically, the `PULL` lines, which carry
+  kubelet's own measurement rather than a proxy for it.
 - **Record the measurement next to the number**, in the suite. What it was, what was observed,
   and why the new value. A budget without that is indistinguishable from a guess, and the next
   maintainer will "tidy" it back to the default.
+
+### What every run emits, and how to read it
+
+Every suite emits the same grep-able lines whether it passes or fails — passing runs from
+`ci/test/chainsaw/steps/report-readiness.yaml` (the last step), failing runs from the shared
+`catch` in `ci/test/chainsaw/.chainsaw.yaml`. Both call the same scripts under
+`ci/test/chainsaw/scripts/`, so the two outcomes cannot drift into different formats again.
+
+| prefix | what it answers |
+| --- | --- |
+| `READY T0+<s> <ts> <status> <kind>/<ns>/<name>` | when each pod, `Kustomization` and `HelmRelease` became Ready, one ascending timeline. This is the input to validate-step ordering. |
+| `RESTART <n> <pod> [<container>]` | which containers crashed and recovered *inside* an assertion's budget — invisible everywhere else. |
+| `PULL <pull_s> <incl_wait_s> <pod> <image>` | kubelet's own pull duration. The second number includes time queued behind containerd's concurrent-download limit; the gap is the multi-node pull-parallelism argument. |
+| `CONTENTION <start\|end> nproc= loadavg= calib_ms= net_mbps= fsync_us= elapsed_s=` | how loaded the runner was, at the two boundaries only. Lets a historical run be conditioned on contention after the fact instead of re-running both arms serially. Four axes because CPU is the one measurably *not* implicated; `net_mbps` is, and `fsync_us` is the untested candidate for the prerequisite phase's bimodality. `elapsed_s` on the `end` line is the whole chainsaw phase. |
+| `UNCENSORED +<s>\|never\|gone <kind>/<ns>/<name>` | **failing runs only.** How much longer each not-Ready object actually needed after the suite went red. `never` on a CNPG `Cluster` is #3678. |
+| `UNCENSORED-SUMMARY watched= ready= notready= max_extra_s=` | one line to grep a fleet of failures for. |
+
+Two readings that are not what they look like: `T0` is the earliest transition in that run's own
+list, not the suite start, so offsets compare between runs of a suite and not against job
+duration; and `calib_ms` is a relative index tied to a fixed iteration count, not a benchmark —
+changing that count silently rebases the whole series.
 
 ### The anti-pattern this exists to prevent
 

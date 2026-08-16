@@ -5,33 +5,31 @@ kind: StepTemplate
 metadata:
   name: report-readiness
 spec:
-  # Emits the suite's observed readiness ordering on runs that PASS. Nothing else does:
-  # the shared `catch` block in .chainsaw.yaml only fires on failure, and a validate step
-  # that returns in 0.1s tells you its component was ready by then, not when it became
-  # ready. Roughly two thirds of this repo's validate assertions are censored that way, so
-  # step order and timeout budgets could previously only be tuned from failed runs -- a
-  # sample biased entirely toward slow ones.
+  # Emits the suite's observed readiness ordering, container restarts and image-pull durations
+  # on runs that PASS. Nothing else does: the shared `catch` block in .chainsaw.yaml only fires
+  # on failure, and a validate step that returns in 0.1s tells you its component was ready by
+  # then, not when it became ready. Roughly two thirds of this repo's validate assertions are
+  # censored that way, so step order and timeout budgets could previously only be tuned from
+  # failed runs -- a sample biased entirely toward slow ones.
+  #
+  # The catch block runs the SAME script, so passing and failing runs emit one format. They did
+  # not before, and the divergence was not cosmetic: the failing side carried no restart counts,
+  # which is the evidence that separates a component that was late from one that was crashing.
   #
   # Purely diagnostic: it asserts nothing and cannot fail the suite. Belongs last in every
   # suite, so the times it reports are final.
   try:
-  - description: Report pod readiness ordering
+  - description: Report readiness, restarts and image pulls
     script:
-      timeout: 1m
-      content: |
-        echo '--- pod Ready transitions, ascending (offsets relative to first pod ready) ---'
-        kubectl get pods -A -o go-template='{{range .items}}{{$p := printf "%s/%s" .metadata.namespace .metadata.name}}{{range .status.conditions}}{{if eq .type "Ready"}}{{printf "%s %s %s\n" .lastTransitionTime .status $p}}{{end}}{{end}}{{end}}' | sort | awk '{ cmd = "date -d " $1 " +%s"; cmd | getline t; close(cmd); if (base == "") base = t; printf "T0+%-6d %-8s %s\n", t - base, $2, $3 }'
-  # Restarts on a run that PASSED. A container that crashes and recovers inside its
-  # assertion's budget is invisible everywhere else: the catch block never fires, and the
-  # assertion itself only reports the end state. That is the exact blind spot created by
-  # sizing a budget to ride out a known crash-restart cycle - see infra-storage's
-  # longhorn-manager, which converges only after 2-4 restarts (#3643). Tolerating something
-  # is defensible; tolerating it silently is not, so a green run says so out loud.
-  #
-  # Prints nothing when nothing restarted, which is the common case.
-  - description: Report container restarts
+      # 3m: five kubectl calls each capped at --request-timeout=30s inside the script, so the
+      # construction's own ceiling is 150s. Free on a passing run -- the script returns when it
+      # is done, not when the budget expires.
+      timeout: 3m
+      content: ../chainsaw/scripts/report-readiness.sh
+  # Closes the pair opened in bootstrap-flux.yaml. Two readings, not one, because the quantity
+  # wanted is whether the runner was contended *during* this suite; a single sample at t=0
+  # cannot distinguish a run that started loaded from one that became loaded.
+  - description: Report runner contention at suite end
     script:
-      timeout: 1m
-      content: |
-        echo '--- container restarts on a passing run (empty = none) ---'
-        kubectl get pods -A -o go-template='{{range .items}}{{$p := printf "%s/%s" .metadata.namespace .metadata.name}}{{range .status.containerStatuses}}{{if gt .restartCount 0}}{{printf "%-6d %s [%s]\n" .restartCount $p .name}}{{end}}{{end}}{{end}}' | sort -rn
+      timeout: 90s
+      content: ../chainsaw/scripts/report-contention.sh end

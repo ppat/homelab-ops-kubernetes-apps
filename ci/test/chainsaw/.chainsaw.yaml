@@ -22,12 +22,36 @@ spec:
     failFast: true
     parallel: 1  # Run tests sequentially since they have dependencies
 
+  # Deliberately no `report:` section, and this is the second time it has looked obvious.
+  # chainsaw v0.2.15 accepts `spec.report.{format,name,path}` (JSON/XML/JUNIT-*), verified with
+  # `chainsaw lint configuration`, so generating machine-readable per-step durations needs no
+  # cross-repo change. Archiving them does: the artifact-upload step lives in
+  # ppat/github-workflows, so a report written here lands on a runner that is then destroyed.
+  # An instrument whose output nobody can read is worse than none, because it reads as coverage.
+  # Enable this the same day that workflow uploads a directory -- $RUNNER_TEMP/ci-metrics/ is
+  # the proposed contract, and chainsaw's script children do inherit $RUNNER_TEMP.
+
   error:
-    # Three separate scripts rather than one, deliberately: each operation gets its own
-    # `exec` budget, so a slow `flux get` on a contended cluster can no longer consume the
-    # budget for the workload table behind it. Diagnostics that only survive on healthy
-    # runs are worth very little.
+    # Separate scripts rather than one, deliberately: each operation gets its own budget, so a
+    # slow `flux get` on a contended cluster can no longer consume the budget for everything
+    # behind it. Diagnostics that only survive on healthy runs are worth very little.
+    #
+    # Order is load-bearing. Cheap unconditional dumps first; the bounded watch in
+    # report-uncensored.sh last, because it is the only entry that can spend minutes, and if a
+    # failing job ever runs into its own timeout-minutes the entry that gets truncated should
+    # be the one whose value is lowest per second.
+    #
+    # Scripts run on the runner with cwd set to the test directory (verified against chainsaw
+    # v0.2.15), which is why `../chainsaw/scripts/...` resolves identically here and from a
+    # StepTemplate.
     catch:
+    # First, and sub-second: records WHICH objects were not Ready at the moment of failure. The
+    # watch that reports on them runs last, but its census has to be taken now -- the first CI
+    # run of this instrument reported watched=1 where the truth was two, because the dumps below
+    # took ~30s and one workload went Ready inside that window.
+    - script:
+        timeout: 90s
+        content: ../chainsaw/scripts/report-uncensored.sh --snapshot
     - script:
         content: |
           echo --------------------------------- flux ---------------------------------
@@ -36,14 +60,58 @@ spec:
         content: |
           echo ------------------------------ resources -------------------------------
           kubectl get -A crd,cm,secret,po,svc,ing,ingressroutes,deploy,ds,sts,cj,job,sc,pv,pvc,volumes,es,cert,ipaddresspools,cluster,dragonfly
-    # Pod `Ready` transition times, ascending. `kubectl get -A po` above reports AGE, which
-    # is creation, not readiness -- and the gap between the two is precisely the quantity
-    # that determines what order validate steps should be asserted in. Reconstructing it
-    # from creation times is what made this suite's step order guesswork for so long.
+    # Readiness transitions, restarts and image-pull durations, in the SAME format a passing
+    # run emits from steps/report-readiness.yaml. Both call this one script precisely so the
+    # two outcomes cannot drift apart again: the failing side used to print absolute timestamps
+    # and no restart counts, so a census across outcomes needed two parsers and the failing
+    # sample -- the one biased toward slow runs, hence the one budgets get sized from -- was
+    # missing the restart counts that separate "late" from "crash-looping".
+    #
+    # 3m: five kubectl calls each capped at --request-timeout=30s, so 150s is the construction's
+    # hard ceiling; the rest is ~100 `date` forks.
     - script:
-        content: |
-          echo ---------------------------- ready timeline ----------------------------
-          kubectl get pods -A -o go-template='{{range .items}}{{$p := printf "%s/%s" .metadata.namespace .metadata.name}}{{range .status.conditions}}{{if eq .type "Ready"}}{{printf "%-24s %-8s %s\n" .lastTransitionTime .status $p}}{{end}}{{end}}{{end}}' | sort
+        timeout: 3m
+        content: ../chainsaw/scripts/report-readiness.sh
+    # Silent unless a CNPG Cluster exists and is not Ready. See the script header and #3678.
+    - script:
+        timeout: 3m
+        content: ../chainsaw/scripts/report-cnpg.sh
+    # Paired with the `start` reading taken in steps/bootstrap-flux.yaml. A failing run never
+    # reaches the last step, so without this entry every failure -- the sample that matters
+    # most -- would carry a start reading and no end reading.
+    - script:
+        timeout: 90s
+        content: ../chainsaw/scripts/report-contention.sh end
+    # Uncensors the failure: keeps watching whatever was not Ready and reports how much longer
+    # it actually needed. Exits immediately when nothing is pending, so failures that are not
+    # about readiness cost nothing.
+    #
+    # 240s, and the script clamps it further against the wall clock it has already spent.
+    # Sized from a census of 305 failing jobs over 30 days (all 16 workflows, all attempts,
+    # durations from the jobs API because `updated_at` on the runs API is corrupt here). Adding
+    # B seconds to every one of them pushes 0 over its job timeout for any B <= 396; the first
+    # breach is apps-bitwarden at 397s, whose worst failing job ran 504s of its 900s. 240s
+    # keeps ~156s of margin under that, and is 4x the 60s assert default -- so an assert
+    # censored at 60s can be shown to have needed up to five times its budget, which is the
+    # range TESTING.md's x3 multiplier is currently guessing at.
+    #
+    # The margin is deliberately wider than the arithmetic needs, because a job killed by
+    # timeout-minutes emits NOTHING from this block rather than a truncated version of it:
+    # chainsaw buffers a script's stdout until the script ends (verified on v0.2.15). Losing
+    # everything is the failure mode, so the bound is chosen well inside the cliff rather than
+    # near it.
+    #
+    # The census also refuted the standing "zero timeout kills, worst job 497s of 900s": there
+    # were 2 kills (test-apps-ai, 2026-07-24, 915s of 900s) and the worst job in the window ran
+    # 992s. Both kills are why apps-ai is at 25m. GitHub reports a timeout kill as
+    # `conclusion: cancelled`, not `failure`, which is how they stayed invisible.
+    #
+    # Raise it only with evidence that real waits are landing on the bound (`notready=` > 0 in
+    # UNCENSORED-SUMMARY for something later seen Ready); it does not need lowering if a
+    # suite's timeout-minutes changes, because the clamp handles that.
+    - script:
+        timeout: 5m
+        content: ../chainsaw/scripts/report-uncensored.sh 240
 
   cleanup:
     skipDelete: true
