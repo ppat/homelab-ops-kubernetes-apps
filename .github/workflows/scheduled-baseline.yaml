@@ -1,0 +1,110 @@
+---
+# yamllint disable rule:line-length
+#
+# Measures the fleet's single-run failure rate by designed sampling.
+#
+# Why it exists: every flake number this repo has came from reds that happened to appear on
+# PRs which changed nothing a suite runs. That is one sample per suite under one set of load
+# conditions, and reading a rate off it has produced contradictory answers. This workflow
+# replaces that with a real instrument -- unchanging content (main), a fixed and published
+# cadence, and n that grows without anyone doing anything.
+#
+# It is also the only source of data on time of day, which is where contention actually
+# varies and which no PR-triggered run can ever see.
+#
+# THE SLOTS ARE 02:23, 08:23, 14:23 AND 20:23 UTC. They are fixed and published (TESTING.md)
+# precisely so that a serial CI experiment can be scheduled around them: a stray fleet
+# dispatch landing in the middle of one has already invalidated a measurement here.
+#
+# Reading the results: ci/scripts/baseline-census.sh
+name: scheduled-baseline
+
+on:
+  schedule:
+  - cron: '23 2,8,14,20 * * *'
+  pull_request:
+    # This instrument only ever runs unattended, and a scheduled run that fails on main
+    # notifies nobody -- "no samples" would look exactly like "nothing to report". So a PR
+    # touching the planner or this file proves the whole chain end to end, on one cheap suite.
+    paths:
+    - '.github/workflows/scheduled-baseline.yaml'
+    - 'ci/scripts/baseline-plan.sh'
+  workflow_dispatch:
+    inputs:
+      suites:
+        description: 'slot (default) | all | comma-separated suite names'
+        required: false
+        default: slot
+        type: string
+
+concurrency:
+  # Deliberately does NOT share a group with the test-*.yaml workflows. Dispatching those
+  # directly would put a baseline run and a human dispatch of the same suite on main into one
+  # group whose cancel-in-progress kills the older -- silently deleting samples, and biasing
+  # what remains toward the hours nobody was working. Calling the reusable workflow from here
+  # instead puts every baseline job under this workflow's name, so the two never interact.
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: 1
+        persist-credentials: false
+
+    - name: Select suites for this slot
+      id: plan
+      env:
+        # apps-misc on a PR: the cheapest suite in the fleet (~3 min, single node), enough to
+        # exercise plan -> fromJSON -> matrix -> reusable workflow -> job name without paying
+        # for a slot's worth of jobs on every push.
+        SELECTOR: ${{ github.event_name == 'pull_request' && 'apps-misc' || (inputs.suites || 'slot') }}
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        matrix="$(./ci/scripts/baseline-plan.sh "${SELECTOR}")"
+
+        # The planner reads each suite's inputs out of its own test-*.yaml. If that extraction
+        # ever silently produces the wrong string, the samples would be of something else --
+        # so fail here rather than run a suite that is not the suite named.
+        while IFS=$'\t' read -r suite path; do
+          [[ -e "${path}" ]] || { echo "plan: ${suite} points at missing ${path}" >&2; exit 1; }
+        done < <(echo "${matrix}" | jq -r '.include[] | [.suite, .test_path], [.suite, .chainsaw_config], [.suite, .kind_config] | @tsv')
+
+        echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
+        {
+          echo "### Baseline slot $(date -u '+%Y-%m-%d %H:%M') UTC"
+          echo
+          echo "| suite | topology |"
+          echo "| --- | --- |"
+          echo "${matrix}" | jq -r '.include[] | "| \(.suite) | \(.topology) |"'
+        } >> "$GITHUB_STEP_SUMMARY"
+
+  baseline:
+    needs: [plan]
+    # The job name is the durable record of what was sampled: workflow logs expire at 90
+    # days but job names do not, and a suite that changes topology mid-series would otherwise
+    # confound the census invisibly.
+    name: ${{ matrix.suite }} [${{ matrix.topology }}]
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    uses: ppat/github-workflows/.github/workflows/chainsaw-test.yaml@1e8ca1b00b6e69bdf5aef8b33111c594c051ff65 # v4.4.0
+    with:
+      # head_ref first: on a pull_request event ref_name is "<n>/merge", which chainsaw-test
+      # passes straight through as Flux's GitRepository spec.ref.branch and which is not one.
+      git_ref: ${{ github.head_ref || github.ref_name }}
+      test_path: ${{ matrix.test_path }}
+      chainsaw_config: ${{ matrix.chainsaw_config }}
+      kind_config: ${{ matrix.kind_config }}

@@ -285,6 +285,34 @@ than *broken* — a broken component leaves obligatory evidence behind (`CrashLo
 non-zero restarts, `Helm install failed`, an Error event), and the absence of that evidence is
 what distinguishes the two. If a component never started at all, no budget can fix it.
 
+## Scheduled Baseline Runs
+
+**The slots are 02:23, 08:23, 14:23 and 20:23 UTC, every day, on `main`.** Anyone running a
+serial CI experiment should read that as a hazard and steer around it: a stray fleet dispatch
+landing mid-experiment has already invalidated a measurement here. The times are fixed and
+published for exactly that reason.
+
+`scheduled-baseline.yaml` measures the fleet's single-run failure rate by designed sampling —
+unchanging content, a published cadence, and *n* that grows without anyone doing anything. It
+exists because a red that happens to appear on a PR which changed nothing a suite runs is one
+sample under one set of load conditions, and rates read off those have contradicted each other.
+It is also the only source of data on time of day, which is where contention varies and which
+no PR-triggered run can see.
+
+Each slot runs a quarter of the fleet, rotating so that every suite visits every slot over four
+days; `infra-observability` and `apps-downloaders` ride every slot because they are the
+historically flaky pair and the ones in-flight work is expected to move. Per suite that is
+about 30 samples a month, or about 120 for those two. Each suite's `test_path` and `kind_config`
+are read out of its own `test-*.yaml` at plan time rather than restated, so a suite that changes
+its kind topology cannot go on producing samples under the old one.
+
+Read the series with:
+
+```bash
+ci/scripts/baseline-census.sh          # per-suite rate, 95% interval, and the same by hour
+ci/scripts/baseline-census.sh --raw    # one TSV row per sampled job
+```
+
 ## Resource Validation
 
 - Uses `kubeconform` to validate all Kubernetes manifests
