@@ -155,7 +155,10 @@ suites in silence, and every assertion in the repo would quietly start meaning s
 
 The suite pairs each negative check with a positive control on the same object, so an `error`
 that passed for the wrong reason (wrong name, wrong field path) cannot read as a green result.
-It needs any cluster, no Flux, and finishes in well under a minute.
+It needs any cluster and no Flux, and it costs one job: **27–33s of chainsaw time inside a
+90–114s job** (five CI runs). Both numbers get quoted for this suite and they are not in
+conflict — see *Say which duration you mean* below; the difference is almost entirely
+`kind create` and the Flux install the shared workflow performs whether a suite needs it or not.
 
 ## Timeout Budgets and Validation Order
 
@@ -273,14 +276,29 @@ It is the evidence base every convention above runs on — budgets, validation o
 for whether a component was late or broken all read these same lines — which is why it belongs to
 none of them in particular.
 
+There is one exception, and it is the case with the most to explain: **a job killed by
+`timeout-minutes` emits none of this.** Chainsaw buffers a script's stdout until the script
+exits, so a run that dies at the ceiling loses the whole block rather than truncating it. Two
+jobs have died there (`test-apps-ai`, 915s of a 900s ceiling), which is why the watch bound in
+the shared `catch` is set well inside the cliff rather than near it.
+
 | prefix | what it answers |
 | --- | --- |
 | `READY T0+<s> <ts> <status> <kind>/<ns>/<name>` | when each pod, `Kustomization` and `HelmRelease` became Ready, one ascending timeline. This is the input to validate-step ordering. |
 | `RESTART <n> <pod> [<container>]` | which containers crashed and recovered *inside* an assertion's budget — invisible everywhere else. |
 | `PULL <pull_s> <incl_wait_s> <pod> <image>` | kubelet's own pull duration. The second number includes time queued behind containerd's concurrent-download limit; the gap is the multi-node pull-parallelism argument. |
-| `CONTENTION <start\|end> nproc= loadavg= calib_ms= net_mbps= fsync_us= elapsed_s=` | how loaded the runner was, at the two boundaries only. Lets a historical run be conditioned on contention after the fact instead of re-running both arms serially. Four axes because CPU is the one measurably *not* implicated; `net_mbps` is, and `fsync_us` is the untested candidate for the prerequisite phase's bimodality. `elapsed_s` on the `end` line is the whole chainsaw phase. |
-| `UNCENSORED +<s>\|never\|gone <kind>/<ns>/<name>` | **failing runs only.** How much longer each not-Ready object actually needed after the suite went red. `never` on a CNPG `Cluster` is #3678. |
-| `UNCENSORED-SUMMARY watched= ready= notready= max_extra_s=` | one line to grep a fleet of failures for. |
+| `CONTENTION <start\|end> nproc= loadavg= calib_ms= net_mbps= fsync_us= uptime_s= elapsed_s=` | how loaded the runner was, at the two boundaries only. Lets a historical run be conditioned on contention after the fact instead of re-running both arms serially. Four axes because CPU is the one measurably *not* implicated; `net_mbps` is, and `fsync_us` is the untested candidate for the prerequisite phase's bimodality. `uptime_s` is the runner's own uptime at that boundary; `elapsed_s` on the `end` line is the whole chainsaw phase. |
+| `UNCENSORED +<s>\|~<s>\|never\|gone <Ready\|NotReady\|Deleted> <kind>/<ns>/<name>` | **failing runs only.** How much longer each not-Ready object actually needed after the suite went red. `never` on a CNPG `Cluster` is #3678. `~` in place of `+` marks a figure taken from when the watch noticed, for an object carrying no Ready `lastTransitionTime`. |
+| `UNCENSORED-SUMMARY watched= ready= notready= gone= max_extra_s= bound_s=` | one line to grep a fleet of failures for. A trailing `skipped=no-wall-clock-left` means the watch never ran because the job had no headroom left. |
+
+The same scripts emit four secondary lines that a parser has to expect even though nobody greps
+for them by hand: `UNCENSORED-SNAPSHOT at= not_ready=` (the census taken at failure time, before
+the dumps), `UNCENSORED-CLAMP requested= remaining_wall_s=` when the watch is shortened against
+the job's remaining wall clock, `UNCENSORED-PENDING t+<s> <keys>` progress lines while it waits,
+and `PULL-CACHED <n> image(s) already present on machine`. A kubelet message the `PULL` parser
+cannot read is emitted as `PULL ? ? <pod> :: <message>` and sorted to the top rather than
+dropped. `ci/test/chainsaw/scripts/report-cnpg.sh` adds `--- CNPG: ... ---` blocks on a failure
+with a CNPG `Cluster` not Ready; those are diagnostics to read, not a grammar to parse.
 
 Two readings that are not what they look like: `T0` is the earliest transition in that run's own
 list, not the suite start, so offsets compare between runs of a suite and not against job
