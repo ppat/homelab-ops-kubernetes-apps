@@ -234,19 +234,6 @@ spec:
         kubeScheduler: false
     # -------------------------------------------------------------------------------------------------------------
 
-    # ---------------------------------- prometheus-node-exporter subchart ----------------------------------------
-    prometheus-node-exporter:
-      extraArgs:
-      # node-exporter's own default is
-      # --collector.vmstat.fields=^(oom_kill|pgpg|pswp|pg.*fault).*  - this widens that
-      # default (kept verbatim below) to also collect pgscan_* and pgsteal_*, which are
-      # the counters that distinguish background reclaim (kswapd) from synchronous
-      # direct reclaim. A pod stalling every allocation on direct reclaim is a real,
-      # continuous latency cost invisible from node_memory_* alone, and the stock regex
-      # drops it. Low cardinality: 2-4 extra vmstat fields per node.
-      - --collector.vmstat.fields=^(oom_kill|pgpg|pswp|pg.*fault|pgscan|pgsteal).*
-    # -------------------------------------------------------------------------------------------------------------
-
     # -------------------------------------- kube-state-metrics subchart ------------------------------------------
     kube-state-metrics:
       tolerations:
@@ -255,3 +242,31 @@ spec:
 
       resources: {}
     # -------------------------------------------------------------------------------------------------------------
+
+  # Widens node-exporter's --collector.vmstat.fields regex via a postRenderer append patch
+  # rather than the prometheus-node-exporter.extraArgs values key. Helm REPLACES list values,
+  # it does not merge them: kube-prometheus-stack's own default values.yaml already sets
+  # prometheus-node-exporter.extraArgs to the two --collector.filesystem.*-exclude flags that
+  # keep container-overlay/kubelet/pseudo-filesystem mounts out of node_filesystem_* - so
+  # setting extraArgs here at all, even to a list that also carries those two flags restated
+  # verbatim, would pin us to today's copy and silently diverge from (or drop) whatever the
+  # chart ships them as on the next version bump. A JSON6902 `add` at the args array's append
+  # position instead operates on the chart's own rendered output, so those defaults keep
+  # flowing through untouched by any future chart change; only the field list we're adding is
+  # ours to own. node-exporter's stock --collector.vmstat.fields regex
+  # (^(oom_kill|pgpg|pswp|pg.*fault).*) is unaffected - neither chart sets it via extraArgs
+  # by default, so this append is the only place that flag is set, widened to also collect
+  # pgscan_*/pgsteal_* (the counters that distinguish background reclaim (kswapd) from
+  # synchronous direct reclaim - a real, continuous latency cost invisible from
+  # node_memory_* alone).
+  postRenderers:
+  - kustomize:
+      patches:
+      - target:
+          kind: DaemonSet
+          name: kube-prometheus-stack-release-prometheus-node-exporter
+        # yamllint disable-line rule:indentation
+        patch: |-
+          - op: add
+            path: /spec/template/spec/containers/0/args/-
+            value: --collector.vmstat.fields=^(oom_kill|pgpg|pswp|pg.*fault|pgscan|pgsteal).*
