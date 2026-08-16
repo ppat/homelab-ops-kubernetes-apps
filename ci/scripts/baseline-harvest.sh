@@ -210,9 +210,16 @@ harvest_run() {
     code="$(fetch_job_log "${job_id}" "${logf}" "${retries}")"
     : > "${linesf}"
     n=0
+    parsed=true
     if [[ "${code}" == "200" && -s "${logf}" ]]; then
-      extract_lines < "${logf}" > "${linesf}"
-      n="$(wc -l < "${linesf}" | tr -d ' ')"
+      # Guarded, and the guard is the point: under `set -e` a failing extractor would abort this
+      # loop, and every job after it would vanish from the TSV with nothing saying it was ever
+      # there. A harvest that is silently short is the one failure this design cannot tolerate.
+      if extract_lines < "${logf}" > "${linesf}"; then
+        n="$(wc -l < "${linesf}" | tr -d ' ')"
+      else
+        parsed=false
+      fi
     fi
 
     # The status vocabulary. Anything other than `ok` is a claim about WHY there is less data here
@@ -227,6 +234,8 @@ harvest_run() {
       status="log-unavailable"
     elif [[ ! -s "${logf}" ]]; then
       status="log-empty"
+    elif ! ${parsed}; then
+      status="parse-failed"
     elif [[ "${n}" -eq 0 ]]; then
       status="no-lines"
     elif awk -F'\t' '
@@ -492,8 +501,8 @@ cmd_summarize() {
       # failed rather than the run, and that is the one state a tidy-looking table would hide.
       for (i = 1; i <= nk; i++) {
         k = order[i]
-        if (status[k] == "log-unavailable" || status[k] == "log-empty")
-          alarm[++nb] = suite[k] " [" topo[k] "] `" status[k] "` -- the harvester could not read this job log"
+        if (status[k] == "log-unavailable" || status[k] == "log-empty" || status[k] == "parse-failed")
+          alarm[++nb] = suite[k] " [" topo[k] "] `" status[k] "` -- the harvester itself failed on this job, so its lines are lost even though the job produced them"
         else if (concl[k] == "success" && status[k] != "ok")
           alarm[++nb] = suite[k] " [" topo[k] "] `" status[k] "` on a SUCCESSFUL job -- obligatory lines are missing, so the instrument is broken, not the run"
         else if (status[k] == "no-lines")
