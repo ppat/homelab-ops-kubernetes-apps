@@ -6,7 +6,7 @@ on:
   pull_request:
     paths:
     - '.github/workflows/test-infrastructure-kubernetes.yaml'
-    - '.github/kind-cluster-multi-node.yaml'
+    - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/infra-kubernetes/**'
     - 'ci/test/chainsaw/**'
     - 'infrastructure/subsystems/kubernetes-core/**'
@@ -35,4 +35,28 @@ jobs:
       git_ref: ${{ github.head_ref || github.ref_name }}
       test_path: ./ci/test/infra-kubernetes
       chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
-      kind_config: .github/kind-cluster-multi-node.yaml
+      # Single node. Three kind nodes on one 4-vCPU runner add two more kubelets, kube-proxies and
+      # containerd instances without adding capacity -- they are containers sharing the same CPUs.
+      #
+      # Measured by dispatching this suite's single-node and multi-node arms at the same instant,
+      # six times: job total 124s against 140s (-10.9%), faster in 6 of 6 pairs (t=-5.49), with
+      # -6.8s of it in the chainsaw step alone (6 of 6, t=-4.45). This is the strongest result of
+      # the five suites audited, and the mechanism is the DaemonSet duplication noted below.
+      #
+      # `kind create` is NOT the lever it looks like: paired over 26 runs it is worth ~2s and is
+      # not significant. An unpaired comparison of historical runs says 4.0s and is confounded by
+      # which suites happen to be single-node.
+      #
+      # Audited 2026-08-15 and nothing here needs a second node. The three cases that look like
+      # they might:
+      #   - coredns is replicas: 3, but the module's Deployment is an SSA merge patch that sets
+      #     no affinity, so it inherits kubeadm's *preferred* pod anti-affinity and all three
+      #     land happily on one node. Its PDB asserts currentHealthy >= desiredHealthy only.
+      #   - the two DaemonSets (node-feature-discovery-worker, generic-device-plugin) are
+      #     asserted with numberReady == desiredNumberScheduled, which is satisfied by one pod.
+      #   - intel-device-plugins is the only nodeSelector in the module and this suite deletes
+      #     its HelmReleases before they are ever applied.
+      # descheduler is replicas: 1 on a 60m interval with minPodAge 30m, so it evicts nothing
+      # inside a CI run. This is also the suite with the most to gain: dropping two of three
+      # copies of the DaemonSet images removes ~174 MB, 56% of its image bytes.
+      kind_config: .github/kind-cluster-single-node.yaml
