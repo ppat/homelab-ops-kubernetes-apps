@@ -8,6 +8,21 @@ spec:
   - name: namespace
     value: flux-system
   try:
+  # Lives here rather than in a step template of its own because this is the first step of all
+  # sixteen suites, so a new suite gets the probe by construction instead of by remembering to
+  # wire it. report-readiness took a sixteen-PR stack to reach every suite and was referenced
+  # by nothing on `main` in the meantime; an instrument only wired where someone remembered is
+  # an instrument that emits nothing exactly where it is least expected to.
+  #
+  # It also stamps the suite's T0, which the end-of-run reading and report-uncensored.sh both
+  # read back. See the script header.
+  - description: Report runner contention at suite start
+    script:
+      # Explicit rather than inheriting the 1m `exec` default. The probe's own hard ceiling is
+      # ~28s (12s curl cap + 15s dd cap + the CPU unit), and a suite going red because a
+      # diagnostic was slow would make the instrumentation a stability problem in its own right.
+      timeout: 90s
+      content: ../chainsaw/scripts/report-contention.sh start
   - description: Create git source
     apply:
       resource:
