@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.29.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.29.3...infra-observability-core-v0.29.4) (2026-08-16)
+
+
+### ✨ Features
+
+* **infra-observability-core:** collect node-exporter reclaim scan/steal counters ([#3734](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3734)) ([1c554b1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1c554b1206502eaf2e5b3dd8dc72bf2fd0b19777))
+
 ## [0.29.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.29.2...infra-observability-core-v0.29.3) (2026-08-15)
 
 
