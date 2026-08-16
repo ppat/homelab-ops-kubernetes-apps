@@ -6,7 +6,7 @@ on:
   pull_request:
     paths:
     - '.github/workflows/test-infrastructure-database.yaml'
-    - '.github/kind-cluster-multi-node.yaml'
+    - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/infra-database/**'
     - 'ci/test/chainsaw/**'
     - 'infrastructure/subsystems/database-core/**'
@@ -33,7 +33,23 @@ jobs:
       git_ref: ${{ github.head_ref || github.ref_name }}
       test_path: ./ci/test/infra-database
       chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
-      kind_config: .github/kind-cluster-multi-node.yaml
+      # Single node. Three kind nodes on one 4-vCPU runner add two more kubelets, kube-proxies and
+      # containerd instances without adding capacity -- they are containers sharing the same CPUs.
+      #
+      # Measured by dispatching this suite's single-node and multi-node arms at the same instant,
+      # four times: job total 312s against 339s (-8.0%), faster in 3 of 4 pairs, and the spread
+      # narrows sharply (sd 38.7s -> 12.7s).
+      #
+      # `kind create` is NOT the lever it looks like: paired over 26 runs it is worth ~2s and is
+      # not significant. An unpaired comparison of historical runs says 4.0s and is confounded by
+      # which suites happen to be single-node. The saving here is the phase where pods converge.
+      #
+      # Audited 2026-08-15 and nothing here needs a second node. Asked of the charts, not just
+      # the checked-in YAML: the cloudnative-pg operator, the Barman Cloud plugin and the
+      # dragonfly operator all render one replica with no affinity; every test Cluster is
+      # instances: 1 and the test Dragonfly is replicas: 1. The restore case is a sequential
+      # generation rotation within one namespace, which is node-agnostic. No DaemonSets.
+      kind_config: .github/kind-cluster-single-node.yaml
       # See the equivalent note in test-infrastructure-observability.yaml. This suite has
       # the highest ceiling utilisation in the repo (p90 0.53) before any change, and its
       # minio reconcile budget has gone 3m -> 5m, so it has the least margin to give.
