@@ -203,10 +203,16 @@ harvest_run() {
     if [[ "${name}" =~ ${BASELINE_JOB_RE} ]]; then
       suite="${BASH_REMATCH[1]}"
       topology="${BASH_REMATCH[2]}"
-    elif [[ "${own}" == "true" ]]; then
-      # This workflow's own `plan` and `harvest` jobs. Giving them rows would put two permanent
-      # "no instrument lines" entries in every slot's table and train the reader to skip past
-      # exactly the column the table exists to show.
+    elif [[ "$(basename "${wf_path}")" == "${WORKFLOW}" ]]; then
+      # Inside this workflow, a job not named "<suite> [<topology>]" is its own scaffolding --
+      # `plan` and `harvest`. Rows for those would put two permanent "no instrument lines"
+      # entries in every slot's table and train the reader to skip past exactly the column the
+      # table exists to show.
+      #
+      # The test is the workflow, not "is this our own run". Keying it off own-run made
+      # `harvest --run <id>` against any suite workflow emit an empty TSV in silence, because a
+      # suite's job is named "test-<module> / test" and matched nothing -- the advertised
+      # on-demand path producing the exact quiet nothing this script exists to rule out.
       continue
     else
       suite="${SUITE_OF[$(basename "${wf_path}")]:-?}"
