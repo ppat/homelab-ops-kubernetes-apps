@@ -7,7 +7,14 @@ allowVolumeExpansion: true
 parameters:
   fsType: ext4
   dataLocality: "best-effort"
-  numberOfReplicas: "2"
+  # 1, matching the single node this suite now runs on (#3680). At 2 the volume attaches and
+  # serves while permanently DEGRADED: longhorn places one replica, leaves the second with an
+  # empty nodeID, and resets the Scheduled condition back to True because
+  # allow-volume-creation-with-degraded-availability defaults on. Nothing in the suite would
+  # observe that -- a missing replica has no pod-layer signature, since replicas are processes
+  # inside instance-manager rather than pods. So 2 would mean every run silently exercised a
+  # degraded volume and depended on longhorn continuing to tolerate it.
+  numberOfReplicas: "1"
 provisioner: driver.longhorn.io
 reclaimPolicy: Delete
 volumeBindingMode: Immediate
