@@ -6,7 +6,7 @@ on:
   pull_request:
     paths:
     - '.github/workflows/test-infrastructure-security.yaml'
-    - '.github/kind-cluster-multi-node.yaml'
+    - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/infra-security/**'
     - 'ci/test/chainsaw/**'
     - 'infrastructure/subsystems/security-core/**'
@@ -35,7 +35,28 @@ jobs:
       git_ref: ${{ github.head_ref || github.ref_name }}
       test_path: ./ci/test/infra-security
       chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
-      kind_config: .github/kind-cluster-multi-node.yaml
+      # Single node. Three kind nodes on one 4-vCPU runner add two more kubelets, kube-proxies and
+      # containerd instances without adding capacity -- they are containers sharing the same CPUs.
+      #
+      # Measured by dispatching this suite's single-node and multi-node arms at the same instant,
+      # four times: job total 354s against 396s (-10.5%), faster in 4 of 4 pairs, and the spread
+      # collapses (sd 64.2s -> 17.1s) -- the largest variance reduction of the five suites audited.
+      #
+      # `kind create` is NOT the lever it looks like: paired over 26 runs it is worth ~2s and is
+      # not significant. An unpaired comparison of historical runs says 4.0s and is confounded by
+      # which suites happen to be single-node.
+      #
+      # Audited 2026-08-15 and nothing here needs a second node, including the two multi-replica
+      # workloads that prompted the question. Rendering kyverno 3.8.2 and authentik 2026.5.6
+      # with this repo's own values shows both use podAntiAffinity
+      # preferredDuringSchedulingIgnoredDuringExecution only -- no required term, no
+      # topologySpreadConstraints -- so kyverno's 3 admission + 2 background replicas and
+      # authentik's 3 server replicas all schedule on one node. Both PDBs (minAvailable 2 and
+      # 1) are satisfied there, and the assertions check readiness, never placement.
+      #
+      # What single-node gives up is real but not asserted today: a chart regression that made
+      # either anti-affinity *required* would strand replicas here and no longer be caught.
+      kind_config: .github/kind-cluster-single-node.yaml
       # The job ceiling has to stay clear of the sum of the chainsaw budgets it bounds. A run
       # killed by this ceiling emits no chainsaw catch dump at all, which is strictly worse
       # than the named assertion failure it replaces -- and it becomes reachable exactly when
