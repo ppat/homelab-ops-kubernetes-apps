@@ -21,6 +21,20 @@ spec:
       - name: namespace
         value: traefik
       file: ../chainsaw/assertions/service-clusterip-ready.yaml
+  # whoami exists as this suite's routing smoke test, and the three asserts around this one
+  # do not test routing: deployment-ready proves pods are up, service-clusterip-ready is an
+  # existence check that no live ClusterIP Service can fail, and ingress-ready proves only
+  # that traefik assigned an address. A pod-label rename that leaves the Service selecting
+  # nothing passes all three while the route resolves to no backend at all. This is the step
+  # that fails on it.
+  - description: Assert service/whoami resolves to a ready pod
+    assert:
+      bindings:
+      - name: name
+        value: whoami
+      - name: namespace
+        value: traefik
+      file: ../chainsaw/assertions/service-endpoints-ready.yaml
   - description: Assert ingress/whoami
     assert:
       bindings:
@@ -41,6 +55,11 @@ spec:
       kind: Service
       namespace: traefik
       name: whoami
+  - describe:
+      apiVersion: discovery.k8s.io/v1
+      kind: EndpointSlice
+      namespace: traefik
+      selector: kubernetes.io/service-name=whoami
   - describe:
       apiVersion: networking.k8s.io/v1
       kind: Ingress

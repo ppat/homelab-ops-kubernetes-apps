@@ -7,3 +7,12 @@ metadata:
 status:
   # Verify that the PodDisruptionBudget has the expected number of healthy pods
   (currentHealthy >= desiredHealthy): true
+  # The arithmetic above is satisfied by 0 >= 0, which is exactly what a PDB whose selector
+  # matches nothing reports for `maxUnavailable` or a percentage `minAvailable`
+  # (desiredHealthy is derived from the pods found, so it rounds to 0). Selector rot - a
+  # chart bump renaming pod labels - is the state a PDB assert exists to catch, and it is
+  # the one state the check above cannot see. Measured on chainsaw v0.2.15: a
+  # `maxUnavailable: 1` PDB with a dead selector passes the line above and fails this one.
+  # Integer `minAvailable`, which is what every PDB asserted in this repo uses today, keeps
+  # desiredHealthy at its literal value and is not affected either way.
+  (expectedPods >= `1`): true

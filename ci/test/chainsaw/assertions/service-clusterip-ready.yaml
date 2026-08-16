@@ -9,3 +9,10 @@ spec:
 status:
   # Verify that loadBalancer.ingress does not exist
   (length(loadBalancer) == `0`): true
+# Read the `-ready` in this file's name narrowly: for an existing, correctly-typed
+# ClusterIP Service there is no cluster state that fails either check above, because a
+# ClusterIP Service never acquires load-balancer status. This asserts that the object
+# exists and is the type the module meant to create - nothing about whether it resolves to
+# anything. A selector that matches no ready pods passes it. Where the Service actually
+# routing is part of what the suite claims to prove, pair this with
+# service-endpoints-ready.yaml.

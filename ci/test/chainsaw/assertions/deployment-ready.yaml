@@ -4,6 +4,19 @@ kind: Deployment
 metadata:
   name: ($name)
   namespace: ($namespace)
+# Everything under `status` below is observed-vs-observed: it can only report on whatever
+# spec the controller last acted on. Without this line the assert passes on a Deployment
+# that has just been mutated in place - the previous spec's Ready/Available status is still
+# attached to the object, so the step returns instantly and never waits for the new spec to
+# roll out. Comparing observedGeneration to generation is what turns "some spec was ready
+# once" into "the controller has seen THIS spec, and it is ready".
+(status.observedGeneration == metadata.generation): true
+# Compared against spec, not against status: every field of DeploymentStatus is omitempty,
+# so a Deployment scaled to zero renders `status: {replicas absent, readyReplicas absent,
+# conditions:[Available=True]}` and satisfies all three checks below with no pods running
+# at all (measured on chainsaw v0.2.15 - absent compares equal to absent). This is the one
+# check here that reads intent.
+(status.readyReplicas == spec.replicas): true
 status:
   # All replicas should be ready and available
   (replicas == readyReplicas): true
