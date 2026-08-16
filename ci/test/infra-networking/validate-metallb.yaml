@@ -5,6 +5,22 @@ metadata:
   name: validate-metallb
 spec:
   try:
+  # First workload validated after the module is applied, so it gets no head start from any
+  # step ahead of it -- everything later in this suite is reached having already spent this
+  # step's duration starting up, and this one has not. That makes what this step measures
+  # the module's initial convergence rather than metallb's own startup, and the budget has
+  # to be sized for the former.
+  #
+  # 2m was set from 29.4/30.2/32.9s. A later run put the absorption at 57.0s, well past the
+  # maximum those three could show, which takes the x3 rule to 171s and so to the 3m rung.
+  # The largest absorption measured in the first position anywhere in the infra suites.
+  #
+  # Adopting the shared fixtures raised it again, to 70s (0.39 of this 3m), and that is the
+  # expected direction rather than a surprise: the prerequisite phase fell 62s -> 32s, and
+  # the convergence it used to absorb has to be paid somewhere. This is the same
+  # displacement pattern the reorders kept producing -- the saving is real, but it moves
+  # pressure onto whatever is first rather than removing it. 3m absorbed the move with room;
+  # it is the number to watch if anything else is taken out of this suite's front.
   - description: Assert deployment/metallb-controller
     assert:
       bindings:
@@ -13,6 +29,7 @@ spec:
       - name: namespace
         value: metallb-system
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 3m
   - description: Assert daemonset/metallb-speaker
     assert:
       bindings:

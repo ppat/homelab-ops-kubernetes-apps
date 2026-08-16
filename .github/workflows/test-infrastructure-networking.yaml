@@ -36,3 +36,7 @@ jobs:
       test_path: ./ci/test/infra-networking
       chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
       kind_config: .github/kind-cluster-single-node.yaml
+      # See the note in test-infrastructure-security.yaml. Here it is external-dns-pihole at
+      # 2m -> 5m: reached ~285s in, so a failure now lands at ~585s and the catch block
+      # follows it, against a 15m default that was sized when nothing here exceeded 2m.
+      timeout: 25

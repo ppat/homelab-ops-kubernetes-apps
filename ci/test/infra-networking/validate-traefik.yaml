@@ -5,6 +5,34 @@ metadata:
   name: validate-traefik
 spec:
   try:
+  # The HelmRelease goes first deliberately, and carries the whole convergence budget.
+  #
+  # The traefik chart sets no `install.disableWait`, so helm-controller waits for the
+  # DaemonSet before reporting the release Ready -- this one condition subsumes every
+  # assertion below it, which then return near-instantly on the shared 1m default. It also
+  # subsumes `spec.dependsOn: metallb-release`: until MetalLB is Ready this release is not
+  # installed at all, and that shows up here as an unmet HelmRelease condition rather than
+  # as a missing DaemonSet.
+  #
+  # Which is the point. All eleven failure dumps this suite has produced name the DaemonSet
+  # as the failing object, and all eleven also contain `Helm install failed` on this
+  # release -- the DaemonSet was never created because the install never got that far. The
+  # release condition reports that cause directly; the DaemonSet assert reported a missing
+  # object and a spent 60s budget.
+  #
+  # 3m is the sizing rule against a 40.9s green maximum on the DaemonSet (min 31.7, median
+  # 35.7) plus the ~3.3s helm takes to mark the release Ready behind it. The downside if the
+  # subsumption claim is wrong is bounded: the DaemonSet assert simply waits on the shared
+  # default as it does today.
+  - description: Assert helmrelease/traefik-release
+    assert:
+      bindings:
+      - name: name
+        value: traefik-release
+      - name: namespace
+        value: traefik
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+      timeout: 3m
   - description: Assert certificate/default-tls-cert
     assert:
       bindings:
@@ -13,6 +41,9 @@ spec:
       - name: namespace
         value: traefik
       file: ../chainsaw/assertions/certificate-ready.yaml
+  # Not redundant with the HelmRelease above: helm's own wait checks `numberReady`, while
+  # daemonset-ready.yaml also requires `numberAvailable`, which the DaemonSet controller
+  # updates on a later resync. The default budget covers that residual gap.
   - description: Assert daemonset/traefik
     assert:
       bindings:
@@ -80,14 +111,6 @@ spec:
       - name: namespace
         value: traefik
       file: ../chainsaw/assertions/poddisruptionbudget-ready.yaml
-  - description: Assert helmrelease/traefik-release
-    assert:
-      bindings:
-      - name: name
-        value: traefik-release
-      - name: namespace
-        value: traefik
-      file: ../chainsaw/assertions/helmrelease-ready.yaml
 
   catch:
   - describe:
