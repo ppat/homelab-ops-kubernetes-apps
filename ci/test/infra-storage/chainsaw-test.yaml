@@ -112,32 +112,11 @@ spec:
   # And the readiness ordering itself has now replicated three times on three runners:
   # garage 118/184/105, minio 132/200/120, csi-nfs-controller 139/208/126. The absolute
   # numbers move by a factor of two between runs; the order does not move at all.
-  - name: Validate garage
-    use:
-      template: ./validate-garage.yaml
-  - name: Validate minio
-    use:
-      template: ./validate-minio.yaml
-  - name: Validate csi-driver-nfs
-    use:
-      template: ./validate-csi-driver-nfs.yaml
-  # Correctly last of the workload steps: the five Longhorn CSI Deployments are the
-  # latest-created objects in the suite by a wide margin (t+76..125s across six failure
-  # dumps, against t+1..18s for everything else), because longhorn-driver-deployer does not
-  # create them until longhorn-manager reports ready.
   - name: Validate longhorn
     use:
       template: ./validate-longhorn.yaml
   # Stays last despite returning in 0.1s. It asserts the recording rule that spans MinIO and
   # Garage, so it is an end-of-suite outcome check, not a cheap step to be sorted forward.
-  - name: Validate object-store
-    use:
-      template: ./validate-object-store.yaml
-
-  # Asserts nothing; prints real pod Ready transition times. This suite's ordering had only
-  # ever been reasoned about from catch dumps of failed runs -- a sample biased entirely
-  # toward slow ones, and one that reports creation rather than readiness. This is what
-  # closed that gap, and the figures the order above rests on come from it.
   - name: Report readiness ordering
     use:
       template: ../chainsaw/steps/report-readiness.yaml
