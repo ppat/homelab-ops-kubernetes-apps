@@ -11,6 +11,8 @@ resources:
 - helm-release-coder.yaml
 - ingress.yaml
 - rbac.yaml
+- service-coder-metrics.yaml
+- servicemonitor-coder.yaml
 
 
 sortOptions:

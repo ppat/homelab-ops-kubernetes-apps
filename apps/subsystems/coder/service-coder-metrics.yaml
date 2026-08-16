@@ -1,0 +1,28 @@
+---
+# Dedicated Service for coderd's Prometheus metrics port. The coder chart's own `coder`
+# Service (rendered from helm-release-coder.yaml) only exposes ports 80/443 - see
+# https://github.com/coder/coder/blob/main/helm/coder/templates/service.yaml - it has no
+# hook to add another port. The container itself does listen on 2112 (env var
+# CODER_PROMETHEUS_ADDRESS, defaulted by the chart, named port "prometheus-http"; see
+# CODER_PROMETHEUS_ENABLE / CODER_PROMETHEUS_COLLECT_AGENT_STATS in
+# helm-release-coder.yaml), so this Service reuses the same pod selector as the chart's
+# Service to reach it - Kubernetes allows more than one Service to select the same Pods.
+apiVersion: v1
+kind: Service
+metadata:
+  name: coder-metrics
+  namespace: coder
+  labels:
+    app.kubernetes.io/name: coder
+    app.kubernetes.io/instance: coder
+    app.kubernetes.io/component: metrics
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/instance: coder
+    app.kubernetes.io/name: coder
+  ports:
+  - name: prometheus-http
+    port: 2112
+    targetPort: prometheus-http
+    protocol: TCP
