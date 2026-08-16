@@ -234,6 +234,19 @@ spec:
         kubeScheduler: false
     # -------------------------------------------------------------------------------------------------------------
 
+    # ---------------------------------- prometheus-node-exporter subchart ----------------------------------------
+    prometheus-node-exporter:
+      extraArgs:
+      # node-exporter's own default is
+      # --collector.vmstat.fields=^(oom_kill|pgpg|pswp|pg.*fault).*  - this widens that
+      # default (kept verbatim below) to also collect pgscan_* and pgsteal_*, which are
+      # the counters that distinguish background reclaim (kswapd) from synchronous
+      # direct reclaim. A pod stalling every allocation on direct reclaim is a real,
+      # continuous latency cost invisible from node_memory_* alone, and the stock regex
+      # drops it. Low cardinality: 2-4 extra vmstat fields per node.
+      - --collector.vmstat.fields=^(oom_kill|pgpg|pswp|pg.*fault|pgscan|pgsteal).*
+    # -------------------------------------------------------------------------------------------------------------
+
     # -------------------------------------- kube-state-metrics subchart ------------------------------------------
     kube-state-metrics:
       tolerations:
