@@ -57,6 +57,24 @@ spec:
     - events:
         namespace: default
 
+  # Applied here for the same reason as the logspewer fixture above: it costs nothing to
+  # create early, and kube-state-metrics reports kube_pod_labels from this Pod object's
+  # existence, not from it ever reaching Running - so there is nothing to wait on before
+  # moving on to the module apply.
+  - name: Apply kube-state-metrics label fixture
+    try:
+    - description: Apply coder-label-fixture
+      apply:
+        file: ./test-resources/coder-label-fixture.yaml
+    catch:
+    - describe:
+        apiVersion: v1
+        kind: Pod
+        name: coder-label-fixture
+        namespace: default
+    - events:
+        namespace: default
+
   - name: Apply infra-observability modules
     try:
     - description: Apply infra-observability-core
@@ -253,6 +271,26 @@ spec:
           value: 'node_vmstat_pgscan_direct'
         - name: prometheus_diagnostic_match
           value: '{__name__=~"node_vmstat_pg(scan|steal).*"}'
+
+  # kube-state-metrics emits kube_pod_labels only for whatever's named in
+  # metricLabelsAllowlist - the chart's own default is `[]`, so with no config at all this
+  # metric does not exist, cluster-wide, rather than existing with labels stripped. "the
+  # HelmRelease reconciled" (asserted just above) says nothing about that config: it would
+  # stay green whether the allowlist is set, emptied, or typo'd. The query below asserts on
+  # the ./test-resources/coder-label-fixture.yaml Pod applied earlier in this suite, which
+  # carries the same three labels the allowlist names - a value present here proves both
+  # that kube_pod_labels exists at all AND that this specific allowlist entry is the one
+  # producing it, not some coincidentally-matching series left over from another pod.
+  - name: Validate kube-state-metrics allowlists Coder workspace pod labels
+    use:
+      template: ../chainsaw/steps/assert-prometheus-query.yaml
+      with:
+        bindings:
+        - name: prometheus_query
+          # yamllint disable-line rule:line-length
+          value: 'kube_pod_labels{label_app_kubernetes_io_part_of="coder-workspace",label_com_coder_user_username="chainsaw",label_com_coder_workspace_name="chainsaw-fixture"}'
+        - name: prometheus_diagnostic_match
+          value: '{__name__="kube_pod_labels"}'
 
   # The first assertion in this repo that looks at a pipeline's OUTPUT rather than at
   # resource status. Everything above proves Alloy and Loki are running; only this

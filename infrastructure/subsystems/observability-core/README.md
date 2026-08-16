@@ -371,6 +371,15 @@ flowchart TB
   reach the Prometheus Service can write arbitrary series to it. Today the only writer is Loki's ruler; locking
   it down further (NetworkPolicy, a write-token proxy, mTLS) is a deliberate, deferred decision, not an
   oversight.
+- **`kube_pod_labels` does not exist by default - kube-state-metrics emits no Kubernetes label metrics
+  cluster-wide unless labels are explicitly named.** `kube-prometheus-stack`'s `kube-state-metrics.metricLabelsAllowlist`
+  is `[]` by default, and cAdvisor's `container_*` series only ever carry an opaque `pod` name, so without this
+  there is no label to join a container's resource usage back to a workspace or its owner. The allowlist here
+  is scoped to `pods` and exactly three labels Coder workspace pods carry (`app.kubernetes.io/part-of`,
+  `com.coder.user.username`, `com.coder.workspace.name`) - not `[*]`, which on a single Prometheus with 30d
+  retention and a ~50GiB cap would be a cardinality blowup for one label metric. `ci/test/infra-observability`
+  asserts this against a fixture pod carrying the same three labels, since a config that reconciled cleanly
+  says nothing about which labels, if any, actually made it into the allowlist.
 - **Any module can ship its own Loki recording (or alerting) rules - the same self-service pattern as Grafana
   dashboards, just for LogQL instead of dashboard JSON.** Add a `ConfigMap` in the module's own namespace
   labelled `loki_rule: "1"`, with one data key per rule file, each a standard Loki rule-group YAML document

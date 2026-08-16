@@ -241,6 +241,33 @@ spec:
         operator: Exists
 
       resources: {}
+
+      # kube-state-metrics emits NO kube_pod_labels series at all unless labels are
+      # explicitly allowlisted here - the subchart's own default is `[]` (confirmed against
+      # kube-state-metrics 8.2.0, vendored by kube-prometheus-stack 88.3.0), so this key is
+      # additive, not a case of Helm's list-replace semantics discarding a chart default (see
+      # the postRenderers comment below for the regression that made that distinction
+      # necessary to state explicitly).
+      #
+      # Without this, cAdvisor container_* series for a Coder workspace pod carry only an
+      # opaque `pod` name (e.g. coder-<uuid>-...) - there is no label to join on to attribute
+      # CPU/memory to a workspace or its owner.
+      #
+      # Scoped to `pods` only, and to exactly the three labels the workspace-attribution join
+      # needs - not a blanket `[*]`, which on a single Prometheus with 30d retention and a
+      # ~50GiB cap would be a cardinality blowup:
+      #   - app.kubernetes.io/part-of - "coder-workspace" for every workspace pod (also
+      #     "coder" on the coderd control-plane pod, not allowlisted from `pods` here since
+      #     that's a Deployment-owned pod out of scope for this join - see PR description for
+      #     that as a follow-up).
+      #   - com.coder.user.username   - the workspace owner.
+      #   - com.coder.workspace.name  - the workspace itself.
+      # Deliberately excluded: com.coder.workspace.id/com.coder.user.id (UUIDs - the name/
+      # username above already identify the same thing for a human-readable dashboard) and
+      # pod-template-hash (churns on every rollout; not needed for this join and would only
+      # add rollout-correlated label noise to a series that already exists once per pod).
+      metricLabelsAllowlist:
+      - pods=[app.kubernetes.io/part-of,com.coder.user.username,com.coder.workspace.name]
     # -------------------------------------------------------------------------------------------------------------
 
   # Widens node-exporter's --collector.vmstat.fields regex via a postRenderer append patch

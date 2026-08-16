@@ -1,0 +1,45 @@
+---
+# Fixture for the kube-state-metrics `metricLabelsAllowlist` assertion in this suite.
+#
+# Nothing else in ci/test/ runs a pod carrying Coder's workspace-attribution labels - this
+# repo's chainsaw cluster never runs actual Coder workspaces. Without a pod like this one,
+# a query for `kube_pod_labels{label_com_coder_workspace_name!="",...}` would pass or fail
+# on whichever unrelated pods happen to be in the cluster, which proves nothing about the
+# allowlist config itself. This is the known-good input side: a pod whose exact label set
+# is known ahead of time, so the resulting kube_pod_labels series can be asserted rather
+# than eyeballed.
+#
+# The three labels mirror exactly what a real Coder workspace pod carries (see
+# templates/kubernetes/homelab-workspace in the coder/coder repo) and exactly what
+# ../../infrastructure/subsystems/observability-core/kube-prometheus-stack's
+# metricLabelsAllowlist allows through for `pods`. A typo or dropped entry on either side
+# makes this fixture's kube_pod_labels series either not exist or not carry the expected
+# label_* value - both of which the assertion catches, neither of which "the HelmRelease
+# reconciled" would.
+#
+# A bare Pod, not a Deployment: kube-state-metrics reports kube_pod_labels from the API
+# object itself, not from container readiness, so nothing here needs to actually run
+# successfully - it only needs to exist. The image is the same digest ../logspewer.yaml
+# already pulls in this suite, so this fixture adds no extra pull.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: coder-label-fixture
+  namespace: default
+  labels:
+    app.kubernetes.io/part-of: coder-workspace
+    com.coder.user.username: chainsaw
+    com.coder.workspace.name: chainsaw-fixture
+spec:
+  containers:
+  - name: sleeper
+    image: busybox@sha256:dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616
+    command:
+    - sleep
+    - "3600"
+    resources:
+      requests:
+        cpu: 10m
+        memory: 16Mi
+      limits:
+        memory: 32Mi
