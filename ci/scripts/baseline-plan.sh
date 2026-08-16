@@ -35,8 +35,8 @@ selector="${1:-slot}"
 # would drop, and the sample would then be of a differently-configured run wearing the suite's
 # name. So the list is enforced below rather than merely consulted -- an unrecognised input is
 # a hard error, not a silent omission. That is the same failure the whole script exists to
-# avoid, and it was live here once: `timeout` went uncarried, so the six suites declaring
-# `timeout: 25` were sampled at the reusable workflow's 15m default (#3732).
+# avoid, and it is not hypothetical -- an uncarried `timeout` sampled the six suites declaring
+# `timeout: 25` at the reusable workflow's 15m default instead (#3732).
 #
 #   carried   -> reaches the baseline job, so the sample is run as the suite is
 #   overridden -> the baseline sets its own value on purpose

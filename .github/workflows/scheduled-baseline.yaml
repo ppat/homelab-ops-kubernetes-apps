@@ -116,8 +116,8 @@ jobs:
       # declares no ceiling has no other way to land on the upstream one. Re-read it when
       # Renovate bumps that sha -- the two must agree, and nothing else checks them.
       #
-      # Suites that DO declare a ceiling are read from their own test-*.yaml by the planner.
-      # Six declare 25; before #3732 that value was dropped here and they were sampled at 15,
-      # so the instrument counted ceiling kills the suite itself would never have had -- a
-      # failure rate biased high, in exactly the 15-25m band it exists to measure.
+      # Suites that DO declare a ceiling have it read from their own test-*.yaml by the
+      # planner; six declare 25. Carrying it is what keeps the sample honest: a baseline job
+      # killed at a ceiling its suite does not use is a failure the suite would never have
+      # had, biasing the rate high in exactly the 15-25m band this instrument measures (#3732).
       timeout: ${{ matrix.timeout || 15 }}
