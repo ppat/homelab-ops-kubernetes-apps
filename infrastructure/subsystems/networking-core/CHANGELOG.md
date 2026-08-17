@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.12.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.12.2...infra-networking-core-v0.12.3) (2026-08-17)
+
+
+### ✨ Features
+
+* **infra-networking-core:** update traefik (41.1.1 -&gt; 41.2.0) ([#3671](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3671)) ([b82eda1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b82eda133356e5ea2f33d9440c2a70ed8f9d3ff5))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* shorten spec.interval on the six HelmReleases that declare dependsOn ([#3686](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3686)) ([76b1812](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/76b1812955b9828911cb5c18f624e093ec4768cb))
+
 ## [0.12.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.12.1...infra-networking-core-v0.12.2) (2026-08-07)
 
 
