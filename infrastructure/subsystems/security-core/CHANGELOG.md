@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.2.10...infra-security-core-v0.2.11) (2026-08-17)
+
+
+### ✨ Features
+
+* **infra-security-core:** update external-secrets (2.8.0 -&gt; 2.9.0) ([#3683](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3683)) ([57ba43b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/57ba43bc579f9734b9cb6c9cc57eb20304f074f4))
+* **infra-security-core:** update policy-reporter (3.8.1 -&gt; 3.9.1) ([#3511](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3511)) ([6c9c1be](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6c9c1becccce5255db65ea9846ca3322237afdd9))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* shorten spec.interval on the six HelmReleases that declare dependsOn ([#3686](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3686)) ([76b1812](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/76b1812955b9828911cb5c18f624e093ec4768cb))
+
 ## [0.2.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.2.9...infra-security-core-v0.2.10) (2026-07-30)
 
 
