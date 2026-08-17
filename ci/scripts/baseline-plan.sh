@@ -111,7 +111,11 @@ for wf in "${WORKFLOW_DIR}"/test-*.yaml; do
 
   topology="$(basename "${kind_config}" .yaml | sed 's/^kind-cluster-//')"
   suites+=("${suite}")
-  rows+=("${suite}"$'\t'"${topology}"$'\t'"${test_path}"$'\t'"${chainsaw_config}"$'\t'"${kind_config}"$'\t'"${timeout}")
+  # The workflow this row came from is carried so that one thing, not two, knows which suite a
+  # given test-*.yaml is. Nothing in the matrix consumes it; ci/scripts/baseline-harvest.sh does,
+  # to name the suite behind a job called "test-infrastructure-storage / test" -- a run's own job
+  # name gives the workflow, never the suite, and the two do not agree.
+  rows+=("${suite}"$'\t'"${topology}"$'\t'"${test_path}"$'\t'"${chainsaw_config}"$'\t'"${kind_config}"$'\t'"${timeout}"$'\t'"$(basename "${wf}")")
 done
 
 if [[ ${#suites[@]} -eq 0 ]]; then
@@ -190,7 +194,7 @@ esac
 } | jq -R -s -c '
   {include: (
     split("\n") | map(select(length > 0)) | map(split("\t")) | map(
-      {suite: .[0], topology: .[1], test_path: .[2], chainsaw_config: .[3], kind_config: .[4]}
+      {suite: .[0], topology: .[1], test_path: .[2], chainsaw_config: .[3], kind_config: .[4], workflow: .[6]}
       # The key is omitted, not set to null or 0, when the suite declares no timeout: the
       # caller falls back only on an absent value, and an emitted 0 would be a valid number
       # that silently becomes a job with no time to run at all.
