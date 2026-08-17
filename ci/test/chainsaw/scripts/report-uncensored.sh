@@ -100,8 +100,19 @@ BOUND="${1:-240}"
 #   - 60s reserve for teardown and log upload
 # so what is left is 900 - 90 - <chainsaw elapsed> - 60. Clamping to that turns "would this
 # push a job over its timeout?" from a claim about today's config into arithmetic the run does
-# for itself. Assumes the 15m default even on the six 25m suites: being conservative there
-# costs measurement range only on the suites that have the most headroom to spare.
+# for itself.
+#
+# The 900 is hardcoded and assumes the 15m default even on the six 25m suites, and the known
+# loss from that is apps-ai. Not "the suites with headroom to spare" -- the reverse. apps-ai
+# is a 25m suite BECAUSE it is the one that actually hit the ceiling (2 kills at 915s, see
+# below), it carries the heaviest images and the longest real waits, and its normal chainsaw
+# phase is long enough that this clamp will cut the watch toward `no-wall-clock-left` on
+# exactly the suite whose uncensored tails matter most. The instrument built to fight
+# censoring carries a censor aimed at its most important subject.
+#
+# Fixing the number needs the suite's own `timeout-minutes`, which the runner does not expose:
+# one `env:` line in the cross-repo `chainsaw-test.yaml`. Until that lands the clamp is safe
+# but under-measures apps-ai, and that is a known, recorded loss rather than a conservatism.
 #
 # If T0 is unreadable the constant stands alone -- it is already safe against every one of the
 # 305 failing jobs sampled over 30 days (first breach at 397s), so the clamp is a safety net
