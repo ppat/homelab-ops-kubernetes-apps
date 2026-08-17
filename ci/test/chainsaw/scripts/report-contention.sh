@@ -2,7 +2,7 @@
 # Per-run contention proxy. Emits one grep-able line:
 #
 #   CONTENTION <phase> nproc=<n> loadavg=<1m>,<5m>,<15m> calib_ms=<n> net_mbps=<n>
-#              fsync_us=<n> uptime_s=<n> elapsed_s=<n>
+#              fsync_us=<n> uptime_s=<n> elapsed_s=<n> cpu_model=<s> cpu_mhz=<n>
 #
 # Why this exists: a chainsaw run cannot currently say whether it was contended, so any
 # comparison between two runs has to be made by dispatching both arms at the same instant
@@ -26,6 +26,18 @@
 #             across runs on the same runner image -- a relative index, not a benchmark.
 #   net_mbps  the axis the rig showed does matter. Image pulls are the runs' dominant network
 #             cost and they are what a shaped link starves.
+#   cpu_model the runner's host CPU, normalised space-free. NOT a contention axis -- it is the
+#             only field on this line that says whether two runs are on comparable hardware at
+#             all. Every other reading here describes a condition that varies run to run; this
+#             one describes the machine. A before/after that spans a runner-fleet hardware
+#             change is invalid, and without this nothing in the grammar could detect that.
+#             It matters most at long horizons, which is exactly when nobody remembers what the
+#             fleet looked like: the archive of these lines is read months later, by which point
+#             "was this the same kind of box?" is unanswerable from anything else.
+#   cpu_mhz   a spot frequency reading, not an identity. On a shared virtualised host it moves
+#             with scaling and neighbours, so treat it as a weak condition signal and use
+#             cpu_model for comparability. Recorded because it is free and cannot be recovered
+#             later.
 #   fsync_us  never tested by anything, and the leading untested candidate for the unexplained
 #             BIMODALITY of the prerequisite phase (fast 20-26s vs slow 75-97s, zero
 #             intermediates across 78 runs). etcd commits are fsync-bound and runner disks have
@@ -61,6 +73,24 @@ if [[ -r "${T0_FILE}" && "${now}" != "0" ]]; then
 fi
 
 nproc_n=$(nproc 2>/dev/null || echo "?")
+
+# Space-free by construction, and that is a hard requirement rather than tidiness: both readers
+# of this grammar extract with a `key=[^ ]*` match (baseline-harvest.sh's field(), and the
+# ci-diagnostics ingester's key=value regex), so a raw /proc/cpuinfo "model name" -- which
+# contains spaces, and (R)/(TM) marks -- would silently truncate at the first space and record
+# a useless prefix. The substitutions strip the trademark marks and the redundant "CPU"/"@",
+# then collapse whitespace to underscores:
+#   "Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz" -> Intel_Xeon_Platinum_8370C_2.80GHz
+#   "AMD EPYC 7763 64-Core Processor"               -> AMD_EPYC_7763_64-Core_Processor
+cpu_model="?"
+cpu_mhz="?"
+if [[ -r /proc/cpuinfo ]]; then
+  cpu_model=$(awk -F': ' '/^model name/ { print $2; exit }' /proc/cpuinfo 2>/dev/null \
+    | sed -e 's/([RTM][MR]*)//g' -e 's/ CPU//' -e 's/@ //' -e 's/^ *//' -e 's/ *$//' -e 's/  */_/g')
+  [[ -z "${cpu_model}" ]] && cpu_model="?"
+  cpu_mhz=$(awk -F': ' '/^cpu MHz/ { printf "%.0f", $2; exit }' /proc/cpuinfo 2>/dev/null || echo "?")
+  [[ -z "${cpu_mhz}" ]] && cpu_mhz="?"
+fi
 uptime_s=$(cut -d' ' -f1 /proc/uptime 2>/dev/null || echo "?")
 if [[ -r /proc/loadavg ]]; then
   read -r l1 l5 l15 _ < /proc/loadavg
@@ -115,8 +145,12 @@ if command -v curl >/dev/null 2>&1; then
   fi
 fi
 
-line=$(printf 'CONTENTION %-5s nproc=%s loadavg=%s calib_ms=%s net_mbps=%s fsync_us=%s uptime_s=%s elapsed_s=%s' \
-  "${phase}" "${nproc_n}" "${load}" "${calib_ms}" "${net_mbps}" "${fsync_us}" "${uptime_s}" "${elapsed}")
+# Appended rather than inserted. Both readers extract by key, not position (harvest's field()
+# matches `key=[^ ]*`), so order is free -- but appending keeps every historical line a strict
+# prefix of every new one, which is one less thing for a future reader to reason about.
+line=$(printf 'CONTENTION %-5s nproc=%s loadavg=%s calib_ms=%s net_mbps=%s fsync_us=%s uptime_s=%s elapsed_s=%s cpu_model=%s cpu_mhz=%s' \
+  "${phase}" "${nproc_n}" "${load}" "${calib_ms}" "${net_mbps}" "${fsync_us}" "${uptime_s}" "${elapsed}" \
+  "${cpu_model}" "${cpu_mhz}")
 echo "${line}"
 
 # Also to the job summary when running under Actions, so a run's conditions are readable from
