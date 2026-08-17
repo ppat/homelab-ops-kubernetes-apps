@@ -323,6 +323,18 @@ script is what keeps these lines past the 90 days their job logs last, and it ma
 allowlist — an unlisted prefix does not error, it simply never arrives, and the omission is
 invisible until someone goes looking for data that was never kept.
 
+**That allowlist now has a second addressee outside this repo**, with the same failure mode.
+The homelab cluster runs a `ci-diagnostics` CronJob
+(`clusters/homelab/services/ci-diagnostics/` in `homelab-ops-kubernetes-clusters`) that reads these
+same job logs through the Actions API and keeps the lines in Loki for a year — well past the
+harvest artifact's own 90 days. It is a **sibling reader of this grammar, not a consumer of the
+harvester**: the two share the published table above and nothing else.
+
+Nothing here depends on it or needs to know it exists — it pulls, CI never pushes, there is no
+inbound path and no CI-side secret, and its absence cannot fail anything in this repo. The only
+consequence of forgetting it is the one above: a prefix added here and not there is simply never
+kept.
+
 ### Say which duration you mean
 
 Three measures nest — **prerequisite ⊂ chainsaw ⊂ job** — and they differ by enough to reverse a
