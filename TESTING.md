@@ -125,7 +125,18 @@ need is not in the object being asserted:
   *currently targets*, so it shrinks along with the regression - a dropped toleration passes
   at 2 == 2 with a node uncovered. `ci/test/chainsaw/scripts/daemonset-node-coverage.sh`
   compares it to the node count; apply it on multi-node suites whose DaemonSet is meant to
-  run everywhere.
+  run everywhere. **It requires a multi-node config, and the script now enforces that**:
+  kind removes the `node-role.kubernetes.io/control-plane:NoSchedule` taint when a cluster
+  has no worker nodes, so on the single-node config nothing repels an untolerating pod, the
+  comparison is `1 == 1` by construction, and the check could only ever pass. Measured on
+  kind 0.32.0 / `kindest/node:v1.36.1` - `.github/kind-cluster-single-node.yaml` produces a
+  node with **no taints at all**, and a DaemonSet with no tolerations covers it. The kind
+  config cannot put the taint back: kind runs `kubectl taint nodes --all
+  node-role.kubernetes.io/control-plane-` on any cluster with no workers, so a
+  `kubeadmConfigPatches` entry re-declaring that taint is removed anyway, and declaring a
+  different key instead makes `kind create cluster` fail outright. **A suite that wants this
+  check needs a worker node in its config** - two nodes is enough - which is the cost to
+  weigh before consolidating a suite that uses it onto one node.
 - **Service to pod wiring.** `service-clusterip-ready.yaml` cannot go red for any live
   ClusterIP Service - it is an existence check. Where a Service actually resolving is part
   of what the suite claims to prove, add `service-endpoints-ready.yaml`.
