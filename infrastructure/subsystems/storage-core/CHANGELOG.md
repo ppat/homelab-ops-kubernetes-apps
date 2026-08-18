@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.7.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.6.0...infra-storage-core-v0.7.0) (2026-08-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-storage-core:** object_store:disk_amplification_ratio is no longer recorded. Anything querying it must move to object_store:disk_used_bytes.
+
+### 🛠 Improvements
+
+* **infra-storage-core:** note first-issuance behavior of the apex+wildcard garage-web Certificate ([#3688](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3688)) ([39be695](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/39be695bfe3159c4164c0e73111f476bca663b95)), closes [#3611](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3611)
+
+
+### ✨ Features
+
+* **infra-storage-core:** re-base object-store disk KPI on raw used bytes per engine ([#3760](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3760)) ([7576fe2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7576fe23ea45d168bee58b920bd1fc04d2e43136)), closes [#3611](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3611)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** correct the recorded justification for the object-store disk KPI ([#3762](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3762)) ([79d1e04](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/79d1e043cc8338ac32adc908cfa6d282f670c67e)), closes [#3611](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3611)
+
 ## [0.6.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.5.1...infra-storage-core-v0.6.0) (2026-08-15)
 
 
