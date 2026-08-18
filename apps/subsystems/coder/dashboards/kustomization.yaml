@@ -1,0 +1,41 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: coder
+
+# Deliberately its own kustomization rather than a configMapGenerator entry in
+# ../kustomization.yaml: generatorOptions below is file-global, so in the parent it
+# would label every future generated ConfigMap in this module as a dashboard for the
+# Grafana sidecar to choke on, and strip the name-suffix hash from any that needs it.
+# Same reasoning as storage-core/garage/dashboards and observability-core/alloy/dashboards.
+configMapGenerator:
+- name: dashboard-coder-workspace-memory
+  files:
+  - coder-workspace-memory.json
+
+generatorOptions:
+  # Flux prune is disabled cluster-wide, so a content-hashed name would strand the
+  # previous ConfigMap as an orphan on every dashboard edit -- and the sidecar would
+  # then serve both copies under the same dashboard uid. A stable name is also what
+  # lets the chainsaw suite assert this ConfigMap by name
+  # (ci/test/apps-coder/validate-coder-metrics.yaml); a mislabelled dashboard fails
+  # silently by simply never appearing in Grafana.
+  disableNameSuffixHash: true
+  labels:
+    # Watched by the Grafana chart's dashboard sidecar
+    # (infrastructure/subsystems/observability-core/grafana/helm-release-grafana.yaml:
+    # sidecar.dashboards label/labelValue, searchNamespace ALL -- so this ConfigMap is
+    # picked up from the coder namespace without needing to live alongside Grafana).
+    grafana_dashboard: "1"
+  annotations:
+    # Consumed by that same sidecar's folderAnnotation (paired with
+    # provider.foldersFromFilesStructure, which is enabled); files this under a "Coder"
+    # folder rather than dumping it at the Grafana root.
+    grafana_folder: Coder
+    # Mandatory, not defensive. Flux's postBuild substitution expands bare $name as well
+    # as ${name}, and this dashboard is full of bare $datasource, $logs, $namespace,
+    # $workspace, $__rate_interval, $__range and $__interval references -- without this
+    # annotation every one of them would be substituted away to an empty string and the
+    # dashboard would load cleanly with every panel silently unconfigured.
+    kustomize.toolkit.fluxcd.io/substitute: disabled

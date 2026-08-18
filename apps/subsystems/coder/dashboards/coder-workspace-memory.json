@@ -1,0 +1,2286 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Whether a Coder workspace is in trouble, and if so why -- built to contradict the stock memory reading rather than reproduce it.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "panels": [],
+      "title": "Is this workspace in trouble right now?",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "How many workspace containers cAdvisor is returning right now, before any attribution join and before the Workspace filter.\n\nRead this first. Every other panel on this dashboard renders empty when there is nothing to scrape, and an empty dashboard looks exactly like a healthy, idle workspace. NONE is the only thing that tells the two apart: it means either no workspace is running, or the kubelet scrape has stopped.\n\nThis is deliberately the raw series count, not a count of workspaces: it does not depend on the recording rule, on the workload naming convention, or on the Workspace variable, so it cannot be blanked by any of them.\n\nIgnores the Workspace variable, so it stays trustworthy however the rest of the dashboard is filtered.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "NONE"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "count(container_memory_rss{namespace=\"$namespace\", container=\"workspace\"}) or vector(0)",
+          "instant": true,
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Workspace containers scraped",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "Age of the most recent workspace-container sample, looked back over 6 hours.\n\nThe subquery is what makes this usable: an instant query alone cannot see past Prometheus' 5-minute staleness window, so a scrape that stopped an hour ago would read 'no data' rather than 'one hour stale'. Anything above a couple of minutes means the cAdvisor scrape is degraded and every timeseries below is showing you history, not now.\n\n'no samples in 6h' next to a NONE on the tile to the left means the workspace has been gone for at least 6 hours. 'no samples in 6h' next to a non-zero count is contradictory and means something is wrong with the scrape target itself.\n\nIgnores the Workspace variable, so it stays trustworthy however the rest of the dashboard is filtered.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "noValue": "no samples in 6h",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 120
+              },
+              {
+                "color": "red",
+                "value": 600
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "time() - max(max_over_time(timestamp(container_memory_rss{namespace=\"$namespace\", container=\"workspace\"})[6h:1m]))",
+          "instant": true,
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Newest sample age",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "Cluster nodes minus kubelet cAdvisor targets that are currently up. Should be 0.\n\nNon-zero means a node's cAdvisor endpoint is failing, so a workspace scheduled there is invisible to this dashboard even though it is running. That distinguishes 'the workspace stopped' from 'we stopped being able to see it', which the two tiles to the left cannot tell apart on their own.\n\nDeliberately *not* `min(up{...})`, which would be the obvious form and is unusable here: this cluster's kubelet ServiceMonitor carries a stale target for a node that no longer exists, down 100% of the time, so `min` reads DOWN forever and the tile becomes something a reader learns to ignore. Counting *healthy targets against real nodes* ignores a target that is never up and still goes red the moment a real node stops reporting.\n\nIgnores the Workspace variable, so it stays trustworthy however the rest of the dashboard is filtered.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "(count(kube_node_info) or vector(0))\n-\n(count(up{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\"} == 1) or vector(0))",
+          "instant": true,
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Nodes not reporting cAdvisor",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "Workspace containers cAdvisor is scraping that the `workload` attribution join does not reach. Should always be 0.\n\nThis is the panel that falsifies the rest of the dashboard. Every per-workspace query here multiplies a cAdvisor series against the `namespace_workload_pod:kube_pod_owner:relabel` recording rule; a pod the rule has not caught up with yet -- it evaluates on its own interval, downstream of kube-state-metrics -- silently drops out of the product rather than erroring. A workspace Deployment named outside the `coder-.+` pattern drops out the same way. Either failure looks like a healthy, quiet workspace everywhere else.\n\nNon-zero for a minute after a workspace starts is the recording rule catching up. Non-zero persistently means a running workspace is missing from every panel below.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "(count(container_memory_rss{namespace=\"$namespace\", container=\"workspace\"}) or vector(0))\n-\n(count(\ncontainer_memory_rss{namespace=\"$namespace\", container=\"workspace\"}\nand on (namespace, pod)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"coder-.+\"}\n) or vector(0))",
+          "instant": true,
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Containers this dashboard cannot attribute",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "How many running workspaces the Workspace variable is currently excluding.\n\nThe Workspace filter is the one control on this dashboard capable of hiding a real problem, so it displays its own size. A number here means there are workspaces you are not looking at; set Workspace to All to see them.\n\nCounts only workspaces that are actually being scraped, so it does not inflate with stopped ones.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "(count(count by (workload) (\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"coder-.+\"}\nand on (namespace, pod)\ncontainer_memory_rss{namespace=\"$namespace\", container=\"workspace\"}\n)) or vector(0))\n-\n(count(count by (workload) (\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\nand on (namespace, pod)\ncontainer_memory_rss{namespace=\"$namespace\", container=\"workspace\"}\n)) or vector(0))",
+          "instant": true,
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Workspaces hidden by the Workspace filter",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "The honest headline number, and the one to act on. `container_memory_rss` (~ the cgroup's `anon`) against the container's memory limit from kube-state-metrics.\n\nThis is the fraction of the limit the kernel *cannot* take back under pressure. When it reaches 100% something in the container gets killed; the tile to the right will have been claiming trouble long before that, and will be wrong.\n\nIt is a proxy, not the true figure, and it under-counts. True unreclaimable memory is `anon + shmem + unevictable + slab_unreclaimable + kernel_stack + pagetables + sec_pagetables + percpu + sock`; cAdvisor exports only the first of those. Treat this as a floor on how full the workspace really is, not as a precise reading -- see MAINTAINER.md.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "noValue": "No workspace matched. Check the freshness tiles above before reading this as calm.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 60
+              },
+              {
+                "color": "orange",
+                "value": 75
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 5
+      },
+      "id": 7,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "100 * sum by (workload) (\ncontainer_memory_rss{namespace=\"$namespace\", container=\"workspace\"}\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)\n/\nsum by (workload) (\nkube_pod_container_resource_limits{namespace=\"$namespace\", container=\"workspace\", resource=\"memory\"}\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "instant": true,
+          "legendFormat": "{{workload}}",
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Unreclaimable memory -- % of limit",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "`container_memory_working_set_bytes` against the same limit. This is what `kubectl top`, Coder's own workspace tile and every stock Kubernetes memory dashboard show you -- and it is on this dashboard so you can watch it disagree with the tile on the left.\n\nWorking set counts page cache and reclaimable slab, which the kernel hands straight back the moment anything asks. On an idle workspace measured during this dashboard's design it read 97% of limit while genuinely unreclaimable memory was 23%; a live reading while the panels were being validated was 79% here against 28% on the left, the difference being 3.9 GB of page cache.\n\nA high reading here on its own is not a reason to do anything. It is a reason to look at the pressure row: full is not the same as suffering.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "noValue": "No workspace matched. Check the freshness tiles above before reading this as calm.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 5
+      },
+      "id": 8,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "100 * sum by (workload) (\ncontainer_memory_working_set_bytes{namespace=\"$namespace\", container=\"workspace\"}\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)\n/\nsum by (workload) (\nkube_pod_container_resource_limits{namespace=\"$namespace\", container=\"workspace\", resource=\"memory\"}\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "instant": true,
+          "legendFormat": "{{workload}}",
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Working set -- % of limit (the misleading number)",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "`container_pressure_memory_stalled_seconds_total` as a percentage of wall-clock time: the share of the last five minutes during which *every* runnable task in this cgroup was blocked waiting on memory.\n\nThis measures harm directly rather than inferring it from a level, and it is the discriminator the two tiles to the left cannot give you. At the limit and fine reads 0 here. At the limit and suffering does not.\n\nAnything sustained above zero means the workspace is spending real time doing nothing but reclaiming. A few percent is a workspace that feels sluggish; tens of percent is a workspace that is effectively stopped, whether or not anything is being killed.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "noValue": "No workspace matched. Check the freshness tiles above before reading this as calm.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "orange",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 20
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 5
+      },
+      "id": 9,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "100 * sum by (workload) (\nrate(container_pressure_memory_stalled_seconds_total{namespace=\"$namespace\", container=\"workspace\"}[$__rate_interval])\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "instant": true,
+          "legendFormat": "{{workload}}",
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Memory PSI -- % of the last 5 minutes fully stalled",
+      "type": "bargauge"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 11
+      },
+      "id": 10,
+      "panels": [],
+      "title": "How much genuine headroom is there, and how fast could it go?",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "The composition behind the two disagreeing tiles above, for every selected workspace.\n\n`unreclaimable` (RSS ~ anon) is what the kernel cannot take back. `page cache` is what it hands back on demand. `working set` is roughly the sum of the two and is what stock tooling reports. `limit` is the wall.\n\nRead the gap between `unreclaimable` and `working set`: that gap is the lie. A workspace whose working-set line is pinned near the limit while the unreclaimable line sits low is a workspace with plenty of room, doing a lot of file I/O.\n\nA `page cache` line that collapses sharply is the kernel reclaiming under pressure -- check the pressure row when you see it.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "noValue": "No workspace matched. Check the freshness tiles above before reading this as calm.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*limit"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*unreclaimable.*"
+            },
+            "properties": [
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum by (workload) (\ncontainer_memory_rss{namespace=\"$namespace\", container=\"workspace\"}\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "legendFormat": "{{workload}} unreclaimable (RSS)",
+          "queryType": "range",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum by (workload) (\ncontainer_memory_cache{namespace=\"$namespace\", container=\"workspace\"}\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "legendFormat": "{{workload}} page cache",
+          "queryType": "range",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum by (workload) (\ncontainer_memory_working_set_bytes{namespace=\"$namespace\", container=\"workspace\"}\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "legendFormat": "{{workload}} working set",
+          "queryType": "range",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum by (workload) (\nkube_pod_container_resource_limits{namespace=\"$namespace\", container=\"workspace\", resource=\"memory\"}\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "legendFormat": "{{workload}} limit",
+          "queryType": "range",
+          "range": true,
+          "refId": "D"
+        }
+      ],
+      "title": "Where the memory actually is",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "`limit - unreclaimable`: how many bytes a spike would have to allocate, right now, before something in this container is killed.\n\nThis is the quantity the OOM investigation actually cared about. Growth here is flat in steady state; what kills a workspace is a burst crossing this distance in seconds. Pair it with the fill-rate panel below -- headroom divided by fill rate is the runway in seconds, and the measured spikes crossed 8 GiB in as little as 43 seconds.\n\nBecause the numerator uses the RSS proxy, which under-counts, real headroom is somewhat *less* than this line shows. It is an optimistic bound.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "noValue": "No workspace matched. Check the freshness tiles above before reading this as calm.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum by (workload) (\nkube_pod_container_resource_limits{namespace=\"$namespace\", container=\"workspace\", resource=\"memory\"}\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)\n-\nsum by (workload) (\ncontainer_memory_rss{namespace=\"$namespace\", container=\"workspace\"}\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "legendFormat": "{{workload}}",
+          "queryType": "range",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Headroom before the limit",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "`deriv()` over a 5-minute window of the unreclaimable (RSS) series -- the slope, in bytes per second, signed.\n\nThis is the panel that separates a leak from a spike, and the investigation this dashboard came out of found spikes: steady-state slope is flat and hovers around zero, while the events that killed the workspace ran at 70-220 MB/s. A slow, persistent positive slope over hours is the other shape, and means something is genuinely leaking.\n\nNegative values are memory being returned, which is normal and not a signal. Note that `deriv` fits a line over the window, so a spike shorter than the window is flattened -- the stat to the right, which maxes over the range, is the better instrument for peaks.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "bytes/sec",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "noValue": "No workspace matched. Check the freshness tiles above before reading this as calm.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "binBps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 0,
+        "y": 21
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum by (workload) (\nderiv(container_memory_rss{namespace=\"$namespace\", container=\"workspace\"}[5m])\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "legendFormat": "{{workload}}",
+          "queryType": "range",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "How fast is unreclaimable memory moving?",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "The largest positive slope of unreclaimable memory anywhere in the dashboard's time range, across all selected workspaces.\n\nCompare it against the headroom panel: headroom / this figure is roughly how long the workspace would survive a repeat of its worst observed burst. Values seen during design were 70-220 MB/s, which crosses 8 GiB of headroom in well under two minutes.\n\nThe subquery samples at 5-minute steps, so this is a floor on the true peak, not the peak itself -- a burst shorter than one step is smeared across it.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "noValue": "No workspace matched.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10000000
+              },
+              {
+                "color": "orange",
+                "value": 50000000
+              },
+              {
+                "color": "red",
+                "value": 100000000
+              }
+            ]
+          },
+          "unit": "binBps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 21
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "max(max_over_time(\n(\nsum by (workload) (\nderiv(container_memory_rss{namespace=\"$namespace\", container=\"workspace\"}[5m])\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)\n)[$__range:5m]\n))",
+          "instant": true,
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Fastest fill observed in range",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 15,
+      "panels": [],
+      "title": "Is it suffering, or merely full?",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "Pressure Stall Information for this cgroup, as a percentage of wall-clock time.\n\n`some` is time during which at least one task was blocked on memory -- the workspace is doing reclaim work but still making progress. `full` is time during which nothing in the cgroup could run at all; that time is pure loss.\n\nThis row is why the level panels above are not enough. A workspace can sit at 95% of its limit with both lines flat at zero and be perfectly healthy -- that is page cache doing its job. The same 95% with `full` in the tens of percent is a workspace being destroyed by reclaim, and it will be killed shortly.\n\n`some` rising while `full` stays near zero is the early-warning shape: reclaim has started but is keeping up.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "noValue": "No workspace matched. Check the freshness tiles above before reading this as calm.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 30
+      },
+      "id": 16,
+      "options": {
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "100 * sum by (workload) (\nrate(container_pressure_memory_waiting_seconds_total{namespace=\"$namespace\", container=\"workspace\"}[$__rate_interval])\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "legendFormat": "{{workload}} some",
+          "queryType": "range",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "100 * sum by (workload) (\nrate(container_pressure_memory_stalled_seconds_total{namespace=\"$namespace\", container=\"workspace\"}[$__rate_interval])\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "legendFormat": "{{workload}} full",
+          "queryType": "range",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Memory pressure inside the container (PSI)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "The same instrument applied to the other two resources, so a stall can be attributed rather than assumed to be memory.\n\nI/O pressure rising alongside memory pressure is the signature of thrashing: the kernel has evicted page cache it immediately needs back and is reading it off disk again. That combination is a memory problem wearing an I/O costume, and it is the state in which a workspace feels frozen without any single metric looking alarming.\n\nCPU pressure rising alone is contention, not a memory fault -- the workspace is competing for CPU, on this node or against its own quota.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "noValue": "No workspace matched. Check the freshness tiles above before reading this as calm.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 30
+      },
+      "id": 17,
+      "options": {
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "100 * sum by (workload) (\nrate(container_pressure_io_waiting_seconds_total{namespace=\"$namespace\", container=\"workspace\"}[$__rate_interval])\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "legendFormat": "{{workload}} io some",
+          "queryType": "range",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "100 * sum by (workload) (\nrate(container_pressure_io_stalled_seconds_total{namespace=\"$namespace\", container=\"workspace\"}[$__rate_interval])\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "legendFormat": "{{workload}} io full",
+          "queryType": "range",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "100 * sum by (workload) (\nrate(container_pressure_cpu_waiting_seconds_total{namespace=\"$namespace\", container=\"workspace\"}[$__rate_interval])\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "legendFormat": "{{workload}} cpu some",
+          "queryType": "range",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "CPU and I/O pressure inside the container (PSI)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "Pages scanned per second by the two reclaim paths, per node. Node-scoped, so this panel deliberately ignores the Workspace variable.\n\n`kswapd` is the background daemon reclaiming ahead of demand; that is the healthy path and a non-zero rate there is unremarkable. `direct` is reclaim running synchronously inside the thread that asked for the memory -- the allocation is stopped dead until it finishes. Direct reclaim is the node telling you it has run out of slack.\n\nThese fields are not collected by node-exporter's defaults; they exist here only because `--collector.vmstat.fields` was widened for exactly this question. The measurement that started the investigation was `pgscan_direct` at 78.7M against `pgscan_kswapd` at 29.4k over one window -- a ratio of thousands to one, and invisible before.\n\nUse this to decide whether the harm is coming from the cgroup or from the node underneath it. A workspace stalling with its own PSI flat, while direct reclaim is running here, is a victim rather than a cause.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "pages/sec",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "noValue": "No node reclaim data. node_vmstat_pgscan_* requires the widened --collector.vmstat.fields regex; see MAINTAINER.md.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*direct"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*PSI full %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 38
+      },
+      "id": 18,
+      "options": {
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum by (instance) (rate(node_vmstat_pgscan_direct[$__rate_interval]))",
+          "legendFormat": "{{instance}} direct",
+          "queryType": "range",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum by (instance) (rate(node_vmstat_pgscan_kswapd[$__rate_interval]))",
+          "legendFormat": "{{instance}} kswapd",
+          "queryType": "range",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum by (instance) (rate(node_pressure_memory_stalled_seconds_total[$__rate_interval])) * 100",
+          "legendFormat": "{{instance}} node memory PSI full %",
+          "queryType": "range",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Node-level reclaim: direct vs background",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 45
+      },
+      "id": 19,
+      "panels": [],
+      "title": "What is the standing population doing over days?",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "`container_processes` and `container_threads` for the selected workspaces.\n\nA workspace is not one program. Every editor server, language server, agent and MCP server that gets started stays started, and each one holds memory for as long as the workspace lives -- one MCP server measured during the investigation held 1.66 GB on its own. That standing population is what erodes the headroom a spike has to cross, so a step change here that never comes back down is a real finding even when memory looks fine today.\n\nProcess count is the leading indicator; thread count mostly tracks it and is here to distinguish 'more programs' from 'one program got busier'.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "noValue": "No workspace matched. Check the freshness tiles above before reading this as calm.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 46
+      },
+      "id": 20,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum by (workload) (\ncontainer_processes{namespace=\"$namespace\", container=\"workspace\"}\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "legendFormat": "{{workload}} processes",
+          "queryType": "range",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum by (workload) (\ncontainer_threads{namespace=\"$namespace\", container=\"workspace\"}\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "legendFormat": "{{workload}} threads",
+          "queryType": "range",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Processes and threads",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "The same process count, pinned to a 7-day window regardless of the time picker.\n\nThe question this answers cannot be asked at the dashboard's default range: does the workspace accumulate? A sawtooth that resets on each restart is normal. A staircase that only ever goes up is the shape that turns a survivable spike into a fatal one weeks later.\n\nThis panel ignores the time picker on purpose. Zooming into an incident elsewhere on this dashboard leaves it showing 7 days, which is the point -- a long horizon is the one thing the rest of the dashboard cannot give you.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "noValue": "No workspace matched in the last 7 days.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 46
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum by (workload) (\ncontainer_processes{namespace=\"$namespace\", container=\"workspace\"}\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "legendFormat": "{{workload}}",
+          "queryType": "range",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "7d",
+      "title": "Standing population over 7 days",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "Unreclaimable (RSS) memory pinned to 7 days, for the leak-versus-spike question at the timescale that can actually answer it.\n\nFlat with vertical excursions is the spike pathology: nothing is leaking, something occasionally allocates very fast. A baseline that ratchets upward between restarts is a leak, and is a different fix.\n\nRead the *floor* of this line rather than its peaks. The floor is the standing cost of the workspace; the peaks are the events.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "noValue": "No workspace matched in the last 7 days.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 54
+      },
+      "id": 22,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum by (workload) (\ncontainer_memory_rss{namespace=\"$namespace\", container=\"workspace\"}\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "legendFormat": "{{workload}}",
+          "queryType": "range",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "7d",
+      "title": "Unreclaimable memory over 7 days",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "CPU seconds consumed per second -- i.e. cores in use -- for the selected workspaces.\n\nHere to correlate rather than to diagnose: the allocation bursts that killed this workspace were CPU-heavy, so a memory spike with no CPU alongside it is a different event from one with a core pinned. It is also the cheapest way to tell an idle workspace from a working one when reading the memory panels above.\n\nThis dashboard has no CPU-limit context because the workspace template sets no CPU limit; throttling metrics are dropped by the k3s ServiceMonitor in any case. See MAINTAINER.md.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "cores",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "noValue": "No workspace matched. Check the freshness tiles above before reading this as calm.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 54
+      },
+      "id": 23,
+      "options": {
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum by (workload) (\nrate(container_cpu_usage_seconds_total{namespace=\"$namespace\", container=\"workspace\"}[$__rate_interval])\n* on (namespace, pod) group_left(workload)\nnamespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}\n)",
+          "legendFormat": "{{workload}}",
+          "queryType": "range",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "CPU usage",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 61
+      },
+      "id": 24,
+      "panels": [],
+      "title": "Did something die, and what was it?",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "$logs"
+      },
+      "description": "Kernel `oom-kill` lines with `constraint=CONSTRAINT_MEMCG` -- a container hitting its own memory limit, as opposed to the node running out.\n\n**This is the only remaining record that a container OOM happened.** `singleProcessOOMKill: true` is set on every node in this cluster, which sets `memory.oom.group = 0`: a cgroup OOM now kills the single offending process instead of the whole cgroup. The container does not terminate, the pod never reports `OOMKilled`, the restart counter does not move, and `container_oom_events_total` reads 0 through confirmed kills. Nothing in Kubernetes notices. The kernel journal is it.\n\nCluster-wide and unfiltered -- see the panel below for why it cannot be narrowed to a workspace.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 62
+      },
+      "id": 25,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "$logs"
+          },
+          "editorMode": "code",
+          "expr": "sum(count_over_time(\n{job=\"systemd-journal\", syslog_identifier=\"kernel\"} |= \"oom-kill:constraint=CONSTRAINT_MEMCG\"\n[$__range])) or vector(0)",
+          "instant": true,
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Cgroup OOM kills in range",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "$logs"
+      },
+      "description": "One row per victim process name, one block per bucket in which it was killed.\n\nThe `task=` field names the process the kernel chose, which is the finding: the investigation that produced this dashboard expected the editor server and found agent processes instead. A name you do not recognise is from another namespace.\n\n**Deliberately not filtered by the Workspace variable, and it cannot be.** The kernel journal carries no namespace or pod name -- only a cgroup path containing the pod UID and container ID. Grafana cannot join a Loki stream against the Prometheus recording rule that resolves those to a workload, and the one filter that would work (container ID) can only match containers that still exist, so it would silently hide exactly the historical kills you came here for. A little cluster-wide noise is the honest trade; use the log panel below to read the cgroup and correlate by hand.\n\nStatus history rather than a state timeline: OOM kills are sparse, Loki returns gaps rather than zeros, and a state timeline would stretch a single kill into an assertion that the state held for hours.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "semi-dark-red",
+            "mode": "fixed"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1
+          },
+          "mappings": [],
+          "noValue": "No cgroup OOM kills in this range. This is the normal, healthy state -- and unlike the panels above it cannot be blanked by a filter.",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 6,
+        "y": 62
+      },
+      "id": 26,
+      "maxDataPoints": 120,
+      "options": {
+        "colWidth": 0.9,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "$logs"
+          },
+          "editorMode": "code",
+          "expr": "sum by (victim) (count_over_time(\n{job=\"systemd-journal\", syslog_identifier=\"kernel\"} |= \"oom-kill:constraint=CONSTRAINT_MEMCG\"\n| pattern \"<_>,task=<victim>,pid=<_>,uid=<_>\"\n[$__interval]))",
+          "legendFormat": "{{victim}}",
+          "queryType": "range",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "OOM victims -- when was each killed?",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "order",
+          "options": {
+            "orderBy": [
+              {
+                "desc": false,
+                "type": "name"
+              }
+            ],
+            "orderByMode": "auto"
+          }
+        }
+      ],
+      "type": "status-history"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "$logs"
+      },
+      "description": "The raw kernel lines behind the two panels above.\n\nEach line carries `oom_memcg=` -- the cgroup path of the limit that was hit -- and `task_memcg=` -- the cgroup the victim was actually in. The pod UID appears in that path as `pod<uid>` with underscores where the Kubernetes UID has dashes, and the container ID as `cri-containerd-<id>`. That is how you attribute a kill to a workspace: take the UID, restore the dashes, and match it against `kube_pod_container_resource_limits{namespace=\"coder\"}`'s `uid` label in Explore.\n\n`uid=` is the Unix user of the victim, not a Kubernetes UID, and is not a reliable way to tell a workspace apart from anything else -- other workloads in this cluster run under the same numeric user.",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 70
+      },
+      "id": 27,
+      "options": {
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": true,
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "$logs"
+          },
+          "editorMode": "code",
+          "expr": "{job=\"systemd-journal\", syslog_identifier=\"kernel\"} |= \"oom-kill:constraint=CONSTRAINT_MEMCG\"",
+          "queryType": "range",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Kernel OOM lines",
+      "type": "logs"
+    }
+  ],
+  "preload": false,
+  "refresh": "1m",
+  "schemaVersion": 41,
+  "tags": [
+    "coder",
+    "workspaces",
+    "memory",
+    "apps-coder"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": "Prometheus",
+          "value": "prometheus"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Metrics datasource",
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "text": "Loki",
+          "value": "loki"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Logs datasource",
+        "multi": false,
+        "name": "logs",
+        "options": [],
+        "query": "loki",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "text": "coder",
+          "value": "coder"
+        },
+        "description": "The namespace this dashboard is about. A constant, not a filter: coderd and workspace pods share this namespace and every panel separates them on container=\"workspace\", which only holds here.",
+        "hide": 2,
+        "name": "namespace",
+        "query": "coder",
+        "skipUrlSync": false,
+        "type": "constant"
+      },
+      {
+        "allValue": "coder-.+",
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(namespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\"}, workload)",
+        "description": "Which workspace Deployments to show. The 'Containers this dashboard cannot attribute' and 'Workspaces hidden by the Workspace filter' tiles exist to keep this control honest.",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Workspace",
+        "multi": true,
+        "name": "workspace",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(namespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\"}, workload)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "/^coder-.+$/",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Coder Workspace Memory",
+  "uid": "coder-workspace-memory",
+  "version": 1,
+  "weekStart": ""
+}

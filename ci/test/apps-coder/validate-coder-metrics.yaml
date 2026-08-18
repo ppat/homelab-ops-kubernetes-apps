@@ -49,6 +49,28 @@ spec:
               app.kubernetes.io/component: metrics
           endpoints:
           - port: prometheus-http
+  # The Grafana dashboard sidecar discovers dashboards purely by label, so a typo in the
+  # label key/value -- or a lost annotation -- doesn't fail anything: the ConfigMap
+  # applies cleanly and the dashboard simply never appears in Grafana. Nothing else in
+  # this repo would catch that, which is why the label and both annotations are asserted
+  # literally here rather than just the ConfigMap's existence. Asserting the name
+  # unsuffixed also pins disableNameSuffixHash, which dashboards/kustomization.yaml
+  # depends on so that repeated edits don't strand orphaned ConfigMaps (Flux prune is
+  # disabled cluster-wide). Same assertion shape as
+  # ci/test/infra-storage/validate-garage.yaml.
+  - description: Assert configmap/dashboard-coder-workspace-memory is labelled for the Grafana dashboard sidecar
+    assert:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: dashboard-coder-workspace-memory
+          namespace: coder
+          labels:
+            grafana_dashboard: "1"
+          annotations:
+            grafana_folder: Coder
+            kustomize.toolkit.fluxcd.io/substitute: disabled
   catch:
   - describe:
       apiVersion: v1
@@ -64,6 +86,11 @@ spec:
       apiVersion: monitoring.coreos.com/v1
       kind: ServiceMonitor
       name: coder
+      namespace: coder
+  - describe:
+      apiVersion: v1
+      kind: ConfigMap
+      name: dashboard-coder-workspace-memory
       namespace: coder
   - events:
       namespace: coder
