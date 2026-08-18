@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.57](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.56...apps-coder-v0.0.57) (2026-08-18)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-coder:** scope workspace memory dashboard OOM row to $workspace ([#3757](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3757)) ([3384cc0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3384cc0864ab02dfbe8abaa7404b9435dd73ca13))
+
 ## [0.0.56](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.55...apps-coder-v0.0.56) (2026-08-18)
 
 
