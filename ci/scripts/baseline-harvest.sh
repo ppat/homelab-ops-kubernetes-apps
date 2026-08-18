@@ -455,6 +455,9 @@ cmd_summarize() {
       split(field($14, "loadavg"), b, ",")
       lav[key, w] = b[1]
       if (w == "e") elapsed[key] = field($14, "elapsed_s")
+      # Both boundaries carry it and it cannot change mid-job -- take whichever arrives first, so
+      # a run that died before emitting `end` still reports its host.
+      if (cpu[key] == "") cpu[key] = field($14, "cpu_model")
       next
     }
     $13 == "UNCENSORED-SUMMARY" {
@@ -485,6 +488,37 @@ cmd_summarize() {
       print sep
       for (i = 1; i <= nk; i++) { k = order[i]; if (rid[k] == own) { print line_for(k); nslot++ } }
       if (nslot == 0) print "| _none_ | | | | | | | | | | | |"
+
+      # Whether the rows above are on comparable hardware, which nothing else here can say. The
+      # runner fleet is heterogeneous: one slot has been observed running five jobs on THREE
+      # different CPU models, and `nproc` reads 4 on every one of them, so it reports "comparable"
+      # whatever the truth is. A reader comparing durations row-to-row is otherwise doing it blind.
+      #
+      # A footnote rather than a column, for two reasons: the model strings are long enough to
+      # wreck a 12-column table, and comparability is a property of the SLOT, not of any one row.
+      #
+      # The warning fires on distinct KNOWN models only. `cpu_model` cannot be backfilled and only
+      # began appearing in 2026-08, so a slot of older jobs is all-unknown -- reporting that as
+      # "not comparable" would cry wolf on every historical slot while saying nothing.
+      nhost = 0; unknown = 0
+      for (i = 1; i <= nk; i++) {
+        k = order[i]
+        if (rid[k] != own) continue
+        if (cpu[k] == "") { unknown++; continue }
+        if (!(cpu[k] in hostn)) hostorder[++nhost] = cpu[k]
+        hostn[cpu[k]]++
+      }
+      if (nslot > 0) {
+        hostline = ""
+        for (i = 1; i <= nhost; i++)
+          hostline = hostline (i > 1 ? ", " : "") "`" hostorder[i] "` x" hostn[hostorder[i]]
+        if (unknown > 0)
+          hostline = hostline (nhost > 0 ? ", " : "") "not recorded x" unknown
+        print ""
+        print "Host CPUs in this slot: " hostline "." \
+              (nhost > 1 ? " **Rows are not on comparable hardware** -- differences between them" \
+                           " carry a hardware term as well as a suite term." : "")
+      }
 
       for (i = 1; i <= nk; i++) {
         k = order[i]
