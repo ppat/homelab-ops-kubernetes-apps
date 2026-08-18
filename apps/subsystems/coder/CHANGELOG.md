@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.56](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.55...apps-coder-v0.0.56) (2026-08-18)
+
+
+### ✨ Features
+
+* **apps-coder:** add workspace memory dashboard ([#3755](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3755)) ([9403ab6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9403ab672003f864e3f32a3d18065205860a1a69))
+
 ## [0.0.55](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.54...apps-coder-v0.0.55) (2026-08-16)
 
 
