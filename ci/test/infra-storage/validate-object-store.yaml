@@ -3,13 +3,16 @@ apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: StepTemplate
 metadata:
   name: validate-object-store
-# Structural check only: kind has no MinIO usage data (no S3 traffic, no
-# kubelet_volume_stats_* backing a real PVC in the way production does), so
-# this cannot exercise the ratio's actual value - only that the Prometheus
-# Operator CRD accepted the resource as written.
+# Structural check only: kind has no object-store usage data (no S3 traffic, and
+# no kubelet_volume_stats_* backing these PVCs the way production does), so this
+# cannot exercise the recorded values - only that the Prometheus Operator CRD
+# accepted the resource as written. What it can still catch is the per-engine
+# pair going missing: the KPI is a MinIO-vs-Garage comparison, so an engine
+# label present on one side and absent on the other is the failure mode worth
+# asserting here.
 spec:
   try:
-  - description: Assert prometheusrule/object-store-disk-amplification loaded with its expected rule
+  - description: Assert prometheusrule/object-store-disk-amplification loaded with both engines' rules
     assert:
       resource:
         apiVersion: monitoring.coreos.com/v1
@@ -21,7 +24,12 @@ spec:
           groups:
           - name: object-store-disk-amplification
             rules:
-            - record: object_store:disk_amplification_ratio
+            - record: object_store:disk_used_bytes
+              labels:
+                engine: minio
+            - record: object_store:disk_used_bytes
+              labels:
+                engine: garage
 
   catch:
   - describe:

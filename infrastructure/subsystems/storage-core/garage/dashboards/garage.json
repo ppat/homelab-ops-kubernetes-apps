@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "Garage single-node object storage. Garage ships no admin UI, so this dashboard is the operator console: it is the only place bucket-store health, capacity and reclamation are visible.\n\nA panel reading \"No data\" here is not necessarily broken. Grafana cannot render custom empty-state text when a query returns no series at all, so a metric that has never been emitted looks identical to a failing panel. Where zero is the truthful reading, the query coalesces to an explicit zero line rather than relying on that text. Where zero would be a false claim -- an undefined ratio, or a recording rule that has not shipped yet -- the panel is deliberately left empty instead of asserting a zero. Each panel's description says which of the two it is, and the module README lists what Garage does not expose at all.",
+  "description": "Garage single-node object storage. Garage ships no admin UI, so this dashboard is the operator console: it is the only place bucket-store health, capacity and reclamation are visible.\n\nA panel reading \"No data\" here is not necessarily broken. Grafana cannot render custom empty-state text when a query returns no series at all, so a metric that has never been emitted looks identical to a failing panel. Where zero is the truthful reading, the query coalesces to an explicit zero line rather than relying on that text. Where zero would be a false claim -- an undefined ratio, or a series nothing has started emitting yet -- the panel is deliberately left empty instead of asserting a zero. Each panel's description says which of the two it is, and the module README lists what Garage does not expose at all.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -836,7 +836,7 @@
         "type": "prometheus",
         "uid": "$datasource"
       },
-      "description": "PROXY, not a direct measurement. Garage exposes no live-bytes series anywhere in its Prometheus surface -- no stored-bytes, no per-bucket usage -- so the consumed/live ratio PR #3648 builds for MinIO cannot be reproduced for Garage. What follows is the closest substitute the metric surface can support.\n\nBytes occupied on the data volume divided by block_rc_size, the number of blocks Garage's reference-count table says should exist on disk.\n\nThe denominator is deliberately blocks, not objects: only objects above 3072 bytes become data blocks at all, so dividing data bytes by the total object count would mostly measure the inline/block mix rather than amplification. Against block_rc_size the reading is direct -- what is on disk over what is supposed to be on disk.\n\nFlat means blocks are being deleted as their references go away. A rising curve means block files are outliving their reference counts: orphaned blocks, the data-volume half of \"retention stopped reclaiming\". Garage delays block GC by design (BLOCK_GC_DELAY), so a bump after a bulk delete that settles within minutes is expected; a monotonic climb is not.\n\nBlank while no blocks are referenced. Note both series here also include filesystem overhead, which dominates when the store is nearly empty.",
+      "description": "PROXY, not a direct measurement. Garage exposes no live-bytes series anywhere in its Prometheus surface -- no stored-bytes, no per-bucket usage -- so a consumed/live amplification ratio cannot be built for Garage at all. That is why the trial's headline KPI is raw bytes consumed per engine (the panel to the right) rather than a ratio. What follows is the closest substitute the metric surface can support for the reclamation question itself.\n\nBytes occupied on the data volume divided by block_rc_size, the number of blocks Garage's reference-count table says should exist on disk.\n\nThe denominator is deliberately blocks, not objects: only objects above 3072 bytes become data blocks at all, so dividing data bytes by the total object count would mostly measure the inline/block mix rather than amplification. Against block_rc_size the reading is direct -- what is on disk over what is supposed to be on disk.\n\nFlat means blocks are being deleted as their references go away. A rising curve means block files are outliving their reference counts: orphaned blocks, the data-volume half of \"retention stopped reclaiming\". Garage delays block GC by design (BLOCK_GC_DELAY), so a bump after a bulk delete that settles within minutes is expected; a monotonic climb is not.\n\nBlank while no blocks are referenced. Note both series here also include filesystem overhead, which dominates when the store is nearly empty.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -936,7 +936,7 @@
         "type": "prometheus",
         "uid": "$datasource"
       },
-      "description": "object_store:disk_amplification_ratio -- PR #3648's recording rule: the data volume's used bytes over MinIO's own crawler-reported live bytes. Reproduced live against production at 3.218x.\n\nThis is MinIO's number, on Garage's dashboard on purpose. It is the reference the two proxy panels to the left are approximating, and the 1.15x line is the threshold the 30-day trial on issue #3611 is scored against. Without it those curves have no scale.\n\nDeliberately NOT coalesced to zero, unlike the S3 panels. This one is empty because its recording rule has not shipped yet (#3648, open; the earlier #3641 was closed in its favour) -- and an amplification ratio rendered as 0 would assert that MinIO is amplifying nothing, which is false and is precisely the confidently-wrong reading this project keeps getting bitten by. Empty is the honest state; the title carries the reason, since Grafana will not render custom text for a query returning no series.\n\nDrop the title suffix once #3648 lands. There is no Garage twin of this rule, and #3648 documents why: the denominator does not exist in Garage's metric surface. Expect this panel to be retired with MinIO itself (#3644).",
+      "description": "object_store:disk_used_bytes -- the disk KPI for issue #3611's 30-day trial: raw bytes on disk per engine, taken from kubelet's own statfs read of each engine's PVCs, with no denominator.\n\nIt replaces the consumed/live amplification ratio this panel used to draw, which was removed rather than repaired. That ratio divided by minio_cluster_usage_total_bytes and called the result live bytes because that metric excludes delete markers -- but delete markers are zero-byte placeholders, so excluding them subtracts nothing, while the noncurrent versions they stand in front of are counted in full. The denominator was version-inclusive, not live, and already contained most of the accumulation it was supposed to measure. The ratio was also not computable for Garage at all -- Garage publishes no bucket or object byte-total series -- so it could only ever exist for one arm of a two-arm comparison.\n\nRead as a trend across the whole trial, never as a single reading. MinIO's figure is months of accumulated noncurrent versions; Garage's on day one is a fresh copy of the retained window and is trivially smaller for that reason alone, so a post-cutover snapshot flatters Garage for free. The question is whether Garage's curve stays flat while data is written and expired -- MinIO's did not.\n\nDeliberately not coalesced to zero. kubelet emits volume stats only for a PVC that a running pod has mounted, so the garage series is genuinely absent until Garage is running; an explicit 0 would assert that Garage is storing nothing, which is a different and false claim. Both series are summed per namespace, which counts each engine's whole footprint -- MinIO keeps data and metadata on one volume, Garage splits them across two. The minio series retires with the engine (#3644); the garage one is why this panel outlives the trial.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -972,7 +972,7 @@
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "dashed"
+              "mode": "off"
             }
           },
           "mappings": [],
@@ -982,15 +982,10 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 1.15
               }
             ]
           },
-          "unit": "none",
-          "decimals": 2,
+          "unit": "bytes",
           "min": 0
         },
         "overrides": []
@@ -1026,14 +1021,14 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "object_store:disk_amplification_ratio",
+          "expr": "object_store:disk_used_bytes",
           "range": true,
           "instant": false,
           "refId": "A",
           "legendFormat": "{{engine}}"
         }
       ],
-      "title": "MinIO disk amplification  (comparator -- needs #3648)",
+      "title": "Object store disk consumed by engine",
       "type": "timeseries"
     },
     {

@@ -1,47 +1,114 @@
 ---
 # Cross-engine, so it lives at this module's root rather than under minio/ or
-# garage/: it must keep working while MinIO is still the live store, and
-# isn't part of either engine's own lifecycle. Backs the disk-amplification
-# KPI tracked by homelab-ops-kubernetes-apps#3611 (a 30-day MinIO->Garage
-# object-store trial). No alert rules here by design - this estate leaves
-# AlertManager unwired until there's an AI triage path for it; this exists to
-# be graphed and queried, not to page anyone.
+# garage/: it has to keep working on both sides of the cutover - while MinIO is
+# still the live store and after Garage becomes it - and isn't part of either
+# engine's own lifecycle. Backs the disk-consumption KPI tracked by
+# homelab-ops-kubernetes-apps#3611 (a 30-day MinIO->Garage object-store trial).
+# No alert rules here by design - this estate leaves AlertManager unwired until
+# there's an AI triage path for it; this exists to be graphed and queried, not
+# to page anyone.
+#
+# This object and its rule group are still named "disk-amplification" after the
+# KPI they carry was re-based onto raw bytes (see the rules below). That is
+# deliberate, not a missed rename: Flux prune is disabled cluster-wide in this
+# estate, so renaming a PrometheusRule does not rename it in-cluster - it
+# creates a second object and abandons the first, which goes on evaluating the
+# rules it was last applied with. An orphan still publishing the defective
+# ratio is a worse outcome than a stale name. A rename is fine, but only as a
+# change that also deletes the old object by hand.
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   labels:
     release: kube-prometheus-stack
   name: object-store-disk-amplification
+  # Same prune reasoning as the name above, with a consequence attached: the
+  # `minio` namespace does not outlive this project. #3644 deletes it at
+  # decommission, and this object goes with it - including the engine="garage"
+  # series, which is the half that still matters afterwards. Moving it now
+  # would not relocate it either; it would strand the copy in `minio`. So it
+  # stays here, and relocating it (to `garage`, or to a namespace that outlives
+  # both engines) is a deliberate change that must delete this object by hand
+  # in the same commit - worth doing before #3644 runs, not during it.
   namespace: minio
 spec:
   groups:
   - name: object-store-disk-amplification
     rules:
-    # du(data_dir) / live bytes. Both halves are already scraped with no new
-    # exporter: kubelet_volume_stats_used_bytes is the kubelet's own statfs
-    # read of the PVC (same figure `du` on data_dir would show, since the PVC
-    # is dedicated to the object store), and minio_cluster_usage_total_bytes
-    # is MinIO's own data-usage-crawler total, which - unlike the PVC's raw
-    # disk usage - excludes delete markers (they are zero-byte placeholder
-    # objects), making it the "live bytes" denominator, not a filesystem fact.
-    # Confirmed against production on 2026-08-13: ~3.22x, matching the 3.2x
-    # MinIO measurement in issue #3611 almost exactly - this is the same
-    # defect that motivated the trial.
+    # Raw bytes on disk, one series per engine, no denominator. This replaces
+    # object_store:disk_amplification_ratio (PVC used bytes divided by
+    # minio_cluster_usage_total_bytes), which was removed rather than repaired,
+    # for two independent reasons.
     #
-    # "minio"/"minio-data" are this module's own fixed, non-parameterized
-    # identifiers - every cluster that deploys this module's MinIO submodule
-    # gets that exact namespace and PVC name (see minio/helm-release-minio.yaml).
+    # It was wrong. That denominator was justified here as the "live bytes"
+    # figure because it excludes delete markers. That is a non-sequitur:
+    # delete markers are zero-byte placeholders, so excluding them subtracts
+    # nothing at all. The bytes that make the denominator wrong are the
+    # noncurrent versions the delete markers stand in front of - the bucket is
+    # versioned, a plain Expiration rule writes a delete marker instead of
+    # removing an entry, and every superseded version stays on disk and stays
+    # counted by MinIO's data-usage crawler. Keep those two apart: excluding
+    # delete markers buys nothing, and the noncurrent versions were never
+    # excluded. The crawler total is therefore version-inclusive, not live -
+    # it already contains most of the accumulation it was supposed to be
+    # measured against, which is the exact accumulation the migration exists
+    # to fix. The "confirmed against production, ~3.22x, matching the 3.2x
+    # figure in #3611" note that used to sit here was not a verification:
+    # both numbers are computed from that same denominator, so they agreed
+    # because they shared the defect. Against genuinely live bytes (~0.8 GB,
+    # not the ~13.58 GB the ratio implied) MinIO's amplification is nearer 55x.
     #
-    # No twin engine="garage" rule: verified live against this module's own
-    # Garage deployment (production homelab, 2026-08-13) - its /metrics
-    # exposes no bucket/object byte-total series at all, only
-    # garage_local_disk_* (statvfs-level, the same fact kubelet_volume_stats_*
-    # already gives). Live bytes for Garage isn't buildable as a recording
-    # rule from what it currently scrapes.
-    - record: object_store:disk_amplification_ratio
+    # It was also only ever half a KPI. Garage's /metrics exposes no bucket or
+    # object byte-total series at all - only garage_local_disk_*, which is
+    # statvfs-level, the same fact kubelet already reports from the PVC side -
+    # so no live-bytes denominator exists on that side and the ratio is not
+    # computable for Garage, now or after cutover. A number that can only be
+    # produced for one arm of a two-arm comparison cannot decide it, and
+    # keeping a MinIO-only ratio would have invited exactly the cross-engine
+    # reading it cannot support.
+    #
+    # kubelet_volume_stats_used_bytes is symmetric where the ratio was not: the
+    # kubelet's own statfs read of the PVC, already scraped identically for
+    # both engines, needing no exporter and no cooperation from the engine
+    # being measured. Being a filesystem-level fact is also what makes it safe
+    # here, and this was asked because the answer isn't obvious: it reports
+    # what the filesystem says is in use, so Longhorn's block-level behaviour
+    # underneath - including its weekly fstrim, which currently fails - changes
+    # how much of the backing volume gets reclaimed but does not enter this
+    # number.
+    #
+    # Selected by namespace rather than by claim name. Both namespaces are this
+    # module's own (namespace.yaml) and hold nothing but their engine's
+    # volumes, whereas neither claim name is a module fact: MinIO's is supplied
+    # by the consuming cluster's patch (persistence.existingClaim - the module
+    # only sets persistence.enabled) and Garage's by ${garage_metadata_claim}/
+    # ${garage_data_claim}, so pinning either here would bake one cluster's
+    # naming into the module. Summing per namespace is also what makes the two
+    # sides comparable: MinIO keeps data and metadata on a single volume while
+    # Garage splits them across two, so counting only Garage's data volume
+    # would flatter it by dropping its metadata.
+    #
+    # Read this as a trend across the whole trial, never as a single reading.
+    # MinIO's figure is months of accumulated noncurrent versions; Garage's on
+    # day one is a fresh copy of the retained window and is trivially smaller
+    # for that reason alone, so any post-cutover snapshot flatters Garage for
+    # free and settles nothing. The question the trial is actually asking is
+    # whether Garage's curve stays flat while data is written and expired -
+    # which MinIO's demonstrably did not.
+    #
+    # Deliberately not coalesced to zero when a series is absent. kubelet emits
+    # volume stats only for a PVC a running pod has mounted, so the
+    # engine="garage" series is genuinely missing whenever Garage isn't running
+    # (confirmed live 2026-08-18: both garage PVCs Bound for days, no series,
+    # Deployment 0/1 Available). An explicit 0 would assert that Garage is
+    # storing nothing, a different and false claim - absent is the honest
+    # state. Same reasoning as object_store:garage_up in
+    # garage/prometheusrule-garage.yaml.
+    - record: object_store:disk_used_bytes
       labels:
         engine: minio
-      expr: |
-        sum(kubelet_volume_stats_used_bytes{namespace="minio", persistentvolumeclaim="minio-data"})
-        /
-        sum(minio_cluster_usage_total_bytes)
+      expr: sum(kubelet_volume_stats_used_bytes{namespace="minio"})
+    - record: object_store:disk_used_bytes
+      labels:
+        engine: garage
+      expr: sum(kubelet_volume_stats_used_bytes{namespace="garage"})
