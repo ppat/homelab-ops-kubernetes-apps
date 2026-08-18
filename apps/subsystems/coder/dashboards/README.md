@@ -51,7 +51,8 @@ The rows are named after questions rather than after the data they hold, and the
    agents and MCP servers all stay running once started, and one MCP server measured during the investigation
    held 1.66 GB by itself. That standing population is what erodes the runway a spike has to cross.
 5. **Did something die, and what was it?** The kernel journal, via Loki. See [below](#why-deaths-come-from-the-kernel-journal) —
-   this is now the only place a container OOM is recorded at all.
+   this is now the only place a container OOM is recorded at all. Two of the four panels are scoped to the
+   `Workspace` selection and two are deliberately not; read them as a set.
 
 In practice, work top to bottom. Confirm the tiles are green, read the three gauges together rather than
 individually, and go down a row only if one of them says to.
@@ -100,9 +101,24 @@ The kernel journal is the only remaining record. Row 5 reads it out of Loki. The
 finding — the investigation that produced this dashboard expected the editor server and found agent processes
 instead.
 
-Row 5 is deliberately **not** filtered by the `Workspace` variable, and cannot be: see
-[MAINTAINER.md](./MAINTAINER.md#deaths-cannot-be-attributed-to-a-workspace-in-a-query). Some cluster-wide noise is
-the honest trade; the log panel at the bottom of the row is where you correlate a kill to a pod by hand.
+The line names no namespace and no pod, only a cgroup path — but that path contains the pod UID, and row 5 reads
+it back out and matches it against the pods of the workspaces you have selected. So the two headline panels
+**are** about your workspace. The other two exist to stop you trusting them blindly:
+
+| Panel | Scoped? | How to read it |
+| --- | --- | --- |
+| `Cgroup OOM kills in this workspace` | yes | The number you came for. Red at 1 or more. |
+| `OOM victims in this workspace` | yes | Which process the kernel picked, and when. |
+| `Cgroup OOM kills anywhere in the cluster` | **no** | Every namespace, every node. A big number here next to a `0` on the left is the normal case — most cgroup OOM kills in this cluster belong to workloads that have nothing to do with Coder. |
+| `Pod generations this filter can see` | yes | How many of your pods the scoping can actually match. **If it reads `BLIND`, the two scoped panels are empty because they cannot see, not because nothing died.** |
+| `Kernel OOM lines` | **no** | Raw lines from everywhere, with the pod UID parsed onto each one. The fallback when the tiles disagree. |
+
+To resolve a UID from the raw lines by hand, expand a line, take its `pod_uid` field, and run
+`kube_pod_info{uid="…"}` in Explore for the namespace and pod name.
+
+Before this row was scoped it was cluster-wide throughout, which read as "your workspace was killed *n* times"
+when the great majority of those kills belonged to an unrelated workload in another namespace. If you remember
+that behaviour, the `anywhere in the cluster` tile is where that number now lives, correctly labelled.
 
 ## What it cannot tell you
 
@@ -115,7 +131,11 @@ the honest trade; the log panel at the bottom of the row is where you correlate 
 - **It cannot tell you which process is using the memory.** Prometheus stops at the container boundary. The
   standing-population row shows you *how many* processes there are, and row 5 shows you which one the kernel
   eventually chose, but attributing a live gigabyte to a specific helper needs a look inside the workspace.
-- **It cannot attribute a kill to a workspace.** Row 5 is cluster-wide. See above.
+- **It attributes a kill to a workspace, but it cannot prove it saw every one.** The scoping matches the pod UID
+  in the kernel line against the UIDs of your workspace's pods, and it can only match pods Prometheus still has a
+  record of within the time picker's range. A kill against a pod that has aged out is absent rather than flagged.
+  `Pod generations this filter can see` is there to bound that: read it before reading a `0`, and fall back to
+  the raw, unfiltered lines at the bottom of the row when in doubt.
 - **It cannot see a burst shorter than a scrape interval.** cAdvisor samples periodically; an allocation that
   starts and ends between two samples leaves no trace on any chart here except, possibly, a line in row 5.
   `Fastest fill observed in range` is a floor on the true peak for the same reason.

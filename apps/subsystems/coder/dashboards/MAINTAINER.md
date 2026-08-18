@@ -64,7 +64,7 @@ Rebuilding this elsewhere means reproducing this shape, or rewriting every query
 | Source | Series used | Notes |
 | --- | --- | --- |
 | cAdvisor (kubelet `/metrics/cadvisor`) | `container_memory_rss`, `container_memory_working_set_bytes`, `container_memory_cache`, `container_cpu_usage_seconds_total`, `container_processes`, `container_threads`, `container_pressure_{memory,cpu,io}_{waiting,stalled}_seconds_total` | No pod labels. `name` is the container ID, `instance` is the kubelet target address. |
-| kube-state-metrics | `kube_pod_container_resource_limits{resource="memory"}`, `kube_node_info` | The only source of the memory limit — see below. |
+| kube-state-metrics | `kube_pod_container_resource_limits{resource="memory"}`, `kube_node_info`, `kube_pod_info` | The only source of the memory limit — see below. `kube_pod_info` is used solely for its `uid` label, which is what bridges the kernel journal to a workspace. |
 | kube-prometheus-stack recording rules | `namespace_workload_pod:kube_pod_owner:relabel` | The entire attribution mechanism. |
 | node-exporter | `node_vmstat_pgscan_direct`, `node_vmstat_pgscan_kswapd`, `node_pressure_memory_stalled_seconds_total` | The two `pgscan` fields require a widened `--collector.vmstat.fields`; they are not collected by chart defaults. |
 | Loki | `{job="systemd-journal", syslog_identifier="kernel"}` | The only record of an OOM kill. |
@@ -142,35 +142,81 @@ it.
 `allValue` is deliberately not `.*`. The two must stay in step: an `allValue` looser than the variable's `regex`
 means `All` shows workspaces the dropdown cannot select individually.
 
-## Deaths cannot be attributed to a workspace in a query
+## How deaths are attributed to a workspace
 
 `singleProcessOOMKill: true` is rolled out to every node, setting `memory.oom.group = 0`. The consequences are
 covered in [README.md](./README.md#why-deaths-come-from-the-kernel-journal); what matters to an editor is that
 `container_oom_events_total` **exists, is scraped, and reads 0 through confirmed kills** (tracked in
 ppat/homelab-ops-kubernetes-apps#3754, not being fixed soon). It is not a fallback. Do not add a panel for it.
 
-Row 5 therefore reads the kernel journal, and it is cluster-wide because it has to be. The log line carries no
-namespace and no pod name — only a cgroup path:
+Row 5 therefore reads the kernel journal. The log line carries no namespace and no pod name — only a cgroup path:
 
 ```text
 oom-kill:constraint=CONSTRAINT_MEMCG,...,oom_memcg=/kubepods.slice/.../kubepods-burstable-pod<uid>.slice/cri-containerd-<container-id>.scope,task_memcg=...,task=<victim>,pid=<n>,uid=<n>
 ```
 
-Three ways to narrow it were considered and rejected:
+The path does spell the pod UID, with underscores where the Kubernetes UID has dashes. **The row shipped
+cluster-wide in the first version on the belief that this could not be bridged. It can.** The bridge is three
+pieces, and each one was checked live before being relied on:
 
-- **By pod UID.** The path spells the pod UID with underscores where the Kubernetes UID has dashes, and Grafana
-  variables have no string-substitution facility, so a UID pulled from Prometheus cannot be matched against it.
-  LogQL's `label_format` could normalise the log side instead, but a Prometheus-derived variable can only list
-  pods that still exist — so historical kills against a since-deleted pod would vanish from the panel.
-- **By container ID.** This one *does* match exactly, because cAdvisor's `name` label is the container ID
-  verbatim. It has the same fatal property: a variable built from live cAdvisor series only knows about
-  containers that still exist, so the panel would silently hide exactly the historical kills it is there to show.
+1. **LogQL restores the UID.** `regexp` lifts the underscored UID out of `task_memcg=`, and `label_format` with
+   Go template `replace` turns it back into a Kubernetes UID. This is the step the first version assumed did not
+   exist — the substitution happens on the *log* side, so Grafana never needs a string function.
+2. **Two hidden chained variables carry the workspace's UIDs.** `workspace_pods` resolves the `Workspace`
+   selection to pod names through the same recording rule everything else here uses; `workspace_pod_uids`
+   resolves those to `kube_pod_info`'s `uid`. Both are `label_values`, which Grafana evaluates over the
+   **dashboard time range** rather than at `now` — so a pod deleted an hour into a six-hour window is still in
+   the set, and the "a variable can only see pods that still exist" objection does not apply. It would apply to
+   `query_result`, which is an instant query; do not switch them.
+3. **The panels match one against the other**, anchored, with the unfiltered count and a coverage tile beside
+   them so the match can be checked rather than trusted.
+
+Two narrowings that genuinely do not work, and should not be re-attempted:
+
+- **By namespace, or "all Coder pods as a class".** The cgroup path names the QoS class and the pod UID and
+  nothing else. There is no namespace in it, so "every `kubepods` cgroup in the `coder` namespace" is not
+  expressible — `kubepods` is every pod on the node. Scoping is per-pod-UID or it is nothing.
 - **By Unix `uid=`.** Checked live and rejected on evidence: the workspace user's numeric UID is shared by
   unrelated workloads elsewhere in this cluster, so it is not a discriminator at all.
 
-A little cross-namespace noise on one panel is the honest trade against a filter that can hide a death. The
-victim's process name is usually enough to recognise a workspace kill; the logs panel below is where a reader
-correlates a specific one by hand.
+Container ID would also match exactly, but the pod UID is strictly better: it survives a container restart within
+the same pod, and it is what `kube_pod_info` already carries.
+
+### What the scoping can still miss, and why the row has three panels rather than one
+
+The exposure is real and it is the invisible kind: a kill whose pod UID is not in `workspace_pod_uids` is not
+*flagged*, it is simply not in the count, which is indistinguishable from no kill. That happens when the pod has
+aged out of `kube_pod_info`, or when the `workload` recording rule never caught it. Measured over a 30-day window
+during validation, 2 of the 95 cluster-wide kill lines belonged to pods Prometheus no longer had any series for
+at all.
+
+Munger's inversion is the whole design of the row: silently dropping a real kill for the reader's own workspace
+is worse than showing kills that are not theirs, because the first failure is invisible and the second is merely
+noisy. So the scoped count never stands alone:
+
+| Panel | Filtered by `Workspace` | What it is for |
+| --- | --- | --- |
+| `Cgroup OOM kills in this workspace` | yes | The answer to the question the reader came with. |
+| `Cgroup OOM kills anywhere in the cluster` | **no** | The old cluster-wide number, kept, and now labelled as what it is. It bounds the scoped one: if it is 0 there was nothing to hide. |
+| `Pod generations this filter can see` | yes | The size of the filter's match set. `0` renders as `BLIND`, in red. A scoped `0` next to a `BLIND` coverage tile is not evidence of health. |
+| `Kernel OOM lines` | **no** | Every line, every namespace, with `pod_uid` parsed onto it. The escape hatch when the tiles above disagree. |
+
+Removing any one of the unfiltered panels turns a checkable filter back into an unfalsifiable one.
+
+### Validation, in the failing direction
+
+Run against live Loki and Prometheus over a 30-day window, with the variables interpolated exactly as Grafana
+emits them:
+
+- Cluster-wide, unfiltered: **95** kill lines across 8 distinct pods. **78 of those belonged to a DNS resolver in
+  an unrelated namespace** — this is the misreading the row shipped with, sitting under a `Workspace` selector.
+- Scoped to `Workspace = All`: **15**. Every Coder workspace kill, and nothing else.
+- Scoped to a workspace that had been killed: **8**, matching the sum of that workspace's pod UIDs counted
+  independently; victims resolved to a single process name.
+- Scoped to a second workspace that had been killed: **7**, likewise matching, across two pod generations.
+- **Failing direction — scoped to a workspace that has never OOMed: `0`**, rendered as `0` rather than "No data"
+  because of the `or vector(0)`. Two such workspaces were checked.
+- **Failing direction — the empty-variable case**, see the trap below.
 
 ## Presence, not magnitude, for the OOM panel
 
@@ -217,11 +263,32 @@ Each of these fails silently. None produces an error or an empty panel with a me
 - **A Grafana multi-value variable interpolated into `=~"$workspace"` becomes `(a|b)`, but a custom `allValue` is
   inserted verbatim.** That asymmetry is why `allValue` is written as a bare regex (`coder-.+`) and not as an
   escaped literal, and why it must be kept in step with the variable's `regex`.
+- **LogQL's `=~` label filter is not anchored, and an empty alternation therefore matches every line.** This is
+  the sharpest trap on the page, because it fires exactly when the filter has nothing to filter with. Checked
+  live: a `pod_uid` filter against the empty alternation `()` returned **95 of 95** lines — the whole cluster —
+  while the same filter against `^()$` returned `0`. An empty `workspace_pod_uids` (no workspace selected, recording rule cold, kube-state-metrics
+  down) is exactly how that empty alternation arises, so **the `^` and `$` around `${workspace_pod_uids:pipe}`
+  are the difference between failing closed and silently reverting the panel to the cluster-wide count this
+  change exists to remove.** They are not stylistic.
+- **`${var:pipe}` is used rather than bare `$var` for the same reason.** Loki's default multi-value formatter
+  already wraps values in parentheses, so `(${workspace_pod_uids})` would nest them; `:pipe` emits a bare
+  `a|b|c` and the parentheses in the query are the query's own. Either works today, but only one of them is
+  obvious about where the grouping comes from.
+- **`allValue` on the two hidden variables must stay `null`.** With `allValue: null`, `$__all` expands to the
+  concrete list of matching values. Setting it to `.*`, by analogy with the `Workspace` variable, would make
+  `All` interpolate as `^(.*)$` and quietly restore the cluster-wide behaviour — the same defect, reintroduced
+  through a field that looks like tidying.
+- **The pod-UID regex must not assume a QoS class or a cgroup driver.** `kubepods-burstable-pod<uid>.slice` is
+  what this cluster happens to emit; Guaranteed pods sit at `kubepods-pod<uid>.slice` with no QoS segment, and a
+  cgroupfs driver writes `pod<uid>` with dashes intact. The shipped regex matches the UUID *shape* after a
+  literal `pod`, accepting `_` or `-` as the separator, so all three forms parse. A tighter regex written
+  against the observed path would silently drop every Guaranteed workspace.
 
 ## Shipping it through GitOps
 
 - **A templating engine will eat the dashboard's own variables.** Dashboard JSON is dense with bare `$` tokens —
-  `$datasource`, `$logs`, `$namespace`, `$workspace`, `$__rate_interval`, `$__range`, `$__interval`. Flux's
+  `$datasource`, `$logs`, `$namespace`, `$workspace`, `$workspace_pods`, `$workspace_pod_uids`,
+  `$__rate_interval`, `$__range`, `$__interval`. Flux's
   post-build substitution expands bare `$name` as well as `${name}`, so without
   `kustomize.toolkit.fluxcd.io/substitute: disabled` on the generated ConfigMap every one of them becomes an
   empty string and the dashboard loads cleanly with every panel silently unconfigured. The failure looks like a
@@ -258,6 +325,14 @@ Each of these fails silently. None produces an error or an empty panel with a me
 - **Alerting rules.** This estate deliberately runs no AlertManager routing; a human reading this dashboard is
   the detection mechanism. If that changes, the thresholds encoded in the gauges are the starting point, and PSI
   is the condition to alert on rather than any level.
+- **A workspace-name label on the kernel log lines.** Resolving `pod_uid` to a readable workspace name inside the
+  panel would need a join across two datasources, which Grafana cannot do in a query and which a transformation
+  can only fake by re-querying. The UID is printed on every line and `kube_pod_info{uid="..."}` resolves it in
+  Explore; a homegrown lookup would be one more thing that can be stale without saying so.
+- **Removing the OOM row rather than scoping it.** This was the alternative if the scoping had not held up, and
+  it is the right answer to a panel that cannot be made correct — the same reasoning that keeps
+  `container_oom_events_total` off the dashboard. It is recorded here because the scoping *did* hold up, and the
+  bar it had to clear was "better than nothing at all", not "better than what shipped".
 - **Data links.** There is no second dashboard worth navigating to and no drill-down that a link could narrow
   usefully. A link added later must use `/d/${__dashboard.uid}/…` rather than a hardcoded uid or a bare `?` query
   string; see the alloy dashboard's MAINTAINER for why both of those fail.
@@ -291,8 +366,16 @@ Treat each of these as a defect if removed, not as cleanup:
   makes a high working-set reading safe to ignore.
 - **`timeFrom: 7d` on the two standing-population panels.** Following the dashboard range instead surrenders the
   one capability the rest of the dashboard cannot provide.
-- **The OOM row being unfiltered by `$workspace`**, and `status-history` rather than `state-timeline` — see
-  [above](#deaths-cannot-be-attributed-to-a-workspace-in-a-query) and
+- **The OOM row's two scoped panels being scoped, and its two unscoped panels being unscoped.** Four panels, two
+  of each, and the pairing is the design: the scoped ones answer the reader's question and the unscoped ones are
+  what make a `0` on them falsifiable. Filtering `Kernel OOM lines` removes the escape hatch; dropping
+  `Cgroup OOM kills anywhere in the cluster` or `Pod generations this filter can see` removes the check. See
+  [above](#how-deaths-are-attributed-to-a-workspace).
+- **The `^` and `$` anchoring `${workspace_pod_uids:pipe}`.** Without them an empty variable matches every line
+  in the cluster. See [the traps](#traps-that-return-a-wrong-number-instead-of-an-error).
+- **`allValue: null` on `workspace_pods` and `workspace_pod_uids`**, which is the opposite of what the
+  `Workspace` variable needs and for the opposite reason.
+- **`status-history` rather than `state-timeline`** on the victims panel — see
   [presence, not magnitude](#presence-not-magnitude-for-the-oom-panel).
 - **`allValue: coder-.+` in step with `regex: /^coder-.+$/`** on the `Workspace` variable.
 - **`kustomize.toolkit.fluxcd.io/substitute: disabled` and `disableNameSuffixHash: true`** on the ConfigMap.

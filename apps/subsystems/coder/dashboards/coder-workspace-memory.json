@@ -1978,7 +1978,7 @@
         "type": "loki",
         "uid": "$logs"
       },
-      "description": "Kernel `oom-kill` lines with `constraint=CONSTRAINT_MEMCG` -- a container hitting its own memory limit, as opposed to the node running out.\n\n**This is the only remaining record that a container OOM happened.** `singleProcessOOMKill: true` is set on every node in this cluster, which sets `memory.oom.group = 0`: a cgroup OOM now kills the single offending process instead of the whole cgroup. The container does not terminate, the pod never reports `OOMKilled`, the restart counter does not move, and `container_oom_events_total` reads 0 through confirmed kills. Nothing in Kubernetes notices. The kernel journal is it.\n\nCluster-wide and unfiltered -- see the panel below for why it cannot be narrowed to a workspace.",
+      "description": "Kernel `oom-kill` lines with `constraint=CONSTRAINT_MEMCG` -- a cgroup hitting its own memory limit, as opposed to the node running out -- narrowed to the pods of the workspaces selected in `Workspace`.\n\n**This is the only remaining record that a container OOM happened.** `singleProcessOOMKill: true` is set on every node in this cluster, which sets `memory.oom.group = 0`: a cgroup OOM now kills the single offending process instead of the whole cgroup. The container does not terminate, the pod never reports `OOMKilled`, the restart counter does not move, and `container_oom_events_total` reads 0 through confirmed kills. Nothing in Kubernetes notices. The kernel journal is it.\n\nThe scoping reads the pod UID out of the line's `task_memcg=` cgroup path, restores the dashes the kernel writes as underscores, and matches it against the UIDs of this workspace's pods. It can only match pods Prometheus still has a series for inside this time range -- **read `Pod generations this filter can see` before believing a 0**, and compare against the cluster-wide count below.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2003,7 +2003,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 4,
         "w": 6,
         "x": 0,
         "y": 62
@@ -2033,14 +2033,14 @@
             "uid": "$logs"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time(\n{job=\"systemd-journal\", syslog_identifier=\"kernel\"} |= \"oom-kill:constraint=CONSTRAINT_MEMCG\"\n[$__range])) or vector(0)",
+          "expr": "sum(count_over_time(\n{job=\"systemd-journal\", syslog_identifier=\"kernel\"} |= \"oom-kill:constraint=CONSTRAINT_MEMCG\"\n| regexp `task_memcg=[^,]*?pod(?P<pod_uid_raw>[0-9a-f]{8}[_-][0-9a-f]{4}[_-][0-9a-f]{4}[_-][0-9a-f]{4}[_-][0-9a-f]{12})`\n| label_format pod_uid=`{{ replace \"_\" \"-\" .pod_uid_raw }}`\n| pod_uid =~ `^(${workspace_pod_uids:pipe})$`\n[$__range])) or vector(0)",
           "instant": true,
           "queryType": "instant",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "Cgroup OOM kills in range",
+      "title": "Cgroup OOM kills in this workspace",
       "type": "stat"
     },
     {
@@ -2048,7 +2048,7 @@
         "type": "loki",
         "uid": "$logs"
       },
-      "description": "One row per victim process name, one block per bucket in which it was killed.\n\nThe `task=` field names the process the kernel chose, which is the finding: the investigation that produced this dashboard expected the editor server and found agent processes instead. A name you do not recognise is from another namespace.\n\n**Deliberately not filtered by the Workspace variable, and it cannot be.** The kernel journal carries no namespace or pod name -- only a cgroup path containing the pod UID and container ID. Grafana cannot join a Loki stream against the Prometheus recording rule that resolves those to a workload, and the one filter that would work (container ID) can only match containers that still exist, so it would silently hide exactly the historical kills you came here for. A little cluster-wide noise is the honest trade; use the log panel below to read the cgroup and correlate by hand.\n\nStatus history rather than a state timeline: OOM kills are sparse, Loki returns gaps rather than zeros, and a state timeline would stretch a single kill into an assertion that the state held for hours.",
+      "description": "One row per victim process name, one block per bucket in which it was killed, scoped to the selected workspaces by pod UID.\n\nThe `task=` field names the process the kernel chose, which is the finding: the investigation that produced this dashboard expected the editor server and found agent processes instead. Every name here now belongs to a process that was running inside a selected workspace -- before this row was scoped, an unfamiliar name usually meant an unrelated workload in another namespace.\n\nAn empty panel is only as trustworthy as `Pod generations this filter can see` to the right, and the cluster-wide count to the left says whether there was anything to attribute in the first place. The raw lines below are never filtered.\n\nStatus history rather than a state timeline: OOM kills are sparse, Loki returns gaps rather than zeros, and a state timeline would stretch a single kill into an assertion that the state held for hours.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2065,7 +2065,7 @@
             "lineWidth": 1
           },
           "mappings": [],
-          "noValue": "No cgroup OOM kills in this range. This is the normal, healthy state -- and unlike the panels above it cannot be blanked by a filter.",
+          "noValue": "No cgroup OOM kills attributed to the selected workspaces in this range. Check 'Pod generations this filter can see' before reading this as healthy -- a blind filter looks identical.",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2080,7 +2080,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 18,
+        "w": 13,
         "x": 6,
         "y": 62
       },
@@ -2109,14 +2109,14 @@
             "uid": "$logs"
           },
           "editorMode": "code",
-          "expr": "sum by (victim) (count_over_time(\n{job=\"systemd-journal\", syslog_identifier=\"kernel\"} |= \"oom-kill:constraint=CONSTRAINT_MEMCG\"\n| pattern \"<_>,task=<victim>,pid=<_>,uid=<_>\"\n[$__interval]))",
+          "expr": "sum by (victim) (count_over_time(\n{job=\"systemd-journal\", syslog_identifier=\"kernel\"} |= \"oom-kill:constraint=CONSTRAINT_MEMCG\"\n| regexp `task_memcg=[^,]*?pod(?P<pod_uid_raw>[0-9a-f]{8}[_-][0-9a-f]{4}[_-][0-9a-f]{4}[_-][0-9a-f]{4}[_-][0-9a-f]{12})`\n| label_format pod_uid=`{{ replace \"_\" \"-\" .pod_uid_raw }}`\n| pod_uid =~ `^(${workspace_pod_uids:pipe})$`\n| pattern `<_>,task=<victim>,pid=<_>,uid=<_>`\n[$__interval]))",
           "legendFormat": "{{victim}}",
           "queryType": "range",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "OOM victims -- when was each killed?",
+      "title": "OOM victims in this workspace -- when was each killed?",
       "transformations": [
         {
           "id": "joinByField",
@@ -2141,10 +2141,150 @@
     },
     {
       "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "How many distinct pod UIDs the two OOM tiles on the left are matching against -- one per pod generation of the selected workspaces that Prometheus still holds a `kube_pod_info` series for anywhere in this time range.\n\nThis is the companion that keeps the OOM filter honest, and it is the panel to read first. The filter turns a kernel cgroup path into a pod UID and matches it against this set; a kill belonging to a pod that has aged out of Prometheus, or that the `workload` recording rule never caught, is absent from the scoped panels and looks exactly like no kill at all.\n\n**0 here means the OOM panels are blind, not that the workspace is calm.** A workspace that has restarted inside the range should show one per generation. If it reads 0 while the workspace is plainly running, fall back to `Kernel OOM lines` at the bottom of the row, which is never filtered.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "BLIND"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "noValue": "BLIND",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 5,
+        "x": 19,
+        "y": 62
+      },
+      "id": 29,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "count(count by (uid) (\nlast_over_time(kube_pod_info{namespace=\"$namespace\", uid=~\"$workspace_pod_uids\"}[$__range])\n)) or vector(0)",
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Pod generations this filter can see",
+      "type": "stat"
+    },
+    {
+      "datasource": {
         "type": "loki",
         "uid": "$logs"
       },
-      "description": "The raw kernel lines behind the two panels above.\n\nEach line carries `oom_memcg=` -- the cgroup path of the limit that was hit -- and `task_memcg=` -- the cgroup the victim was actually in. The pod UID appears in that path as `pod<uid>` with underscores where the Kubernetes UID has dashes, and the container ID as `cri-containerd-<id>`. That is how you attribute a kill to a workspace: take the UID, restore the dashes, and match it against `kube_pod_container_resource_limits{namespace=\"coder\"}`'s `uid` label in Explore.\n\n`uid=` is the Unix user of the victim, not a Kubernetes UID, and is not a reliable way to tell a workspace apart from anything else -- other workloads in this cluster run under the same numeric user.",
+      "description": "The same count with **no workspace filter at all**: every cgroup OOM kill on every node, in every namespace. This number is not about your workspace, and is here so the tile above can be checked rather than trusted.\n\nA large number here with 0 above is the ordinary case, not a fault -- most cgroup OOM kills in this cluster belong to workloads that have nothing to do with Coder. Before this row was scoped, that cluster-wide figure was the only number on the dashboard, sitting under a `Workspace` selector, and it read as the selected workspace's own.\n\nDeliberately uncoloured: a number here is not a problem statement. If it is 0, there is nothing anywhere for the filter above to have hidden.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "text",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 66
+      },
+      "id": 28,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "13.1.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "$logs"
+          },
+          "editorMode": "code",
+          "expr": "sum(count_over_time(\n{job=\"systemd-journal\", syslog_identifier=\"kernel\"} |= \"oom-kill:constraint=CONSTRAINT_MEMCG\"\n[$__range])) or vector(0)",
+          "instant": true,
+          "queryType": "instant",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Cgroup OOM kills anywhere in the cluster",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "$logs"
+      },
+      "description": "The raw kernel lines, from **every namespace on every node**, deliberately unfiltered by `Workspace`. This is the row's escape hatch: if the scoped panels above are blind, everything they could have shown is still here.\n\n`pod_uid` is a parsed field on each line -- the Kubernetes pod UID lifted out of the `task_memcg=` cgroup path with the kernel's underscores turned back into dashes, exactly as the panels above match it. Expand a line to read it, then resolve it with `kube_pod_info{uid=\"...\"}` in Explore to get the namespace and pod name.\n\n`oom_memcg=` is the cgroup whose limit was hit and `task_memcg=` the cgroup the victim was in; they differ when the limit sits on the pod rather than the container. `uid=` is the victim's Unix user, not a Kubernetes UID, and is not a discriminator -- unrelated workloads here run as the same numeric user.",
       "gridPos": {
         "h": 10,
         "w": 24,
@@ -2171,13 +2311,13 @@
             "uid": "$logs"
           },
           "editorMode": "code",
-          "expr": "{job=\"systemd-journal\", syslog_identifier=\"kernel\"} |= \"oom-kill:constraint=CONSTRAINT_MEMCG\"",
+          "expr": "{job=\"systemd-journal\", syslog_identifier=\"kernel\"} |= \"oom-kill:constraint=CONSTRAINT_MEMCG\"\n| regexp `task_memcg=[^,]*?pod(?P<pod_uid_raw>[0-9a-f]{8}[_-][0-9a-f]{4}[_-][0-9a-f]{4}[_-][0-9a-f]{4}[_-][0-9a-f]{12})`\n| label_format pod_uid=`{{ replace \"_\" \"-\" .pod_uid_raw }}`",
           "queryType": "range",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Kernel OOM lines",
+      "title": "Kernel OOM lines -- cluster-wide, never filtered",
       "type": "logs"
     }
   ],
@@ -2268,6 +2408,72 @@
         "refresh": 2,
         "regex": "/^coder-.+$/",
         "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(namespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}, pod)",
+        "description": "Hidden. Every pod of the selected workspaces, including pods that have since been deleted -- `label_values` resolves over the dashboard time range, so a workspace that restarted twice inside the range contributes all three generations. Chained into `workspace_pod_uids`, which is what scopes row 5. `allValue` is null on purpose: a custom one such as `.*` would silently widen row 5 back to the whole cluster, which is the defect this variable exists to fix.",
+        "hide": 2,
+        "includeAll": true,
+        "label": "workspace_pods",
+        "multi": true,
+        "name": "workspace_pods",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(namespace_workload_pod:kube_pod_owner:relabel{namespace=\"$namespace\", workload_type=\"deployment\", workload=~\"$workspace\"}, pod)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": true,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": null,
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "$datasource"
+        },
+        "definition": "label_values(kube_pod_info{namespace=\"$namespace\", pod=~\"$workspace_pods\"}, uid)",
+        "description": "Hidden. The Kubernetes pod UIDs behind `workspace_pods`. Row 5 reads the pod UID out of the kernel line's cgroup path and matches it against this set -- it is the only bridge between the journal and a workspace name. Empty means row 5's scoped panels can match nothing at all, which is why 'Pod generations this filter can see' is beside them.",
+        "hide": 2,
+        "includeAll": true,
+        "label": "workspace_pod_uids",
+        "multi": true,
+        "name": "workspace_pod_uids",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(kube_pod_info{namespace=\"$namespace\", pod=~\"$workspace_pods\"}, uid)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": true,
         "sort": 1,
         "type": "query"
       }
