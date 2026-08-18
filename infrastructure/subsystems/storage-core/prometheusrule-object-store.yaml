@@ -13,9 +13,10 @@
 # deliberate, not a missed rename: Flux prune is disabled cluster-wide in this
 # estate, so renaming a PrometheusRule does not rename it in-cluster - it
 # creates a second object and abandons the first, which goes on evaluating the
-# rules it was last applied with. An orphan still publishing the defective
-# ratio is a worse outcome than a stale name. A rename is fine, but only as a
-# change that also deletes the old object by hand.
+# rules it was last applied with. An orphan still publishing the retired ratio
+# - unmaintained, and asserting a MinIO-only comparison this KPI deliberately
+# dropped - is a worse outcome than a stale name. A rename is fine, but only as
+# a change that also deletes the old object by hand.
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -37,35 +38,36 @@ spec:
     rules:
     # Raw bytes on disk, one series per engine, no denominator. This replaces
     # object_store:disk_amplification_ratio (PVC used bytes divided by
-    # minio_cluster_usage_total_bytes), which was removed rather than repaired,
-    # for two independent reasons.
-    #
-    # It was wrong. That denominator was justified here as the "live bytes"
-    # figure because it excludes delete markers. That is a non-sequitur:
-    # delete markers are zero-byte placeholders, so excluding them subtracts
-    # nothing at all. The bytes that make the denominator wrong are the
-    # noncurrent versions the delete markers stand in front of - the bucket is
-    # versioned, a plain Expiration rule writes a delete marker instead of
-    # removing an entry, and every superseded version stays on disk and stays
-    # counted by MinIO's data-usage crawler. Keep those two apart: excluding
-    # delete markers buys nothing, and the noncurrent versions were never
-    # excluded. The crawler total is therefore version-inclusive, not live -
-    # it already contains most of the accumulation it was supposed to be
-    # measured against, which is the exact accumulation the migration exists
-    # to fix. The "confirmed against production, ~3.22x, matching the 3.2x
-    # figure in #3611" note that used to sit here was not a verification:
-    # both numbers are computed from that same denominator, so they agreed
-    # because they shared the defect. Against genuinely live bytes (~0.8 GB,
-    # not the ~13.58 GB the ratio implied) MinIO's amplification is nearer 55x.
-    #
-    # It was also only ever half a KPI. Garage's /metrics exposes no bucket or
-    # object byte-total series at all - only garage_local_disk_*, which is
+    # minio_cluster_usage_total_bytes), which was removed rather than repaired
+    # because it was only ever half a KPI. Garage's /metrics exposes no bucket
+    # or object byte-total series at all - only garage_local_disk_*, which is
     # statvfs-level, the same fact kubelet already reports from the PVC side -
-    # so no live-bytes denominator exists on that side and the ratio is not
-    # computable for Garage, now or after cutover. A number that can only be
-    # produced for one arm of a two-arm comparison cannot decide it, and
+    # so a disk-over-live-bytes ratio is not computable for Garage from
+    # anything that gets scraped, now or after cutover. A number that can only
+    # be produced for one arm of a two-arm comparison cannot decide it, and
     # keeping a MinIO-only ratio would have invited exactly the cross-engine
     # reading it cannot support.
+    #
+    # It was not removed for being wrong; it measured what it claimed. A
+    # complete read-only traversal of MinIO's largest bucket on the trial
+    # cluster (2026-08-18) found 15.42 GB live across 209,406 objects against
+    # 46.22 GB of PVC disk - ~3.0x - and that bucket's
+    # minio_bucket_usage_total_bytes read 15.34 GB over the same population,
+    # ~0.5% apart, with the buckets summing to minio_cluster_usage_total_bytes.
+    # MinIO's crawler total does track live bytes, so the ~3.22x reading this
+    # file used to cite, and the 3.2x in #3611, were both right. What their
+    # agreement was not is a verification: both are computed the same way from
+    # the same denominator, so agreeing was guaranteed rather than
+    # corroborating. History, not evidence.
+    #
+    # Two things worth keeping apart - conflating them has already produced one
+    # wrong conclusion about this KPI. Delete markers are zero-byte, so
+    # whether a byte-total counts them changes nothing. What inflates *disk*
+    # is the unreclaimed noncurrent versions those markers stand in front of -
+    # a plain Expiration rule on a versioned bucket writes a marker instead of
+    # removing an entry, and every superseded version stays on disk. That is a
+    # disk fact, not a denominator fact, and it is the real accumulation the
+    # migration exists to fix: ~46 GB of volume holding ~15.4 GB of live data.
     #
     # kubelet_volume_stats_used_bytes is symmetric where the ratio was not: the
     # kubelet's own statfs read of the PVC, already scraped identically for
