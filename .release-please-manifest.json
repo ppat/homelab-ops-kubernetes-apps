@@ -1,7 +1,7 @@
 {
   "apps/subsystems/ai": "0.7.1",
   "apps/subsystems/bitwarden": "0.1.3",
-  "apps/subsystems/coder": "0.0.55",
+  "apps/subsystems/coder": "0.0.56",
   "apps/subsystems/downloaders": "0.5.4",
   "apps/subsystems/harbor": "0.0.19",
   "apps/subsystems/home-automation": "0.3.15",
