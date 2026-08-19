@@ -154,8 +154,9 @@ jobs:
         # Grafana: the ESO generator kind (generators.external-secrets.io/v1alpha1). The
         # datreeio CRDs-catalog schema kubeconform resolves predates spec.serviceAccount.
         # secondsToLive and rejects it, but the CRD bundle we actually install
-        # (external-secrets v2.8.0) does define the field. Keep in sync with
-        # .pre-commit-config.yaml. Drop this skip once the catalog catches up.
+        # (see infrastructure/bootstrap/crds/external-secrets) does define the field.
+        # Keep in sync with .pre-commit-config.yaml. Drop this skip once the catalog
+        # catches up.
         kubeconform-flags: '-skip=Secret,IPAddressPool,Grafana'
         env-file: 'ci/validation/.env'
         base-kustomization-file: 'ci/validation/kustomization.yaml'

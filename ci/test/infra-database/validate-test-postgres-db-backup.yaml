@@ -65,7 +65,7 @@ spec:
             cnpg.io/podRole: instance
         status:
           phase: Running
-          # v0.13.0 injects the sidecar as a native (restartable init) container.
+          # The barman-cloud plugin injects the sidecar as a native (restartable init) container.
           (initContainerStatuses[?name == 'plugin-barman-cloud'] | [0].ready): true
   catch:
   - describe:

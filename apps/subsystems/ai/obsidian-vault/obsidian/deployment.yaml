@@ -57,7 +57,7 @@ spec:
       containers:
       - name: obsidian
         # Pinned to a digest, not a bare tag: this image's tag is locked to the upstream
-        # Obsidian version rather than incremented per build, so `1.12.7` is a moving tag
+        # Obsidian version rather than incremented per build, so the tag is a moving one
         # reused across rebuilds of this image -- the digest, not the tag, is what actually
         # identifies which build runs. This container is the single writer to the
         # authoritative vault, so floating onto whatever was last pushed is not tolerable.

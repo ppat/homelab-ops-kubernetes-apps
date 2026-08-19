@@ -19,7 +19,7 @@ spec:
   # Flux defaults retryInterval to `interval` when unset, so with `interval: 15m0s` a single
   # health-check overshoot below would park this Kustomization in a failed state for a quarter
   # of an hour -- far longer than the suite that depends on it runs. Confirmed against the
-  # v2.9.4 CRD schema, and corroborated in run logs: after the health check expired, this
+  # Flux CRD schema, and corroborated in run logs: after the health check expired, this
   # object was still reporting False 3m32s after its own HelmRelease had gone Ready, with no
   # retry in between.
   retryInterval: 1m0s
@@ -53,7 +53,7 @@ spec:
       kind: ExternalSecret
       name: minio-admin-credentials
       namespace: minio
-  # The minio 5.4.0 chart defaults persistence.size to 500Gi (checked, not assumed). Nothing
+  # The minio chart defaults persistence.size to 500Gi (checked, not assumed). Nothing
   # using minio as scaffolding stores more than a few objects. kind's local-path provisioner
   # ignores the requested capacity, so this is not what makes the PVC bind -- it is what stops
   # the fixture from making a claim no real storage class would satisfy.
