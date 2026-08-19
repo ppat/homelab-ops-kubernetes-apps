@@ -3,7 +3,14 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- ../../infra-database/infra-database-core.yaml
+# The shared cnpg-operator fixture, not the whole database-core module. authentik's Postgres
+# (security-extra/authentik/postgres.yaml) is the only thing in either security module that
+# needs CloudNativePG -- neither security-core nor security-extra contains a Dragonfly, and
+# that Cluster declares no plugins, so the module was bringing the dragonfly operator and the
+# Barman Cloud plugin for nothing. Dragonfly alone measures Ready at T0+178s.
+#
+# See ../../chainsaw/pre-requisites/README.md.
+- ../../chainsaw/pre-requisites/cnpg-operator/
 - fake-secret-store.yaml
 
 sortOptions:
