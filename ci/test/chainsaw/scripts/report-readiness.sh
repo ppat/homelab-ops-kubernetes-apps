@@ -193,13 +193,16 @@ echo '--- ESOCERT: webhook TLS secret vs webhook pod start (the MODE mechanism) 
 #
 # The webhook mounts secret/external-secrets-webhook as a plain secret volume at /tmp/certs.
 # The chart's readinessProbe carries initialDelaySeconds: 20, which WAS the fast mode's uniform
-# floor; the shared external-secrets fixture now overrides it to 1, so a fast gap from a suite
-# composing that fixture reads single digits. infra-security deploys the whole security-core
-# module instead of the fixture and still pays the chart default -- it is the one suite whose
-# fast band stays ~20s, and that difference is expected, not a fault.
+# floor; the shared external-secrets fixture now overrides it to 1. That floor was also a clamp,
+# and removing it makes the fast band WIDER rather than merely lower: measured across one fleet,
+# fast gaps ran 1-15s. What is left is the spread in when the webhook pod starts relative to the
+# controller, which the clamp had been hiding -- so a fast gap in the low teens is normal now and
+# is not evidence of a slow-mode near miss. infra-security deploys the whole security-core module
+# instead of the fixture and still pays the chart default -- it is the one suite whose fast band
+# stays ~20s, and that difference is expected, not a fault.
 #
 # Three outcomes this can return, and it must be able to return all three:
-#   secret written well before containerStarted, webhook Ready a probe later-> fast, no puzzle
+#   secret written well before containerStarted, webhook Ready next probe  -> fast, no puzzle
 #   secret written EARLY, webhook Ready ~60s after that                    -> ESO-internal
 #                                                                             timer, not kubelet
 #   secret written AFTER containerStarted, webhook Ready at the next tick  -> the mount-refresh

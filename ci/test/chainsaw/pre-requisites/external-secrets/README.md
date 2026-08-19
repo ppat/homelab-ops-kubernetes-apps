@@ -67,6 +67,10 @@ waiting on, so the slow band reported by
 classifier edge. `infra-security` deploys the whole `security-core` module rather than this fixture
 and keeps the chart default, so its fast band stays where it was.
 
+Expect the fast band to be *wider*, not just lower. The old delay clamped it to 20–27s; with the
+clamp gone, one fleet measured 1–15s, the residual being how much later the webhook pod starts than
+the controller. A fast gap in the low teens is ordinary, not a near miss.
+
 ## What a consumer would lose
 
 A suite that actually needs to resolve secrets **through the Bitwarden provider** cannot use this fixture:
