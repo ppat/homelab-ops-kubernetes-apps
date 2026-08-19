@@ -37,7 +37,28 @@ flowchart TD
 1. Environment Setup
    - Kind cluster creation
    - FluxCD installation
+   - **Bootstrap CRDs applied once**, as their own step (`ci/test/chainsaw/steps/bootstrap-crds.yaml`)
    - Test configuration and secrets
+
+   **`infrastructure/bootstrap/crds/` must never be a resource of a Flux `Kustomization`, here
+   or anywhere.** DESIGN.md makes it a manual, one-time apply for first-time setup and disaster
+   recovery, with CRD updates thereafter owned by the modules' own helm charts — and no
+   Kustomization in the clusters repo references it.
+
+   It is a distinct phase, not part of standing Flux up — DESIGN.md's order is
+   `Install FluxCD -> Apply CRDs -> Create namespaces -> Deploy Modules`.
+
+   The suites used to list it under `pre-requisites/`, which Flux reconciles every 60s with
+   `prune: false`. Because the bundle and the charts track **two independent Renovate
+   datasources** (upstream GitHub releases vs the chart version) they routinely disagree after an
+   upgrade, so the bundle's CRD was force-applied over the chart's once a minute. **Replacing a
+   CRD closes the API server's open watch connections for that resource, and the operator does
+   not re-establish them** — so no events for those objects reach its work queue and it never
+   runs a reconcile for them again. The process itself stays healthy throughout: it holds its
+   leader election lease, answers its admission webhooks, and logs no errors.
+
+   That was #3678: empty `Status`, `Events: <none>`, no instance pod, operator `1/1 Running`.
+   Reproduced on demand, and the same object reconciles within seconds once the CRD is restored.
 
 2. Dependency Deployment
    - Deploy hard dependencies first

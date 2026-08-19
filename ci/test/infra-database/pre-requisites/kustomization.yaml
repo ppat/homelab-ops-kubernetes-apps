@@ -3,7 +3,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- ../../../../infrastructure/bootstrap/crds/
 # This suite's own minio data -- the buckets/users/policies ConfigMap and the
 # `minio-user-credentials` Secret the module's backups authenticate with. Deliberately not
 # part of the minio fixture: the bucket names and access keys are per-suite.

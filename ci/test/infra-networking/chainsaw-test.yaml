@@ -9,6 +9,10 @@ spec:
     use:
       template: ../chainsaw/steps/bootstrap-flux.yaml
 
+  - name: Bootstrap CRDs
+    use:
+      template: ../chainsaw/steps/bootstrap-crds.yaml
+
   - name: Bootstrap pre-requisites
     use:
       template: ../chainsaw/steps/bootstrap-prerequisites.yaml
