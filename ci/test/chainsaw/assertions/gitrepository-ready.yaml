@@ -4,6 +4,8 @@ kind: GitRepository
 metadata:
   name: ($name)
   namespace: ($namespace)
+# See helmrelease-ready.yaml for what Flux's status.observedGeneration guarantees.
+(status.observedGeneration == metadata.generation): true
 status:
   (conditions[?type == 'Ready']):
   - status: 'True'

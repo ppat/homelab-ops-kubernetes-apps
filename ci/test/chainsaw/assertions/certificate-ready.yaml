@@ -4,6 +4,11 @@ kind: Certificate
 metadata:
   name: ($name)
   namespace: ($namespace)
+# cert-manager has no top-level observedGeneration, so the guard goes on the condition -
+# and is weaker there: it is written on every reconcile, including failing ones. Not
+# `| [0]`, which re-roots the expression so metadata.generation is null and the line is
+# vacuous; not `contains()`, which errors on a status-absent object and aborts the step.
+(status.conditions[?type == 'Ready' && status == 'True'].observedGeneration == [metadata.generation]): true
 status:
   (conditions[?type == 'Ready']):
   - status: 'True'
