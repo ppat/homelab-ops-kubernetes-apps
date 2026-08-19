@@ -197,3 +197,10 @@ jobs:
     with:
       git_ref: ${{ github.head_ref || github.ref }}
       files: ${{ github.event_name != 'pull_request' && 'ALL' || fromJSON(needs.detect-changes.outputs.results).yaml_all_changed_files }}
+
+  zizmor:
+    needs: [detect-changes]
+    if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).actions_any_changed == 'true' }}
+    uses: ppat/github-workflows/.github/workflows/lint-zizmor.yaml@1e8ca1b00b6e69bdf5aef8b33111c594c051ff65 # v4.4.0
+    with:
+      git_ref: ${{ github.head_ref || github.ref }}
