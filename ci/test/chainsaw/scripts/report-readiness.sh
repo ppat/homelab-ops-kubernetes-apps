@@ -127,7 +127,39 @@ echo '--- RESTART: container restarts (empty = none) ---'
 # budget to ride out a known crash-restart cycle (infra-storage's longhorn-manager, #3643).
 # Tolerating something is defensible; tolerating it silently is not.
 # shellcheck disable=SC2016  # go-template, not shell
-kubectl get pods -A "${KOPTS[@]}" -o go-template='{{range .items}}{{if .status}}{{$p := printf "pod/%s/%s" .metadata.namespace .metadata.name}}{{range .status.containerStatuses}}{{if gt .restartCount 0}}{{printf "RESTART %-6d %s [%s]\n" .restartCount $p .name}}{{end}}{{end}}{{end}}{{end}}' 2>/dev/null | sort -k2 -rn
+restarts=$(kubectl get pods -A "${KOPTS[@]}" -o go-template='{{range .items}}{{if .status}}{{$p := printf "pod/%s/%s" .metadata.namespace .metadata.name}}{{range .status.containerStatuses}}{{if gt .restartCount 0}}{{printf "RESTART %-6d %s [%s]\n" .restartCount $p .name}}{{end}}{{end}}{{end}}{{end}}' 2>/dev/null | sort -k2 -rn)
+echo "${restarts}"
+
+# WHY a container restarted, not just that it did. The count above says a crash happened; the
+# log of the instance that crashed says what happened, and it is gone the moment the next
+# instance replaces it.
+#
+# This gap has cost a real diagnosis: on 2026-08-19 a suite failed with external-dns-pihole in
+# CrashLoopBackOff at 4 restarts, and the dump carried the counts, the workload table and the
+# uncensored watch -- but no log, so the failure could only be classified, not explained.
+#
+# Gated on restarts existing, so a healthy run pays nothing and the common case emits no extra
+# API calls at all. Bounded per container, because a crash-looping container can produce far
+# more than anyone will read and this runs inside the catch path's budget.
+if [[ -n "${restarts}" ]]; then
+  echo '--- RESTART-LOG: last lines from the PREVIOUS instance of each restarted container ---'
+  while read -r _ _ ref container; do
+    [[ -n "${ref}" ]] || continue
+    ns="${ref#pod/}"; ns="${ns%%/*}"
+    pod="${ref##*/}"
+    container="${container#[}"; container="${container%]}"
+    echo "=== ${ns}/${pod} [${container}] ==="
+    # --previous is the point: the current instance may be healthy or still starting, and it is
+    # the one that died that carries the reason. Failure here is expected and non-fatal -- a
+    # container evicted or never started has no previous log to read.
+    # `2>&1` and not `||`: kubectl prints "unable to retrieve container logs" and still exits 0
+    # when the previous instance's log has already been reaped, so a `||` fallback would never
+    # fire. That message is the useful part anyway. Captured and echoed rather than streamed,
+    # because kubectl omits the trailing newline on that path and the next section runs into it.
+    prev=$(kubectl logs -n "${ns}" "${pod}" -c "${container}" --previous --tail=40 "${KOPTS[@]}" 2>&1)
+    [[ -n "${prev}" ]] && echo "${prev}"
+  done <<< "${restarts}"
+fi
 
 echo '--- PULL: image pull durations from reason=Pulled events (slowest first) ---'
 # Replaces image size, which was used as a pull-time proxy and is measurably wrong the moment a

@@ -23,7 +23,31 @@ set -u
 KOPTS=(--request-timeout=30s)
 CNPG_NS=cnpg-system
 
-kubectl get crd clusters.postgresql.cnpg.io "${KOPTS[@]}" >/dev/null 2>&1 || exit 0
+# Both kubectl calls below distinguish "CNPG is not installed in this suite" from "the API
+# server could not be asked". They used to be indistinguishable, and in the direction that
+# matters: an unreachable API server produced the same silence as a healthy suite with no
+# CNPG in it. Demonstrated with KUBECONFIG=/nonexistent -- rc 0, zero bytes of stdout AND
+# stderr, i.e. this instrument reporting "nothing to see" about a cluster it never reached.
+# That is the failure mode it exists to catch, one level up.
+crd_err=$(kubectl get crd clusters.postgresql.cnpg.io "${KOPTS[@]}" 2>&1 >/dev/null); crd_rc=$?
+if [[ ${crd_rc} -ne 0 ]]; then
+  # A genuinely absent CRD is the common case and stays silent -- most suites have no CNPG.
+  if [[ "${crd_err}" == *NotFound* || "${crd_err}" == *"not found"* ]]; then
+    exit 0
+  fi
+  echo '--- CNPG: COULD NOT ASK -- the API server did not answer, so nothing below was checked ---'
+  echo "${crd_err}"
+  exit 0
+fi
+
+# shellcheck disable=SC2016  # go-template, not shell
+list_err=$(kubectl get clusters.postgresql.cnpg.io -A "${KOPTS[@]}" \
+  -o go-template='{{range .items}}{{$c := printf "%s/%s" .metadata.namespace .metadata.name}}{{$r := "MISSING-STATUS"}}{{if .status}}{{range .status.conditions}}{{if eq .type "Ready"}}{{$r = .status}}{{end}}{{end}}{{end}}{{printf "%s %s\n" $r $c}}{{end}}' 2>&1 >/dev/null); list_rc=$?
+if [[ ${list_rc} -ne 0 ]]; then
+  echo '--- CNPG: COULD NOT ASK -- listing Cluster objects failed, so "all Ready" is NOT established ---'
+  echo "${list_err}"
+  exit 0
+fi
 
 # shellcheck disable=SC2016  # go-template, not shell
 not_ready=$(kubectl get clusters.postgresql.cnpg.io -A "${KOPTS[@]}" \
