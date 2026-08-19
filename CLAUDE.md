@@ -69,7 +69,7 @@ pre-commit run --all-files      # yamllint, markdownlint, shellcheck, commitlint
 
 Individual checks can be run standalone if needed: `yamllint --strict <path>`, `markdownlint-cli2 --fix --config .markdownlint-cli2.yaml <path>`, `shellcheck <script>`.
 
-Kubernetes manifest validation (kubeconform via the `validate-kubernetes-manifests` pre-commit hook) uses `ci/validation/kustomization.yaml` as the base kustomization and `ci/validation/.env` for dummy post-build substitution values, restricted to `apps/*` and `infrastructure/*` (excludes `components/*` and `.archive/*` since components aren't standalone kustomizations).
+Kubernetes manifest validation (kubeconform via the `validate-kubernetes-manifests` pre-commit hook) uses `ci/validation/kustomization.yaml` as the base kustomization and `ci/validation/.env` for dummy post-build substitution values, restricted to `apps/*`, `infrastructure/*` and `ci/test/*` (excludes `components/*`, `.archive/*` and `infrastructure/bootstrap/crds/*` since those aren't standalone kustomizations).
 
 ### Module tests (chainsaw + kind)
 
