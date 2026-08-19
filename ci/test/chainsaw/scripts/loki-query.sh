@@ -45,6 +45,15 @@ SERVICE_PORT=3100
 LOCAL_PORT=13100
 LOOKBACK="30m"
 DEADLINE=180
+# Every curl below is bounded by this. Without a per-request cap the --deadline above is
+# unenforceable: the loop only re-checks the clock between attempts, so one request that hangs
+# inside curl blocks past the deadline indefinitely and the chainsaw step's own `timeout` does
+# the killing instead. That converts "Loki was slow" into a red run attributed to the wrong
+# thing -- the step is reported as timing out rather than the query as failing to return.
+#
+# 30s is well above a healthy response (sub-second here) and well under the 180s deadline, so a
+# hung request costs at most one wasted attempt rather than the whole budget.
+CURL_MAX_TIME=30
 LIMIT=100
 DIAGNOSTIC_MATCH=""
 EMIT="result"
@@ -149,7 +158,7 @@ trap "kill ${PF_PID} >/dev/null 2>&1 || true" EXIT
 # two turns "Loki was never reachable" into an indistinguishable timeout.
 ready=0
 for _ in $(seq 1 60); do
-  if curl -fsS "${BASE}/ready" >/dev/null 2>&1; then
+  if curl -fsS --max-time 10 "${BASE}/ready" >/dev/null 2>&1; then
     ready=1
     break
   fi
@@ -165,7 +174,7 @@ run_query() {
   local now start
   now="$(date +%s)"
   start=$(( now - LOOKBACK_SECONDS ))
-  curl -fsS -G "${BASE}/loki/api/v1/query_range" \
+  curl -fsS --max-time "${CURL_MAX_TIME}" -G "${BASE}/loki/api/v1/query_range" \
     --data-urlencode "query=${QUERY}" \
     --data-urlencode "start=${start}" \
     --data-urlencode "end=${now}" \
@@ -178,16 +187,16 @@ dump_diagnostics() {
   now="$(date +%s)"
   start=$(( now - LOOKBACK_SECONDS ))
   echo "--- diagnostics: label names Loki currently knows about ---" >&2
-  curl -fsS -G "${BASE}/loki/api/v1/labels" \
+  curl -fsS --max-time "${CURL_MAX_TIME}" -G "${BASE}/loki/api/v1/labels" \
     --data-urlencode "start=${start}" --data-urlencode "end=${now}" 2>/dev/null \
     | jq -c '.data' >&2 || echo "(labels endpoint unavailable)" >&2
   echo "--- diagnostics: values of the 'job' label ---" >&2
-  curl -fsS -G "${BASE}/loki/api/v1/label/job/values" \
+  curl -fsS --max-time "${CURL_MAX_TIME}" -G "${BASE}/loki/api/v1/label/job/values" \
     --data-urlencode "start=${start}" --data-urlencode "end=${now}" 2>/dev/null \
     | jq -c '.data' >&2 || echo "(job label values unavailable)" >&2
   if [ -n "$DIAGNOSTIC_MATCH" ]; then
     echo "--- diagnostics: full label set of every stream matching ${DIAGNOSTIC_MATCH} ---" >&2
-    curl -fsS -G "${BASE}/loki/api/v1/series" \
+    curl -fsS --max-time "${CURL_MAX_TIME}" -G "${BASE}/loki/api/v1/series" \
       --data-urlencode "match[]=${DIAGNOSTIC_MATCH}" \
       --data-urlencode "start=${start}" --data-urlencode "end=${now}" 2>/dev/null \
       | jq -S '.data' >&2 || echo "(series endpoint unavailable)" >&2
@@ -235,7 +244,7 @@ fi
 # --emit=series. Gated on the query above having returned data, so an empty series
 # response means "these streams carry no indexed labels", never "nothing was collected".
 now="$(date +%s)"
-series="$(curl -fsS -G "${BASE}/loki/api/v1/series" \
+series="$(curl -fsS --max-time "${CURL_MAX_TIME}" -G "${BASE}/loki/api/v1/series" \
   --data-urlencode "match[]=${SERIES_MATCH}" \
   --data-urlencode "start=$(( now - LOOKBACK_SECONDS ))" \
   --data-urlencode "end=${now}" 2>/dev/null || true)"

@@ -1,5 +1,14 @@
 ---
-# Git configuration
+# Values for running a suite locally, passed with `chainsaw test --values`. The CI workflow
+# generates its own equivalent; this is the local one.
+#
+# The key is `branch`, not `ref`. ci/test/chainsaw/steps/bootstrap-flux.yaml reads
+# `($values.git.branch)` and feeds it straight to the Flux GitRepository's `spec.ref.branch`,
+# which needs a bare branch name -- so a mismatched key here produces a GitRepository with an
+# empty branch rather than any kind of error.
+#
+# Flux fetches from the REMOTE, so `branch` must name a branch you have pushed. Uncommitted
+# local work is not what the suite will test.
 git:
   url: https://github.com/ppat/homelab-ops-kubernetes-apps
-  ref: main
+  branch: main

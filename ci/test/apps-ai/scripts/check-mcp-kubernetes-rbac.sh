@@ -163,15 +163,25 @@ check_sandbox_write_boundary() {
   # FAILING direction: the control that matters most. RBAC (check_sandbox_identity above)
   # already allows this read outright -- only mcp-kubernetes-sandbox-config's own
   # denied_resources stands between read_only = false and a readable Secret.
-  local secret_response
+  #
+  # Three outcomes, not two. `curl -fsS` returning nothing -- port-forward dropped, pod gone,
+  # apiserver unreachable -- used to fall into the same branch as a successful-but-allowed read
+  # and print "was NOT denied", which reads as the security control failing OPEN when in fact the
+  # probe never ran. That is the most misleading direction a security check can fail in, so
+  # "could not ask" is now its own outcome and says so.
+  local secret_response curl_rc=0
   secret_response=$(curl -fsS "${base}/mcp" \
     -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
     -H "Mcp-Session-Id: ${session}" \
-    -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"resources_list","arguments":{"apiVersion":"v1","kind":"Secret","namespace":"kube-system"}}}')
-  if echo "$secret_response" | grep -q '"isError":true' && echo "$secret_response" | grep -q 'resource not allowed'; then
+    -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"resources_list","arguments":{"apiVersion":"v1","kind":"Secret","namespace":"kube-system"}}}') || curl_rc=$?
+  if [ "${curl_rc}" -ne 0 ] || [ -z "${secret_response}" ]; then
+    echo "FAIL: could not ask -- the resources_list(Secret) call itself failed (curl rc=${curl_rc}, response empty=$([ -z "${secret_response}" ] && echo yes || echo no))." >&2
+    echo "      This is NOT evidence that denied_resources failed open. It is evidence the probe could not run." >&2
+    FAILED=1
+  elif echo "$secret_response" | grep -q '"isError":true' && echo "$secret_response" | grep -q 'resource not allowed'; then
     echo "ok: resources_list(Secret) was denied by denied_resources, despite read_only = false"
   else
-    echo "FAIL: resources_list(Secret) was NOT denied -- got: $secret_response" >&2
+    echo "FAIL: resources_list(Secret) was ALLOWED -- denied_resources did not hold. Got: $secret_response" >&2
     FAILED=1
   fi
 

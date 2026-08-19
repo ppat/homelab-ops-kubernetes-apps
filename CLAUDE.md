@@ -79,8 +79,14 @@ To run a module's suite locally:
 
 ```bash
 kind create cluster --config .github/kind-cluster-single-node.yaml
-chainsaw test ./ci/test/<module-dir> --config ./ci/test/chainsaw/.chainsaw.yaml
+chainsaw test ./ci/test/<module-dir> --config ./ci/test/chainsaw/.chainsaw.yaml \
+  --values ./ci/test/chainsaw/values-local.yaml
 ```
+
+`--values` is **required, not optional** — the shared bootstrap step reads `$values.git.branch`
+and `$values.git.url` to build the Flux `GitRepository`, so without it the first step fails.
+The reusable CI workflow passes its own generated file; `values-local.yaml` is the local
+equivalent. Flux fetches from the remote, so set `branch` to a branch you have **pushed**.
 
 `<module-dir>` matches the CI workflow names, e.g. `apps-ai`, `apps-coder`, `infra-security`, `infra-database`. Each corresponds 1:1 with a `.github/workflows/test-*.yaml` file — check that workflow to see the exact `chainsaw_config`/`kind_config` inputs used in CI.
 
