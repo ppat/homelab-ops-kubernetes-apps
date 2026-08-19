@@ -207,7 +207,20 @@ check_sandbox_write_boundary() {
     echo "      (curl rc=${curl_rc}, ${#secret_response} bytes returned)." >&2
     echo "      This is NOT evidence that denied_resources failed open. It is evidence the probe could not run." >&2
     FAILED=1
-  elif echo "$secret_response" | grep -q '"isError":true' && echo "$secret_response" | grep -q 'resource not allowed'; then
+  # The GVK is pinned, not just the phrase. A bare `resource not allowed` would accept a denial
+  # issued for some other resource, and the safety of the `"isError":true` half rests on Go's
+  # json.Marshal escaping quotes inside tool text -- an invariant of the pinned image, not
+  # something this script arranges. Pinning the GVK is what stops an upstream response-shape
+  # change from being read as this control holding.
+  #
+  # Read off the real server rather than assumed -- the denial body is
+  #   ...\"failed to list resources: Get \\\"https://kubernetes.default.svc/api/v1/namespaces/
+  #   kube-system/secrets\\\": resource not allowed: /v1, Kind=Secret\"...,\"isError\":true
+  # and this pattern matches both observed denial bodies and neither observed allow body.
+  #
+  # If upstream rewords it, this goes RED rather than quietly passing -- which is the correct
+  # direction for a security assertion to fail.
+  elif echo "$secret_response" | grep -q '"isError":true' && echo "$secret_response" | grep -q 'resource not allowed: /v1, Kind=Secret'; then
     echo "ok: resources_list(Secret) was denied by denied_resources, despite read_only = false"
   else
     # The body is deliberately NOT printed here. This branch means the read may have SUCCEEDED,
