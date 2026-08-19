@@ -4,6 +4,10 @@ kind: HelmRelease
 metadata:
   name: ($name)
   namespace: ($namespace)
+# See deployment-ready.yaml. Flux advances status.observedGeneration only on a SUCCESSFUL
+# reconcile - a failing one leaves it at the last good generation indefinitely - so this is
+# a stronger guard here than it is for a Deployment.
+(status.observedGeneration == metadata.generation): true
 status:
   (conditions[?type == 'Ready']):
   - status: 'True'

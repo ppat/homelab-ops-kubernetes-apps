@@ -3,6 +3,8 @@ apiVersion: trust.cert-manager.io/v1alpha1
 kind: Bundle
 metadata:
   name: ($name)
+# See certificate-ready.yaml for why the guard goes on the condition, not at top level.
+(status.conditions[?type == 'Synced' && status == 'True'].observedGeneration == [metadata.generation]): true
 status:
   (conditions[?type == 'Synced']):
   - status: 'True'
