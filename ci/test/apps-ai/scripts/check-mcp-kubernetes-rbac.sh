@@ -121,10 +121,22 @@ check_sandbox_write_boundary() {
   # ../chainsaw-test.yaml). A request that spends ten seconds upstream and comes back with a
   # "context deadline exceeded" tool error IS an answer, and the branches below handle it --
   # so the cap must sit clear of it rather than converting it into "could not ask".
-  # Ceiling: the step allows 2m. Readiness can spend 40s of that, and past the handshake the
-  # longest continuing chain is three bounded calls (write probe, Secret read, cleanup), since
-  # a failed write probe deliberately does NOT return. 40 + 3x20 = 100s, inside 2m with room
-  # for port-forward setup.
+  # Ceiling: the step allows 2m, and readiness can spend 40s of that. Past readiness the
+  # longest continuing chain is FIVE bounded calls -- initialize, notifications/initialized,
+  # write probe, Secret read, cleanup -- because a failed write probe deliberately does NOT
+  # return, so no branch shortens it. 40 + 5x20 = 140s, which is 20s OVER the 2m budget: the
+  # cap on its own does not guarantee that a verdict is printed inside the step.
+  #
+  # It fits anyway because the two handshake calls are protocol-local -- neither carries a
+  # tools/call, so neither can spend the ten seconds upstream that sets the floor above.
+  # Measured rather than assumed: the whole step (port-forward, readiness, all five calls,
+  # cleanup) runs in 1.1s in CI (job 96174214869), and a driven run holding EVERY call to the
+  # server's full 10s API deadline finishes in 50.1s -- 70s of slack. Reaching 140s needs all
+  # five calls to answer at ~19s AND succeed, which has never been observed.
+  #
+  # If it ever is reached it fails RED: chainsaw kills the step at its own timeout and reports
+  # SCRIPT ERROR / "context deadline exceeded". No ordering runs past 2m and still exits 0, so
+  # the residue costs a rerun, never a false pass.
   #
   # A cap is safe here only because every call is request/response: each POSTs one JSON-RPC
   # message and the server closes after replying. Nothing below opens a long-lived stream, so
