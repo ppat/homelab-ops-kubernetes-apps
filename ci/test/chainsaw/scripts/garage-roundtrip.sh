@@ -49,6 +49,19 @@ ADMIN_LOCAL_PORT=13903
 S3_LOCAL_PORT=13900
 WEB_LOCAL_PORT=13902
 DEADLINE=300
+# Every curl below is bounded by this. Without a per-request cap the readiness poll's DEADLINE
+# is unenforceable: that loop only re-checks the clock *between* attempts, so a request that
+# hangs inside curl never returns control to it and the chainsaw step's own `timeout` does the
+# killing instead -- reporting "the assertion ran out of budget" for what was actually "the
+# admin API never answered". See issue #3724.
+#
+# 15s, deliberately not the larger cap an object round-trip would suggest: none of the curls
+# here carries object data. They are small Admin API JSON calls and a 45-byte index.html read
+# back over a local port-forward, all sub-second when healthy -- the S3 put/get is boto3
+# further down and is bounded by botocore's own timeouts, not by this. At 5% of the step's 5m
+# (../../infra-storage/validate-garage.yaml) apiece, even several consecutive hung admin calls
+# still leave the round-trip and website phases their share of the budget.
+CURL_MAX_TIME=15
 
 python3 -m pip install --quiet --user boto3
 
@@ -107,7 +120,7 @@ S3_ENDPOINT="http://127.0.0.1:${S3_LOCAL_PORT}"
 WEB_ENDPOINT="http://127.0.0.1:${WEB_LOCAL_PORT}"
 
 auth_curl() {
-  curl -fsS -H "Authorization: Bearer ${ADMIN_TOKEN}" "$@"
+  curl -fsS --max-time "${CURL_MAX_TIME}" -H "Authorization: Bearer ${ADMIN_TOKEN}" "$@"
 }
 
 echo "waiting for garage admin API through the port-forward ..." >&2
@@ -244,7 +257,8 @@ MISSING_BUCKET_HOST="chainsaw-test-bucket-does-not-exist.${ROOT_DOMAIN}"
 
 echo "reading index.html back through the website endpoint (Host=${WEB_HOST}) ..." >&2
 web_body_file="$(mktemp)"
-web_status="$(curl -sS -o "$web_body_file" -w '%{http_code}' -H "Host: ${WEB_HOST}" "${WEB_ENDPOINT}/index.html")"
+web_status="$(curl -sS --max-time "${CURL_MAX_TIME}" -o "$web_body_file" -w '%{http_code}' \
+  -H "Host: ${WEB_HOST}" "${WEB_ENDPOINT}/index.html")"
 if [ "$web_status" != "200" ]; then
   echo "FAIL: website endpoint returned HTTP ${web_status} for Host=${WEB_HOST} /index.html, expected 200" >&2
   cat "$web_body_file" >&2
@@ -272,7 +286,8 @@ check_web_404() {
   local headers body status has_marker=0
   headers="$(mktemp)"
   body="$(mktemp)"
-  status="$(curl -sS -o "$body" -D "$headers" -w '%{http_code}' -H "Host: ${host}" "${WEB_ENDPOINT}${path}")"
+  status="$(curl -sS --max-time "${CURL_MAX_TIME}" -o "$body" -D "$headers" -w '%{http_code}' \
+    -H "Host: ${host}" "${WEB_ENDPOINT}${path}")"
   if [ "$status" != "404" ]; then
     echo "FAIL: ${label}: expected HTTP 404 for Host=${host} ${path}, got ${status}" >&2
     cat "$headers" "$body" >&2

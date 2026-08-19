@@ -26,6 +26,18 @@ SERVICE="kube-prometheus-stack-prometheus"
 SERVICE_PORT=9090
 LOCAL_PORT=19090
 DEADLINE=300
+# Every curl below is bounded by this. Without a per-request cap the --deadline above is
+# unenforceable: the polling loop only re-checks the clock *between* attempts, so a request
+# that hangs inside curl never returns control to it, and the chainsaw step's own `timeout`
+# does the killing instead. That reports "the assertion ran out of budget" for what was
+# actually "this query never returned" -- which invites raising a budget that was never the
+# problem. See issue #3724.
+#
+# 20s is derived from the budget this has to fit inside, not copied from a sibling: a healthy
+# instant query here answers in well under a second, while ../steps/assert-prometheus-query.yaml
+# allows 6m against this 300s deadline. The worst case past the deadline is one overshooting
+# query plus one diagnostic query, so the cap has to leave 2x itself inside that 60s of slack.
+CURL_MAX_TIME=20
 DIAGNOSTIC_MATCH=""
 
 for param in "$@"
@@ -83,7 +95,10 @@ trap "kill ${PF_PID} >/dev/null 2>&1 || true" EXIT
 # turns "Prometheus was never reachable" into an indistinguishable timeout.
 ready=0
 for _ in $(seq 1 60); do
-  if curl -fsS "${BASE}/-/ready" >/dev/null 2>&1; then
+  # A liveness ping on an already-forwarded local port, not a query, so it takes a much tighter
+  # bound than CURL_MAX_TIME: a hung probe then costs 10s of this readiness phase instead of
+  # blocking the loop's 60 attempts from ever completing.
+  if curl -fsS --max-time 10 "${BASE}/-/ready" >/dev/null 2>&1; then
     ready=1
     break
   fi
@@ -96,14 +111,14 @@ if [ "$ready" -ne 1 ]; then
 fi
 
 run_query() {
-  curl -fsS -G "${BASE}/api/v1/query" \
+  curl -fsS --max-time "${CURL_MAX_TIME}" -G "${BASE}/api/v1/query" \
     --data-urlencode "query=${QUERY}" 2>/dev/null
 }
 
 dump_diagnostics() {
   if [ -n "$DIAGNOSTIC_MATCH" ]; then
     echo "--- diagnostics: metric names currently matching ${DIAGNOSTIC_MATCH} ---" >&2
-    curl -fsS -G "${BASE}/api/v1/label/__name__/values" \
+    curl -fsS --max-time "${CURL_MAX_TIME}" -G "${BASE}/api/v1/label/__name__/values" \
       --data-urlencode "match[]=${DIAGNOSTIC_MATCH}" 2>/dev/null \
       | jq -c '.data' >&2 || echo "(label values endpoint unavailable)" >&2
   fi
