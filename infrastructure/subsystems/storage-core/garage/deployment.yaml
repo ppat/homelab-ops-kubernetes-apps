@@ -40,8 +40,8 @@ spec:
         # in-process (garage/src/garage/server.rs's initial_config, called from
         # run_server before any listener binds -- not HTTP to Garage's own admin
         # API, not a CLI shell-out, and not the separate sidecar/Job this module
-        # used before #3639's follow-up removed it). Added in v2.3.0, the version
-        # pinned above. Requires replication_factor = 1 (conf.d/garage.toml).
+        # used before #3639's follow-up removed it). Added in v2.3.0. Requires
+        # replication_factor = 1 (conf.d/garage.toml).
         # Capacity is auto-detected from data_dir's filesystem *total* bytes (not
         # available -- doesn't shrink misleadingly as the volume fills over time)
         # and zone is hardcoded to "dc1" by Garage itself, not configurable here.

@@ -42,11 +42,11 @@ dependency waits before re-checking; that has already caused an outright suite f
 
 Two things checked rather than assumed:
 
-- external-secrets 2.8.0 defaults `webhook.certManager.enabled` to `false` and this module does not override
+- The chart defaults `webhook.certManager.enabled` to `false` and this module does not override
   it, so the operator's own webhook certificates come from its built-in certController, not from
   cert-manager.
 - The chart's `Chart.yaml` declares the subchart with `condition: bitwarden-sdk-server.enabled`, and
-  `helm template` at version 2.8.0 with that value false renders exactly three fewer objects — the
+  `helm template` with that value false renders exactly three fewer objects — the
   `bitwarden-sdk-server` ServiceAccount, Service and Deployment — and no other difference.
 
 ## What a consumer would lose

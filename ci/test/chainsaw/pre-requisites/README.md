@@ -109,7 +109,7 @@ sized on observed CI (28.1/82.1/94.1s green) and exercised on the branch it came
 
 Every fixture sets `retryInterval: 1m0s`. Flux defaults `retryInterval` to `interval` when it is unset, and
 `interval` here is `15m0s` — so a single transient failure parks the object for a quarter of an hour, far
-longer than any suite runs. Confirmed against the Flux v2.9.4 CRD schema and observed in run logs: after a
+longer than any suite runs. Confirmed against the Flux CRD schema and observed in run logs: after a
 health check expired, the `minio` `Kustomization` still read `False` 3m32s after its own `HelmRelease` had
 gone Ready, with no retry in between. See #3685.
 

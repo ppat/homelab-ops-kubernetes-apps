@@ -40,9 +40,9 @@ in that gap is rejected outright rather than merely delayed. With `retryInterval
 longer than the check saves, and it is intermittent, which is worse — it would surface as suite flakiness with
 no obvious cause.
 
-Verified by rendering the chart at the pinned v1.21.1 rather than from documentation: the hook annotation, the
-`check api` argument, the `certificaterequests: ["create"]` RBAC the Job is granted, and the webhook's
-`failurePolicy`.
+Verified by rendering the chart at the version this fixture pins rather than from documentation: the hook
+annotation, the `check api` argument, the `certificaterequests: ["create"]` RBAC the Job is granted, and the
+webhook's `failurePolicy`.
 
 ## Consumer must supply
 

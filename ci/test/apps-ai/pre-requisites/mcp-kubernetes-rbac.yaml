@@ -332,7 +332,7 @@ rules:
   #   spec.kind is Fake") isn't an option either — RBAC has no concept of it.
   # - GeneratorState.spec.resource is a snapshot of the generator manifest at
   #   the time the state was produced, and spec.state is the generator's
-  #   output (per the external-secrets v2.8.0 CRD bundle this repo pins) —
+  #   output (per the external-secrets CRD bundle this repo pins) —
   #   for vaultdynamicsecrets, which this role does grant, that output is
   #   lease material. GeneratorStates are written by the controller, not a
   #   person, so they appear without anyone choosing to create one.
