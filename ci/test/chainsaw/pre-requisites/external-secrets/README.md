@@ -49,6 +49,24 @@ Two things checked rather than assumed:
   `helm template` with that value false renders exactly three fewer objects — the
   `bitwarden-sdk-server` ServiceAccount, Service and Deployment — and no other difference.
 
+## Also changed: the webhook's readiness delay
+
+The chart gives the webhook a `readinessProbe` with `initialDelaySeconds: 20` and no liveness or
+startup probe. That delay never changes when the webhook can serve — only when kubelet first asks —
+so every suite composing this fixture paid it on every run, whatever else happened. The fixture
+patches it to `1`.
+
+This is safe rather than merely fast: readiness is the pod's only probe, so a failing check keeps it
+NotReady and out of the Service — correct while its certificates are still missing — and cannot
+restart it. The webhook's own two-minute deadline for those certificates runs from container start,
+not from probe timing, so the margin against it is unchanged.
+
+It moves the fast mode only. When the certificate is late, the probe grid is not what the webhook is
+waiting on, so the slow band reported by
+[`report-readiness.sh`](../../scripts/report-readiness.sh) is unaffected — as is its `>= 60`
+classifier edge. `infra-security` deploys the whole `security-core` module rather than this fixture
+and keeps the chart default, so its fast band stays where it was.
+
 ## What a consumer would lose
 
 A suite that actually needs to resolve secrets **through the Bitwarden provider** cannot use this fixture:

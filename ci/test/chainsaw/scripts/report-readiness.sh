@@ -37,8 +37,9 @@
 # longhorn-manager, #3643) -- cross-check those against the RESTART block.
 #
 # MODE / ESOCERT / ESOLOG exist for one question: the prerequisite phase is BIMODAL. The
-# external-secrets controller -> webhook readiness gap is either ~20-27s or ~71-97s with
+# external-secrets controller -> webhook readiness gap was either ~20-27s or ~71-97s with
 # nothing in between across 143 classified runs, and the mode does not track load (06 §5).
+# The fast band has since moved -- see the band edges below -- but the slow one has not.
 # A contended resource produces a continuum, not two bands with an empty 40s gulf; that shape
 # needs a fixed timer converting a lost race into a discrete penalty. MODE names the mode so
 # nobody re-derives the band by hand again, and ESOCERT/ESOLOG carry the four timestamps that
@@ -111,6 +112,10 @@ echo '--- READY: pod and Flux object Ready transitions, ascending (T0 = earliest
       gap = rt["webhook"] - rt["ctrl"]
       # Band edges from the published distribution (06 §5, outside-review-2 §3.3): 78 runs on
       # the old instrument and 65 on the new one split 20-27s vs 71-97s with NOTHING between.
+      # Both edges still hold after the fixture dropped the webhook probe delay: that delay
+      # only ever gated OBSERVING a webhook that was already serving, so it moved the fast band
+      # down (well clear of 35) and left the slow band -- gated on the certificate itself, not
+      # on the probe grid -- where it was.
       # `intermediate` therefore prints for 36-59s not as a hedge but as the falsifier: the
       # zero-intermediates claim is the sharpest fact in the dataset, and an instrument that
       # cannot contradict its own headline is not measuring anything.
@@ -186,12 +191,15 @@ echo '--- ESOCERT: webhook TLS secret vs webhook pod start (the MODE mechanism) 
 # observed as one continuous wait that returned the second the HR flipped), so the quantum is
 # inside the chart's own webhook-certificate bootstrap.
 #
-# The webhook mounts secret/external-secrets-webhook as a plain secret volume at /tmp/certs
-# and its readinessProbe carries initialDelaySeconds: 20 -- which is the fast mode's uniform
-# floor, and the reason a fast gap should never read much under 20.
+# The webhook mounts secret/external-secrets-webhook as a plain secret volume at /tmp/certs.
+# The chart's readinessProbe carries initialDelaySeconds: 20, which WAS the fast mode's uniform
+# floor; the shared external-secrets fixture now overrides it to 1, so a fast gap from a suite
+# composing that fixture reads single digits. infra-security deploys the whole security-core
+# module instead of the fixture and still pays the chart default -- it is the one suite whose
+# fast band stays ~20s, and that difference is expected, not a fault.
 #
 # Three outcomes this can return, and it must be able to return all three:
-#   secret written well before containerStarted, webhook Ready ~20s later  -> fast, no puzzle
+#   secret written well before containerStarted, webhook Ready a probe later-> fast, no puzzle
 #   secret written EARLY, webhook Ready ~60s after that                    -> ESO-internal
 #                                                                             timer, not kubelet
 #   secret written AFTER containerStarted, webhook Ready at the next tick  -> the mount-refresh
