@@ -45,7 +45,8 @@ SERVICE_PORT=3100
 LOCAL_PORT=13100
 LOOKBACK="30m"
 DEADLINE=180
-# Every curl below is bounded by this. Without a per-request cap the --deadline above is
+# Bounds every DATA request below. The readiness probe uses its own tighter literal. Without a
+# per-request cap the --deadline above is
 # unenforceable: the loop only re-checks the clock between attempts, so one request that hangs
 # inside curl blocks past the deadline indefinitely and the chainsaw step's own `timeout` does
 # the killing instead. That converts "Loki was slow" into a red run attributed to the wrong
@@ -156,8 +157,15 @@ trap "kill ${PF_PID} >/dev/null 2>&1 || true" EXIT
 
 # Wait for the port-forward itself, separately from waiting for data: conflating the
 # two turns "Loki was never reachable" into an indistinguishable timeout.
+#
+# Bounded by WALL CLOCK, not by iteration count. With a per-request cap, `seq 1 60` would allow
+# 60 x (10s cap + 1s sleep) = 660s -- past this script's own 180s deadline AND past the step's
+# timeout, so a consistently-slow endpoint would consume the whole budget here and the script
+# would never reach the data phase to report its own failure. That is exactly the conflation
+# the paragraph above says this loop exists to prevent.
 ready=0
-for _ in $(seq 1 60); do
+ready_deadline=$(( $(date +%s) + 60 ))
+while [ "$(date +%s)" -lt "${ready_deadline}" ]; do
   if curl -fsS --max-time 10 "${BASE}/ready" >/dev/null 2>&1; then
     ready=1
     break
