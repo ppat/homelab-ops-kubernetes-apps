@@ -1,0 +1,27 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: bootstrap-crds
+spec:
+  try:
+  # Its own step, and its own phase, because DESIGN.md's bootstrap order is
+  # `Install FluxCD -> Apply CRDs -> Create namespaces -> Deploy Modules` -- three distinct
+  # things. Standing Flux up and seeding CRDs are not the same concern and do not belong in
+  # one template just because both happen early.
+  #
+  # It is emphatically NOT a resource of the `pre-requisites` Kustomization, which is where it
+  # lived until #3678 was diagnosed. See the script header: a Flux Kustomization re-applies on
+  # an interval, and re-applying a CRD closes the API server's watch connections for that resource
+  # -- which the operator does not re-establish, so it stops reconciling those objects entirely.
+  - description: Apply bootstrap CRDs
+    script:
+      # 3m. The bundle pulls ten CRD sets over HTTPS from upstream release assets, so the cost is
+      # dominated by network rather than by the apply -- and a remote resource inside a
+      # kustomization gets no retry from kustomize, which already makes upstream availability a
+      # single point of failure for every suite. Sized to ride out a slow fetch, not to be tight.
+      timeout: 3m
+      content: ../chainsaw/scripts/apply-bootstrap-crds.sh
+  catch:
+  - script:
+      content: kubectl get crds -o name | sort

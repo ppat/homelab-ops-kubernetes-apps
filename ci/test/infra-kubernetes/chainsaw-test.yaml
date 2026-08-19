@@ -9,13 +9,9 @@ spec:
     use:
       template: ../chainsaw/steps/bootstrap-flux.yaml
 
-  - name: Bootstrap pre-requisites
+  - name: Bootstrap CRDs
     use:
-      template: ../chainsaw/steps/bootstrap-prerequisites.yaml
-      with:
-        bindings:
-        - name: prerequisites_path
-          value: ./ci/test/infra-kubernetes/pre-requisites
+      template: ../chainsaw/steps/bootstrap-crds.yaml
 
   - name: Apply infra-kubernetes modules
     try:
