@@ -331,8 +331,17 @@ the dumps), `UNCENSORED-CLAMP requested= remaining_wall_s=` when the watch is sh
 the job's remaining wall clock, `UNCENSORED-PENDING t+<s> <keys>` progress lines while it waits,
 and `PULL-CACHED <n> image(s) already present on machine`. A kubelet message the `PULL` parser
 cannot read is emitted as `PULL ? ? <pod> :: <message>` and sorted to the top rather than
-dropped. `ci/test/chainsaw/scripts/report-cnpg.sh` adds `--- CNPG: ... ---` blocks on a failure
-with a CNPG `Cluster` not Ready; those are diagnostics to read, not a grammar to parse.
+dropped.
+
+Two blocks carry raw container output rather than grammar, and are diagnostics to read rather
+than lines to parse. `report-readiness.sh` follows the `RESTART` block with
+`--- RESTART-LOG: ... ---`, the tail of the **previous** instance of each restarted container,
+whenever any restart exists — which includes passing runs, since several suites restart a
+container on every run. `report-cnpg.sh` adds `--- CNPG: ... ---` blocks, either around the
+operator's logs when a `Cluster` is not Ready, or as `COULD NOT ASK` when the API server did
+not answer and nothing below it could be established. Both prefix every raw line with a
+`--timestamps` clock, which is what keeps a container's own log text from being read as the
+grammar above by the two prefix allowlists below.
 
 Two readings that are not what they look like: `T0` is the earliest transition in that run's own
 list, not the suite start, so offsets compare between runs of a suite and not against job

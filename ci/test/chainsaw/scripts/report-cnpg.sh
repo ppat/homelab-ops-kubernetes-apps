@@ -1,15 +1,22 @@
 #!/bin/bash
 # cloudnative-pg operator logs, on a failure where a CNPG Cluster is not Ready.
 #
-# #3678 is the largest single failure source in this repo -- 36 of 112 real failures across
-# four suites and twelve unrelated branches -- and it is undiagnosed for exactly one reason:
-# nothing captures the operator's logs. Its signature is a `Cluster` with an empty `Status` and
-# `Events: <none>` while the operator itself reports Ready, i.e. the operator never acted. The
-# absence of the obligatory SettingUp/CreatingInstance events proves inaction, but says nothing
-# about why, and the per-suite `describe`/`events` catches can only ever show the object that
-# did not change. The leading hypothesis -- a race between the operator's informer cache sync
-# and the Cluster being created just after its HelmRelease reconciles -- is testable only
-# against what the operator logged during that window.
+# #3678 was the largest single failure source in this repo -- 36 of 112 real failures across
+# four suites. Its signature is a `Cluster` with an empty `Status` and `Events: <none>` while
+# the operator itself reports Ready, i.e. the operator never acted.
+#
+# THE MECHANISM IS NO LONGER A HYPOTHESIS, and this file used to say otherwise. It named a race
+# between the operator's informer cache sync and the Cluster being created as the leading
+# candidate; that was refuted on the archive before it could be tested -- the operator had a
+# ~99s head start and was demonstrably serving admission at the time. The real cause is serving
+# operator 1.30.0 a PRE-1.30.0 `clusters` CRD, which wedges it for new objects and is sticky per
+# process; a newer CRD under an older operator is harmless. Reproduced 4 arms on one cluster,
+# and fixed by #3763 (nothing re-applies the bootstrap bundle on an interval any more).
+#
+# SO THIS SCRIPT IS A CONFIRMATION INSTRUMENT WITH A SHORT LIFE. It exists to show that the fix
+# holds across a few more weeks of real runs, and is expected to be deleted once it has. Keep it
+# correct -- a wrong answer during the confirmation window defeats the whole point -- but do not
+# invest in it beyond that.
 #
 # This does NOT come with a budget raise, and must not. The operator never acted, so no budget
 # can help; raising one would only delay the same failure and hide it behind a longer red run.
@@ -22,6 +29,10 @@ set -u
 
 KOPTS=(--request-timeout=30s)
 CNPG_NS=cnpg-system
+
+ERR_FILE=$(mktemp)
+# shellcheck disable=SC2064  # expand now: the trap must survive whatever reassigns it later
+trap "rm -f '${ERR_FILE}'" EXIT
 
 # Both kubectl calls below distinguish "CNPG is not installed in this suite" from "the API
 # server could not be asked". They used to be indistinguishable, and in the direction that
@@ -40,19 +51,26 @@ if [[ ${crd_rc} -ne 0 ]]; then
   exit 0
 fi
 
+# ONE call, captured once. An earlier draft ran this listing twice -- once as an rc probe with
+# its output discarded, then again for real -- which meant the call that was checked was not the
+# call that was used: if the second one failed, its error was still swallowed and `not_ready`
+# came back empty, i.e. exactly the silent "all Ready" this section exists to eliminate.
+#
+# stderr goes to a file rather than into the capture. `2>&1` would be loud on failure, which is
+# usually the right instinct and is the wrong one here: on SUCCESS it would fold any kubectl
+# warning into `list_out`, where it survives `grep -v '^True '` and prints as a not-Ready
+# Cluster. A false positive in the #3678 instrument, during the weeks it exists to confirm #3678
+# stays fixed, is worse than anything it buys.
 # shellcheck disable=SC2016  # go-template, not shell
-list_err=$(kubectl get clusters.postgresql.cnpg.io -A "${KOPTS[@]}" \
-  -o go-template='{{range .items}}{{$c := printf "%s/%s" .metadata.namespace .metadata.name}}{{$r := "MISSING-STATUS"}}{{if .status}}{{range .status.conditions}}{{if eq .type "Ready"}}{{$r = .status}}{{end}}{{end}}{{end}}{{printf "%s %s\n" $r $c}}{{end}}' 2>&1 >/dev/null); list_rc=$?
+list_out=$(kubectl get clusters.postgresql.cnpg.io -A "${KOPTS[@]}" \
+  -o go-template='{{range .items}}{{$c := printf "%s/%s" .metadata.namespace .metadata.name}}{{$r := "MISSING-STATUS"}}{{if .status}}{{range .status.conditions}}{{if eq .type "Ready"}}{{$r = .status}}{{end}}{{end}}{{end}}{{printf "%s %s\n" $r $c}}{{end}}' 2>"${ERR_FILE}"); list_rc=$?
 if [[ ${list_rc} -ne 0 ]]; then
   echo '--- CNPG: COULD NOT ASK -- listing Cluster objects failed, so "all Ready" is NOT established ---'
-  echo "${list_err}"
+  cat "${ERR_FILE}"
   exit 0
 fi
 
-# shellcheck disable=SC2016  # go-template, not shell
-not_ready=$(kubectl get clusters.postgresql.cnpg.io -A "${KOPTS[@]}" \
-  -o go-template='{{range .items}}{{$c := printf "%s/%s" .metadata.namespace .metadata.name}}{{$r := "MISSING-STATUS"}}{{if .status}}{{range .status.conditions}}{{if eq .type "Ready"}}{{$r = .status}}{{end}}{{end}}{{end}}{{printf "%s %s\n" $r $c}}{{end}}' 2>/dev/null \
-  | grep -v '^True ' || true)
+not_ready=$(printf '%s\n' "${list_out}" | grep -v '^True ' || true)
 
 [[ -z "${not_ready}" ]] && exit 0
 

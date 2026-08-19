@@ -16,15 +16,25 @@ spec:
   # not before, and the divergence was not cosmetic: the failing side carried no restart counts,
   # which is the evidence that separates a component that was late from one that was crashing.
   #
-  # Purely diagnostic: it asserts nothing and cannot fail the suite. Belongs last in every
-  # suite, so the times it reports are final.
+  # Purely diagnostic: it asserts nothing, and the script itself always exits 0. The one way it
+  # can still redden a suite is by exceeding its own timeout, which is a property of the budget
+  # below and not of anything it checks. Belongs last in every suite, so the times it reports
+  # are final.
   try:
   - description: Report readiness, restarts and image pulls
     script:
-      # 5m: nine kubectl calls each capped at --request-timeout=30s inside the script, so the
-      # construction's own ceiling is 270s. Free on a passing run -- the script returns when it
-      # is done, not when the budget expires. Was 3m against five calls, raised with the four
-      # that carry the MODE/ESOCERT/ESOLOG capture.
+      # 5m. The arithmetic is in .chainsaw.yaml beside the catch entry that runs the same
+      # script, and the short version is that `--request-timeout` bounds one HTTP request
+      # rather than one kubectl call, so the old "nine calls at 30s = 270s" understated the
+      # pathological figure by 5x. It is tolerated because that case needs a hanging
+      # connection, and a hanging connection empties the pod listing that gates the
+      # RESTART-LOG capture.
+      #
+      # This is the PASS path, which matters more than it looks: ~16% of green runs carry a
+      # restart and six suites carry one routinely, so the capture below is mostly a
+      # green-run instrument. Note the asymmetry with the catch -- a script that exceeds its
+      # timeout HERE fails the operation and therefore the suite, which is why the work is
+      # bounded rather than the clock raised.
       timeout: 5m
       content: ../chainsaw/scripts/report-readiness.sh
   # Closes the pair opened in bootstrap-flux.yaml. Two readings, not one, because the quantity
