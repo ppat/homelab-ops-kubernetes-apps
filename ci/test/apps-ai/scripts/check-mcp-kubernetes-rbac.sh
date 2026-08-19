@@ -125,14 +125,28 @@ check_sandbox_write_boundary() {
     sleep 1
   done
 
-  local init_headers
+  # Every curl here is rc-captured rather than left to `set -e`. An unguarded transport failure
+  # kills the function BEFORE the Secret assertion runs, silently and with a non-1 exit code --
+  # which is the same defect as the one the Secret probe below documents, in a worse position:
+  # it cancels the security check rather than mislabelling it.
+  local init_headers rc=0
   init_headers=$(mktemp)
   curl -fsS -D "$init_headers" -o /dev/null "${base}/mcp" \
     -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
-    -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"chainsaw-write-boundary-check","version":"0"}}}'
+    -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"chainsaw-write-boundary-check","version":"0"}}}' || rc=$?
+  if [ "${rc}" -ne 0 ]; then
+    echo "FAIL: could not ask -- /mcp initialize failed (curl rc=${rc}). Not evidence about any control." >&2
+    rm -f "$init_headers"
+    FAILED=1
+    return
+  fi
 
+  # `|| true` is load-bearing. grep exits 1 when the header is absent and `set -o pipefail`
+  # propagates that, so under `set -e` the assignment killed the function one line before its
+  # own guard -- leaving the guard below as unreachable dead code and producing NO output at
+  # all. Reproduced: empty stdout, empty stderr, exit 1, security assertion never reached.
   local session
-  session=$(grep -i '^Mcp-Session-Id:' "$init_headers" | tr -d '\r' | awk '{print $2}')
+  session=$(grep -i '^Mcp-Session-Id:' "$init_headers" | tr -d '\r' | awk '{print $2}' || true)
   rm -f "$init_headers"
   if [ -z "$session" ]; then
     echo "FAIL: no Mcp-Session-Id returned from mcp-kubernetes-sandbox's /mcp initialize" >&2
@@ -140,20 +154,29 @@ check_sandbox_write_boundary() {
     return
   fi
 
+  rc=0
   curl -fsS -o /dev/null "${base}/mcp" \
     -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
     -H "Mcp-Session-Id: ${session}" \
-    -d '{"jsonrpc":"2.0","method":"notifications/initialized"}'
+    -d '{"jsonrpc":"2.0","method":"notifications/initialized"}' || rc=$?
+  if [ "${rc}" -ne 0 ]; then
+    echo "FAIL: could not ask -- notifications/initialized failed (curl rc=${rc}). Not evidence about any control." >&2
+    FAILED=1
+    return
+  fi
 
   # WRITE direction: this is read_only = false's entire point. A ConfigMap in the
   # cluster's built-in "default" namespace, not a new Namespace -- avoids depending on
   # namespace-deletion finalizers settling within this step's timeout.
-  local create_response
+  local create_response create_rc=0
   create_response=$(curl -fsS "${base}/mcp" \
     -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
     -H "Mcp-Session-Id: ${session}" \
-    -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"resources_create_or_update","arguments":{"resource":"apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: chainsaw-write-boundary-check\n  namespace: default\ndata:\n  probe: \"true\"\n"}}}')
-  if echo "$create_response" | grep -q 'created or updated successfully'; then
+    -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"resources_create_or_update","arguments":{"resource":"apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: chainsaw-write-boundary-check\n  namespace: default\ndata:\n  probe: \"true\"\n"}}}') || create_rc=$?
+  if [ "${create_rc}" -ne 0 ]; then
+    echo "FAIL: could not ask -- resources_create_or_update failed (curl rc=${create_rc}). Not evidence about any control." >&2
+    FAILED=1
+  elif echo "$create_response" | grep -q 'created or updated successfully'; then
     echo "ok: resources_create_or_update (ConfigMap) succeeded through mcp-kubernetes-sandbox"
   else
     echo "FAIL: resources_create_or_update did not report success: $create_response" >&2
@@ -163,15 +186,50 @@ check_sandbox_write_boundary() {
   # FAILING direction: the control that matters most. RBAC (check_sandbox_identity above)
   # already allows this read outright -- only mcp-kubernetes-sandbox-config's own
   # denied_resources stands between read_only = false and a readable Secret.
-  local secret_response
+  #
+  # Three outcomes, not two. `curl -fsS` returning nothing -- port-forward dropped, pod gone,
+  # apiserver unreachable -- used to fall into the same branch as a successful-but-allowed read
+  # and print "was NOT denied", which reads as the security control failing OPEN when in fact the
+  # probe never ran. That is the most misleading direction a security check can fail in, so
+  # "could not ask" is now its own outcome and says so.
+  local secret_response curl_rc=0
   secret_response=$(curl -fsS "${base}/mcp" \
     -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
     -H "Mcp-Session-Id: ${session}" \
-    -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"resources_list","arguments":{"apiVersion":"v1","kind":"Secret","namespace":"kube-system"}}}')
-  if echo "$secret_response" | grep -q '"isError":true' && echo "$secret_response" | grep -q 'resource not allowed'; then
+    -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"resources_list","arguments":{"apiVersion":"v1","kind":"Secret","namespace":"kube-system"}}}') || curl_rc=$?
+  # `-z` alone asks "is it empty", which is not the question. An SSE keepalive or a bare framing
+  # line is non-empty and carries no answer, and would have routed to ALLOWED -- reporting the
+  # control as failed open on a response that never addressed it. Require something that is
+  # actually a JSON-RPC reply before believing either verdict. This can only move a case from
+  # ALLOWED to could-not-ask, never the reverse, so it cannot manufacture a pass.
+  if [ "${curl_rc}" -ne 0 ] || [ -z "${secret_response}" ] || ! echo "${secret_response}" | grep -q '"jsonrpc"'; then
+    echo "FAIL: could not ask -- the resources_list(Secret) call did not return a JSON-RPC reply" >&2
+    echo "      (curl rc=${curl_rc}, ${#secret_response} bytes returned)." >&2
+    echo "      This is NOT evidence that denied_resources failed open. It is evidence the probe could not run." >&2
+    FAILED=1
+  # The GVK is pinned, not just the phrase. A bare `resource not allowed` would accept a denial
+  # issued for some other resource, and the safety of the `"isError":true` half rests on Go's
+  # json.Marshal escaping quotes inside tool text -- an invariant of the pinned image, not
+  # something this script arranges. Pinning the GVK is what stops an upstream response-shape
+  # change from being read as this control holding.
+  #
+  # Read off the real server rather than assumed -- the denial body is
+  #   ...\"failed to list resources: Get \\\"https://kubernetes.default.svc/api/v1/namespaces/
+  #   kube-system/secrets\\\": resource not allowed: /v1, Kind=Secret\"...,\"isError\":true
+  # and this pattern matches both observed denial bodies and neither observed allow body.
+  #
+  # If upstream rewords it, this goes RED rather than quietly passing -- which is the correct
+  # direction for a security assertion to fail.
+  elif echo "$secret_response" | grep -q '"isError":true' && echo "$secret_response" | grep -q 'resource not allowed: /v1, Kind=Secret'; then
     echo "ok: resources_list(Secret) was denied by denied_resources, despite read_only = false"
   else
-    echo "FAIL: resources_list(Secret) was NOT denied -- got: $secret_response" >&2
+    # The body is deliberately NOT printed here. This branch means the read may have SUCCEEDED,
+    # so the response can carry Secret material -- and this repository is public, which makes
+    # its CI logs world-readable. Printing it would turn a contained control failure into a
+    # disclosure. Reproduce locally to see the body.
+    echo "FAIL: resources_list(Secret) was ALLOWED -- denied_resources did not hold." >&2
+    echo "      ${#secret_response} bytes returned; body withheld because it may contain Secret" >&2
+    echo "      material and CI logs for this repository are public." >&2
     FAILED=1
   fi
 
