@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   test-assertion-semantics:
-    uses: ppat/github-workflows/.github/workflows/chainsaw-test.yaml@1e8ca1b00b6e69bdf5aef8b33111c594c051ff65 # v4.4.0
+    uses: ppat/github-workflows/.github/workflows/chainsaw-test.yaml@667d20d10c8756b11feeab1ee691825ccea8f991 # v5.0.1
     with:
       # github.ref_name rather than github.ref: bare branch name on every event type.
       git_ref: ${{ github.head_ref || github.ref_name }}
