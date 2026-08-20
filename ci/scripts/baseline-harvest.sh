@@ -387,10 +387,16 @@ cmd_harvest() {
 # becomes a dash while the TSV still holds the line verbatim, so a grammar change costs a column
 # rather than a slot.
 #
-# MODE is retained but deliberately not given a column. It is already emitted on an unlanded
-# branch and this harvester captured it on its first sweep, which is exactly the point of a prefix
-# allowlist -- but its field layout is not in TESTING.md yet, and the contract this reads is the
-# published one. Add the column when the line is published, not before.
+# MODE gets one cell carrying both its verdict and the gap that verdict is banded from, because
+# the two have different shelf lives. The verdict is the gap classified against fixed published
+# edges, so shrinking the underlying delay collapses every run to `fast` and the verdict stops
+# discriminating; the gap goes on reporting the distribution afterwards. A cell holding only the
+# band would show a bimodality disappear without being able to say whether it went away or moved.
+#
+# `none` prints as itself rather than as a dash. A suite with no external-secrets fixture emits
+# `MODE none` legitimately, and everywhere else in this table a dash means the run said something
+# this reader could not read -- collapsing "not applicable" into "unreadable" would leave the one
+# cell able to report an instrument failure unable to report it.
 cmd_summarize() {
   local tsv="${1:-}" own="${GITHUB_RUN_ID:-}"
   if [[ -z "${tsv}" || ! -s "${tsv}" ]]; then
@@ -460,25 +466,37 @@ cmd_summarize() {
       if (cpu[key] == "") cpu[key] = field($14, "cpu_model")
       next
     }
+    $13 == "MODE" {
+      split($14, a, " ")
+      mode_v[key] = a[2]
+      mode_gap[key] = field($14, "ctrl_webhook_gap_s")
+      next
+    }
     $13 == "UNCENSORED-SUMMARY" {
       unc[key] = "notready=" field($14, "notready") " max=" field($14, "max_extra_s") "s"
       next
+    }
+
+    function mode_cell(key) {
+      if (mode_v[key] == "") return "-"
+      if (mode_v[key] == "none") return "none"
+      return mode_v[key] " / " d(mode_gap[key])
     }
 
     function line_for(key,   ready, pulls, st) {
       ready = (ready_n[key] > 0) ? ready_last[key] "s" : ""
       pulls = (pull_n[key] > 0) ? sprintf("%d / %.0fs", pull_n[key], pull_max[key]) : ""
       st = (status[key] == "ok") ? "ok" : "**" status[key] "**"
-      return sprintf("| %s [%s] | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |",
+      return sprintf("| %s [%s] | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |",
         suite[key], topo[key], concl[key], d(dur[key]), d(elapsed[key]), d(ready),
-        d(restarts[key] ? restarts[key] : ""), d(pulls),
+        mode_cell(key), d(restarts[key] ? restarts[key] : ""), d(pulls),
         pair(net[key, "s"], net[key, "e"]), pair(fsy[key, "s"], fsy[key, "e"]),
         d(lav[key, "e"]), d(unc[key]), st)
     }
 
     END {
-      hdr = "| suite [topology] | outcome | job s | chainsaw s | last ready | restarts | pulls / slowest | net mbps | fsync us | load end | uncensored | status |"
-      sep = "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"
+      hdr = "| suite [topology] | outcome | job s | chainsaw s | last ready | mode / gap s | restarts | pulls / slowest | net mbps | fsync us | load end | uncensored | status |"
+      sep = "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"
 
       print "### Harvest"
       print ""
@@ -487,7 +505,7 @@ cmd_summarize() {
       print hdr
       print sep
       for (i = 1; i <= nk; i++) { k = order[i]; if (rid[k] == own) { print line_for(k); nslot++ } }
-      if (nslot == 0) print "| _none_ | | | | | | | | | | | |"
+      if (nslot == 0) print "| _none_ | | | | | | | | | | | | |"
 
       # Whether the rows above are on comparable hardware, which nothing else here can say. The
       # runner fleet is heterogeneous: one slot has been observed running five jobs on THREE
