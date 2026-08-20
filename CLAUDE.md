@@ -104,16 +104,18 @@ A comment must earn its place by telling a future maintainer something the manif
 
 Full type/scope rules, the deciding rule, and the awkward cases: [.claude/rules/commits.md](.claude/rules/commits.md).
 
-Conventional Commits, enforced by commitlint (`commitlint.config.js`):
+Conventional Commits, enforced by commitlint. The allowed types and scopes are listed in `commitlint.config.js` and nowhere else — read them there, not from memory or from a doc.
 
-- header max 120 chars; scope must be one of the enums in `commitlint.config.js` (`apps-*`, `infra-*`, `component-*`, or `renovate`/`release`/`github-actions`/`kubernetes-api`/`dev-tools`/`claude`)
-- scope generally matches the module directory name, e.g. a change under `apps/subsystems/ai/` uses scope `apps-ai`
-- use scope `claude` for changes under `.claude/` (skills, agents, settings) — use `dev-tools` for other repo/CI tooling config
+- **Scope names the released artifact whose directory the diff touches** — or, when the diff touches no artifact directory, the internal surface it maintains. Type states the kind of change. The header is a claim about the diff, not a routing instruction: release-please routes by path and sizes the bump by type.
+- Types that claim shipped behaviour changed pair only with scopes that can carry that claim, and `!` pairs only with those types; commitlint rejects both mismatches. Which scopes are which is in the rule.
+- Header max 120 chars. A multi-commit PR lands its **PR title** as the squash message, so the title is the release-facing string — keep it conforming too.
 
 ## Releases
 
 Each module is released and versioned independently via release-please (`release-please-config.json` maps module paths → component names). Version bumps and `CHANGELOG.md` updates happen automatically when a release PR is merged — don't hand-edit `CHANGELOG.md` files.
 
+Whether a landed change proposes a release is decided by the commit **type**, not the scope: types marked hidden in `release-please-config.json` open no release PR, and any other type proposes a patch bump on every module whose paths the diff touched. `docs` is visible there deliberately, so a documentation change does propose a release.
+
 ## Dependency updates
 
-Renovate manages version bumps for Helm charts/images across modules (config split across `.github/renovate.json` + `.github/renovate/*.json`). Patch/minor auto-merge if tests pass; major versions require human review.
+Renovate manages version bumps for Helm charts/images across modules (config split across `.github/renovate.json` + `.github/renovate/*.json`). Routine updates auto-merge once the module's tests pass; updates that carry a compatibility claim get human review. Which is which is a property of the dependency, not just of the version delta — see [OPERATIONS.md](./OPERATIONS.md#automated-updates).
