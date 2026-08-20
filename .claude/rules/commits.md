@@ -16,8 +16,8 @@ Consequences that follow directly:
 - A scope cannot make a release happen or not happen. Touching `apps/subsystems/ai/` proposes an
   `apps-ai` release whatever the scope says; the scope's job is to say so honestly.
 - The release-facing string is the **squash title**: a single-commit PR lands its commit header, a
-  multi-commit PR lands its **PR title** (`squash_merge_commit_title: COMMIT_OR_PR_TITLE`). Both are
-  linted and gated; keep the PR title conforming — it is what release-please parses.
+  multi-commit PR lands its **PR title** (`squash_merge_commit_title: COMMIT_OR_PR_TITLE`). Keep the
+  PR title conforming — it is the header that lands on `main`, and it is what release-please parses.
 - Interior commit bodies and GitHub's `*`-prefixed squash bullets are inert to release-please. Only the title
   line carries release semantics; bodies are for humans.
 
@@ -141,8 +141,8 @@ consumer at once, the enum must always move **before** the preset pin, never aft
 
 ## Gotchas
 
-- **The scope enum constrains humans and bots through different doors** — commitlint on PR titles and
-  branch commits for humans, the emission-closure check for Renovate config. Editing
+- **The scope enum constrains humans and bots through different doors** — commitlint on branch
+  commits for humans, the emission-closure check for Renovate config. Editing
   `commitlint.config.js` without re-running the closure check (or vice versa) reopens the gap between
   what can be emitted and what would be accepted.
 - **A scope naming a module is a version claim.** `fix(apps-media):` on a diff that never touches
