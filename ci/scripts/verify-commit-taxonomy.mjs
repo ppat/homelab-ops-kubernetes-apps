@@ -52,6 +52,7 @@ const args = process.argv.slice(2);
 const selfTest = args.includes('--self-test');
 const offlineIdx = args.indexOf('--offline-presets');
 const offlinePresets = offlineIdx >= 0 ? args[offlineIdx + 1] : null;
+const dumpHeaders = args.includes('--dump-headers');
 
 const failures = [];
 const notes = [];
@@ -379,6 +380,46 @@ function resolveCell(rootDefaults, rules, occ, updateType) {
 }
 
 // ---------------------------------------------------------------------------
+// 6b. Calver classification + breaking-treatment predicate (Layer C).
+//
+// Calver-class = matched by any override-calver.json rule with matchUpdateTypes
+// ignored. Ignoring that field is deliberate: the F5-era defect was matchUpdateTypes
+// being (wrongly) added to those rules, and a classifier that consulted it would go
+// blind to exactly that mutation. A calver "major" is a year rollover -- calver
+// segments date the release, they do not signal API compatibility (calver.org) --
+// so a calver-class cell must NEVER resolve with breaking treatment, for ANY
+// update type. Non-calver majors of module-path packages must still resolve WITH
+// breaking treatment ('!' or a BREAKING CHANGE body).
+// ---------------------------------------------------------------------------
+
+function isCalverCell(rules, occ) {
+  return rules.some(({ src, rule }) => {
+    if (!src.includes('override-calver')) return false;
+    const rest = { ...rule };
+    delete rest.matchUpdateTypes;
+    return ruleMatches(rest, { ...occ, updateType: 'major', packageFileDir: dirname(occ.packageFile).replace(/^\.$/, '') });
+  });
+}
+
+function breakingTreatmentFault(rules, occ, updateType, header, eff, applied = []) {
+  const bang = /^\w+(\([^)]*\))?!:/.test(header);
+  const breakingBody = String(eff.commitBody ?? '').includes('BREAKING CHANGE');
+  const prov = `${occ.manager}:${occ.depName}@${dirname(occ.packageFile)} [${updateType}] via ${applied.join(',')}`;
+  if (isCalverCell(rules, occ)) {
+    if (bang || breakingBody) {
+      return `calver-class package resolves WITH breaking treatment (a calver major is a year rollover, not an API break; override-calver must win for every update type):\n    ${header}\n    ${prov}`;
+    }
+    return null;
+  }
+  if (updateType === 'major' &&
+      /^(apps\/subsystems|infrastructure\/subsystems|infrastructure\/bootstrap\/crds)\//.test(occ.packageFile) &&
+      !bang && !breakingBody) {
+    return `major update of a module-path package resolves without breaking treatment (no '!' and no BREAKING CHANGE body):\n    ${header}\n    ${prov}`;
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // 7. Judgement: every rendered header through commitlint itself (type, scope
 //    and '!', not a scope set-membership test).
 // ---------------------------------------------------------------------------
@@ -436,6 +477,27 @@ async function runSelfTest(lintHeader, rootDefaults, rules) {
     if (r.valid) fail(`SELF-TEST: synthetic ci/test calver cell passed the lint but must not: ${header}`);
     else { caught++; note(`self-test: synthetic ci/test calver cell rendered '${header}' and was caught`); }
   }
+  // breaking-treatment injections (the F5-era defect, both directions):
+  // (a) re-apply the reverted PR #3795 mutation -- matchUpdateTypes excluding
+  //     major on the override-calver rules. A calver major then falls through to
+  //     override-breaking-changes, resolves as feat(<scope>)!: + BREAKING CHANGE,
+  //     and the calver falsifier must catch it (classification ignores
+  //     matchUpdateTypes precisely so this mutation cannot blind it).
+  const authentikOcc = { manager: 'flux', datasource: 'helm', depName: 'authentik', packageFile: 'infrastructure/subsystems/security-extra/authentik/helm-release-authentik.yaml' };
+  const mutated = rules.map((e) => e.src.includes('override-calver')
+    ? { ...e, rule: { ...e.rule, matchUpdateTypes: UPDATE_TYPES.filter((t) => t !== 'major') } }
+    : e);
+  const maj = resolveCell(rootDefaults, mutated, authentikOcc, 'major');
+  if (!maj.header) fail('SELF-TEST: mutated authentik major cell resolved to no emission -- resolver defect');
+  else if (!breakingTreatmentFault(mutated, authentikOcc, 'major', maj.header, maj.eff, maj.applied)) {
+    fail(`SELF-TEST: calver major resolving with breaking treatment was NOT caught: ${maj.header}`);
+  } else { caught++; note(`self-test: matchUpdateTypes-excluding-major mutation rendered '${maj.header}' and was caught`); }
+  // (b) the non-calver direction is unchanged: a module-path major resolving
+  //     without '!' or a BREAKING CHANGE body must still be flagged.
+  const longhornOcc = { manager: 'flux', datasource: 'helm', depName: 'longhorn', packageFile: 'infrastructure/subsystems/storage-core/longhorn/helm-release-longhorn.yaml' };
+  if (!breakingTreatmentFault(rules, longhornOcc, 'major', 'feat(infra-storage-core): update longhorn (1.8.0 -> 2.0.0)', { commitBody: '' }, ['synthetic'])) {
+    fail('SELF-TEST: non-calver module-path major without breaking treatment was NOT caught');
+  } else caught++;
   // template-grammar injection: unknown handlebars must fail loudly, not render
   const before = failures.length;
   evalTemplate('{{#unless isMajor}}x{{/unless}}', { packageFileDir: 'a/b/c', updateType: 'minor' }, 'self-test');
@@ -488,15 +550,11 @@ for (const occ of occupancy) {
     const { header, applied, eff } = resolveCell(rootDefaults, rules, occ, updateType);
     if (header == null) { disabledCells++; continue; }
     if (!headers.has(header)) headers.set(header, `${occ.manager}:${occ.depName}@${dirname(occ.packageFile)} [${updateType}] via ${applied.join(',') || 'root defaults'}`);
-    // Layer C falsifier (F5 regression): a MAJOR of a module-path package must be
-    // marked breaking -- '!' in the header or a BREAKING CHANGE commit body. The F5
-    // defect was exactly this signal being clobbered for calver majors.
-    if (updateType === 'major' &&
-        /^(apps\/subsystems|infrastructure\/subsystems|infrastructure\/bootstrap\/crds)\//.test(occ.packageFile) &&
-        !/^\w+(\([^)]*\))?!:/.test(header) &&
-        !String(eff.commitBody ?? '').includes('BREAKING CHANGE')) {
-      fail(`major update of a module-path package resolves without breaking treatment (no '!' and no BREAKING CHANGE body):\n    ${header}\n    ${occ.manager}:${occ.depName}@${dirname(occ.packageFile)} via ${applied.join(',')}`);
-    }
+    // Layer C falsifier (breaking-treatment class, both directions -- see 6b):
+    // calver-class cells must never resolve breaking; non-calver module-path
+    // majors must always resolve breaking.
+    const fault = breakingTreatmentFault(rules, occ, updateType, header, eff, applied);
+    if (fault) fail(fault);
   }
 }
 for (const h of releasePleaseHeaders()) {
@@ -504,6 +562,9 @@ for (const h of releasePleaseHeaders()) {
 }
 
 console.log(`distinct candidate headers: ${headers.size} (${disabledCells} cells disabled by rule)`);
+if (dumpHeaders) {
+  for (const [h, prov] of [...headers.entries()].sort()) console.log(`  header: ${h}\n    from: ${prov}`);
+}
 let bad = 0;
 for (const [header, prov] of headers) {
   const r = await lintHeader(header);
