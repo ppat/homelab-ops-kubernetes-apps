@@ -26,9 +26,11 @@
 //     commitlint check is the gate there, and this script's guarantee for grouped
 //     branches is only that every CANDIDATE prefix on such a branch is in-enum.
 //   - Renovate built-in presets (":ignoreModulesAndTests" etc.) are not fetched;
-//     they are Renovate-internal and carry no ppat scopes. The one whose semantics
-//     matter here (:ignoreModulesAndTests' ignorePaths) is encoded as a constant
-//     below, with its source cited.
+//     they are Renovate-internal and carry no ppat scopes. The only semantics that
+//     matter here are the ones that set ignorePaths; those are encoded below with
+//     their source cited, and WHICH of them applies is read off the closure's
+//     extends lists rather than assumed -- so removing (or re-adding) such a preset
+//     moves package occupancy here exactly as it moves it in Renovate.
 //   - Subjects are synthesized ("update <dep> (1.0.0 -> 2.0.0)"); commitMessage
 //     Action/Topic/Extra cannot place a scope or type (they render after the
 //     prefix), so this loses nothing the check cares about.
@@ -59,12 +61,40 @@ const notes = [];
 const fail = (msg) => failures.push(msg);
 const note = (msg) => notes.push(msg);
 
-// --- Renovate's :ignoreModulesAndTests, encoded (not fetched: it is an internal
-// preset). Source: renovatebot/renovate lib/config/presets/internal/default.ts.
+// --- Global `ignorePaths`. Renovate's built-in default, plus the internal presets
+// that replace it (ignorePaths is non-mergeable, so a preset REPLACES, never adds).
+// Internal presets ship inside Renovate and are not fetched, so the ones that matter
+// are encoded here; WHICH of them applies is derived from the resolved closure's
+// extends lists (see globalIgnorePaths), never assumed -- dropping
+// ':ignoreModulesAndTests' from extends must move occupancy, and it does.
+// Source: renovatebot/renovate lib/config/presets/internal/{default,config}.ts and
+// lib/config/options/index.ts (ignorePaths: mergeable false, default as below).
+const RENOVATE_DEFAULT_IGNORE_PATHS = ['**/node_modules/**', '**/bower_components/**'];
 const IGNORE_MODULES_AND_TESTS = [
   '**/node_modules/**', '**/bower_components/**', '**/vendor/**', '**/examples/**',
   '**/__tests__/**', '**/test/**', '**/tests/**', '**/__fixtures__/**',
 ];
+// config:* all extend :ignoreModulesAndTests transitively, so re-adding any of them
+// would silently restore the eight globs; they are listed so that cannot go unseen.
+const IGNORE_PATHS_BY_BUILTIN = new Map([
+  [':ignoreModulesAndTests', IGNORE_MODULES_AND_TESTS],
+  ['config:recommended', IGNORE_MODULES_AND_TESTS],
+  ['config:best-practices', IGNORE_MODULES_AND_TESTS],
+  ['config:js-app', IGNORE_MODULES_AND_TESTS],
+  ['config:js-lib', IGNORE_MODULES_AND_TESTS],
+  [':includeNodeModules', []],
+]);
+
+// Effective global ignorePaths for this repo, from the closure that was actually
+// resolved: built-in default, then each built-in preset named in an extends list,
+// then any config in the closure that sets a top-level ignorePaths. Every step
+// REPLACES, because the option is non-mergeable.
+function globalIgnorePaths(configs, builtins) {
+  let ignore = RENOVATE_DEFAULT_IGNORE_PATHS;
+  for (const b of builtins) if (IGNORE_PATHS_BY_BUILTIN.has(b)) ignore = IGNORE_PATHS_BY_BUILTIN.get(b);
+  for (const { config } of configs) if (config.ignorePaths) ignore = config.ignorePaths;
+  return ignore;
+}
 
 // All ten Renovate update types.
 const UPDATE_TYPES = [
@@ -251,8 +281,9 @@ const regexFromSlashes = (s) => {
   return m ? new RegExp(m[1]) : null;
 };
 
-function detectOccupancy(configs, allFiles) {
+function detectOccupancy(configs, allFiles, builtins) {
   const rootConfig = configs[configs.length - 1].config; // renovate.json
+  const globalIgnore = globalIgnorePaths(configs, builtins);
   const cells = []; // {manager, datasource, depName, packageFile}
   const add = (manager, datasource, depName, packageFile) =>
     cells.push({ manager, datasource, depName, packageFile });
@@ -261,8 +292,8 @@ function detectOccupancy(configs, allFiles) {
     const managerCfg = rootConfig[managerName] ?? {};
     const patterns = (managerCfg.managerFilePatterns ?? defaultPatterns).map(regexFromSlashes);
     // manager-level ignorePaths REPLACES the global list for that manager
-    // (non-mergeable option); otherwise :ignoreModulesAndTests applies.
-    const ignore = managerCfg.ignorePaths ?? IGNORE_MODULES_AND_TESTS;
+    // (non-mergeable option); otherwise the global list applies.
+    const ignore = managerCfg.ignorePaths ?? globalIgnore;
     return allFiles.filter((f) =>
       patterns.some((re) => re && re.test(f)) &&
       !ignore.some((g) => globToRegex(g).test(f) || f === g));
@@ -540,7 +571,8 @@ for (const { src, rule } of rules) {
 }
 
 const allFiles = gitLsFiles();
-const occupancy = detectOccupancy(configs, allFiles);
+const occupancy = detectOccupancy(configs, allFiles, skippedBuiltins);
+console.log(`effective global ignorePaths: ${JSON.stringify(globalIgnorePaths(configs, skippedBuiltins))}`);
 console.log(`package occupancy: ${occupancy.length} (manager, package, dir) sites from ${allFiles.length} tracked files`);
 
 const headers = new Map(); // header -> one representative provenance
