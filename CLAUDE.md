@@ -102,6 +102,8 @@ A comment must earn its place by telling a future maintainer something the manif
 
 ## Commit conventions
 
+Full type/scope rules, the deciding rule, and the awkward cases: [.claude/rules/commits.md](.claude/rules/commits.md).
+
 Conventional Commits, enforced by commitlint (`commitlint.config.js`):
 
 - header max 120 chars; scope must be one of the enums in `commitlint.config.js` (`apps-*`, `infra-*`, `component-*`, or `renovate`/`release`/`github-actions`/`kubernetes-api`/`dev-tools`/`claude`)
