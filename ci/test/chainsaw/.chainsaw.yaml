@@ -67,12 +67,31 @@ spec:
     # sample -- the one biased toward slow runs, hence the one budgets get sized from -- was
     # missing the restart counts that separate "late" from "crash-looping".
     #
-    # 5m: nine kubectl calls each capped at --request-timeout=30s, so 270s is the
-    # construction's hard ceiling; the rest is ~100 `date` forks. Was 3m against five calls,
-    # raised with the four that carry the MODE/ESOCERT/ESOLOG capture. Raising it is free on
-    # a healthy run -- the script returns when it is done -- and the entry behind it,
-    # report-uncensored.sh, clamps its own watch against the wall clock already spent, so an
-    # over-run here shortens that watch rather than pushing the job over its timeout.
+    # 5m, and the arithmetic below is worth reading before changing either number.
+    #
+    # `--request-timeout=Ns` bounds ONE HTTP request, not one kubectl invocation. Against a
+    # connection that hangs, kubectl's discovery client retries the API-group list and the wall
+    # time comes out at ~5x the flag for `get` and ~4x for `logs` (measured: 2s -> 10.1s,
+    # 5s -> 25.1s, 8s -> 40.0s). So the old note here -- "nine calls at 30s, so 270s is the
+    # construction's hard ceiling" -- understated it by 5x and was never right; the real
+    # pathological figure for those nine is ~1350s, and it has always exceeded this timeout.
+    #
+    # Why that is tolerated rather than fixed with a bigger number. The pathological case needs
+    # a connection that ACCEPTS and never answers; a refused connection or a missing kubeconfig
+    # returns in under 0.1s (measured). And in every one of those modes `kubectl get pods -A`
+    # yields zero bytes, so the RESTART-LOG loop -- gated on that listing being non-empty --
+    # never runs at all. The two worst cases cannot compound from one dead API server: the
+    # capture is reachable only when the listing succeeded, i.e. when the server is serving.
+    # The residue is an API server that answers the listing and then stops, which bounds the
+    # added term at 12 containers x ~40s. Sized against reality rather than the tail: the whole
+    # script, including two `--previous` fetches, ran in ~0.9s on a real suite.
+    #
+    # Do not raise this to cover the tail. A timeout kill loses EVERYTHING from this entry --
+    # chainsaw buffers a script's stdout until it exits (verified on v0.2.15) -- so the answer
+    # to the tail is bounding the work, which is what MAX_RESTART_LOGS and the 10s timeout on
+    # the log fetch do. The entry behind this one, report-uncensored.sh, clamps its own watch
+    # against the wall clock already spent, so an over-run here shortens that watch rather than
+    # pushing the job over its timeout.
     - script:
         timeout: 5m
         content: ../chainsaw/scripts/report-readiness.sh

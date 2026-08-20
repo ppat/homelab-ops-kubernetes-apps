@@ -132,7 +132,68 @@ echo '--- RESTART: container restarts (empty = none) ---'
 # budget to ride out a known crash-restart cycle (infra-storage's longhorn-manager, #3643).
 # Tolerating something is defensible; tolerating it silently is not.
 # shellcheck disable=SC2016  # go-template, not shell
-kubectl get pods -A "${KOPTS[@]}" -o go-template='{{range .items}}{{if .status}}{{$p := printf "pod/%s/%s" .metadata.namespace .metadata.name}}{{range .status.containerStatuses}}{{if gt .restartCount 0}}{{printf "RESTART %-6d %s [%s]\n" .restartCount $p .name}}{{end}}{{end}}{{end}}{{end}}' 2>/dev/null | sort -k2 -rn
+restarts=$(kubectl get pods -A "${KOPTS[@]}" -o go-template='{{range .items}}{{if .status}}{{$p := printf "pod/%s/%s" .metadata.namespace .metadata.name}}{{range .status.containerStatuses}}{{if gt .restartCount 0}}{{printf "RESTART %-6d %s [%s]\n" .restartCount $p .name}}{{end}}{{end}}{{end}}{{end}}' 2>/dev/null | sort -k2 -rn)
+echo "${restarts}"
+
+# WHY a container restarted, not just that it did. The count above says a crash happened; the
+# log of the instance that crashed says what happened, and it is gone the moment the next
+# instance replaces it. It found a real one on its first run: infra-networking carries a
+# three-deep startup crash-wait chain -- unbound/cloudflare-doh not up yet, so pihole exits
+# ("Cannot proceed without an upstream DNS server"), so external-dns-pihole goes `level=fatal`
+# on pihole -- burning 2-4 restart backoffs on EVERY run of that suite, green ones included.
+# That is 04 C4: tolerating a defect is fine, tolerating it silently is not.
+#
+# Gated on restarts existing, which is NOT the same as "only on failing runs" -- ~16% of green
+# runs open this gate and six suites open it routinely (apps-downloaders sits at 8 restarted
+# containers on every pass). The bounds below are sized for that, not for the rare failure.
+#
+# Bounded four ways, matching the ESOLOG block below because the hazards are identical: 40 lines
+# per container, each line cut to 200 chars (external-dns logs a 4309-char config dump on the
+# line this would otherwise print untruncated), at most MAX_RESTART_LOGS containers, and a
+# tighter request timeout than the rest of the script.
+MAX_RESTART_LOGS=12
+if [[ -n "${restarts}" ]]; then
+  echo '--- RESTART-LOG: last lines from the PREVIOUS instance of each restarted container ---'
+  shown=0
+  skipped=0
+  while read -r _ _ ref container; do
+    [[ -n "${ref}" ]] || continue
+    if [[ ${shown} -ge ${MAX_RESTART_LOGS} ]]; then
+      skipped=$((skipped + 1))
+      continue
+    fi
+    shown=$((shown + 1))
+    ns="${ref#pod/}"; ns="${ns%%/*}"
+    pod="${ref##*/}"
+    container="${container#[}"; container="${container%]}"
+    echo "=== ${ns}/${pod} [${container}] ==="
+    # --previous is the point: the current instance may be healthy or still starting, and it is
+    # the one that died that carries the reason. Failure here is expected and non-fatal.
+    #
+    # `2>&1` rather than `||`, because the exit code does not separate the cases: a pod or
+    # container that no longer exists exits 1 (measured), while a previous instance whose log
+    # has already been reaped prints "unable to retrieve container logs" and exits 0. Capturing
+    # both streams reports all of them identically, which is what a reader wants -- the message
+    # is the useful part in every case. Captured and echoed rather than streamed because kubectl
+    # omits the trailing newline on at least one of those paths and the next section runs into it.
+    #
+    # --timestamps is load-bearing and not cosmetic. It is what stops a container's own log text
+    # being read as this script's grammar: baseline-harvest.sh and the ci-diagnostics ingester
+    # both match a line-leading prefix allowlist after stripping the Actions timestamp, so a log
+    # line beginning `READY ` or `MODE ` would be retained as an instrument reading. A leading
+    # RFC3339 puts a digit in that position. Every other raw-log emitter here already does this
+    # (report-cnpg.sh, the ESOLOG block); this was the one that did not.
+    prev=$(kubectl logs -n "${ns}" "${pod}" -c "${container}" --previous --tail=40 --timestamps \
+      --request-timeout=10s 2>&1 | cut -c1-200)
+    [[ -n "${prev}" ]] && echo "${prev}"
+  done <<< "${restarts}"
+  # Said out loud rather than dropped: a silent cap turns "we bounded this" into "there was
+  # nothing else", which is the failure this whole script exists to stop. The list is sorted by
+  # restart count descending, so the ones shown are the worst offenders.
+  if [[ ${skipped} -gt 0 ]]; then
+    echo "=== ${skipped} further restarted container(s) not shown (bounded at ${MAX_RESTART_LOGS}) ==="
+  fi
+fi
 
 echo '--- PULL: image pull durations from reason=Pulled events (slowest first) ---'
 # Replaces image size, which was used as a pull-time proxy and is measurably wrong the moment a
