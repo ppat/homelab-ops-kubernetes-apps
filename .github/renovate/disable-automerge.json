@@ -16,12 +16,28 @@
       "addLabels": [
         "automerge:off"
       ],
-      "description": "disable automerge for openclaw -- unusually high security-advisory volume, every bump gets human review",
+      "description": [
+        "Keep a human in the loop on every openclaw change. PROBLEM: openclaw's upstream carries an",
+        "unusually high security-advisory volume, so a bump can carry a behaviour or exposure change",
+        "that nobody would see if it merged itself -- including a digest-only refresh, since the",
+        "'YYYY.M.P' tag is mutable and gets repointed at rebuilt images. automerge:false is the",
+        "policy; the 'automerge:off' label exists so the PR announces it at a glance.",
+        "The matcher must be the image reference AS WRITTEN, i.e. the kubernetes manager's depName,",
+        "not the colloquial 'org/image'. The deployment writes 'docker.io/ppatlabs/openclaw', so the",
+        "previous 'ppatlabs/openclaw' matched nothing and THIS POLICY WAS NOT IN FORCE -- confirmed",
+        "in a live 44.30.4 lookup, which resolved the dep with automerge unset. A rule that matches",
+        "nothing raises no error, so nothing surfaced it. Both spellings are listed: a bare",
+        "'ppatlabs/openclaw' is the depName a '# renovate:' annotation would produce for this image.",
+        "Ordering is load-bearing: this preset must stay AFTER override-calver in renovate.json's",
+        "extends, because that preset sets automerge:true for calver deps (openclaw is one) and",
+        "automerge is a plain boolean -- the last matching rule wins."
+      ],
       "matchDatasources": [
         "docker"
       ],
       "matchPackageNames": [
-        "ppatlabs/openclaw"
+        "ppatlabs/openclaw",
+        "docker.io/ppatlabs/openclaw"
       ]
     },
     {

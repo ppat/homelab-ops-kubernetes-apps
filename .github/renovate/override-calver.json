@@ -48,7 +48,18 @@
         "update calver versioned packages managed by kubernetes manager (rationale: rule 1).",
         "pihole/pihole (docker-pi-hole YYYY.MM.patch), visibilityspots/cloudflared (cloudflared",
         "YYYY.M.patch), and home-assistant (YYYY.MM.patch, home-assistant.io/faq/release: monthly",
-        "feature releases with 'smaller patch releases ... if any important issues turn up')."
+        "feature releases with 'smaller patch releases ... if any important issues turn up').",
+        "openclaw (docker.io/ppatlabs/openclaw, YYYY.M.P) is here for the same reason: its segments",
+        "track the release date, so a year rollover is not a breaking change and must not be typed",
+        "as one. It needs no manifest change -- it is already on the mutable 'YYYY.M.P' tag and",
+        "already digest-pinned -- and joining this rule does not disturb its digest tracking, which",
+        "gates on currentDigest and never consults the versioning module. It DOES pick up",
+        "automerge:true from here, which openclaw must not have; disable-automerge sits after this",
+        "preset in extends and puts it back to false. See also the digest rule at the end of this",
+        "file, which openclaw is the reason for.",
+        "The package names are the depNames the kubernetes manager emits, i.e. the image reference",
+        "AS WRITTEN in the manifest -- 'docker.io/ppatlabs/openclaw' carries its registry prefix",
+        "while the other three do not. A name spelled the colloquial way silently matches nothing."
       ],
       "matchManagers": [
         "kubernetes"
@@ -56,7 +67,9 @@
       "matchPackageNames": [
         "ghcr.io/home-operations/home-assistant",
         "pihole/pihole",
-        "visibilityspots/cloudflared"
+        "visibilityspots/cloudflared",
+        "ppatlabs/openclaw",
+        "docker.io/ppatlabs/openclaw"
       ],
       "minimumReleaseAge": "14 days",
       "semanticCommits": "disabled",
@@ -76,6 +89,44 @@
       "minimumReleaseAge": "14 days",
       "semanticCommits": "disabled",
       "separateMajorMinor": false
+    },
+    {
+      "description": [
+        "Stop the 14-day soak above from holding openclaw's DIGEST refreshes. PROBLEM: the soak lets",
+        "a newly published release settle before this repo adopts it, which is right for a version",
+        "update and wrong for a digest. Renovate applies minimumReleaseAge to digest updates too",
+        "(lookup/index.ts applyMinimumReleaseAgeToDigestUpdate, which re-runs applyPackageRules with",
+        "updateType set -- that is why a matchUpdateTypes rule reaches it at all), and with this",
+        "repo's internalChecksFilter 'strict' the effect is not a delayed PR: the update is stamped",
+        "pendingChecks:true and the branch is never created (update/branch/index.js, 'creation is",
+        "disabled because internalChecksFilter was not met'). No error, no PR, nothing to notice.",
+        "The age is measured against the newest matching version's timestamp, and for a MUTABLE",
+        "docker tag that timestamp is the moment upstream last repointed it. openclaw is pinned to",
+        "the mutable 'YYYY.M.P' tag by digest, so every rebuild restarts the clock: the refresh that",
+        "carries the rebuild is suppressed for 14 days from the rebuild. Repointing is exactly how a",
+        "security rebuild reaches this repo -- digest-only PRs are how this dep has been kept current",
+        "(e.g. #3405) -- so the hold does not defer adopting something new, it holds the cluster on",
+        "an image the publisher has already replaced. Backwards for the one dep whose",
+        "automerge:false policy exists BECAUSE of security-advisory volume.",
+        "Version updates keep the soak; digest refreshes do not. Verified, not reasoned: against a",
+        "deliberately stale pin on live 44.30.4, with the soak raised above the tag's age the digest",
+        "update came back pendingChecks:true, and with this rule present the flag was gone.",
+        "Ordering is load-bearing -- minimumReleaseAge is a plain scalar, so this must stay LAST of",
+        "the calver rules to win.",
+        "Deliberately scoped to openclaw and NOT to the other digest-pinned calver deps. The same",
+        "argument applies to them and the hold is live there today (a dry run showed",
+        "ghcr.io/home-operations/home-assistant's digest refresh carrying pendingChecks:true), but",
+        "un-holding their digests is a behaviour change that has not been agreed. Widening this rule",
+        "to those names is the whole change if that is wanted."
+      ],
+      "matchPackageNames": [
+        "ppatlabs/openclaw",
+        "docker.io/ppatlabs/openclaw"
+      ],
+      "matchUpdateTypes": [
+        "digest"
+      ],
+      "minimumReleaseAge": null
     }
   ]
 }
