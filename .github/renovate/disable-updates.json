@@ -18,7 +18,7 @@
       ]
     },
     {
-      "description": "disable minio updates due to OSS unfriendly practices until a suitable replacement is found",
+      "description": "disable minio updates due to OSS unfriendly practices until a suitable replacement is found (all update types, deliberately unenumerated: enumerating types let replacement/rollback/bump fall through to override-calver with automerge on)",
       "enabled": false,
       "matchDatasources": [
         "docker"
@@ -26,14 +26,6 @@
       "matchPackageNames": [
         "minio/minio",
         "minio/mc"
-      ],
-      "matchUpdateTypes": [
-        "digest",
-        "major",
-        "minor",
-        "patch",
-        "pin",
-        "pinDigest"
       ]
     },
     {
@@ -41,6 +33,26 @@
       "enabled": false,
       "matchPackageNames": [
         "pihole/pihole"
+      ]
+    },
+    {
+      "description": [
+        "disable kubernetes-manager updates of the vendored flux toolkit manifest. The flux manager",
+        "legitimately updates fluxcd/flux2 via this file, so this rule must stay scoped to",
+        "matchManagers: [kubernetes] -- an unscoped enabled:false here would stop flux2 upgrades of",
+        "clusterops-core entirely. This records the intent behind the kubernetes.ignorePaths entry in",
+        "renovate.json and keeps the exclusion effective if that override is ever removed. Note: that",
+        "manager-level ignorePaths override (non-mergeable) is also the only reason the kubernetes",
+        "manager scans ci/test/** at all (:ignoreModulesAndTests ignores **/test/**); restoring the",
+        "preset uniformly would stop Renovate updating ci/test/** image pins (fixture drift) -- a",
+        "maintainer decision, deliberately not made here."
+      ],
+      "enabled": false,
+      "matchManagers": [
+        "kubernetes"
+      ],
+      "matchFileNames": [
+        "infrastructure/subsystems/clusterops-core/flux/gotk-components.yaml"
       ]
     }
   ]

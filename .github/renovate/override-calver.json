@@ -5,7 +5,16 @@
       "automerge": true,
       "commitBody": "",
       "commitMessagePrefix": "{{#if (or isMajor isMinor)}}feat{{else if isPatch}}fix{{else}}chore{{/if}}({{#if (equals (lookup (split packageFileDir '/') 0) 'apps')}}apps{{else}}infra{{/if}}-{{ lookup (split packageFileDir '/') 2 }}):",
-      "description": "update calver versioned packages managed by custom.regex manager",
+      "description": [
+        "update calver versioned packages managed by custom.regex manager",
+        "every update type except major: calver majors must fall through to override-breaking-changes'",
+        "feat(<scope>)!: + BREAKING CHANGE treatment and default.json's major defaults (automerge off,",
+        "30-day soak). Without this gate these rules sit later in extends and clobber the breaking",
+        "prefix/body for calver majors (observed: authentik 2025.12.4->2026.2.1 cut a patch, PR #2818).",
+        "Enumerating update types is deliberate here and deliberately absent from disable-updates rules:",
+        "a novel update type escaping this rule falls to default.json's defaults and still renders an",
+        "in-enum header (benign); one escaping a disable rule would re-enable a disabled package (not benign)."
+      ],
       "matchManagers": [
         "custom.regex"
       ],
@@ -14,7 +23,18 @@
         "minio/mc"
       ],
       "minimumReleaseAge": "14 days",
-      "semanticCommits": "disabled"
+      "semanticCommits": "disabled",
+      "matchUpdateTypes": [
+        "bump",
+        "digest",
+        "lockFileMaintenance",
+        "minor",
+        "patch",
+        "pin",
+        "pinDigest",
+        "replacement",
+        "rollback"
+      ]
     },
     {
       "automerge": true,
@@ -29,7 +49,18 @@
         "visibilityspots/cloudflared"
       ],
       "minimumReleaseAge": "14 days",
-      "semanticCommits": "disabled"
+      "semanticCommits": "disabled",
+      "matchUpdateTypes": [
+        "bump",
+        "digest",
+        "lockFileMaintenance",
+        "minor",
+        "patch",
+        "pin",
+        "pinDigest",
+        "replacement",
+        "rollback"
+      ]
     },
     {
       "automerge": true,
@@ -43,7 +74,18 @@
         "authentik"
       ],
       "minimumReleaseAge": "14 days",
-      "semanticCommits": "disabled"
+      "semanticCommits": "disabled",
+      "matchUpdateTypes": [
+        "bump",
+        "digest",
+        "lockFileMaintenance",
+        "minor",
+        "patch",
+        "pin",
+        "pinDigest",
+        "replacement",
+        "rollback"
+      ]
     }
   ]
 }

@@ -21,6 +21,13 @@
         "infrastructure/bootstrap/crds/**"
       ],
       "semanticCommitScope": "infra-bootstrap-crds"
+    },
+    {
+      "description": "add semantic commit scope for shared kustomize components (ship by proxy via each consuming module's release; one collapsed scope, per the commit taxonomy)",
+      "matchFileNames": [
+        "components/**"
+      ],
+      "semanticCommitScope": "components"
     }
   ]
 }
