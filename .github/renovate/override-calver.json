@@ -6,14 +6,28 @@
       "commitBody": "",
       "commitMessagePrefix": "{{#if (or isMajor isMinor)}}feat{{else if isPatch}}fix{{else}}chore{{/if}}({{#if (equals (lookup (split packageFileDir '/') 0) 'apps')}}apps{{else}}infra{{/if}}-{{ lookup (split packageFileDir '/') 2 }}):",
       "description": [
-        "update calver versioned packages managed by custom.regex manager",
-        "every update type except major: calver majors must fall through to override-breaking-changes'",
-        "feat(<scope>)!: + BREAKING CHANGE treatment and default.json's major defaults (automerge off,",
-        "30-day soak). Without this gate these rules sit later in extends and clobber the breaking",
-        "prefix/body for calver majors (observed: authentik 2025.12.4->2026.2.1 cut a patch, PR #2818).",
-        "Enumerating update types is deliberate here and deliberately absent from disable-updates rules:",
-        "a novel update type escaping this rule falls to default.json's defaults and still renders an",
-        "in-enum header (benign); one escaping a disable rule would re-enable a disabled package (not benign)."
+        "update calver versioned packages managed by custom.regex manager.",
+        "These three rules deliberately carry NO matchUpdateTypes: sitting after override-breaking-changes",
+        "and default.json's per-update-type defaults in extends, they must win (last match) for EVERY",
+        "update type, including major. A calver major is a year rollover -- it has no more significance",
+        "than the month (minor) or patch segment and is not a breaking-change signal (calver segments",
+        "track the release date, not API compatibility: calver.org). So calver deps are opted out of",
+        "every semver-assuming inheritance: no '!' and no BREAKING CHANGE body ever; a series bump",
+        "(year or month) types feat and a patch types fix (for these deps the trailing segment IS a",
+        "bugfix counter -- authentik's '.x = latest patch release', docs.goauthentik.io/docs/security/policy);",
+        "automerge stays on for majors; a flat 14-day release age replaces the 1/7/30-day semver ladder;",
+        "and separateMajorMinor is off (no major-vs-minor branch split, one PR to newest -- Renovate",
+        "still computes the update type from the version delta, so the prefix template is unaffected;",
+        "renovatebot/renovate lib/workers/repository/process/lookup/bucket.ts).",
+        "History: an earlier revision of PR #3795 read the major clobber as a defect (F5) and added",
+        "matchUpdateTypes excluding major, sending year rollovers to feat(<scope>)!: + BREAKING CHANGE",
+        "+ 30-day soak. That was a misreading of the rule's intent -- do not re-add matchUpdateTypes.",
+        "The unenumerated types parallel the disable-updates rules (F12) for a different reason: an",
+        "enumerating disable rule re-enables forgotten types; an enumerating calver rule sends the",
+        "omitted type back to semver-major treatment.",
+        "Known cosmetic residue: default.json's major rule addLabels 'automerge:off' still attaches",
+        "(addLabels is merge-cumulative and cannot be unset by a later rule), so calver-major PRs",
+        "carry that label while correctly automerging."
       ],
       "matchManagers": [
         "custom.regex"
@@ -24,49 +38,35 @@
       ],
       "minimumReleaseAge": "14 days",
       "semanticCommits": "disabled",
-      "matchUpdateTypes": [
-        "bump",
-        "digest",
-        "lockFileMaintenance",
-        "minor",
-        "patch",
-        "pin",
-        "pinDigest",
-        "replacement",
-        "rollback"
-      ]
+      "separateMajorMinor": false
     },
     {
       "automerge": true,
       "commitBody": "",
       "commitMessagePrefix": "{{#if (or isMajor isMinor)}}feat{{else if isPatch}}fix{{else}}chore{{/if}}({{#if (equals (lookup (split packageFileDir '/') 0) 'apps')}}apps{{else}}infra{{/if}}-{{ lookup (split packageFileDir '/') 2 }}):",
-      "description": "update calver versioned packages managed by kubernetes manager",
+      "description": [
+        "update calver versioned packages managed by kubernetes manager (rationale: rule 1).",
+        "pihole/pihole (docker-pi-hole YYYY.MM.patch), visibilityspots/cloudflared (cloudflared",
+        "YYYY.M.patch), and home-assistant (YYYY.MM.patch, home-assistant.io/faq/release: monthly",
+        "feature releases with 'smaller patch releases ... if any important issues turn up')."
+      ],
       "matchManagers": [
         "kubernetes"
       ],
       "matchPackageNames": [
+        "ghcr.io/home-operations/home-assistant",
         "pihole/pihole",
         "visibilityspots/cloudflared"
       ],
       "minimumReleaseAge": "14 days",
       "semanticCommits": "disabled",
-      "matchUpdateTypes": [
-        "bump",
-        "digest",
-        "lockFileMaintenance",
-        "minor",
-        "patch",
-        "pin",
-        "pinDigest",
-        "replacement",
-        "rollback"
-      ]
+      "separateMajorMinor": false
     },
     {
       "automerge": true,
       "commitBody": "",
       "commitMessagePrefix": "{{#if (or isMajor isMinor)}}feat{{else if isPatch}}fix{{else}}chore{{/if}}({{#if (equals (lookup (split packageFileDir '/') 0) 'apps')}}apps{{else}}infra{{/if}}-{{ lookup (split packageFileDir '/') 2 }}):",
-      "description": "update calver versioned packages managed by flux manager",
+      "description": "update calver versioned packages managed by flux manager (rationale: rule 1). authentik: YYYY.<release>.patch, supported versions are '2026.5.x / 2026.8.x with .x being the latest patch release'.",
       "matchManagers": [
         "flux"
       ],
@@ -75,17 +75,7 @@
       ],
       "minimumReleaseAge": "14 days",
       "semanticCommits": "disabled",
-      "matchUpdateTypes": [
-        "bump",
-        "digest",
-        "lockFileMaintenance",
-        "minor",
-        "patch",
-        "pin",
-        "pinDigest",
-        "replacement",
-        "rollback"
-      ]
+      "separateMajorMinor": false
     }
   ]
 }
