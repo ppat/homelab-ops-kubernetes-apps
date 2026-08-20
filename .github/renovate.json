@@ -14,8 +14,18 @@
   ],
   "configMigration": true,
   "dependencyDashboard": true,
+  "description": [
+    "Renovate's ':ignoreModulesAndTests' preset is deliberately NOT extended here, and must not",
+    "be re-added -- including indirectly, via 'config:recommended' or 'config:best-practices',",
+    "which extend it. Its ignorePaths ignores '**/test/**', which covers this repo's chainsaw",
+    "fixtures under ci/test/. Those fixtures pin the same images the modules run, so ignoring",
+    "them would let fixture pins drift behind the modules and the suites would then validate",
+    "against images nobody runs. With the preset absent the global ignorePaths is Renovate's",
+    "built-in default ('**/node_modules/**', '**/bower_components/**'), neither of which matches",
+    "a tracked file in this repo. The 'kubernetes.ignorePaths' entry below is unrelated to test",
+    "paths and is deliberately retained -- see .github/renovate/disable-updates.json."
+  ],
   "extends": [
-    ":ignoreModulesAndTests",
     "abandonments:recommended",
     "docker:pinDigests",
     "helpers:pinGitHubActionDigests",

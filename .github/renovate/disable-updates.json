@@ -41,11 +41,14 @@
         "legitimately updates fluxcd/flux2 via this file, so this rule must stay scoped to",
         "matchManagers: [kubernetes] -- an unscoped enabled:false here would stop flux2 upgrades of",
         "clusterops-core entirely. This records the intent behind the kubernetes.ignorePaths entry in",
-        "renovate.json and keeps the exclusion effective if that override is ever removed. Note: that",
-        "manager-level ignorePaths override (non-mergeable) is also the only reason the kubernetes",
-        "manager scans ci/test/** at all (:ignoreModulesAndTests ignores **/test/**); restoring the",
-        "preset uniformly would stop Renovate updating ci/test/** image pins (fixture drift) -- a",
-        "maintainer decision, deliberately not made here."
+        "renovate.json and keeps the exclusion effective if that override is ever removed. The two",
+        "are not redundant in effect: ignorePaths stops the kubernetes manager EXTRACTING the file",
+        "(its 27 deps -- 4 docker, 23 kubernetes-api -- never reach the dependency dashboard),",
+        "while this rule only stops updates on deps that were extracted. Historical note: that",
+        "manager-level ignorePaths override (non-mergeable) used to be the only reason the",
+        "kubernetes manager scanned ci/test/** at all, because ':ignoreModulesAndTests' ignored",
+        "'**/test/**' globally. That preset has since been dropped from renovate.json's extends",
+        "(fixture drift), so nothing ignores test paths for any manager now."
       ],
       "enabled": false,
       "matchManagers": [
