@@ -191,6 +191,19 @@ function flatten(configs) {
             fail(`${name}#${i}: unsupported matcher '${k}' on a rule carrying ${relevant.join('/')} -- extend the resolver before trusting this run`);
           }
         }
+        // Brace expansion: Renovate's matcher is minimatch, which expands '{a,b}';
+        // the primitives below model exactly one brace form, the '<name>{/,}**'
+        // idiom, and treat every other '{' literally. A pattern this resolver reads
+        // literally and Renovate expands would resolve the cell differently here
+        // than in production, and would do so silently -- the same silent-mismatch
+        // class this check exists to close. Fail rather than guess.
+        for (const k of ['matchPackageNames', 'matchFileNames']) {
+          for (const pat of rule[k] ?? []) {
+            if (pat.includes('{') && !pat.endsWith('{/,}**')) {
+              fail(`${name}#${i}: ${k} pattern '${pat}' uses brace expansion this resolver does not model (only the '<name>{/,}**' idiom is) -- extend matchesPackageName/globToRegex before trusting this run`);
+            }
+          }
+        }
       }
     }
   }
