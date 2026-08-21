@@ -64,7 +64,9 @@ happen to run on a pull request: a job outside that list reports its result and 
 past. The commit header checks sit in that reporting position by deliberate choice — commitlint
 over the branch's commits, and the emission-closure check that asserts every header this repo's
 Renovate and release-please configuration *can* produce would pass commitlint. Making either one
-required is a separate decision that has not been taken. Treat a red result there as a real
+required is a separate decision that has not been taken. The closure check lives in
+[`ci/scripts/commit-taxonomy/`](./ci/scripts/commit-taxonomy/README.md), which documents what it
+models and what it deliberately does not. Treat a red result there as a real
 defect regardless: it is precisely what would block if the check were required, and the taxonomy
 it protects decays silently when it is ignored.
 

@@ -134,8 +134,9 @@ behaviours are documented properties, not violations to fix:
 - A bot branch whose last-resolved package file sits under `ci/test/**` emits the empty scope.
 
 What must stay true instead is **closure**: every header the Renovate config *can* emit must be inside
-the commitlint enums. The `commit-taxonomy` CI check derives that emittable set from the config and
-fails on any escape — when it goes red on a config or preset change, the emitter or the enum is wrong,
+the commitlint enums. The `commit-taxonomy` CI check
+([`ci/scripts/commit-taxonomy/`](../../ci/scripts/commit-taxonomy/README.md)) derives that emittable
+set from the config and fails on any escape — when it goes red on a config or preset change, the emitter or the enum is wrong,
 never the check's place in the pipeline. Because a shared-preset bump changes emission for every
 consumer at once, the enum must always move **before** the preset pin, never after.
 

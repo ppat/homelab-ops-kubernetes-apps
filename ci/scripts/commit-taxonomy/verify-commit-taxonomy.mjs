@@ -1,32 +1,60 @@
 #!/usr/bin/env node
-// Layer A: closure over every scope-carrying site in the commit-emission machinery.
+// Emission-closure check for the commit taxonomy.  See ./README.md for how to
+// maintain this script; .claude/rules/commits.md for the taxonomy it defends.
 //
-// Asserts that every commit header this repo's configuration CAN emit -- Renovate
-// (all managers, all update types, over the package occupancy the repo actually has)
+// WHY THIS EXISTS
+// ---------------
+// Nothing this repository can emit automatically may be a commit header its own
+// commitlint config would reject.  Renovate and release-please compile headers
+// from configuration; commitlint only ever sees headers that already exist.  So
+// there is no natural moment at which the two are compared -- a config that can
+// emit an out-of-enum scope stays green until the bot actually opens that PR,
+// which may be months later and on someone else's schedule.  This script closes
+// that gap by generating the emittable set and linting it.
+//
+// The most common way the gap opens is NOT a bad edit to commitlint.config.js.
+// It is adding a module or a component and forgetting to update
+// commitlint.config.js + release-please-config.json, because the Renovate scopes
+// are TEMPLATED ("apps-{{dir}}"): the set of headers the config can emit is a
+// function of repo state, so a new directory with a manifest in it mints a new
+// scope with no config edit anywhere and nothing for commitlint to catch.
+// Renaming or moving a package does the same in reverse.
+//
+// WHAT IT ASSERTS
+// ---------------
+// Every commit header this repo's configuration CAN emit -- Renovate (all
+// managers, all update types, over the package occupancy the repo actually has)
 // and release-please (its pull-request-title-pattern) -- passes the repo's own
-// commitlint config. The site list is derived MECHANICALLY by walking the resolved
-// Renovate config closure (renovate.json -> extends -> local sub-configs + remote
-// presets fetched at their pinned ref) and collecting every field that can place a
-// type, scope or '!' into a header: semanticCommitScope, semanticCommitType,
-// semanticCommits, commitMessagePrefix. There is no hand-maintained list of files
-// or rules; adding a preset or a rule extends the closure automatically.
+// commitlint config.  The scope-carrying site list is derived MECHANICALLY by
+// walking the resolved Renovate config closure (renovate.json -> extends ->
+// local sub-configs + remote presets fetched at their pinned ref) and collecting
+// every field that can place a type, scope or '!' into a header:
+// semanticCommitScope, semanticCommitType, semanticCommits, commitMessagePrefix.
+// There is no hand-maintained list of files or rules; adding a preset or a rule
+// extends the closure automatically.
 //
 // Package occupancy is resolved from `git ls-files` (never a filesystem walk:
 // .claude/worktrees/ can contain full checkouts), honouring each manager's
-// managerFilePatterns and its *effective* ignorePaths. Occupancy is repo state:
+// managerFilePatterns and its *effective* ignorePaths.  Occupancy is repo state:
 // a new directory, a moved package or a new image can mint a new cell with no
-// config change, which is why this runs per-commit in CI rather than once.
+// config change, which is why this runs per-commit in CI rather than once, and
+// why the CI job is deliberately NOT path-gated -- gating it on the config files
+// would skip exactly the case it exists to catch.
 //
-// What this closure is, and is not (stated per the design's own limits):
+// WHAT IT DOES NOT ASSERT
 //   - It closes PER-UPGRADE resolution: (manager x packageFile x package x update
 //     type) -> one rendered header, judged by commitlint itself (type, scope and
 //     '!', not scope alone).
 //   - It does NOT model branch-level aggregation (which upgrade's prefix a grouped
-//     multi-upgrade branch emits). That is unbounded repo state; the merge-time
+//     multi-upgrade branch emits).  That is unbounded repo state; the merge-time
 //     commitlint check is the gate there, and this script's guarantee for grouped
 //     branches is only that every CANDIDATE prefix on such a branch is in-enum.
+//   - It does not model every Renovate manager.  Occupancy is enumerated only for
+//     the managers that have packages here (see detectOccupancy); notably the
+//     kustomize manager is not modelled.  An unmodelled manager is a silent
+//     coverage gap, not a failure -- adding one is a README-documented task.
 //   - Renovate built-in presets (":ignoreModulesAndTests" etc.) are not fetched;
-//     they are Renovate-internal and carry no ppat scopes. The only semantics that
+//     they are Renovate-internal and carry no ppat scopes.  The only semantics that
 //     matter here are the ones that set ignorePaths; those are encoded below with
 //     their source cited, and WHICH of them applies is read off the closure's
 //     extends lists rather than assumed -- so removing (or re-adding) such a preset
@@ -34,22 +62,30 @@
 //   - Subjects are synthesized ("update <dep> (1.0.0 -> 2.0.0)"); commitMessage
 //     Action/Topic/Extra cannot place a scope or type (they render after the
 //     prefix), so this loses nothing the check cares about.
+//   - Where it cannot model a construct it FAILS rather than guesses: an unknown
+//     handlebars helper, an unsupported match* key on a scope-carrying rule, or a
+//     brace-expansion glob outside the one idiom implemented below.
 //
 // Usage:
-//   node ci/scripts/verify-commit-taxonomy.mjs [--self-test] [--offline-presets DIR]
+//   node ci/scripts/commit-taxonomy/verify-commit-taxonomy.mjs \
+//        [--self-test] [--dump-headers] [--offline-presets DIR]
 //
 // --self-test injects known-bad synthetic cells and templates and exits non-zero
 // unless every one of them is caught: a zero-defect result from a checker that
 // cannot see an injected defect is vacuous, so CI runs this mode first.
+// --dump-headers prints every candidate header with its provenance.
 // --offline-presets uses pre-downloaded preset files (dir containing <name>.json)
 // instead of fetching from raw.githubusercontent.com.
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+// Repo root from git, not from this file's depth: the script has moved once already
+// and a hardcoded '../..' is the kind of assumption that breaks on the next move.
+const repoRoot = execFileSync('git', ['-C', dirname(fileURLToPath(import.meta.url)),
+  'rev-parse', '--show-toplevel']).toString().trim();
 const args = process.argv.slice(2);
 const selfTest = args.includes('--self-test');
 const offlineIdx = args.indexOf('--offline-presets');
@@ -276,7 +312,10 @@ function ruleMatches(rule, cell) {
   if (rule.matchUpdateTypes && !rule.matchUpdateTypes.includes(cell.updateType)) return false;
   if (rule.matchFileNames && !matchesFileName(cell.packageFile, rule.matchFileNames)) return false;
   if (rule.matchPackageNames && !matchesPackageName(cell.depName, rule.matchPackageNames)) return false;
-  if (rule.matchDepTypes) return false; // no dep-type-bearing managers have occupancy here
+  // depType is set only by managers that have one (npm/bun read it off the
+  // package.json section a dependency sits in). A cell with no depType cannot
+  // match a matchDepTypes rule, which is also how Renovate behaves.
+  if (rule.matchDepTypes && !rule.matchDepTypes.includes(cell.depType)) return false;
   return true;
 }
 
@@ -297,9 +336,9 @@ const regexFromSlashes = (s) => {
 function detectOccupancy(configs, allFiles, builtins) {
   const rootConfig = configs[configs.length - 1].config; // renovate.json
   const globalIgnore = globalIgnorePaths(configs, builtins);
-  const cells = []; // {manager, datasource, depName, packageFile}
-  const add = (manager, datasource, depName, packageFile) =>
-    cells.push({ manager, datasource, depName, packageFile });
+  const cells = []; // {manager, datasource, depName, packageFile, depType?}
+  const add = (manager, datasource, depName, packageFile, depType) =>
+    cells.push({ manager, datasource, depName, packageFile, depType });
 
   const managerFiles = (managerName, defaultPatterns) => {
     const managerCfg = rootConfig[managerName] ?? {};
@@ -369,6 +408,27 @@ function detectOccupancy(configs, allFiles, builtins) {
     }
   }
 
+  // npm/bun managers: the repo's own toolchain manifest. Modelled under BOTH
+  // manager names on purpose -- which one claims a package.json depends on
+  // whether a bun lockfile sits beside it, and the answer is Renovate-version
+  // dependent. Both resolve identically here (the shared dev-tools preset lists
+  // both in matchManagers), so covering both is free and cannot go stale.
+  // depType is carried because the scope-setting rule matches on it: packages in
+  // devDependencies are internal tooling, packages in dependencies are not, and
+  // moving one between sections changes the header the bot emits.
+  for (const f of allFiles.filter((x) => /(^|\/)package\.json$/.test(x))) {
+    let pkg;
+    try { pkg = JSON.parse(readFileSync(join(repoRoot, f), 'utf8')); } catch { continue; }
+    const hasBunLock = allFiles.includes(join(dirname(f), 'bun.lock').replace(/^\.\//, '')) ||
+      allFiles.includes(join(dirname(f), 'bun.lockb').replace(/^\.\//, ''));
+    const managers = hasBunLock ? ['npm', 'bun'] : ['npm'];
+    for (const depType of ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies']) {
+      for (const dep of Object.keys(pkg[depType] ?? {})) {
+        for (const m of managers) add(m, 'npm', dep, f, depType);
+      }
+    }
+  }
+
   // pre-commit manager
   if (allFiles.includes('.pre-commit-config.yaml')) {
     for (const line of readLines('.pre-commit-config.yaml')) {
@@ -380,7 +440,7 @@ function detectOccupancy(configs, allFiles, builtins) {
   // dedupe
   const seen = new Set();
   return cells.filter((c) => {
-    const k = `${c.manager}|${c.datasource}|${c.depName}|${dirname(c.packageFile)}`;
+    const k = `${c.manager}|${c.datasource}|${c.depName}|${c.depType ?? ''}|${dirname(c.packageFile)}`;
     if (seen.has(k)) return false;
     seen.add(k);
     return true;
@@ -411,7 +471,16 @@ function resolveCell(rootDefaults, rules, occ, updateType) {
   if (!eff.enabled) return { cell, header: null, applied, eff };
   let header;
   const subject = `update ${occ.depName} (1.0.0 -> 2.0.0)`;
-  if (eff.commitMessagePrefix != null && eff.semanticCommits === 'disabled') {
+  // Renovate builds the semantic prefix ONLY when no commitMessagePrefix is in
+  // effect: `if (semanticCommits === 'enabled' && !commitMessagePrefix)` in
+  // renovatebot/renovate lib/workers/repository/updates/generate.ts. So an explicit
+  // prefix wins whether or not semanticCommits is disabled alongside it. Every rule
+  // in the current closure that sets a prefix also disables semanticCommits, so this
+  // condition is not load-bearing today -- but a shared preset that sets a prefix
+  // WITHOUT disabling semantic commits (ppat/renovate-presets v1.0.0's major rule does
+  // exactly that) would make the difference decide whether '!' appears, so model
+  // Renovate rather than the current configs.
+  if (eff.commitMessagePrefix != null) {
     const prefix = evalTemplate(eff.commitMessagePrefix, cell, applied.join(','));
     if (prefix == null) return { cell, header: null, applied, eff };
     header = `${prefix} ${subject}`;
@@ -424,12 +493,12 @@ function resolveCell(rootDefaults, rules, occ, updateType) {
 }
 
 // ---------------------------------------------------------------------------
-// 6b. Calver classification + breaking-treatment predicate (Layer C).
+// 6b. Calver classification + breaking-treatment predicate.
 //
 // Calver-class = matched by any override-calver.json rule with matchUpdateTypes
-// ignored. Ignoring that field is deliberate: the F5-era defect was matchUpdateTypes
-// being (wrongly) added to those rules, and a classifier that consulted it would go
-// blind to exactly that mutation. A calver "major" is a year rollover -- calver
+// ignored. Ignoring that field is deliberate: the defect this predicate exists to
+// catch IS matchUpdateTypes being (wrongly) added to those rules, and a classifier
+// that consulted it would go blind to exactly that mutation. A calver "major" is a year rollover -- calver
 // segments date the release, they do not signal API compatibility (calver.org) --
 // so a calver-class cell must NEVER resolve with breaking treatment, for ANY
 // update type. Non-calver majors of module-path packages must still resolve WITH
@@ -480,8 +549,9 @@ async function makeLinter() {
 }
 
 // ---------------------------------------------------------------------------
-// 8. release-please: the one scope-carrying site outside Renovate. From E2 on
-//    its rendered titles must pass the required check or releases stop.
+// 8. release-please: the one scope-carrying site outside Renovate. Its rendered
+//    PR titles land on main as squash commits, so they must pass commitlint too
+//    or releases stop.
 // ---------------------------------------------------------------------------
 
 function releasePleaseHeaders() {
@@ -497,11 +567,11 @@ function releasePleaseHeaders() {
 // Self-test: inject defects; a checker that cannot see them proves nothing.
 // ---------------------------------------------------------------------------
 
-async function runSelfTest(lintHeader, rootDefaults, rules) {
+async function runSelfTest(lintHeader, rootDefaults, rules, configs, builtins) {
   const injected = [
-    ['feat(infra-crds)!: update longhorn (1.8.0 -> 1.9.0)', 'off-enum scope (the F6a live defect shape)'],
-    ['feat(infra-)!: update fluxcd/flux2 (2.3.0 -> 2.4.0)', 'degenerate empty-segment render (F6b shape)'],
-    ['chore(apps-ai)!: breaking chore (the cell-19 shape)', "'!' on a non-shipped type"],
+    ['feat(infra-crds)!: update longhorn (1.8.0 -> 1.9.0)', 'off-enum scope: a templated scope rendered from a path outside the module layout'],
+    ['feat(infra-)!: update fluxcd/flux2 (2.3.0 -> 2.4.0)', 'degenerate render: the templated path segment was absent, leaving an empty suffix'],
+    ['chore(apps-ai)!: breaking chore', "'!' on a type that does not claim shipped behaviour changed"],
     ['feat(internal-workflows): shipped type on internal scope', 'pairing violation'],
     ['style: address markdown linting errors', 'removed type'],
   ];
@@ -521,9 +591,9 @@ async function runSelfTest(lintHeader, rootDefaults, rules) {
     if (r.valid) fail(`SELF-TEST: synthetic ci/test calver cell passed the lint but must not: ${header}`);
     else { caught++; note(`self-test: synthetic ci/test calver cell rendered '${header}' and was caught`); }
   }
-  // breaking-treatment injections (the F5-era defect, both directions):
-  // (a) re-apply the reverted PR #3795 mutation -- matchUpdateTypes excluding
-  //     major on the override-calver rules. A calver major then falls through to
+  // breaking-treatment injections, both directions:
+  // (a) re-apply the mutation this predicate was written against -- matchUpdateTypes
+  //     excluding major on the override-calver rules. A calver major then falls through to
   //     override-breaking-changes, resolves as feat(<scope>)!: + BREAKING CHANGE,
   //     and the calver falsifier must catch it (classification ignores
   //     matchUpdateTypes precisely so this mutation cannot blind it).
@@ -542,6 +612,31 @@ async function runSelfTest(lintHeader, rootDefaults, rules) {
   if (!breakingTreatmentFault(rules, longhornOcc, 'major', 'feat(infra-storage-core): update longhorn (1.8.0 -> 2.0.0)', { commitBody: '' }, ['synthetic'])) {
     fail('SELF-TEST: non-calver module-path major without breaking treatment was NOT caught');
   } else caught++;
+  // occupancy-coverage assertion for the node toolchain manifest. This is not a
+  // defect injection but a vacuity guard: if detectOccupancy stopped enumerating
+  // package.json, every npm/bun verdict below would be about an empty set and the
+  // injection that follows would pass without checking anything.
+  const occ = detectOccupancy(configs, gitLsFiles(), builtins);
+  const nodeCells = occ.filter((c) => /(^|\/)package\.json$/.test(c.packageFile));
+  if (nodeCells.length === 0) {
+    fail('SELF-TEST: no npm/bun occupancy found for a tracked package.json -- the node manifest ' +
+         'is unmodelled and every npm/bun verdict is vacuous');
+  } else {
+    caught++;
+    note(`self-test: ${nodeCells.length} npm/bun cells enumerated from the node toolchain manifest`);
+    // resolution-stage injection through that cell: rewrite the scope every rule
+    // assigns to the toolchain manifest to an off-enum value. If the cell were not
+    // actually flowing through resolveCell + commitlint, this would pass silently.
+    const offEnum = rules.map((e) => e.rule.semanticCommitScope === 'internal-dependencies'
+      ? { ...e, rule: { ...e.rule, semanticCommitScope: 'internal-deps' } }
+      : e);
+    const injected2 = resolveCell(rootDefaults, offEnum, nodeCells[0], 'major');
+    if (!injected2.header) fail('SELF-TEST: node manifest cell resolved to no emission -- resolver defect');
+    else if ((await lintHeader(injected2.header)).valid) {
+      fail(`SELF-TEST: off-enum scope on the node toolchain manifest was NOT caught: ${injected2.header}`);
+    } else { caught++; note(`self-test: off-enum node-manifest scope rendered '${injected2.header}' and was caught`); }
+  }
+
   // template-grammar injection: unknown handlebars must fail loudly, not render
   const before = failures.length;
   evalTemplate('{{#unless isMajor}}x{{/unless}}', { packageFileDir: 'a/b/c', updateType: 'minor' }, 'self-test');
@@ -564,7 +659,7 @@ console.log(`scope/type-carrying sites found mechanically: ${sites.length}`);
 for (const s of sites) console.log(`  site: ${s}`);
 
 if (selfTest) {
-  const caught = await runSelfTest(lintHeader, rootDefaults, rules);
+  const caught = await runSelfTest(lintHeader, rootDefaults, rules, configs, skippedBuiltins);
   if (failures.length) {
     console.error('\nSELF-TEST FAILURES:');
     for (const f of failures) console.error(`  ${f}`);
@@ -574,7 +669,7 @@ if (selfTest) {
   process.exit(0);
 }
 
-// Layer C falsifier (F12 regression): an enabled:false rule that enumerates
+// Falsifier: an enabled:false rule that enumerates
 // matchUpdateTypes silently re-enables the package for any type it forgot
 // (replacement/rollback/bump reached override-calver with automerge on).
 for (const { src, rule } of rules) {
@@ -595,7 +690,7 @@ for (const occ of occupancy) {
     const { header, applied, eff } = resolveCell(rootDefaults, rules, occ, updateType);
     if (header == null) { disabledCells++; continue; }
     if (!headers.has(header)) headers.set(header, `${occ.manager}:${occ.depName}@${dirname(occ.packageFile)} [${updateType}] via ${applied.join(',') || 'root defaults'}`);
-    // Layer C falsifier (breaking-treatment class, both directions -- see 6b):
+    // Falsifier (breaking-treatment class, both directions -- see 6b):
     // calver-class cells must never resolve breaking; non-calver module-path
     // majors must always resolve breaking.
     const fault = breakingTreatmentFault(rules, occ, updateType, header, eff, applied);
