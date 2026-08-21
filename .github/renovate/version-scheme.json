@@ -2,16 +2,6 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "packageRules": [
     {
-      "description": "configure version scheme for ppatlabs images",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "ppatlabs/{/,}**"
-      ],
-      "versioning": "semver-coerced"
-    },
-    {
       "description": "configure version scheme for linuxserver images",
       "matchDatasources": [
         "docker"

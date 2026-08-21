@@ -5,7 +5,30 @@
       "automerge": true,
       "commitBody": "",
       "commitMessagePrefix": "{{#if (or isMajor isMinor)}}feat{{else if isPatch}}fix{{else}}chore{{/if}}({{#if (equals (lookup (split packageFileDir '/') 0) 'apps')}}apps{{else}}infra{{/if}}-{{ lookup (split packageFileDir '/') 2 }}):",
-      "description": "update calver versioned packages managed by custom.regex manager",
+      "description": [
+        "update calver versioned packages managed by custom.regex manager.",
+        "These three rules deliberately carry NO matchUpdateTypes: sitting after override-breaking-changes",
+        "and default.json's per-update-type defaults in extends, they must win (last match) for EVERY",
+        "update type, including major. A calver major is a year rollover -- it has no more significance",
+        "than the month (minor) or patch segment and is not a breaking-change signal (calver segments",
+        "track the release date, not API compatibility: calver.org). So calver deps are opted out of",
+        "every semver-assuming inheritance: no '!' and no BREAKING CHANGE body ever; a series bump",
+        "(year or month) types feat and a patch types fix (for these deps the trailing segment IS a",
+        "bugfix counter -- authentik's '.x = latest patch release', docs.goauthentik.io/docs/security/policy);",
+        "automerge stays on for majors; a flat 14-day release age replaces the 1/7/30-day semver ladder;",
+        "and separateMajorMinor is off (no major-vs-minor branch split, one PR to newest -- Renovate",
+        "still computes the update type from the version delta, so the prefix template is unaffected;",
+        "renovatebot/renovate lib/workers/repository/process/lookup/bucket.ts).",
+        "History: an earlier revision of PR #3795 read the major clobber as a defect and added",
+        "matchUpdateTypes excluding major, sending year rollovers to feat(<scope>)!: + BREAKING CHANGE",
+        "+ 30-day soak. That was a misreading of the rule's intent -- do not re-add matchUpdateTypes.",
+        "The unenumerated types parallel the disable-updates rules for a different reason: an",
+        "enumerating disable rule re-enables forgotten types; an enumerating calver rule sends the",
+        "omitted type back to semver-major treatment.",
+        "Known cosmetic residue: default.json's major rule addLabels 'automerge:off' still attaches",
+        "(addLabels is merge-cumulative and cannot be unset by a later rule), so calver-major PRs",
+        "carry that label while correctly automerging."
+      ],
       "matchManagers": [
         "custom.regex"
       ],
@@ -14,28 +37,54 @@
         "minio/mc"
       ],
       "minimumReleaseAge": "14 days",
-      "semanticCommits": "disabled"
+      "semanticCommits": "disabled",
+      "separateMajorMinor": false
     },
     {
       "automerge": true,
       "commitBody": "",
       "commitMessagePrefix": "{{#if (or isMajor isMinor)}}feat{{else if isPatch}}fix{{else}}chore{{/if}}({{#if (equals (lookup (split packageFileDir '/') 0) 'apps')}}apps{{else}}infra{{/if}}-{{ lookup (split packageFileDir '/') 2 }}):",
-      "description": "update calver versioned packages managed by kubernetes manager",
+      "description": [
+        "update calver versioned packages managed by kubernetes manager (rationale: rule 1).",
+        "pihole/pihole (docker-pi-hole YYYY.MM.patch), visibilityspots/cloudflared (cloudflared",
+        "YYYY.M.patch), and home-assistant (YYYY.MM.patch, home-assistant.io/faq/release: monthly",
+        "feature releases with 'smaller patch releases ... if any important issues turn up').",
+        "openclaw (docker.io/ppatlabs/openclaw, YYYY.M.P) is here for the same reason: its segments",
+        "track the release date, so a year rollover is not a breaking change and must not be typed",
+        "as one. It needs no manifest change -- it is already on the mutable 'YYYY.M.P' tag and",
+        "already digest-pinned -- and joining this rule does not disturb its digest tracking, which",
+        "gates on currentDigest and never consults the versioning module. It picks up automerge",
+        "true from here and KEEPS it: openclaw is an image this repo builds itself, and carries no",
+        "human-review exemption. An earlier revision of PR #3795 gave it one (automerge:false plus",
+        "an 'automerge:off' label, in disable-automerge) on the grounds of upstream",
+        "security-advisory volume; that rule was removed because advisory volume is a property of",
+        "what the image contains, not of who ships it, and nothing about this image makes it",
+        "different from the other first-party images that automerge today. Its release-age soak is",
+        "removed for every update type by override-release-age, extended last -- see that file for",
+        "why an image we build ourselves is not soaked at all.",
+        "The package names are the depNames the kubernetes manager emits, i.e. the image reference",
+        "AS WRITTEN in the manifest -- 'docker.io/ppatlabs/openclaw' carries its registry prefix",
+        "while the other three do not. A name spelled the colloquial way silently matches nothing."
+      ],
       "matchManagers": [
         "kubernetes"
       ],
       "matchPackageNames": [
+        "ghcr.io/home-operations/home-assistant",
         "pihole/pihole",
-        "visibilityspots/cloudflared"
+        "visibilityspots/cloudflared",
+        "ppatlabs/openclaw",
+        "docker.io/ppatlabs/openclaw"
       ],
       "minimumReleaseAge": "14 days",
-      "semanticCommits": "disabled"
+      "semanticCommits": "disabled",
+      "separateMajorMinor": false
     },
     {
       "automerge": true,
       "commitBody": "",
       "commitMessagePrefix": "{{#if (or isMajor isMinor)}}feat{{else if isPatch}}fix{{else}}chore{{/if}}({{#if (equals (lookup (split packageFileDir '/') 0) 'apps')}}apps{{else}}infra{{/if}}-{{ lookup (split packageFileDir '/') 2 }}):",
-      "description": "update calver versioned packages managed by flux manager",
+      "description": "update calver versioned packages managed by flux manager (rationale: rule 1). authentik: YYYY.<release>.patch, supported versions are '2026.5.x / 2026.8.x with .x being the latest patch release'.",
       "matchManagers": [
         "flux"
       ],
@@ -43,7 +92,8 @@
         "authentik"
       ],
       "minimumReleaseAge": "14 days",
-      "semanticCommits": "disabled"
+      "semanticCommits": "disabled",
+      "separateMajorMinor": false
     }
   ]
 }

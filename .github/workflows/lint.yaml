@@ -54,6 +54,77 @@ jobs:
       from: ${{ github.event.pull_request.head.sha || 'HEAD' }}~${{ github.event.pull_request.commits || '1' }}
       to: ${{ github.event.pull_request.head.sha || 'HEAD' }}
 
+  # WHY THIS JOB EXISTS
+  # Nothing this repository can emit automatically may be a commit header its own
+  # commitlint config would reject. Renovate and release-please COMPILE headers from
+  # configuration; commitlint only ever sees headers that already exist. So nothing
+  # in the pipeline compares the two, and a config able to emit an out-of-enum scope
+  # stays green until the bot actually opens that PR. This job generates the emittable
+  # set -- Renovate over the current package occupancy, plus release-please's PR-title
+  # pattern -- and lints every header in it against commitlint.config.js.
+  #
+  # The usual way the gap opens is NOT a bad edit to commitlint.config.js. It is adding
+  # a module or a component and forgetting to update commitlint.config.js and
+  # release-please-config.json, because the Renovate scopes are TEMPLATED
+  # ("apps-{{dir}}"): the emittable set is a function of REPO STATE, so a new directory
+  # with a manifest in it mints a new scope with no config edit anywhere and nothing for
+  # commitlint to catch. Renaming or moving a package does the same in reverse.
+  #
+  # WHY IT IS UNGATED
+  # Deliberately NOT gated on detect-changes. The check's input includes package
+  # occupancy read from `git ls-files`, so any path in the repo can change its answer;
+  # path-gating it on commitlint.config.js / release-please-config.json / .github/renovate
+  # would skip precisely the case above -- the one it exists to catch. It costs seconds.
+  #
+  # The self-test runs FIRST: it injects known-bad cells and templates and fails unless
+  # every one is caught, so the zero-defect verdict comes from a checker that has just
+  # demonstrated it can see defects.
+  #
+  # Maintenance: ci/scripts/commit-taxonomy/README.md.
+  commit-taxonomy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      # renovate: datasource=npm depName=bun
+      BUN_VERSION: "1.3.14"
+      # renovate: datasource=node-version depName=node
+      NODE_VERSION: "24.11.1"
+    steps:
+    # commitlint and its plugin come from this repo's committed package.json + bun.lock,
+    # installed with a bun supplied by mise. The versions are Renovate-managed there
+    # (chore(internal-dependencies)); nothing is installed ad hoc. The same manifest is
+    # what the commit-messages job above resolves, so this check and the gate it predicts
+    # run the same commitlint.
+    - name: Setup repository and tools
+      uses: ppat/homelab-ops-actions/actions/setup-repository-tools@9c16506c3c527478b6314c86ca961c0011d9f94a # v2.2.0
+      with:
+        current_fetch_depth: 1
+        current_git_ref: ${{ github.head_ref || github.ref }}
+        current_repository: ${{ github.repository }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        # yamllint disable-line rule:indentation
+        mise_toml: |
+          [tools]
+          bun               = "${{ env.BUN_VERSION }}"
+          node              = "${{ env.NODE_VERSION }}"
+          [settings.npm]
+          bun               = true
+
+    - name: Install node packages
+      shell: bash
+      working-directory: ./current
+      run: bun install --frozen-lockfile
+
+    - name: Self-test (injected defects must be caught)
+      shell: bash
+      working-directory: ./current
+      run: node ci/scripts/commit-taxonomy/verify-commit-taxonomy.mjs --self-test
+
+    - name: Verify emission closure against commitlint
+      shell: bash
+      working-directory: ./current
+      run: node ci/scripts/commit-taxonomy/verify-commit-taxonomy.mjs
+
   alloy:
     needs: [detect-changes]
     if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).alloy_any_changed == 'true' }}

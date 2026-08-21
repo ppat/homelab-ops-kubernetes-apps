@@ -1,5 +1,13 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "All release-age policy lives here, and this preset is extended LAST in renovate.json for that",
+    "reason. minimumReleaseAge is a plain scalar, so the last matching rule wins; the two rules",
+    "below that remove a soak have to beat every earlier setter, including the 1/7/30-day",
+    "per-update-type ladder in github>ppat/renovate-presets and override-calver's flat 14 days.",
+    "Keep this entry last in extends, and keep new release-age rules in this file rather than",
+    "somewhere earlier where an unrelated preset can silently outrank them."
+  ],
   "packageRules": [
     {
       "description": "delay patch updates to 7 days (from 1 day)",
@@ -23,6 +31,86 @@
         "minor"
       ],
       "minimumReleaseAge": "30 days"
+    },
+    {
+      "description": [
+        "Images this repo builds itself (docker.io/ppatlabs/*) are adopted as soon as they are",
+        "published: no release-age soak, on any update type. PROBLEM: a soak exists to let someone",
+        "ELSE's release be found broken by someone else before this cluster takes it. For an image",
+        "we build there is no such someone else -- the build is ours, it has already passed its own",
+        "repo's CI, and the soak only delays our own change from reaching the cluster. This is not",
+        "a claim that first-party images are safer or better tested than upstream ones; it is that",
+        "the thing a soak waits for does not exist for them.",
+        "No matchUpdateTypes, deliberately: version updates and digest refreshes alike, major",
+        "included. Enumerating types would leave whichever type was not listed soaked by whatever",
+        "set it last -- the 1/7/30-day per-update-type ladder from github>ppat/renovate-presets for",
+        "obsidian and obsidian-tools, override-calver's flat 14 days for openclaw -- and a soak",
+        "under internalChecksFilter 'strict' is a suppressed branch, not a late PR (see the digest",
+        "rule below for that mechanism).",
+        "'minimumReleaseAge: null' is a workaround spelling, not a semantic assertion: null is the",
+        "unset value, and checkMinimumReleaseAge (util/minimum-release-age.ts) skips the check when",
+        "the value is falsy. Read it as 'zero'; Renovate has no literal zero for this option.",
+        "Both spellings of the name are listed: the registry-prefixed form the kubernetes manager",
+        "emits for the image reference AS WRITTEN in the manifest (docker.io/ppatlabs/<name>), and",
+        "the bare form a '# renovate: datasource=docker depName=...' annotation would produce. A",
+        "matcher that matches nothing raises no error -- 'ppatlabs/{/,}**' was inert for two years",
+        "for exactly that reason (#3795). Note the idiom takes NO slash before the brace."
+      ],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ppatlabs{/,}**",
+        "docker.io/ppatlabs{/,}**"
+      ],
+      "minimumReleaseAge": null
+    },
+    {
+      "description": [
+        "A digest refresh on a container image is never soaked. PROBLEM: a digest update means the",
+        "tag this repo ALREADY runs was repointed upstream at a rebuilt image. The version decision",
+        "was taken when the tag was adopted; soaking the refresh does not defer adopting something",
+        "new, it keeps the cluster on a build the publisher has already replaced -- usually a",
+        "rebuild for a CVE in a base layer, which is the last thing to sit on.",
+        "And it does not merely delay it. Renovate ages a digest update against the newest matching",
+        "version's timestamp (lookup/index.ts applyMinimumReleaseAgeToDigestUpdate, which re-runs",
+        "applyPackageRules with updateType set -- that is why an update-type-matched rule reaches it",
+        "at all), and for a MUTABLE tag that timestamp is the moment upstream last repointed it. So",
+        "every rebuild restarts the clock: an image rebuilt more often than the soak is long can",
+        "never clear it. With this repo's internalChecksFilter 'strict' the held update is not a",
+        "late PR either -- it is stamped pendingChecks:true and the branch is never created",
+        "(update/branch/index.js, 'creation is disabled because internalChecksFilter was not met').",
+        "No error, no PR, nothing to notice. Observed on live 44.30.4:",
+        "ghcr.io/home-operations/home-assistant's digest refresh came back pendingChecks:true under",
+        "override-calver's 14-day soak and pendingChecks:false with this rule, everything else",
+        "equal. Its mechanism is the second, harsher one: that tag resolves NO releaseTimestamp at",
+        "all, and Renovate's default minimumReleaseAgeBehaviour 'timestamp-required' marks an",
+        "un-timestamped release pending -- so the hold never expires, at any soak length.",
+        "visibilityspots/cloudflared carries the identical 14-day soak and is exposed to the same",
+        "mechanism, but was NOT held at the time of writing: its tag last moved 199 days ago, so",
+        "the soak had already elapsed. Do not read its green state as evidence the hold is",
+        "harmless -- the next repoint restarts the clock.",
+        "Scope is deliberate and is the whole design decision here. It is repo-wide rather than a",
+        "list of the two deps observed, because every docker dep in this repo is digest-pinned",
+        "(docker:pinDigests is extended globally) and several sit on tags that are mutable by",
+        "construction ('latest', or no tag at all), so an allowlist would silently fail to protect",
+        "the next one added. It is restricted to matchDatasources 'docker' because there IS a case",
+        "where soaking a digest is wanted and must not be swept up: the github-actions SHA pins",
+        "(helpers:pinGitHubActionDigests), where ppat/renovate-presets soaks a repointed action tag",
+        "for 3 days if the publisher is trusted and 30 if not. That soak guards against a tag being",
+        "moved to hostile code, which is a real threat for a third-party action and not the",
+        "situation a rebuilt container image is in.",
+        "Version updates are untouched: this rule matches updateType 'digest' only, so an image's",
+        "own semver/calver soak still applies. 'pinDigest' (first-time pinning) is also untouched.",
+        "Ordering is load-bearing -- see the file note above."
+      ],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchUpdateTypes": [
+        "digest"
+      ],
+      "minimumReleaseAge": null
     }
   ]
 }

@@ -27,6 +27,15 @@
       "matchFileNames": [
         "infrastructure/bootstrap/crds/**"
       ]
+    },
+    {
+      "addLabels": [
+        "subsystem:components"
+      ],
+      "description": "add subsystem label for shared kustomize components",
+      "matchFileNames": [
+        "components/**"
+      ]
     }
   ]
 }

@@ -39,7 +39,18 @@
     },
     {
       "commitBody": "BREAKING CHANGE",
-      "description": "configure breaking changes for minor version upgrades of packages that treat minor versions as major versions",
+      "description": [
+        "configure breaking changes for minor version upgrades of packages that treat minor versions",
+        "as major versions -- subsystem paths. This rule and the next replace a single unguarded rule",
+        "whose packageFileDir template rendered off-enum scopes outside subsystem paths: infra-crds",
+        "under infrastructure/bootstrap/crds/** (PRs #2327/#2785/#3232) and infra- (empty segment)",
+        "for .github/workflows package files. There is deliberately no unguarded fallback: a flux CLI",
+        "pin in a workflow file ships nothing and falls to normal custom.regex handling (chore(dev-tools):)."
+      ],
+      "matchFileNames": [
+        "apps/subsystems/**",
+        "infrastructure/subsystems/**"
+      ],
       "matchPackageNames": [
         "fluxcd/flux2",
         "longhorn",
@@ -50,6 +61,23 @@
       ],
       "semanticCommits": "disabled",
       "commitMessagePrefix": "feat({{#if (equals (lookup (split packageFileDir '/') 0) 'apps')}}apps{{else}}infra{{/if}}-{{ lookup (split packageFileDir '/') 2 }})!:"
+    },
+    {
+      "commitBody": "BREAKING CHANGE",
+      "description": "configure breaking changes for minor version upgrades of packages that treat minor versions as major versions -- bootstrap CRD copies (literal scope: packageFileDir index 2 is 'crds' here, not the module name)",
+      "matchFileNames": [
+        "infrastructure/bootstrap/crds/**"
+      ],
+      "matchPackageNames": [
+        "fluxcd/flux2",
+        "longhorn",
+        "longhorn/longhorn"
+      ],
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "semanticCommits": "disabled",
+      "commitMessagePrefix": "feat(infra-bootstrap-crds)!:"
     }
   ]
 }
