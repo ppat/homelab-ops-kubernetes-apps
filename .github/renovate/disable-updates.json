@@ -56,6 +56,38 @@
       "matchFileNames": [
         "infrastructure/subsystems/clusterops-core/flux/gotk-components.yaml"
       ]
+    },
+    {
+      "description": [
+        "chainsaw fixture marker, permanently ignored: the image name is deliberately",
+        "unresolvable (imagePullPolicy Never) -- its job is to fail pulling so the observability",
+        "suite can assert the events are shipped. There is nothing to look up; every run",
+        "reported the failed lookup as a repository problem. Per-package on purpose: test deps",
+        "update unless excluded case by case."
+      ],
+      "enabled": false,
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "chainsaw-event-marker"
+      ]
+    },
+    {
+      "description": [
+        "kubevirt demo boot image for the virtualization suite, permanently ignored: pinned",
+        "'latest' plus digest as a frozen boot artifact whose guest OS is incidental, so the",
+        "only offerable update is a digest churn with no review meaning -- and that lookup",
+        "failed every run, reported as a repository problem. Per-package on purpose: test deps",
+        "update unless excluded case by case."
+      ],
+      "enabled": false,
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "quay.io/kubevirt/cirros-container-disk-demo"
+      ]
     }
   ]
 }
