@@ -32,11 +32,16 @@ It asserts that every header in the per-upgrade closure passes commitlint:
 rendered pull-request titles. Judgement is delegated to commitlint itself — type, scope *and* `!`,
 not a scope set-membership test — so pairing rules and breaking-marker rules are exercised too.
 
-It additionally runs two **falsifiers** that commitlint alone cannot express:
+It additionally runs three **falsifiers** that commitlint alone cannot express:
 
 - a calver-classified package must never resolve with breaking treatment (no `!`, no
   `BREAKING CHANGE` body) for **any** update type;
-- a non-calver major on a module path must always resolve with breaking treatment.
+- a non-calver major on a module path must always resolve with breaking treatment;
+- no module-path cell may resolve to an **unscoped** header, for any update type. A lost scope is
+  the silent failure class: the preset's guarded marker template renders `feat!:` and the
+  per-update-type defaults render `feat:`/`fix:` — and this repo's commitlint accepts `feat():`
+  and `feat()!:` too (empty parens parse as no scope; measured 2026-08), so no config spelling
+  can make the loss loud. Only this predicate can.
 
 It does **not**:
 
@@ -127,6 +132,13 @@ This is the part that makes the check **repo-state-triggered**. A new manifest, 
 new image reference, a new `# renovate:` annotation, a new `uses:` — any of these can mint a cell and
 therefore a header, with no configuration change at all.
 
+One modelled manager is easy to forget because its package file is the configuration itself:
+`renovate-config` treats every pinned `github>owner/repo#tag` in `.github/renovate.json`'s `extends`
+as a `github-tags` dependency, so **the shared-preset pin is something Renovate bumps on its own**.
+That upgrade's header is checked here like any other. The unpinned local refs
+(`github>ppat/homelab-ops-kubernetes-apps//…`) also extract, but with `skipReason
+unspecified-version` and no update, so they mint no cell.
+
 ### 4. Per-cell resolution
 
 `resolveCell()` folds the flattened rules in closure order, last match wins **per field**, then
@@ -134,12 +146,18 @@ renders. `ruleMatches()` implements only the matcher semantics these configs act
 carries `depType` only for managers that have one (npm/bun read it off the `package.json` section),
 which is why a `matchDepTypes` rule cannot match a cell without one — as in Renovate.
 
-One precedence detail is easy to get wrong and worth stating: Renovate builds the semantic prefix
-**only when no `commitMessagePrefix` is in effect** (`semanticCommits === 'enabled' &&
+One precedence detail is easy to get wrong and is now load-bearing: Renovate builds the semantic
+prefix **only when no `commitMessagePrefix` is in effect** (`semanticCommits === 'enabled' &&
 !commitMessagePrefix`, `lib/workers/repository/updates/generate.ts`). An explicit prefix wins whether
-or not `semanticCommits` is disabled alongside it. Every rule in the current closure that sets a
-prefix also disables semantic commits, so the distinction is inert today — and stops being inert the
-moment a shared preset sets a prefix without disabling them.
+or not `semanticCommits` is disabled alongside it — and the shared preset's major rule sets one
+without disabling them, so this condition is what decides whether `!` appears on every major in the
+repo.
+
+The same guard tests **falsiness**, which is why an empty-string prefix is Renovate's only spelling
+for "no prefix" and why `resolveCell` treats `''` and `null` identically. `.github/renovate/
+override-breaking-changes.json` relies on that to take the marker back off internal surfaces; a
+resolver that modelled `''` as a literal prefix would render a header with a leading space and no
+type at all.
 
 ### 5. Judgement
 
@@ -159,11 +177,16 @@ The injections cover each stage independently:
 | Stage | Injection | What its absence would hide |
 | --- | --- | --- |
 | Lint | literal headers with an off-enum scope, a degenerate empty scope segment, `!` on a type that cannot claim shipped behaviour, and a type removed from the enum | commitlint not actually being consulted, or the config not loading |
-| Resolution → lint | a calver-class package planted on a `ci/test/` path, which must render an off-enum doubled scope | the resolver rendering headers nobody lints |
+| Resolution → lint | an off-enum scope written into `organize-semantic-scope` must flow through the calver prefix's `{{semanticCommitScope}}` reference into a rejected header | the calver prefix silently ceasing to read the referenced scope, or calver cells never reaching commitlint |
+| Falsifier (unscoped-module) | every path-derived scope emptied, so a module-path major renders through the preset's guarded template as `feat!:` — commitlint-valid, so only the falsifier can object (the injection asserts the lint passes, proving non-redundancy); plus the reverse direction on the real config | the unscoped-module predicate going blind, or firing on correctly scoped headers |
 | Falsifier (calver) | the calver rules mutated to enumerate `matchUpdateTypes` excluding major | the breaking-treatment predicate going blind to the exact mutation it exists to detect |
 | Falsifier (non-calver) | a module-path major with neither `!` nor a `BREAKING CHANGE` body | the predicate only ever firing in one direction |
 | Occupancy | an assertion that the node toolchain manifest yields npm/bun cells at all | a whole manager silently dropping out, making every verdict about it vacuous |
 | Occupancy → lint | the scope assigned to that manifest rewritten off-enum | those cells being enumerated but never resolved or linted |
+| Occupancy | an assertion that a pinned preset ref yields `renovate-config` cells at all | the manager that moves the shared-preset pin going unmodelled, so the pin-bump PR's own header is never checked |
+| Occupancy → lint | the `renovate` scope on those cells rewritten off-enum | those cells being enumerated but never resolved or linted |
+| Templates | the breaking-marker prefix must render `chore(github-actions)!:` and `feat!:` | a template that silently rendered nothing, making every marker verdict vacuous |
+| Templates → lint | the local rule that strips the marker from internal surfaces removed | the marker reaching an internal scope, which commitlint must reject |
 | Templates | an unimplemented handlebars construct | the resolver rendering a guess instead of failing |
 
 **When you add modelling, add an injection for it.** The occupancy pair above is the pattern to copy:
@@ -175,8 +198,14 @@ is not falsified is not coverage.
 These are deliberate and worth knowing before trusting a green run:
 
 - **Unmodelled managers are a silent coverage gap.** `detectOccupancy` enumerates only the managers
-  that have packages here. The `kustomize` manager is notably not modelled. An unmodelled manager
-  produces no cells, no headers and no failures — it does not announce itself.
+  that have packages here. An unmodelled manager produces no cells, no headers and no failures — it
+  does not announce itself. The one still outstanding is `kustomize`, and its occupancy has been
+  measured rather than guessed: a live extraction found exactly two deps,
+  `metallb/metallb` and `traefik/traefik-helm-chart`, in
+  `infrastructure/bootstrap/crds/*/kustomization.yaml`. Both sit on a module path that the
+  `custom.regex` cells already exercise, and a live resolution confirms they render
+  `feat(infra-bootstrap-crds)!:` — in-enum. So the gap is real but currently benign; re-measure
+  before assuming that still holds.
 - **Grouped branches** are covered only at candidate level (see above).
 - **Occupancy detection is line-based**, not a YAML parse. It recognises the shapes these manifests
   actually use (`image:`, `chart:`, `url: oci://`, `# renovate:` annotations, `uses:`, `repo:`). A
@@ -203,21 +232,33 @@ consumer at once. Rehearse it before landing it:
 
 ```bash
 mkdir -p /tmp/presets && cd /tmp/presets
-for f in default dev-tools github-actions kubernetes; do
+for f in default dev-tools github-actions kubernetes; do   # the four this repo extends
   curl -sfL "https://raw.githubusercontent.com/ppat/renovate-presets/<new-tag>/$f.json" -o "$f.json"
 done
 cd -
 node ci/scripts/commit-taxonomy/verify-commit-taxonomy.mjs --offline-presets /tmp/presets
 ```
 
-A worked example of why this matters: `ppat/renovate-presets` v1.0.0 adds
+A worked example, from the shared-preset bump this procedure was written for. The new revision adds
 `commitMessagePrefix: "{{semanticCommitType}}{{#if semanticCommitScope}}({{semanticCommitScope}}){{/if}}!:"`
-to its major rule *without* disabling semantic commits. Rehearsed against the pinned v0.2.1 the
-closure is clean; rehearsed against v1.0.0 the resolver stops on that unimplemented template, which
-is the correct answer — `!` would then attach to **every** major, including ones whose type cannot
-carry it. Implementing the template turns the stop into a list of the headers the enum must accept
-first. `.claude/rules/commits.md` states the ordering this enforces: the enum moves **before** the
-preset pin, never after.
+to its major rule *without* disabling semantic commits — which does not matter, because an explicit
+prefix wins either way. Rehearsed at the old pin the closure was clean; rehearsed at the new pin the resolver
+**stopped on the unimplemented template**, which was the correct answer rather than a bug in the
+rehearsal. Implementing the template turned the stop into a list: 20 headers of the form
+`chore(github-actions)!:` / `chore(internal-dependencies)!:`, every one on an internal surface, every
+one rejected by commitlint because `!` is release-operative and those scopes ship nothing. The fix
+was a local rule in `.github/renovate/override-breaking-changes.json` that unsets the prefix on those
+paths; the enum did not have to move at all.
+
+Two properties of that episode are worth carrying forward:
+
+- **The stop is the feature.** A resolver that guessed at the template would have reported a clean
+  run over 20 headers that commitlint rejects.
+- **The rehearsal is not optional even when the diff is one line.** The bump changed five preset
+  files, and its visible part — a version string in `extends` — said nothing about any of them.
+
+`.claude/rules/commits.md` states the ordering this enforces: the enum moves **before** the preset
+pin, never after.
 
 ### A new manager gains occupancy
 

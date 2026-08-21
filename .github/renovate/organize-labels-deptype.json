@@ -1,29 +1,38 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "Labels that say WHAT KIND of thing a bot pull request is bumping, so the review queue can be",
+    "sorted by the kind of check the reviewer has to do -- a CRD copy, a container image and a Helm",
+    "chart fail in different ways and are read differently.",
+    "Triage facets only: nothing in this repository's workflows, and no required check, keys off",
+    "a 'dependency-type:' label. Do not turn one into a gate without saying so here.",
+    "The companion facet is subsystem:* (organize-labels-subsystem.json); the two combine in a",
+    "filter."
+  ],
   "packageRules": [
     {
+      "description": "CRD copies -- reviewed against the module that normally installs the same CRDs, not on their own",
       "addLabels": [
         "dependency-type:crds"
       ],
-      "description": "add dependency-type label for crds",
       "matchFileNames": [
         "infrastructure/bootstrap/crds/**"
       ]
     },
     {
+      "description": "container images -- every docker dep here is digest-pinned, so these arrive as both version bumps and digest refreshes",
       "addLabels": [
         "dependency-type:docker-image"
       ],
-      "description": "add dependency-type label for docker images",
       "matchDatasources": [
         "docker"
       ]
     },
     {
+      "description": "Helm charts -- the bump can move values schema and rendered resources at once, so review is chart release notes rather than an image diff",
       "addLabels": [
         "dependency-type:helm-chart"
       ],
-      "description": "add dependency-type label for helm charts",
       "matchDatasources": [
         "helm"
       ]

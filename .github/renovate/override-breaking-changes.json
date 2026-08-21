@@ -1,54 +1,29 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "'!' is the only read-before-merging signal a consuming cluster gets: modules are consumed at",
+    "PINNED tags, and at 0.x '!' cuts a minor instead of a silent patch. The bot cannot read",
+    "release notes, so the marker is structural: every module-path major (the shared preset does",
+    "this), plus the two dependencies whose minors historically broke operators (rule below).",
+    "Not a claim that every such bump breaks, but that a bot may not decide it does not.",
+    "Do not re-add a local majors rule: kubernetes-api migrations group into one PR spanning",
+    "many modules, where no module scope is true (.claude/rules/commits.md, rule 3 over 4).",
+    "A bare 'BREAKING CHANGE' body is absent everywhere: the bare token parses as nothing, and",
+    "'!' in the header is what release-please reads (.claude/rules/commits.md, 'Breaking",
+    "changes')."
+  ],
   "packageRules": [
     {
-      "commitBody": "BREAKING CHANGE",
-      "description": "configure breaking changes for infra subsystems",
-      "matchFileNames": [
-        "infrastructure/subsystems/**"
-      ],
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "semanticCommits": "disabled",
-      "commitMessagePrefix": "feat(infra-{{ lookup (split packageFileDir '/') 2 }})!:"
-    },
-    {
-      "commitBody": "BREAKING CHANGE",
-      "description": "configure breaking changes for apps subsystems",
-      "matchFileNames": [
-        "apps/subsystems/**"
-      ],
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "semanticCommits": "disabled",
-      "commitMessagePrefix": "feat(apps-{{ lookup (split packageFileDir '/') 2 }})!:"
-    },
-    {
-      "commitBody": "BREAKING CHANGE",
-      "description": "configure breaking changes for infra-bootstrap-crds",
-      "matchFileNames": [
-        "infrastructure/bootstrap/crds/**"
-      ],
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "semanticCommits": "disabled",
-      "commitMessagePrefix": "feat(infra-bootstrap-crds)!:"
-    },
-    {
-      "commitBody": "BREAKING CHANGE",
       "description": [
-        "configure breaking changes for minor version upgrades of packages that treat minor versions",
-        "as major versions -- subsystem paths. This rule and the next replace a single unguarded rule",
-        "whose packageFileDir template rendered off-enum scopes outside subsystem paths: infra-crds",
-        "under infrastructure/bootstrap/crds/** (PRs #2327/#2785/#3232) and infra- (empty segment)",
-        "for .github/workflows package files. There is deliberately no unguarded fallback: a flux CLI",
-        "pin in a workflow file ships nothing and falls to normal custom.regex handling (chore(dev-tools):)."
+        "Flux and Longhorn ship operator-affecting changes in minor releases (a Flux minor can",
+        "require a CRD/API migration; a Longhorn minor, an upgrade path), and the shared preset",
+        "marks only majors -- so this marker is hand-built. The scope is {{semanticCommitScope}} by",
+        "reference, never re-derived from the path. Module paths only, deliberately: a flux CLI pin",
+        "elsewhere ships nothing."
       ],
       "matchFileNames": [
         "apps/subsystems/**",
+        "infrastructure/bootstrap/crds/**",
         "infrastructure/subsystems/**"
       ],
       "matchPackageNames": [
@@ -59,25 +34,25 @@
       "matchUpdateTypes": [
         "minor"
       ],
-      "semanticCommits": "disabled",
-      "commitMessagePrefix": "feat({{#if (equals (lookup (split packageFileDir '/') 0) 'apps')}}apps{{else}}infra{{/if}}-{{ lookup (split packageFileDir '/') 2 }})!:"
+      "commitMessagePrefix": "feat({{semanticCommitScope}})!:"
     },
     {
-      "commitBody": "BREAKING CHANGE",
-      "description": "configure breaking changes for minor version upgrades of packages that treat minor versions as major versions -- bootstrap CRD copies (literal scope: packageFileDir index 2 is 'crds' here, not the module name)",
+      "description": [
+        "The shared preset marks every major '!'; here that renders chore(github-actions)!:, which",
+        "commitlint rejects: '!' cuts a release, and these surfaces ship nothing.",
+        "'' is the UNSET spelling: Renovate's guard tests falsiness, so the plain semantic header",
+        "returns.",
+        "No matchUpdateTypes: the strip follows the marker if the preset moves it.",
+        "components/** and ci/test/** stay marked: majors there reach shipped modules."
+      ],
       "matchFileNames": [
-        "infrastructure/bootstrap/crds/**"
+        ".github/renovate.json",
+        ".github/renovate/**",
+        ".github/workflows/**",
+        ".pre-commit-config.yaml",
+        "package.json"
       ],
-      "matchPackageNames": [
-        "fluxcd/flux2",
-        "longhorn",
-        "longhorn/longhorn"
-      ],
-      "matchUpdateTypes": [
-        "minor"
-      ],
-      "semanticCommits": "disabled",
-      "commitMessagePrefix": "feat(infra-bootstrap-crds)!:"
+      "commitMessagePrefix": ""
     }
   ]
 }

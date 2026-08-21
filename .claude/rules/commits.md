@@ -31,7 +31,7 @@ an improvisation.
 | --- | --- | --- | --- |
 | 1 | `release` | A release cut — commits authored by release-please. Changes to the release *machinery* go to rule 8 | — |
 | 2 | `github-actions` | A `uses:`/action ref bumped or re-pinned, anywhere — nothing else | no |
-| 3 | `kubernetes-api` | A Kubernetes `apiVersion:` bumped, anywhere — nothing else | yes |
+| 3 | `kubernetes-api` | A Kubernetes `apiVersion:` bumped, anywhere — nothing else. Sits above the module scopes because an API migration is grouped by group+Kind across every module using that API, so no module scope can be true of it | yes |
 | 4 | module scopes: `apps-*` (8), `infra-*` (12), `infra-bootstrap-crds` | The diff's footprint is one released module: its directory, plus its **1:1** `ci/test/` suite, plus any `components/**` or `.static/**` files riding along | **yes — the scope is the shipped claim** |
 | 5 | `components` | Only `components/**` changed, no module directory | by proxy (see below) |
 | 6 | `renovate` | This repo's Renovate configuration (`.github/renovate.json`, `.github/renovate/**`) | no |
@@ -100,7 +100,11 @@ read-before-merging signal for the clusters that consume these modules — use i
 Breaking is a claim about the *operator's* obligations (a required values change, a manual migration,
 a CRD replacement), not about the size of the diff. Some dependencies are known to break on minors;
 the Renovate overrides hand-build `!` headers for those paths — that is the overrides doing their job,
-not noise to clean up.
+not noise to clean up. The overrides work in both directions: the shared preset attaches `!` to every
+major, and `.github/renovate/override-breaking-changes.json` takes it back off the internal surfaces
+(`github-actions`, `internal-dependencies`, `renovate`), where a `!` would cut a release for a scope
+that ships nothing. A bot `!` is applied structurally — nothing reads the release notes — so it means
+"a human should read this before it reaches a cluster", not "this is known to break".
 
 ## Version schemes that are not semver
 
@@ -124,7 +128,7 @@ Consequences, stated generally because the affected set changes:
 
 ## Bot commits
 
-Renovate compiles its own headers from `.github/renovate/**`; **leave its titles alone.** Two of its
+Renovate compiles its own headers from `.github/renovate/**`; **leave its titles alone.** Three of its
 behaviours are documented properties, not violations to fix:
 
 - A **grouped** update of a shared dependency emits one scope for a diff spanning several modules. For
@@ -132,6 +136,12 @@ behaviours are documented properties, not violations to fix:
   touches, and the diff may touch more* — the paths carry the full truth, and release-please routes
   every touched module correctly regardless.
 - A bot branch whose last-resolved package file sits under `ci/test/**` emits the empty scope.
+- Renovate also updates **its own configuration**: the `renovate-config` manager treats every pinned
+  `github>owner/repo#tag` in `.github/renovate.json` as a dependency, so the shared-preset pin moves
+  by bot. That header is `chore(renovate):` — the config reaches no cluster — and it is the one bot
+  pull request that changes every other bot pull request's header, which is why the
+  `commit-taxonomy` check resolves the preset **at the pin in the diff** rather than at the pin on
+  `main`.
 
 What must stay true instead is **closure**: every header the Renovate config *can* emit must be inside
 the commitlint enums. The `commit-taxonomy` CI check

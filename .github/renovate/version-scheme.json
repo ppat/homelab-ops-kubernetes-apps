@@ -1,8 +1,25 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "Read every 'versioning' entry as a statement about a REGISTRY'S TAG SHAPE, never about the",
+    "upstream project's release policy. Renovate has to sort tags to say which is newer, and its",
+    "default docker versioning rejects or mis-orders several shapes. A wrong parse does not",
+    "error: it silently offers the wrong version, or none. Each rule is the parser that makes",
+    "one registry's tags sortable; the tags quoted are shape illustrations, not current",
+    "versions.",
+    "Release policy (calendar versioning, minors that break) lives in override-calver.json and",
+    "override-breaking-changes.json; a regex mapping a segment to 'patch' is a parsing decision,",
+    "not a risk grading."
+  ],
   "packageRules": [
     {
-      "description": "configure version scheme for linuxserver images",
+      "description": [
+        "One linuxserver repository carries several tag dialects (e.g. '2.0.0.5344-ls84' beside",
+        "'version-' and arch-prefixed variants) which default docker versioning cannot order",
+        "(#246). semver-coerced is the lenient parser: it coerces down to major.minor.patch, so a",
+        "fourth segment and an '-lsNNN' rebuild counter are invisible to comparison. The manifests",
+        "pin the bare three-segment tag plus a digest, so rebuilds arrive as digest refreshes."
+      ],
       "matchDatasources": [
         "docker"
       ],
@@ -12,19 +29,37 @@
       "versioning": "semver-coerced"
     },
     {
-      "description": "configure version scheme for plex image",
+      "description": [
+        "plex. Tags are shaped like '1.43.3.10896-cb3ebc72d': four numeric segments and a git short",
+        "sha. Plain semver cannot parse that and 'loose' ordered it unpredictably (#2946). The regex",
+        "names the fourth segment 'build' (the segment that actually moves between Plex releases),",
+        "so those bumps grade as patches; that grading is a consequence of the mapping, not a",
+        "judgement about Plex."
+      ],
       "matchDatasources": ["docker"],
       "matchPackageNames": ["plexinc/pms-docker"],
       "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d+)-[0-9a-f]+$"
     },
     {
-      "description": "configure version scheme for unbound image",
+      "description": [
+        "unbound. Tags like '1.25.2-1' are an upstream version plus an IMAGE rebuild counter.",
+        "Under semver a trailing '-1' is a PRERELEASE, so the newer rebuild sorts below '1.25.2'",
+        "and is never offered; the regex maps that suffix to 'build' instead (#2946). The anchored",
+        "pattern also excludes the '-quic' variants and 'latest'/'canary' tags, so only the build",
+        "line is considered."
+      ],
       "matchDatasources": ["docker"],
       "matchPackageNames": ["madnuttah/unbound"],
       "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-(?<build>\\d+)$"
     },
     {
-      "description": "configure version scheme for minio images",
+      "description": [
+        "minio, currently DORMANT: disable-updates.json turns minio off. Kept so the pin stays",
+        "sortable if minio is re-enabled; deleting it would make re-enablement quietly offer the",
+        "wrong tag. Tags like 'RELEASE.2025-01-03T05-34-25Z' are a timestamp with no version in",
+        "them; the regex maps year/month/day onto major/minor/patch so tags order. Keep in step",
+        "with override-calver.json, which grades those segments as dates, not risk."
+      ],
       "matchDatasources": [
         "docker"
       ],
@@ -36,7 +71,10 @@
     },
     {
       "description": [
-        "strip digests from OCIRepository tags (flux rejects digests in ref.tag field)"
+        "dragonfly-operator chart. PROBLEM: Flux rejects a digest in an OCIRepository's ref.tag field,",
+        "so the globally-extended docker:pinDigests would produce a manifest Flux refuses to",
+        "reconcile. This opts that one chart out of digest pinning; it says nothing about the chart's",
+        "versioning."
       ],
       "matchDatasources": [
         "docker"
