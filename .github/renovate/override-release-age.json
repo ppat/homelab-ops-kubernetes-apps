@@ -1,5 +1,13 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "All release-age policy lives here, and this preset is extended LAST in renovate.json for that",
+    "reason. minimumReleaseAge is a plain scalar, so the last matching rule wins; the two rules",
+    "below that remove a soak have to beat every earlier setter, including the 1/7/30-day",
+    "per-update-type ladder in github>ppat/renovate-presets and override-calver's flat 14 days.",
+    "Keep this entry last in extends, and keep new release-age rules in this file rather than",
+    "somewhere earlier where an unrelated preset can silently outrank them."
+  ],
   "packageRules": [
     {
       "description": "delay patch updates to 7 days (from 1 day)",
@@ -23,6 +31,39 @@
         "minor"
       ],
       "minimumReleaseAge": "30 days"
+    },
+    {
+      "description": [
+        "Images this repo builds itself (docker.io/ppatlabs/*) are adopted as soon as they are",
+        "published: no release-age soak, on any update type. PROBLEM: a soak exists to let someone",
+        "ELSE's release be found broken by someone else before this cluster takes it. For an image",
+        "we build there is no such someone else -- the build is ours, it has already passed its own",
+        "repo's CI, and the soak only delays our own change from reaching the cluster. This is not",
+        "a claim that first-party images are safer or better tested than upstream ones; it is that",
+        "the thing a soak waits for does not exist for them.",
+        "No matchUpdateTypes, deliberately: version updates and digest refreshes alike, major",
+        "included. Enumerating types would leave whichever type was not listed soaked by whatever",
+        "set it last -- the 1/7/30-day per-update-type ladder from github>ppat/renovate-presets for",
+        "obsidian and obsidian-tools, override-calver's flat 14 days for openclaw -- and a soak",
+        "under internalChecksFilter 'strict' is a suppressed branch, not a late PR (see the digest",
+        "rule below for that mechanism).",
+        "'minimumReleaseAge: null' is a workaround spelling, not a semantic assertion: null is the",
+        "unset value, and checkMinimumReleaseAge (util/minimum-release-age.ts) skips the check when",
+        "the value is falsy. Read it as 'zero'; Renovate has no literal zero for this option.",
+        "Both spellings of the name are listed: the registry-prefixed form the kubernetes manager",
+        "emits for the image reference AS WRITTEN in the manifest (docker.io/ppatlabs/<name>), and",
+        "the bare form a '# renovate: datasource=docker depName=...' annotation would produce. A",
+        "matcher that matches nothing raises no error -- 'ppatlabs/{/,}**' was inert for two years",
+        "for exactly that reason (#3795). Note the idiom takes NO slash before the brace."
+      ],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ppatlabs{/,}**",
+        "docker.io/ppatlabs{/,}**"
+      ],
+      "minimumReleaseAge": null
     }
   ]
 }

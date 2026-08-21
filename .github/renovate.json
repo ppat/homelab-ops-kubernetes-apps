@@ -44,11 +44,11 @@
     "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/group-related-updates",
     "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/version-separation",
     "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/version-scheme",
-    "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/override-release-age",
     "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/override-breaking-changes",
     "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/override-calver",
     "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/disable-automerge",
-    "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/disable-updates.json"
+    "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/disable-updates.json",
+    "github>ppat/homelab-ops-kubernetes-apps//.github/renovate/override-release-age"
   ],
   "flux": {
     "managerFilePatterns": [

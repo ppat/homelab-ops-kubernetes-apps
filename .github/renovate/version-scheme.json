@@ -2,34 +2,6 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "packageRules": [
     {
-      "description": [
-        "Decide which ppatlabs tags count as versions at all, and how they order. PROBLEM: a single",
-        "ppatlabs build publishes several tag families at once -- 'latest', 'git-<sha>',",
-        "'branch-<name>', bare '1', '1.12', '1.12.7', and an immutable '1.12.7-<epoch>' alongside the",
-        "mutable '1.12.7'. 'versioning' here is a PARSER CHOICE for that tag soup, NOT an assertion",
-        "that ppatlabs follows semver -- read it as a workaround, not as semantics.",
-        "The matcher must be the image reference AS WRITTEN in the manifest: the kubernetes manager",
-        "sets depName and packageName to the literal string, and all three ppatlabs images here are",
-        "written 'docker.io/ppatlabs/<name>'. The previous glob 'ppatlabs/{/,}**' has no leading",
-        "wildcard, so it matched none of them: this rule was inert from the day it landed (#559) and",
-        "the images silently ran on 'versioning: docker' -- observed in a live 44.30.4 lookup, which",
-        "resolved all three to 'versioning: docker' before this fix and to 'semver-coerced' after,",
-        "with no change to the updates offered. Both spellings are listed: the registry-prefixed one",
-        "used today, and a bare 'ppatlabs/<name>', which is the depName a '# renovate:",
-        "datasource=docker depName=...' annotation on the same image would produce. Note the idiom",
-        "is '<name>{/,}**' with NO slash before the brace: 'ppatlabs/{/,}**' expands to 'ppatlabs//**'",
-        "and 'ppatlabs/**', so the old pattern was wrong twice over."
-      ],
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "ppatlabs{/,}**",
-        "docker.io/ppatlabs{/,}**"
-      ],
-      "versioning": "semver-coerced"
-    },
-    {
       "description": "configure version scheme for linuxserver images",
       "matchDatasources": [
         "docker"
