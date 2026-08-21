@@ -23,11 +23,35 @@
       "semanticCommitScope": "infra-bootstrap-crds"
     },
     {
-      "description": "add semantic commit scope for shared kustomize components (ship by proxy via each consuming module's release; one collapsed scope, per the commit taxonomy)",
+      "description": "add semantic commit scope for shared kustomize components (ship by proxy via each consuming module's release; one collapsed scope, per .claude/rules/commits.md scope rule 5)",
       "matchFileNames": [
         "components/**"
       ],
       "semanticCommitScope": "components"
+    },
+    {
+      "description": [
+        "add semantic commit scope for this repo's own toolchain manifest.",
+        "package.json + bun.lock exist only to pin the commitlint that the commit-messages gate and",
+        "ci/scripts/commit-taxonomy/verify-commit-taxonomy.mjs both run. They reach no cluster and sit",
+        "in no release-please package, so their bumps maintain an internal surface rather than shipping",
+        "anything: chore(internal-dependencies), per .claude/rules/commits.md scope rule 7.",
+        "Both managers are matched because which one claims a package.json depends on whether a bun",
+        "lockfile sits beside it. The shared dev-tools preset at the pinned ref lists only npm and",
+        "poetry, so without this rule a bun-claimed bump would fall through to the per-update-type",
+        "defaults and emit feat:/fix: with an empty scope -- a shipped claim for a dev dependency.",
+        "semanticCommitType is pinned here for the same reason: the type must not vary with the update",
+        "type on a surface that never ships."
+      ],
+      "matchFileNames": [
+        "package.json"
+      ],
+      "matchManagers": [
+        "bun",
+        "npm"
+      ],
+      "semanticCommitScope": "internal-dependencies",
+      "semanticCommitType": "chore"
     }
   ]
 }
