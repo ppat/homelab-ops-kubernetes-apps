@@ -13,7 +13,9 @@ const validateBodyMaxLengthIgnoringDeps = (parsedCommit) => {
 }
 
 // ---------------------------------------------------------------------------
-// Commit taxonomy (see .analysis / the taxonomy design docs for derivation).
+// Commit taxonomy. The enums below are the source of truth for what commitlint
+// accepts; .claude/rules/commits.md is the source of truth for how to CHOOSE
+// among them, and explains every entry here that is not self-evident.
 //
 // Scope names the released artifact whose directory the diff touches -- or,
 // when the diff touches no artifact directory, which internal surface it
@@ -65,7 +67,9 @@ const internalScopes = [
 ];
 
 // Transitional entries: accepted while pre-migration emissions and open PRs
-// flush; retire at migration step E7. Do not use in new commits.
+// flush. Do not use in new commits. Retire them once no open PR and no pinned
+// shared preset can still emit them -- the pinned ppat/renovate-presets ref in
+// .github/renovate.json still emits 'dev-tools', so that one outlives the others.
 //   dev-tools    -> internal-dependencies / internal-workflows
 //   claude       -> agents
 //   component-*  -> components
