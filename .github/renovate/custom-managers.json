@@ -13,13 +13,13 @@
   ],
   "customManagers": [
     {
-      "description": "'# renovate:' -- the version is the value on the next line (Helm values, env vars, script constants)",
+      "description": "'# renovate:' -- the version is the value on the next line (Helm values, env vars, script constants). A trailing @sha256 digest is captured as currentDigest, never as part of the version: swallowed into currentValue it made a digest-pinned value look unpinned (so pinDigests offered to re-pin it) and unsortable.",
       "customType": "regex",
       "managerFilePatterns": [
         "/(^|/).+\\.ya?ml$/"
       ],
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>[a-z-.]+?)\\s+depName=(?<depName>[a-zA-Z0-9-/.]+?)(\\s+repository=(?<registryUrl>[^\\s]+?))?(\\s+versioning=(?<versioning>[^\\s]+?))?(\\s+extractVersion=(?<extractVersion>[^\\s]+?))?\\s*\\n.+[\\:\\=]\\s?\"v?(?<currentValue>[^\\s]+)\""
+        "# renovate: datasource=(?<datasource>[a-z-.]+?)\\s+depName=(?<depName>[a-zA-Z0-9-/.]+?)(\\s+repository=(?<registryUrl>[^\\s]+?))?(\\s+versioning=(?<versioning>[^\\s]+?))?(\\s+extractVersion=(?<extractVersion>[^\\s]+?))?\\s*\\n.+[\\:\\=]\\s?\"v?(?<currentValue>[^\\s@\"]+)(?:@(?<currentDigest>sha256:[0-9a-f]+))?\""
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     },
