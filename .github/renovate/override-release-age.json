@@ -64,6 +64,53 @@
         "docker.io/ppatlabs{/,}**"
       ],
       "minimumReleaseAge": null
+    },
+    {
+      "description": [
+        "A digest refresh on a container image is never soaked. PROBLEM: a digest update means the",
+        "tag this repo ALREADY runs was repointed upstream at a rebuilt image. The version decision",
+        "was taken when the tag was adopted; soaking the refresh does not defer adopting something",
+        "new, it keeps the cluster on a build the publisher has already replaced -- usually a",
+        "rebuild for a CVE in a base layer, which is the last thing to sit on.",
+        "And it does not merely delay it. Renovate ages a digest update against the newest matching",
+        "version's timestamp (lookup/index.ts applyMinimumReleaseAgeToDigestUpdate, which re-runs",
+        "applyPackageRules with updateType set -- that is why an update-type-matched rule reaches it",
+        "at all), and for a MUTABLE tag that timestamp is the moment upstream last repointed it. So",
+        "every rebuild restarts the clock: an image rebuilt more often than the soak is long can",
+        "never clear it. With this repo's internalChecksFilter 'strict' the held update is not a",
+        "late PR either -- it is stamped pendingChecks:true and the branch is never created",
+        "(update/branch/index.js, 'creation is disabled because internalChecksFilter was not met').",
+        "No error, no PR, nothing to notice. Observed on live 44.30.4:",
+        "ghcr.io/home-operations/home-assistant's digest refresh came back pendingChecks:true under",
+        "override-calver's 14-day soak and pendingChecks:false with this rule, everything else",
+        "equal. Its mechanism is the second, harsher one: that tag resolves NO releaseTimestamp at",
+        "all, and Renovate's default minimumReleaseAgeBehaviour 'timestamp-required' marks an",
+        "un-timestamped release pending -- so the hold never expires, at any soak length.",
+        "visibilityspots/cloudflared carries the identical 14-day soak and is exposed to the same",
+        "mechanism, but was NOT held at the time of writing: its tag last moved 199 days ago, so",
+        "the soak had already elapsed. Do not read its green state as evidence the hold is",
+        "harmless -- the next repoint restarts the clock.",
+        "Scope is deliberate and is the whole design decision here. It is repo-wide rather than a",
+        "list of the two deps observed, because every docker dep in this repo is digest-pinned",
+        "(docker:pinDigests is extended globally) and several sit on tags that are mutable by",
+        "construction ('latest', or no tag at all), so an allowlist would silently fail to protect",
+        "the next one added. It is restricted to matchDatasources 'docker' because there IS a case",
+        "where soaking a digest is wanted and must not be swept up: the github-actions SHA pins",
+        "(helpers:pinGitHubActionDigests), where ppat/renovate-presets soaks a repointed action tag",
+        "for 3 days if the publisher is trusted and 30 if not. That soak guards against a tag being",
+        "moved to hostile code, which is a real threat for a third-party action and not the",
+        "situation a rebuilt container image is in.",
+        "Version updates are untouched: this rule matches updateType 'digest' only, so an image's",
+        "own semver/calver soak still applies. 'pinDigest' (first-time pinning) is also untouched.",
+        "Ordering is load-bearing -- see the file note above."
+      ],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchUpdateTypes": [
+        "digest"
+      ],
+      "minimumReleaseAge": null
     }
   ]
 }
