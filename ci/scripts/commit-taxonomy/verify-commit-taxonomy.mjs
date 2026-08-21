@@ -250,8 +250,19 @@ function flatten(configs) {
 // 3. Template evaluation (the exact handlebars grammar these configs use).
 // ---------------------------------------------------------------------------
 
-function evalTemplate(tpl, { packageFileDir, updateType }, src) {
+function evalTemplate(tpl, { packageFileDir, updateType, semanticCommitType, semanticCommitScope }, src) {
   let out = tpl;
+  // {{semanticCommitType}}{{#if semanticCommitScope}}({{semanticCommitScope}}){{/if}}!:
+  // -- the breaking-marker prefix ppat/renovate-presets sets on its major rule.
+  // Renovate exposes semanticCommitType/semanticCommitScope to templates
+  // (util/template/index.ts exposedConfigOptions) and compiles commitMessage three
+  // times with noEscape, so a scope that is ITSELF a template resolves on a later
+  // pass; that is why the caller passes the already-resolved scope in here.
+  out = out.replace(
+    /\{\{#if semanticCommitScope\}\}(.*?)\{\{\/if\}\}/g,
+    (_, a) => (semanticCommitScope ? a : ''));
+  out = out.replace(/\{\{semanticCommitType\}\}/g, () => semanticCommitType ?? '');
+  out = out.replace(/\{\{semanticCommitScope\}\}/g, () => semanticCommitScope ?? '');
   // {{#if (or isMajor isMinor)}}feat{{else if isPatch}}fix{{else}}chore{{/if}}
   out = out.replace(
     /\{\{#if \(or isMajor isMinor\)\}\}(.*?)\{\{else if isPatch\}\}(.*?)\{\{else\}\}(.*?)\{\{\/if\}\}/g,
@@ -429,6 +440,20 @@ function detectOccupancy(configs, allFiles, builtins) {
     }
   }
 
+  // renovate-config manager: Renovate manages this repo's OWN preset pins. Every
+  // pinned `github>owner/repo#tag` in .github/renovate.json's extends is a
+  // github-tags dep it can bump, which is how the shared-preset pin moves without
+  // anyone typing it (observed live: each pinned ppat/renovate-presets ref is
+  // such a dep, offering minor and major). The unpinned local refs
+  // (github>ppat/homelab-ops-kubernetes-apps//...) extract with skipReason
+  // 'unspecified-version' and yield no update, so they are not cells.
+  for (const f of allFiles.filter((x) => /^(\.github\/)?renovate\.json5?$|^\.renovaterc(\.json5?)?$/.test(x))) {
+    for (const line of readLines(f)) {
+      const pm = line.match(/["']github>([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)(?::[A-Za-z0-9_.-]+)?#/);
+      if (pm) add('renovate-config', 'github-tags', pm[1], f);
+    }
+  }
+
   // pre-commit manager
   if (allFiles.includes('.pre-commit-config.yaml')) {
     for (const line of readLines('.pre-commit-config.yaml')) {
@@ -474,19 +499,22 @@ function resolveCell(rootDefaults, rules, occ, updateType) {
   // Renovate builds the semantic prefix ONLY when no commitMessagePrefix is in
   // effect: `if (semanticCommits === 'enabled' && !commitMessagePrefix)` in
   // renovatebot/renovate lib/workers/repository/updates/generate.ts. So an explicit
-  // prefix wins whether or not semanticCommits is disabled alongside it. Every rule
-  // in the current closure that sets a prefix also disables semanticCommits, so this
-  // condition is not load-bearing today -- but a shared preset that sets a prefix
-  // WITHOUT disabling semantic commits (ppat/renovate-presets v1.0.0's major rule does
-  // exactly that) would make the difference decide whether '!' appears, so model
-  // Renovate rather than the current configs.
-  if (eff.commitMessagePrefix != null) {
-    const prefix = evalTemplate(eff.commitMessagePrefix, cell, applied.join(','));
+  // prefix wins whether or not semanticCommits is disabled alongside it. This IS
+  // load-bearing at the current pin: ppat/renovate-presets' major rule sets the
+  // breaking-marker prefix WITHOUT disabling semantic commits, so this condition is
+  // what decides whether '!' appears on every major in the repo.
+  const scope = evalTemplate(String(eff.semanticCommitScope ?? ''), cell, applied.join(','));
+  if (scope == null) return { cell, header: null, applied, eff };
+  // Renovate treats an EMPTY prefix as no prefix: the semantic branch is guarded by
+  // `!config.commitMessagePrefix`, so '' and null take the same path. Modelling ''
+  // as a prefix would render a header with a leading space and no type at all.
+  if (eff.commitMessagePrefix) {
+    const prefix = evalTemplate(eff.commitMessagePrefix,
+      { ...cell, semanticCommitType: eff.semanticCommitType, semanticCommitScope: scope },
+      applied.join(','));
     if (prefix == null) return { cell, header: null, applied, eff };
     header = `${prefix} ${subject}`;
   } else {
-    const scope = evalTemplate(String(eff.semanticCommitScope ?? ''), cell, applied.join(','));
-    if (scope == null) return { cell, header: null, applied, eff };
     header = scope === '' ? `${eff.semanticCommitType}: ${subject}` : `${eff.semanticCommitType}(${scope}): ${subject}`;
   }
   return { cell, header, applied, eff };
@@ -530,6 +558,30 @@ function breakingTreatmentFault(rules, occ, updateType, header, eff, applied = [
     return `major update of a module-path package resolves without breaking treatment (no '!' and no BREAKING CHANGE body):\n    ${header}\n    ${prov}`;
   }
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// 6c. Unscoped-module falsifier. A module-path cell losing its scope is SILENT:
+// the shared preset's breaking-marker template guards the scope segment
+// ('{{#if semanticCommitScope}}({{semanticCommitScope}}){{/if}}!:'), and the
+// per-update-type defaults render 'feat:'/'fix:' when the scope is empty -- all
+// in-enum, all untrue (the empty scope means 'spans modules or belongs to
+// none', which a single-module dependency bump never does). commitlint cannot
+// object, so this predicate does. No config spelling ever made this loud: the
+// local majors rule deleted when the preset took over module-path majors was
+// deliberately unguarded so a missing scope would render 'feat()!:', believed
+// off-enum -- MEASURED FALSE 2026-08: commitlint parses empty parens as no
+// scope and accepts 'feat()!:' and 'feat():' here, so the loudness that rule
+// claimed to provide never existed. This predicate is the first real guard for
+// the class, and it covers every rule and update type rather than one rule's
+// majors.
+// ---------------------------------------------------------------------------
+
+function unscopedModuleFault(occ, updateType, header, applied = []) {
+  if (!/^(apps\/subsystems|infrastructure\/subsystems|infrastructure\/bootstrap\/crds)\//.test(occ.packageFile)) return null;
+  if (/^\w+\([^)]+\)!?:/.test(header)) return null;
+  const prov = `${occ.manager}:${occ.depName}@${dirname(occ.packageFile)} [${updateType}] via ${applied.join(',')}`;
+  return `module-path cell resolves to an UNSCOPED header (in-enum, so commitlint cannot catch it; the scope-naming rule for this path is missing or renders empty):\n    ${header}\n    ${prov}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -581,15 +633,24 @@ async function runSelfTest(lintHeader, rootDefaults, rules, configs, builtins) {
     if (r.valid) fail(`SELF-TEST: injected defect NOT caught (${why}): ${header}`);
     else caught++;
   }
-  // resolution-stage injection: a calver-class package planted on a ci/test path
-  // must render an off-enum doubled scope and be caught end to end
-  const synthetic = { manager: 'kubernetes', datasource: 'docker', depName: 'visibilityspots/cloudflared', packageFile: 'ci/test/infra-networking/injected.yaml' };
-  const { header } = resolveCell(rootDefaults, rules, synthetic, 'minor');
-  if (!header) fail('SELF-TEST: synthetic ci/test cloudflared cell resolved to no emission -- resolver defect');
+  // resolution-stage injection through a calver cell: the calver prefix
+  // references {{semanticCommitScope}} rather than re-deriving the scope from
+  // the path (the old doubled-scope render 'feat(infra-infra-networking):' is
+  // structurally impossible now), so what needs falsifying is the REFERENCE:
+  // an off-enum value in organize-semantic-scope must flow through the calver
+  // prefix template into a rejected header. If the prefix silently stopped
+  // reading the scope, or calver cells stopped reaching commitlint, this
+  // passes without checking anything.
+  const calverOcc = { manager: 'flux', datasource: 'helm', depName: 'authentik', packageFile: 'infrastructure/subsystems/security-extra/authentik/helm-release-authentik.yaml' };
+  const offEnumScope = rules.map((e) => e.src.includes('organize-semantic-scope') && typeof e.rule.semanticCommitScope === 'string' && e.rule.semanticCommitScope.startsWith('infra-')
+    ? { ...e, rule: { ...e.rule, semanticCommitScope: e.rule.semanticCommitScope.replace(/^infra-/, 'infrastructure-') } }
+    : e);
+  const calverLeak = resolveCell(rootDefaults, offEnumScope, calverOcc, 'minor');
+  if (!calverLeak.header) fail('SELF-TEST: authentik minor resolved to no emission -- resolver defect');
   else {
-    const r = await lintHeader(header);
-    if (r.valid) fail(`SELF-TEST: synthetic ci/test calver cell passed the lint but must not: ${header}`);
-    else { caught++; note(`self-test: synthetic ci/test calver cell rendered '${header}' and was caught`); }
+    const r = await lintHeader(calverLeak.header);
+    if (r.valid) fail(`SELF-TEST: off-enum scope reference through the calver prefix was NOT caught: ${calverLeak.header}`);
+    else { caught++; note(`self-test: off-enum scope flowed through the calver prefix as '${calverLeak.header}' and was caught`); }
   }
   // breaking-treatment injections, both directions:
   // (a) re-apply the mutation this predicate was written against -- matchUpdateTypes
@@ -636,6 +697,80 @@ async function runSelfTest(lintHeader, rootDefaults, rules, configs, builtins) {
       fail(`SELF-TEST: off-enum scope on the node toolchain manifest was NOT caught: ${injected2.header}`);
     } else { caught++; note(`self-test: off-enum node-manifest scope rendered '${injected2.header}' and was caught`); }
   }
+
+  // renovate-config occupancy pair. Renovate bumps this repo's own preset pins, so
+  // the pin-moving pull request is itself an emission -- and the surface it names is
+  // this repo's bot configuration, not anything shipped. Vacuity guard first:
+  const cfgCells = occ.filter((c) => c.manager === 'renovate-config');
+  if (cfgCells.length === 0) {
+    fail('SELF-TEST: no renovate-config occupancy found for a pinned preset ref -- the manager ' +
+         'that moves the shared-preset pin is unmodelled and every verdict about it is vacuous');
+  } else {
+    caught++;
+    note(`self-test: ${cfgCells.length} renovate-config cells enumerated from pinned preset refs`);
+    // ... then an injection through it: rewrite the scope those cells resolve to into
+    // an off-enum value. If they were enumerated but never resolved or linted, this
+    // would pass silently.
+    const offEnumCfg = rules.map((e) => e.rule.semanticCommitScope === 'renovate'
+      ? { ...e, rule: { ...e.rule, semanticCommitScope: 'renovate-config' } }
+      : e);
+    const leaked = resolveCell(rootDefaults, offEnumCfg, cfgCells[0], 'major');
+    if (!leaked.header) fail('SELF-TEST: renovate-config cell resolved to no emission -- resolver defect');
+    else if ((await lintHeader(leaked.header)).valid) {
+      fail(`SELF-TEST: off-enum scope on a renovate-config cell was NOT caught: ${leaked.header}`);
+    } else { caught++; note(`self-test: off-enum renovate-config scope rendered '${leaked.header}' and was caught`); }
+  }
+
+  // breaking-marker pair. The shared preset attaches '!' through a handlebars
+  // prefix on its major rule, and .github/renovate/override-breaking-changes.json
+  // strips it back off the surfaces that reach no consumer. Both halves need
+  // falsifying, and either alone is vacuous: a template that silently rendered
+  // nothing would make the strip rule look load-bearing when it is not, and a
+  // strip rule that matched nothing would leave the marker unopposed.
+  // (i) vacuity guard -- the marker template must actually render a marker.
+  const markerTpl = '{{semanticCommitType}}{{#if semanticCommitScope}}({{semanticCommitScope}}){{/if}}!:';
+  for (const [ctx, want] of [
+    [{ semanticCommitType: 'chore', semanticCommitScope: 'github-actions' }, 'chore(github-actions)!:'],
+    [{ semanticCommitType: 'feat', semanticCommitScope: '' }, 'feat!:'],
+  ]) {
+    const got = evalTemplate(markerTpl, { packageFileDir: '.github/workflows', updateType: 'major', ...ctx }, 'self-test');
+    if (got !== want) fail(`SELF-TEST: breaking-marker template rendered ${JSON.stringify(got)}, expected '${want}' -- every marker verdict below is vacuous`);
+    else caught++;
+  }
+  // (ii) injection through it -- remove the strip rule and the same cell must
+  //      render an internal-scope '!' header that commitlint rejects.
+  const actionsOcc = { manager: 'github-actions', datasource: 'github-tags', depName: 'actions/checkout', packageFile: '.github/workflows/lint.yaml' };
+  const stripped = resolveCell(rootDefaults, rules, actionsOcc, 'major');
+  if (!stripped.header || !(await lintHeader(stripped.header)).valid) {
+    fail(`SELF-TEST: a .github/workflows major does not resolve to an acceptable header: ${stripped.header}`);
+  } else caught++;
+  const unstripped = rules.filter((e) => !(e.src.includes('override-breaking-changes') && e.rule.commitMessagePrefix === ''));
+  const marked = resolveCell(rootDefaults, unstripped, actionsOcc, 'major');
+  if (!marked.header) fail('SELF-TEST: unstripped .github/workflows major resolved to no emission -- resolver defect');
+  else if ((await lintHeader(marked.header)).valid) {
+    fail(`SELF-TEST: the breaking marker on an internal surface was NOT caught: ${marked.header}`);
+  } else { caught++; note(`self-test: dropping the internal-surface marker strip rendered '${marked.header}' and was caught`); }
+
+  // unscoped-module pair (see 6c). Mutation: empty every path-derived scope, so a
+  // module-path major renders through the preset's GUARDED marker template as
+  // 'feat!:' -- in-enum, so commitlint accepts it and only the falsifier can
+  // object. Both directions: the mutation must fire, the real config must not.
+  const scopelessRules = rules.map((e) => e.src.includes('organize-semantic-scope') && typeof e.rule.semanticCommitScope === 'string' && /^(apps|infra)-\{\{/.test(e.rule.semanticCommitScope)
+    ? { ...e, rule: { ...e.rule, semanticCommitScope: '' } }
+    : e);
+  const unscoped = resolveCell(rootDefaults, scopelessRules, longhornOcc, 'major');
+  if (!unscoped.header) fail('SELF-TEST: scope-stripped longhorn major resolved to no emission -- resolver defect');
+  else if (!(await lintHeader(unscoped.header)).valid) {
+    fail(`SELF-TEST: the unscoped-module injection was rejected by commitlint itself (${unscoped.header}) -- ` +
+         'the silent-failure premise of the 6c falsifier no longer holds; re-derive whether it is still needed');
+  } else if (!unscopedModuleFault(longhornOcc, 'major', unscoped.header, unscoped.applied)) {
+    fail(`SELF-TEST: module-path cell resolving to an unscoped header was NOT caught: ${unscoped.header}`);
+  } else { caught++; note(`self-test: scope-stripped module major rendered '${unscoped.header}' (commitlint-valid) and was caught by the unscoped-module falsifier`); }
+  const scoped = resolveCell(rootDefaults, rules, longhornOcc, 'major');
+  if (!scoped.header) fail('SELF-TEST: longhorn major resolved to no emission -- resolver defect');
+  else if (unscopedModuleFault(longhornOcc, 'major', scoped.header, scoped.applied)) {
+    fail(`SELF-TEST: the unscoped-module falsifier fires on a correctly scoped header: ${scoped.header}`);
+  } else caught++;
 
   // template-grammar injection: unknown handlebars must fail loudly, not render
   const before = failures.length;
@@ -695,6 +830,10 @@ for (const occ of occupancy) {
     // majors must always resolve breaking.
     const fault = breakingTreatmentFault(rules, occ, updateType, header, eff, applied);
     if (fault) fail(fault);
+    // Falsifier (unscoped-module class -- see 6c): a module-path cell must
+    // always carry a scope; losing one renders in-enum and lands silently.
+    const scopeFault = unscopedModuleFault(occ, updateType, header, applied);
+    if (scopeFault) fail(scopeFault);
   }
 }
 for (const h of releasePleaseHeaders()) {

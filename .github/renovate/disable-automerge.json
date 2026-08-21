@@ -6,7 +6,13 @@
       "addLabels": [
         "automerge:off"
       ],
-      "description": "disable automerge for specific file paths",
+      "description": [
+        "The bootstrap CRD copies never automerge. They exist so a first-time cluster build or a",
+        "disaster recovery works: dependent modules reference custom resources before the module",
+        "that normally installs those CRDs is deployed. A bad bump surfaces only on a path",
+        "nobody exercises until they need it, so the gate is a human reading the diff, not a",
+        "green suite."
+      ],
       "matchFileNames": [
         "infrastructure/bootstrap/crds/**"
       ]

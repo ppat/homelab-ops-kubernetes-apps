@@ -1,7 +1,19 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "Most versions sit where no built-in manager looks (Helm values, kustomize remote URLs,",
+    "script variables, workflow env blocks), and a version Renovate cannot see silently stops",
+    "being updated. Each manager teaches one comment dialect marking such a pin; three, because",
+    "the version appears as a value, in a release-asset URL, or in a raw.githubusercontent URL.",
+    "Annotations need an explicit depName=; the inferred-name form in Renovate's docs matches",
+    "nothing here.",
+    "Known overlap: renovate.json's own customManager is a strict subset of the first rule",
+    "below; both copies share a branch name, so the cost is dashboard double-counting, not",
+    "duplicate PRs."
+  ],
   "customManagers": [
     {
+      "description": "'# renovate:' -- the version is the value on the next line (Helm values, env vars, script constants)",
       "customType": "regex",
       "managerFilePatterns": [
         "/(^|/).+\\.ya?ml$/"
@@ -12,6 +24,7 @@
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     },
     {
+      "description": "'# renovate-gh-release-asset:' -- the version is a path segment of a github.com/.../releases/download/vX.Y.Z/ URL, so it cannot be matched as a value",
       "customType": "regex",
       "managerFilePatterns": [
         "/(^|/).+\\.ya?ml$/"
@@ -22,6 +35,7 @@
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     },
     {
+      "description": "'# renovate-gh-raw-url:' -- same problem for raw.githubusercontent.com/.../vX.Y.Z/ URLs, which is how the bootstrap CRD copies pin upstream manifests",
       "customType": "regex",
       "managerFilePatterns": [
         "/(^|/).+\\.ya?ml$/"

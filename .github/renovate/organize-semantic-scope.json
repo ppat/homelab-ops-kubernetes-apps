@@ -1,29 +1,56 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "Every rule here answers one question: which released artifact, or which internal surface,",
+    "does this dependency belong to? Without an answer the shared preset's per-update-type",
+    "defaults emit feat:/fix:/chore: with the EMPTY scope, a real taxonomy entry ('spans more",
+    "than one module, or belongs to none'), so a missing rule does not fail; it silently produces",
+    "a header that is in-enum and untrue.",
+    "The scope templates read packageFileDir, so a new module directory mints its scope with no",
+    "edit here; ci/scripts/commit-taxonomy/ notices when that scope is not yet in the commitlint",
+    "enum. See .claude/rules/commits.md for which scope belongs to what."
+  ],
   "packageRules": [
     {
-      "description": "add semantic commit scope for apps-* subsystems",
+      "description": [
+        "apps-* subsystem directories: each one is a released module, so its scope is a version claim.",
+        "The template takes path segment 2 (apps/subsystems/<name>/...), which is the same key",
+        "release-please-config.json maps to the component name -- keep those two in step."
+      ],
       "matchFileNames": [
         "apps/subsystems/**"
       ],
       "semanticCommitScope": "apps-{{ lookup (split packageFileDir '/') 2 }}"
     },
     {
-      "description": "add semantic commit scope for infra-* subsystems",
+      "description": [
+        "infra-* subsystem directories: as above (infrastructure/subsystems/<name>/...). A bump here",
+        "reaches every cluster that pins this module, which is why the scope must name it."
+      ],
       "matchFileNames": [
         "infrastructure/subsystems/**"
       ],
       "semanticCommitScope": "infra-{{ lookup (split packageFileDir '/') 2 }}"
     },
     {
-      "description": "add semantic commit scope for infra-bootstrap-crds",
+      "description": [
+        "bootstrap CRD copies. LITERAL scope, not a template: path segment 2 here is 'crds', not a",
+        "module name, so the apps/infra template above would render 'infra-crds' -- an off-enum scope",
+        "that reached production three times (PRs #2327, #2785, #3232) before this rule existed."
+      ],
       "matchFileNames": [
         "infrastructure/bootstrap/crds/**"
       ],
       "semanticCommitScope": "infra-bootstrap-crds"
     },
     {
-      "description": "add semantic commit scope for shared kustomize components (ship by proxy via each consuming module's release; one collapsed scope, per .claude/rules/commits.md scope rule 5)",
+      "description": [
+        "shared kustomize components. One collapsed scope rather than component-<name>, because no",
+        "component has a version of its own to claim: components ship by proxy, riding each consuming",
+        "module's next release. A module scope here would name a release that is not routed, and",
+        "the empty scope would hide a real, nameable surface. Per .claude/rules/commits.md scope",
+        "rule 5."
+      ],
       "matchFileNames": [
         "components/**"
       ],
@@ -31,17 +58,27 @@
     },
     {
       "description": [
-        "add semantic commit scope for this repo's own toolchain manifest.",
-        "package.json + bun.lock exist only to pin the commitlint that the commit-messages gate and",
-        "ci/scripts/commit-taxonomy/verify-commit-taxonomy.mjs both run. They reach no cluster and sit",
-        "in no release-please package, so their bumps maintain an internal surface rather than shipping",
-        "anything: chore(internal-dependencies), per .claude/rules/commits.md scope rule 7.",
-        "Both managers are matched because which one claims a package.json depends on whether a bun",
-        "lockfile sits beside it. The shared dev-tools preset at the pinned ref lists only npm and",
-        "poetry, so without this rule a bun-claimed bump would fall through to the per-update-type",
-        "defaults and emit feat:/fix: with an empty scope -- a shipped claim for a dev dependency.",
-        "semanticCommitType is pinned here for the same reason: the type must not vary with the update",
-        "type on a surface that never ships."
+        "this repo's Renovate configuration. The renovate-config manager treats pinned",
+        "`github>owner/repo#tag` entries in extends as dependencies, so the bot bumps its preset",
+        "pins. Without this rule they fall to the defaults: feat:/fix: with the empty scope, a",
+        "shipped claim for a file reaching no cluster.",
+        ".github/renovate/** is defensive: unclaimed by the manager today, but must never fall to",
+        "the empty scope."
+      ],
+      "matchFileNames": [
+        ".github/renovate.json",
+        ".github/renovate/**"
+      ],
+      "semanticCommitScope": "renovate",
+      "semanticCommitType": "chore"
+    },
+    {
+      "description": [
+        "package.json and bun.lock exist only to pin the commitlint the commit gates run; they",
+        "reach no cluster, so bumps are chore(internal-dependencies) (.claude/rules/commits.md rule",
+        "7). Both managers: bun claims package.json when its lockfile is present. The shared preset",
+        "sets the same scope and type for dev depTypes; this rule covers a future 'dependencies'",
+        "entry and holds against an in-enum preset rename."
       ],
       "matchFileNames": [
         "package.json"

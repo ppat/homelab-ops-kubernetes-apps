@@ -1,38 +1,49 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "Labels that say WHICH released module a bot pull request touches. Modules are released and",
+    "consumed independently, so the question before merging is 'what else is in flight for this",
+    "module', and a bot PR's title carries the module name only when a scope rule assigned one;",
+    "the label answers uniformly, from the path.",
+    "The vocabulary is shared with release-please: release-please-config.json sets",
+    "'subsystem:<component>' on each release PR, so one subsystem: filter shows a module's",
+    "pending bumps and pending release together. Keep the spellings identical; nothing",
+    "enforces it.",
+    "Triage facets only: no workflow or required check keys off a subsystem: label."
+  ],
   "packageRules": [
     {
+      "description": "apps-* modules, from path segment 2 -- same key release-please maps to the component name",
       "addLabels": [
         "subsystem:apps-{{ lookup (split packageFileDir '/') 2 }}"
       ],
-      "description": "add subsystem label for apps-* subsystems",
       "matchFileNames": [
         "apps/subsystems/**"
       ]
     },
     {
+      "description": "infra-* modules, as above",
       "addLabels": [
         "subsystem:infra-{{ lookup (split packageFileDir '/') 2 }}"
       ],
-      "description": "add subsystem label for infra-* subsystems",
       "matchFileNames": [
         "infrastructure/subsystems/**"
       ]
     },
     {
+      "description": "bootstrap CRD copies -- literal, because path segment 2 is 'crds' here and the template above would render 'infra-crds'",
       "addLabels": [
         "subsystem:infra-bootstrap-crds"
       ],
-      "description": "add subsystem label for infra-bootstrap-crds",
       "matchFileNames": [
         "infrastructure/bootstrap/crds/**"
       ]
     },
     {
+      "description": "shared components -- not a released module, but it is the surface a reviewer has to think about, and it rides every consuming module's next release",
       "addLabels": [
         "subsystem:components"
       ],
-      "description": "add subsystem label for shared kustomize components",
       "matchFileNames": [
         "components/**"
       ]

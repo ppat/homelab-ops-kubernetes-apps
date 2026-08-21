@@ -1,8 +1,26 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "How many PARALLEL pull requests a dependency may have open, not how risky its versions are.",
+    "With separation off Renovate only offers the newest version: a module two majors behind",
+    "gets only the jump to newest. Separation splits the offers into independent",
+    "branches so intermediate steps stay takeable, in order.",
+    "Branch shape only: risk grading lives in override-breaking-changes.json and",
+    "override-release-age.json; update types still come from the version delta, so commit",
+    "prefixes are unaffected.",
+    "Extended after github>ppat/renovate-presets:kubernetes to override it: that preset sets",
+    "separateMinorPatch true for flux2/kubernetes/kubectl/kindest; module directories want the",
+    "opposite, outside subsystem paths the preset's value stands."
+  ],
   "packageRules": [
     {
-      "description": "configure version separation for non-infra subsystems",
+      "description": [
+        "apps subsystems and the bootstrap CRD copies. separateMinorPatch FALSE: a patch is the",
+        "routine bump; splitting it from the minor stream doubles pull-request volume for no",
+        "decision made differently. separateMultipleMajor TRUE so a module two majors behind",
+        "gets one pull request per major rather than only the jump to newest; separateMultipleMinor",
+        "FALSE because accumulated minors are taken in one step."
+      ],
       "matchFileNames": [
         "apps/subsystems/**",
         "infrastructure/bootstrap/crds/**"
@@ -13,7 +31,12 @@
       "separateMultipleMinor": false
     },
     {
-      "description": "configure version separation for infra subsystems",
+      "description": [
+        "infra subsystems: as above, except separateMultipleMinor is TRUE. Several infra",
+        "dependencies document a supported upgrade PATH rather than a jump (Longhorn and Flux are",
+        "the standing examples); collapsing accumulated minors into one pull request would offer a",
+        "hop the vendor does not support. One pull request per minor keeps the path takeable."
+      ],
       "matchFileNames": [
         "infrastructure/subsystems/**"
       ],
