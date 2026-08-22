@@ -28,13 +28,9 @@ jobs:
         - ci/scripts/alloy-lint.sh
         - ci/scripts/alloy-lint-version.yaml
         - .github/workflows/lint.yaml
-        # the bootstrap-CRD gate's inputs: the bundle it checks, the script that is
-        # its logic, and this workflow file, which carries its trigger -- so a PR
-        # changing any part of the gate, including just its if-condition or this
-        # group, is exercised by that same PR (same reasoning as the alloy gate).
-        # Listing lint.yaml makes the gate run on workflow-only PRs too; that is
-        # the accepted trade -- a gate that silently stops firing is worse than
-        # one that runs more often than strictly needed.
+        # the bootstrap-CRD gate's inputs: the bundle it checks, its script, and this
+        # file, which carries its trigger -- so any change to the gate is exercised by
+        # the PR that makes it, at the cost of running on workflow-only PRs.
         bootstrap_crds:
         - infrastructure/bootstrap/crds/**
         - ci/scripts/verify-bootstrap-crds.sh
@@ -178,6 +174,32 @@ jobs:
       git_ref: ${{ github.head_ref || github.ref }}
       files: ${{ github.event_name != 'pull_request' && 'ALL' || fromJSON(needs.detect-changes.outputs.results).actions_all_changed_files }}
 
+  bootstrap-crds:
+    needs: [detect-changes]
+    if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).bootstrap_crds_any_changed == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: 1
+        persist-credentials: false
+
+    # The bundle's kind filter is a denylist -- kustomize targets cannot express "any kind
+    # except CustomResourceDefinition" -- so it fails open, and nothing else builds the bundle
+    # (kubeconform excludes it, no suite consumes it): an escaped kind would first appear when
+    # an operator applies it during disaster recovery. Self-test runs first so the verdict comes
+    # from a checker that has just shown it can see an escape. Gated on the bundle's own inputs;
+    # the scheduled run builds unconditionally, which is what catches an upstream re-tagging a
+    # release under a pinned URL.
+    - name: Verify the bundle emits only CRDs
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        ./ci/scripts/verify-bootstrap-crds.sh --self-test
+        ./ci/scripts/verify-bootstrap-crds.sh
+
   kubernetes-manifests:
     needs: [detect-changes]
     runs-on: ubuntu-24.04
@@ -225,29 +247,6 @@ jobs:
           echo "files_json=[]" >> "${GITHUB_OUTPUT}"
           echo "validate_k8s_manifests=true" >> "${GITHUB_OUTPUT}"
         fi
-
-    # The kubeconform validation below deliberately excludes infrastructure/bootstrap/crds
-    # (pkg-exclude), so no other check ever builds that bundle before an operator applies it
-    # during first-time setup or disaster recovery. This step is the fail-closed half of the
-    # bundle's kind filter -- the filter is a denylist because kustomize targets cannot express
-    # "any kind except CustomResourceDefinition" -- and the self-test runs first so the verdict
-    # comes from a checker that has just demonstrated it can see an escaped kind.
-    #
-    # Path-gated to the bundle's own inputs: building the bundle fetches its vendored upstream
-    # release manifests over the network, and this job is a required check, so running it on
-    # every manifest change would let one upstream blip block PRs that never touched the
-    # bundle (the failure mode #3818 hardened commit-taxonomy against). The built output can
-    # only change when these paths change -- except an upstream re-tagging a release under a
-    # pinned URL, which no path gate can see; the scheduled run below takes the first branch
-    # of this condition and still builds unconditionally, so that drift surfaces within a
-    # week as a red scheduled run instead of a blocked PR.
-    - name: Verify bootstrap CRD bundle emits only CRDs
-      if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).bootstrap_crds_any_changed == 'true' }}
-      shell: bash
-      # yamllint disable-line rule:indentation
-      run: |
-        ./ci/scripts/verify-bootstrap-crds.sh --self-test
-        ./ci/scripts/verify-bootstrap-crds.sh
 
     - name: Validate Kubernetes Manifests
       if: ${{ steps.select-files.outputs.validate_k8s_manifests == 'true' }}
