@@ -108,22 +108,70 @@ check_sandbox_identity() {
 check_sandbox_write_boundary() {
   local port=18080
   local base="http://127.0.0.1:${port}"
+  # Bounds every /mcp request below. Without a per-request cap a server that accepts the
+  # connection and never answers blocks inside curl forever, so this step's own `timeout`
+  # does the killing -- and the run is then reported as "the write-boundary assertion ran out
+  # of budget" rather than "the Secret probe never returned". On a security control those read
+  # very differently: the first invites raising a budget, the second says the control was
+  # never exercised. See issue #3724.
+  #
+  # 20s is derived from the two deadlines this sits between, not copied from a sibling script.
+  # Floor: the MCP server gives the Kubernetes API ten seconds of its own, and that deadline is
+  # known to be reached under rollout load (see the comment above this step in
+  # ../chainsaw-test.yaml). A request that spends ten seconds upstream and comes back with a
+  # "context deadline exceeded" tool error IS an answer, and the branches below handle it --
+  # so the cap must sit clear of it rather than converting it into "could not ask".
+  # Ceiling: the step allows 2m, and readiness can spend 40s of that. Past readiness the
+  # longest continuing chain is FIVE bounded calls -- initialize, notifications/initialized,
+  # write probe, Secret read, cleanup -- because a failed write probe deliberately does NOT
+  # return, so no branch shortens it. 40 + 5x20 = 140s, which is 20s OVER the 2m budget: the
+  # cap on its own does not guarantee that a verdict is printed inside the step.
+  #
+  # It fits anyway because the two handshake calls are protocol-local -- neither carries a
+  # tools/call, so neither can spend the ten seconds upstream that sets the floor above.
+  # Measured rather than assumed: the whole step (port-forward, readiness, all five calls,
+  # cleanup) runs in 1.1s in CI (job 96174214869), and a driven run holding EVERY call to the
+  # server's full 10s API deadline finishes in 50.1s -- 70s of slack. Reaching 140s needs all
+  # five calls to answer at ~19s AND succeed, which has never been observed.
+  #
+  # If it ever is reached it fails RED: chainsaw kills the step at its own timeout and reports
+  # SCRIPT ERROR / "context deadline exceeded". No ordering runs past 2m and still exits 0, so
+  # the residue costs a rerun, never a false pass.
+  #
+  # A cap is safe here only because every call is request/response: each POSTs one JSON-RPC
+  # message and the server closes after replying. Nothing below opens a long-lived stream, so
+  # no bound can truncate one.
+  local CURL_MAX_TIME=20
 
   kubectl port-forward -n ai svc/mcp-kubernetes-sandbox "${port}:8080" \
     >/tmp/mcp-kubernetes-sandbox-port-forward.log 2>&1 &
   local pf_pid=$!
   trap 'kill "$pf_pid" >/dev/null 2>&1 || true' RETURN
 
-  local attempt=0
-  until curl -fsS "${base}/healthz" >/dev/null 2>&1; do
-    attempt=$((attempt + 1))
-    if [ "$attempt" -ge 30 ]; then
-      echo "FAIL: mcp-kubernetes-sandbox never answered /healthz through the port-forward" >&2
-      FAILED=1
-      return
+  # A pure reachability probe on an already-forwarded local port, not a tool call, so it takes
+  # a much tighter bound than CURL_MAX_TIME -- nothing upstream of the pod is involved and a
+  # healthy answer is immediate.
+  #
+  # Bounded by WALL CLOCK rather than by attempt count, because the two only agree while the
+  # probe returns instantly. Counting attempts was a proxy for "give it 30 seconds" that held
+  # exactly as long as each curl failed fast (connection refused while the port-forward comes
+  # up). Once a request can legitimately occupy 10s, 30 attempts buys 30 x (10 + 1) = 330s --
+  # longer than this step's entire 2m budget, so a slow-but-answering endpoint would consume
+  # the whole step here and the write boundary would never be probed at all.
+  local ready=0 ready_deadline
+  ready_deadline=$(( $(date +%s) + 30 ))
+  while [ "$(date +%s)" -lt "${ready_deadline}" ]; do
+    if curl -fsS --max-time 10 "${base}/healthz" >/dev/null 2>&1; then
+      ready=1
+      break
     fi
     sleep 1
   done
+  if [ "${ready}" -ne 1 ]; then
+    echo "FAIL: mcp-kubernetes-sandbox never answered /healthz through the port-forward" >&2
+    FAILED=1
+    return
+  fi
 
   # Every curl here is rc-captured rather than left to `set -e`. An unguarded transport failure
   # kills the function BEFORE the Secret assertion runs, silently and with a non-1 exit code --
@@ -131,7 +179,7 @@ check_sandbox_write_boundary() {
   # it cancels the security check rather than mislabelling it.
   local init_headers rc=0
   init_headers=$(mktemp)
-  curl -fsS -D "$init_headers" -o /dev/null "${base}/mcp" \
+  curl -fsS --max-time "${CURL_MAX_TIME}" -D "$init_headers" -o /dev/null "${base}/mcp" \
     -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
     -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"chainsaw-write-boundary-check","version":"0"}}}' || rc=$?
   if [ "${rc}" -ne 0 ]; then
@@ -155,7 +203,7 @@ check_sandbox_write_boundary() {
   fi
 
   rc=0
-  curl -fsS -o /dev/null "${base}/mcp" \
+  curl -fsS --max-time "${CURL_MAX_TIME}" -o /dev/null "${base}/mcp" \
     -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
     -H "Mcp-Session-Id: ${session}" \
     -d '{"jsonrpc":"2.0","method":"notifications/initialized"}' || rc=$?
@@ -169,7 +217,7 @@ check_sandbox_write_boundary() {
   # cluster's built-in "default" namespace, not a new Namespace -- avoids depending on
   # namespace-deletion finalizers settling within this step's timeout.
   local create_response create_rc=0
-  create_response=$(curl -fsS "${base}/mcp" \
+  create_response=$(curl -fsS --max-time "${CURL_MAX_TIME}" "${base}/mcp" \
     -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
     -H "Mcp-Session-Id: ${session}" \
     -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"resources_create_or_update","arguments":{"resource":"apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: chainsaw-write-boundary-check\n  namespace: default\ndata:\n  probe: \"true\"\n"}}}') || create_rc=$?
@@ -193,7 +241,7 @@ check_sandbox_write_boundary() {
   # probe never ran. That is the most misleading direction a security check can fail in, so
   # "could not ask" is now its own outcome and says so.
   local secret_response curl_rc=0
-  secret_response=$(curl -fsS "${base}/mcp" \
+  secret_response=$(curl -fsS --max-time "${CURL_MAX_TIME}" "${base}/mcp" \
     -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
     -H "Mcp-Session-Id: ${session}" \
     -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"resources_list","arguments":{"apiVersion":"v1","kind":"Secret","namespace":"kube-system"}}}') || curl_rc=$?
@@ -235,7 +283,13 @@ check_sandbox_write_boundary() {
 
   # Best-effort cleanup so a re-run of this step doesn't depend on the prior run's probe
   # object; failure here doesn't fail the step, since the assertions above already ran.
-  curl -fsS -o /dev/null "${base}/mcp" \
+  #
+  # Bounded anyway, and being best-effort is the reason rather than an exception to it: this is
+  # the one call whose result nobody reads, so a hang here kills the step on its timeout after
+  # every verdict has already been printed -- turning a run that proved the control holds into
+  # a red attributed to a budget. Same cap as the calls above, because it is the same kind of
+  # tool call and a shorter one risks abandoning a delete that would have succeeded.
+  curl -fsS --max-time "${CURL_MAX_TIME}" -o /dev/null "${base}/mcp" \
     -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
     -H "Mcp-Session-Id: ${session}" \
     -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"resources_delete","arguments":{"apiVersion":"v1","kind":"ConfigMap","namespace":"default","name":"chainsaw-write-boundary-check"}}}' \
