@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.4.1...infra-observability-extra-v0.4.2) (2026-08-22)
+
+
+### 🛠 Improvements
+
+* **infra-observability-extra:** drop stale event-exporter diagram node ([#3664](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3664)) ([39415be](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/39415bee0a94fde93c6ce60cf8bb9009579bbd2b))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-extra:** update digest balabit/syslog-ng (af9c8d2 -&gt; b177f01) ([#3749](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3749)) ([5994b3f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5994b3f4cccc2101926ea394dba02dd2f1a6b297))
+
 ## [0.4.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.4.0...infra-observability-extra-v0.4.1) (2026-08-13)
 
 
