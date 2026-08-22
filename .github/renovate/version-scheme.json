@@ -30,6 +30,28 @@
     },
     {
       "description": [
+        "lidarr. One bare tag from a retired build-number scheme ('8.1.2135', frozen since 2017)",
+        "survives in the registry, and semver-coerced cannot tell it from a release, so it is",
+        "offered as an enormous upgrade. The exclusion names exactly that tag; any genuinely new",
+        "version stays offerable."
+      ],
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["ghcr.io/linuxserver/lidarr"],
+      "allowedVersions": "!/^8\\.1\\.2135$/"
+    },
+    {
+      "description": [
+        "sonarr. The bare tag '5.14' names the Mono runtime of a retired tag dialect",
+        "('5.14-<app version>-lsNN'), not a Sonarr release, and semver-coerced reads it as a",
+        "future major. The exclusion names exactly that tag; a real release of that line would",
+        "carry more segments and stays offerable."
+      ],
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["ghcr.io/linuxserver/sonarr"],
+      "allowedVersions": "!/^5\\.14$/"
+    },
+    {
+      "description": [
         "plex. Tags are shaped like '1.43.3.10896-cb3ebc72d': four numeric segments and a git short",
         "sha. Plain semver cannot parse that and 'loose' ordered it unpredictably (#2946). The regex",
         "names the fourth segment 'build' (the segment that actually moves between Plex releases),",
@@ -51,6 +73,18 @@
       "matchDatasources": ["docker"],
       "matchPackageNames": ["madnuttah/unbound"],
       "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-(?<build>\\d+)$"
+    },
+    {
+      "description": [
+        "SQL Server. Tags name a year-branded product, a servicing update and an OS base (e.g.",
+        "'2022-CU16-ubuntu-22.04'); the year is a REAL product major, not calver. A lenient parser",
+        "sorts these strings alphabetically, offering sideways, backwards and preview moves. The",
+        "regex orders year/CU/GDR/base numerically (RTM is servicing zero); RC, CTP, '-preview'",
+        "and alias tags match nothing and are never offered."
+      ],
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["mcr.microsoft.com/mssql/server"],
+      "versioning": "regex:^(?<major>\\d{4})-(?:RTM|CU(?<minor>\\d+))(?:-GDR(?<patch>\\d+))?-ubuntu-(?<build>\\d+)\\.\\d+$"
     },
     {
       "description": [

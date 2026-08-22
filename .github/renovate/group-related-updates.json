@@ -7,6 +7,14 @@
       "matchPackageNames": [
         "dxflrs/garage"
       ]
+    },
+    {
+      "groupName": "litellm",
+      "description": "the litellm chart and the database-capable app image the chart is overridden to run are released in lockstep upstream; offered separately, merging one without the other puts chart and app out of step, so both must land in one PR",
+      "matchPackageNames": [
+        "ghcr.io/berriai/litellm-helm",
+        "ghcr.io/berriai/litellm-database"
+      ]
     }
   ]
 }

@@ -401,8 +401,8 @@ function detectOccupancy(configs, allFiles, builtins) {
     }
   }
 
-  // custom.regex managers: the annotation grammars from custom-managers.json +
-  // renovate.json (all share 'datasource=... depName=...')
+  // custom.regex managers: the annotation grammars from custom-managers.json
+  // (all share 'datasource=... depName=...')
   const regexDefault = ['/(^|/).+\\.ya?ml$/'];
   for (const f of managerFiles('regex', regexDefault)) {
     for (const line of readLines(f)) {
