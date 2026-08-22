@@ -66,28 +66,16 @@ const internalScopes = [
   'renovate',               // this repo's Renovate configuration
 ];
 
-// Transitional entries: accepted while pre-migration emissions and open PRs
-// flush. Do not use in new commits. Retire them once no open PR and no pinned
-// shared preset can still emit them. At the current ppat/renovate-presets pin
-// NO emitter produces any of these any more (the preset renamed the shared
-// dev-tools scope to internal-dependencies), so what holds them open now is
-// only in-flight branches cut before the rename -- verify none remain, then
-// drop the two lists below and the matching paragraph in
-// .claude/rules/commits.md.
-//   dev-tools    -> internal-dependencies / internal-workflows
-//   claude       -> agents
-//   component-*  -> components
+// Transitional entries: accepted only because unmerged branches still carry
+// commits with them. No current emitter -- human or bot -- produces either
+// one; retire each as soon as its last unmerged branch or open PR lands.
+// Do not use them in a new commit: dev-tools -> internal-dependencies or
+// internal-workflows, component-db-backups -> components.
 const transitionalInternalScopes = [
-  'claude',
   'dev-tools',
 ];
 const transitionalComponentScopes = [
-  'component-cert-issuer',
   'component-db-backups',
-  'component-db-restore',
-  'component-external-dns-provider',
-  'component-oidc-credentials',
-  'component-sso',
 ];
 
 // The empty scope: repo-level docs/policy belonging to no single surface,

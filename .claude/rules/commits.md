@@ -43,9 +43,9 @@ an improvisation.
 The module list itself lives in `commitlint.config.js` and `release-please-config.json` (path →
 component); those files are the source of truth when a module is added or removed.
 
-**Transitional scopes** (`dev-tools`, `claude`, `component-*`) remain in the enum only so that
-pre-migration emissions and open PRs can flush. Never use them in a new commit: `dev-tools` →
-`internal-dependencies` or `internal-workflows`, `claude` → `agents`, `component-*` → `components`.
+**Transitional scopes** (`dev-tools`, `component-db-backups`) remain in the enum only because unmerged
+branches still carry commits with them. Never use them in a new commit: `dev-tools` →
+`internal-dependencies` or `internal-workflows`, `component-db-backups` → `components`.
 
 ## Types
 
