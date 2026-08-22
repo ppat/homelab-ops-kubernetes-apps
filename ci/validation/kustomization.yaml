@@ -13,3 +13,4 @@ patches:
     kind: ConfigMap
     name: plex-scripts
     namespace: media
+# probe: measuring that the bootstrap-CRD gate skips on PRs that do not touch its inputs
