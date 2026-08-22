@@ -66,8 +66,13 @@ which are also what the `commit-messages` gate resolves, so this check and the g
 the same commitlint. Those bumps are Renovate-managed as `chore(internal-dependencies)` — repo
 tooling, reaching no cluster and sitting in no release-please package.
 
-Remote presets are fetched from `raw.githubusercontent.com` at their pinned ref. Without network,
-pre-download them and pass `--offline-presets DIR`, where `DIR` holds one `<preset-name>.json` per
+Remote presets are fetched from `raw.githubusercontent.com` at their pinned ref, with a per-attempt
+timeout and retry-with-backoff on transient failures (network errors, timeouts, 5xx, 429) — a CDN
+blip costs seconds, not a red check. A 404 is terminal and fails on the first attempt: at a pinned
+ref it means the pin is wrong, the preset was renamed, or the file does not exist at that tag —
+the very conditions the check exists to catch — so retrying it would only disguise a real
+configuration error as flakiness. Without network, pre-download the presets and pass
+`--offline-presets DIR`, where `DIR` holds one `<preset-name>.json` per
 remote preset file (`default.json`, `dev-tools.json`, …). That flag is also the cheapest way to ask
 "what would happen if the preset pin moved" — see [When the shared preset pin
 moves](#when-the-shared-preset-pin-moves).
