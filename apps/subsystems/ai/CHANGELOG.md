@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.7.1...apps-ai-v0.7.2) (2026-08-22)
+
+
+### 🛠 Improvements
+
+* state the behaviour, not the version it was checked at ([#3771](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3771)) ([08b0411](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/08b0411c8d0db0127f56f65f5b1ed639abb0c7ea))
+
+
+### ✨ Features
+
+* **apps-ai:** update docker.io/grafana/mcp-grafana (1.0.0 -&gt; 1.1.0) ([#3748](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3748)) ([be07a3a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/be07a3a36133a40c998c088f743db5606de4144b))
+
 ## [0.7.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.7.0...apps-ai-v0.7.1) (2026-08-10)
 
 
