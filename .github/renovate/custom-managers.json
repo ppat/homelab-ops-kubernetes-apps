@@ -6,10 +6,7 @@
     "being updated. Each manager teaches one comment dialect marking such a pin; three, because",
     "the version appears as a value, in a release-asset URL, or in a raw.githubusercontent URL.",
     "Annotations need an explicit depName=; the inferred-name form in Renovate's docs matches",
-    "nothing here.",
-    "Known overlap: renovate.json's own customManager is a strict subset of the first rule",
-    "below; both copies share a branch name, so the cost is dashboard double-counting, not",
-    "duplicate PRs."
+    "nothing here."
   ],
   "customManagers": [
     {

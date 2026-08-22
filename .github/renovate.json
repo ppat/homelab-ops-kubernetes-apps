@@ -1,17 +1,5 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "customManagers": [
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/(^|/).+\\.ya?ml$/"
-      ],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>[a-z-.]+?)\\s+depName=(?<depName>[a-zA-Z0-9-/]+?)(\\s+repository=(?<registryUrl>[^\\s]+?))?(\\s+versioning=(?<versioning>[^\\s]+?))?(\\s+extractVersion=(?<extractVersion>[^\\s]+?))?\\s*\\n.+[\\:\\=]\\s?\"v?(?<currentValue>[^\\s@\"]+)(?:@(?<currentDigest>sha256:[0-9a-f]+))?\""
-      ],
-      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
-    }
-  ],
   "configMigration": true,
   "dependencyDashboard": true,
   "description": [
@@ -25,10 +13,7 @@
     "on this.",
     "",
     "The flux and kubernetes managerFilePatterns include ci/ and components/: fixtures and",
-    "shared components carry pins of their own.",
-    "",
-    "The customManager below duplicates custom-managers.json's first entry -- known and",
-    "cosmetic; see that file."
+    "shared components carry pins of their own."
   ],
   "extends": [
     "abandonments:recommended",
