@@ -1,6 +1,7 @@
 ---
 # yamllint disable rule:line-length
 name: lint
+# probe: measuring that a workflow-only change triggers the bootstrap-CRD gate
 
 on:
   pull_request:
