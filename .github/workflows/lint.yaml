@@ -28,6 +28,13 @@ jobs:
         - ci/scripts/alloy-lint.sh
         - ci/scripts/alloy-lint-version.yaml
         - .github/workflows/lint.yaml
+        # the bootstrap-CRD gate's inputs: the bundle it checks, its script, and this
+        # file, which carries its trigger -- so any change to the gate is exercised by
+        # the PR that makes it, at the cost of running on workflow-only PRs.
+        bootstrap_crds:
+        - infrastructure/bootstrap/crds/**
+        - ci/scripts/verify-bootstrap-crds.sh
+        - .github/workflows/lint.yaml
         kubernetes:
         - 'apps/**/*.yaml'
         - 'ci/**/*.yaml'
@@ -166,6 +173,32 @@ jobs:
     with:
       git_ref: ${{ github.head_ref || github.ref }}
       files: ${{ github.event_name != 'pull_request' && 'ALL' || fromJSON(needs.detect-changes.outputs.results).actions_all_changed_files }}
+
+  bootstrap-crds:
+    needs: [detect-changes]
+    if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).bootstrap_crds_any_changed == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: 1
+        persist-credentials: false
+
+    # The bundle's kind filter is a denylist -- kustomize targets cannot express "any kind
+    # except CustomResourceDefinition" -- so it fails open, and nothing else builds the bundle
+    # (kubeconform excludes it, no suite consumes it): an escaped kind would first appear when
+    # an operator applies it during disaster recovery. Self-test runs first so the verdict comes
+    # from a checker that has just shown it can see an escape. Gated on the bundle's own inputs;
+    # the scheduled run builds unconditionally, which is what catches an upstream re-tagging a
+    # release under a pinned URL.
+    - name: Verify the bundle emits only CRDs
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        ./ci/scripts/verify-bootstrap-crds.sh --self-test
+        ./ci/scripts/verify-bootstrap-crds.sh
 
   kubernetes-manifests:
     needs: [detect-changes]
