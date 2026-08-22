@@ -28,14 +28,17 @@ jobs:
         - ci/scripts/alloy-lint.sh
         - ci/scripts/alloy-lint-version.yaml
         - .github/workflows/lint.yaml
+        # the bootstrap-CRD gate's inputs, including the gate's own script so a
+        # change to the gate is exercised by the PR that makes it (same reasoning
+        # as the alloy gate)
+        bootstrap_crds:
+        - infrastructure/bootstrap/crds/**
+        - ci/scripts/verify-bootstrap-crds.sh
         kubernetes:
         - 'apps/**/*.yaml'
         - 'ci/**/*.yaml'
         - 'components/**/*.yaml'
         - 'infrastructure/**/*.yaml'
-        # the bootstrap-CRD gate's own input, so a change to the gate is exercised
-        # by the PR that makes it (same reasoning as the alloy gate)
-        - ci/scripts/verify-bootstrap-crds.sh
         markdown:
         - '**.md'
         - '!**/CHANGELOG.md'
@@ -224,8 +227,17 @@ jobs:
     # bundle's kind filter -- the filter is a denylist because kustomize targets cannot express
     # "any kind except CustomResourceDefinition" -- and the self-test runs first so the verdict
     # comes from a checker that has just demonstrated it can see an escaped kind.
+    #
+    # Path-gated to the bundle's own inputs: building the bundle fetches its vendored upstream
+    # release manifests over the network, and this job is a required check, so running it on
+    # every manifest change would let one upstream blip block PRs that never touched the
+    # bundle (the failure mode #3818 hardened commit-taxonomy against). The built output can
+    # only change when these paths change -- except an upstream re-tagging a release under a
+    # pinned URL, which no path gate can see; the scheduled run below takes the first branch
+    # of this condition and still builds unconditionally, so that drift surfaces within a
+    # week as a red scheduled run instead of a blocked PR.
     - name: Verify bootstrap CRD bundle emits only CRDs
-      if: ${{ steps.select-files.outputs.validate_k8s_manifests == 'true' }}
+      if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).bootstrap_crds_any_changed == 'true' }}
       shell: bash
       # yamllint disable-line rule:indentation
       run: |
