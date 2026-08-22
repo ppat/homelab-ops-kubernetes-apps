@@ -28,12 +28,17 @@ jobs:
         - ci/scripts/alloy-lint.sh
         - ci/scripts/alloy-lint-version.yaml
         - .github/workflows/lint.yaml
-        # the bootstrap-CRD gate's inputs, including the gate's own script so a
-        # change to the gate is exercised by the PR that makes it (same reasoning
-        # as the alloy gate)
+        # the bootstrap-CRD gate's inputs: the bundle it checks, the script that is
+        # its logic, and this workflow file, which carries its trigger -- so a PR
+        # changing any part of the gate, including just its if-condition or this
+        # group, is exercised by that same PR (same reasoning as the alloy gate).
+        # Listing lint.yaml makes the gate run on workflow-only PRs too; that is
+        # the accepted trade -- a gate that silently stops firing is worse than
+        # one that runs more often than strictly needed.
         bootstrap_crds:
         - infrastructure/bootstrap/crds/**
         - ci/scripts/verify-bootstrap-crds.sh
+        - .github/workflows/lint.yaml
         kubernetes:
         - 'apps/**/*.yaml'
         - 'ci/**/*.yaml'
