@@ -15,6 +15,7 @@
 #
 #   READY   T0+<secs> <rfc3339> <True|False> <kind>/<ns>/<name>
 #   MODE    <fast|slow|intermediate|none> ctrl_webhook_gap_s=<n|-> ctrl= webhook= certctrl=
+#           resync=<no-wait|ambiguous|one-short|unexplained|one-long|none>
 #   RESTART <count>   <kind>/<ns>/<name> [<container>]
 #   PULL    <pull_s>  <incl_wait_s> <ns>/<pod> <image>
 #   PULL    ?         ?             <ns>/<pod> :: <unparsed message>
@@ -47,6 +48,17 @@
 # actually written, and what each side logged about it. They are emitted on EVERY run, fast
 # ones included: an instrument that only speaks during the rare event cannot be trusted when
 # the rare event arrives.
+#
+# MODE carries TWO classifications of the same gap and they answer different questions, which
+# is why neither may be re-cut to make the other redundant. `<fast|slow|intermediate>` is
+# frozen on the edges the whole classified series was measured against, so "is the mode gone,
+# by the definition we have been measuring against all along?" stays answerable across any
+# change to the mechanism. `resync=` classifies the same number against what one kubelet pod
+# re-sync can account for, so "is there still structure, at whatever scale the quantum now
+# has?" stays answerable too. A fix here can be partial, or can move the wait somewhere the
+# frozen edges no longer look -- and either of those reads as success on one instrument alone.
+# Redefining the frozen edges to suit a new scale would silently convert an open question into
+# an apparent answer.
 #
 # Never fails the step it runs in: this is a diagnostic, and on the failing side it runs after
 # the suite is already red.
@@ -107,7 +119,7 @@ echo '--- READY: pod and Flux object Ready transitions, ascending (T0 = earliest
     }
   }
   END {
-    gap = "-"; mode = "none"
+    gap = "-"; mode = "none"; band = "none"
     if (("ctrl" in rt) && ("webhook" in rt)) {
       gap = rt["webhook"] - rt["ctrl"]
       # Band edges from the published distribution (06 §5, outside-review-2 §3.3): 78 runs on
@@ -120,9 +132,58 @@ echo '--- READY: pod and Flux object Ready transitions, ascending (T0 = earliest
       # zero-intermediates claim is the sharpest fact in the dataset, and an instrument that
       # cannot contradict its own headline is not measuring anything.
       mode = (gap <= 35) ? "fast" : ((gap >= 60) ? "slow" : "intermediate")
+
+      # The second classifier, cut against the MECHANISM rather than against the historical
+      # distribution. The slow mode is one kubelet pod re-sync remounting the TLS secret
+      # of the webhook -- `wait.Jitter(syncFrequency, 0.5)`, so U[f, 1.5f) for a syncFrequency
+      # of f -- plus the 10s certificate poll the webhook itself runs, on top of however long
+      # after the controller the webhook pod happens to become Ready. The bands are "how many
+      # re-syncs does this gap need", at the two syncFrequency values a kind cluster here can
+      # run: the kubelet default of 60s -> U[60,90), and 10s -> U[10,15).
+      #
+      #   no-wait      <=  9  under the floor of one 10s re-sync, so no remount under either
+      #   ambiguous    10-27  BOTH fast bands sit here -- 1-16s on the ten suites whose
+      #                       fixture drops the webhook probe delay, 20-27s on infra-security,
+      #                       which deploys the real module and keeps the 20s of the chart --
+      #                       AND
+      #                       so does the lower half of one 10s re-sync. This number cannot
+      #                       separate them, and the band exists to say so rather than pick
+      #   one-short    28-45  longer than any fast gap yet observed, far short of one 60s
+      #                       re-sync: one remount at syncFrequency 10s. 15 + 15 + 10 + probe
+      #                       is the ceiling, hence 45
+      #   unexplained  46-59  THE FALSIFIER, and it is why the set is not a pair. Neither
+      #                       quantum reaches it: too long for one 10s re-sync, too short for
+      #                       one 60s. A run here means the re-sync model is wrong, not that
+      #                       the wait grew
+      #   one-long     >= 60  one remount at the 60s default. Deliberately the same edge as
+      #                       `slow`, so the two classifiers cannot disagree where both can see
+      #
+      # `ambiguous` covering most of the fleet today is not a defect: at a 60s quantum the gap
+      # separates the modes by itself and `<fast|slow>` above already says which. It stops
+      # separating them if the quantum shrinks to ~10s, because a remount then costs less than
+      # the spread this fleet has in webhook probe delay -- which is the whole reason this line
+      # exists, and the reason its edges must not be back-fitted onto the frozen ones.
+      # What still separates the two at that scale is the log of the webhook: a fast run finds
+      # the cert file at first read and logs no `invalid certs. retrying...` at all, a slow one
+      # logs one per 10s waited. ESOLOG below already captures those lines; nothing counts them
+      # yet, and that count -- not a finer gap band -- is what to build if ~10s becomes the
+      # quantum this fleet actually runs at.
+      if      (gap <=  9) band = "no-wait"
+      else if (gap <= 27) band = "ambiguous"
+      else if (gap <= 45) band = "one-short"
+      else if (gap <= 59) band = "unexplained"
+      else                band = "one-long"
     }
-    printf "MODE    %-12s ctrl_webhook_gap_s=%-5s ctrl=%-10s webhook=%-10s certctrl=%s\n", \
-      mode, gap, pos("ctrl"), pos("webhook"), pos("certctrl")
+    # `resync=` is appended as a FIELD on the existing line rather than given a prefix of its
+    # own, and that is a consumer decision, not a layout one. Both readers of this grammar --
+    # ci/scripts/baseline-harvest.sh here, and the ci-diagnostics ingester in the clusters repo
+    # -- match a line-leading prefix allowlist and then keep the line whole, and the ingester
+    # lifts every `key=value` on a MODE line into Loki structured metadata. So a field arrives
+    # at both with no change in either, where a NEW prefix must be added to both or the line is
+    # silently retained nowhere. Nothing before `resync=` moved: every existing token keeps its
+    # position, width and meaning.
+    printf "MODE    %-12s ctrl_webhook_gap_s=%-5s ctrl=%-10s webhook=%-10s certctrl=%-10s resync=%s\n", \
+      mode, gap, pos("ctrl"), pos("webhook"), pos("certctrl"), band
   }
 '
 

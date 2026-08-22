@@ -317,7 +317,7 @@ the shared `catch` is set well inside the cliff rather than near it.
 | prefix | what it answers |
 | --- | --- |
 | `READY T0+<s> <ts> <status> <kind>/<ns>/<name>` | when each pod, `Kustomization` and `HelmRelease` became Ready, one ascending timeline. This is the input to validate-step ordering. Reads the *current* Ready condition's `lastTransitionTime`, so a pod that flapped shows its latest transition, not its first — cross-check `RESTART`. |
-| `MODE <fast\|slow\|intermediate\|none> ctrl_webhook_gap_s= ctrl= webhook= certctrl=` | which mode the prerequisite phase ran in, classified from the external-secrets controller → **its own** webhook pod gap (not cert-manager's controller). Bands are the published ones: fast ≤ 35s, slow ≥ 60s. `intermediate` is a finding in itself — no run has produced one yet. `none` is normal for a suite with no external-secrets fixture (`apps-coder`); the three positions distinguish `absent` from `notready`. |
+| `MODE <fast\|slow\|intermediate\|none> ctrl_webhook_gap_s= ctrl= webhook= certctrl= resync=` | which mode the prerequisite phase ran in, classified from the external-secrets controller → **its own** webhook pod gap (not cert-manager's controller). Bands are the published ones: fast ≤ 35s, slow ≥ 60s. `intermediate` is a finding in itself — no run has produced one yet. `none` is normal for a suite with no external-secrets fixture (`apps-coder`); the three positions distinguish `absent` from `notready`. **`resync=` classifies the same gap a second time**, against what one kubelet pod re-sync of the webhook's TLS secret can account for rather than against the historical distribution: `no-wait` ≤ 9s, `ambiguous` 10–27s, `one-short` 28–45s, `unexplained` 46–59s, `one-long` ≥ 60s, `none` when there is no gap. `ambiguous` spans both fast bands — 1–16s where the fixture drops the webhook probe delay, 20–27s on `infra-security`, which deploys the real module — *and* the low half of a re-sync at `syncFrequency: 10s`; where the two overlap this number cannot separate them and the token says so instead of guessing. `unexplained` is its falsifier: no re-sync interval reaches 46–59s. The two classifications are deliberately redundant at today's 60s quantum and stop being so if that quantum changes — the first answers *"is the mode gone by the definition we have always measured against?"*, the second *"is there still structure, at whatever scale?"*, and a partial fix or one that only moves the wait reads as success on either alone. |
 | `RESTART <n> <pod> [<container>]` | which containers crashed and recovered *inside* an assertion's budget — invisible everywhere else. |
 | `PULL <pull_s> <incl_wait_s> <pod> <image>` | kubelet's own pull duration. The second number includes time queued behind **kubelet's** serial pull queue (`serializeImagePulls: true`, read from the CI node image — *not* containerd's concurrent-download limit, which that setting makes irrelevant); the gap is the multi-node pull-parallelism argument. |
 | `ESOCERT secret\|pod …` and `ESOLOG <pod> <line>` | the four timestamps that separate the surviving explanations of the slow `MODE`: when the webhook TLS secret was created and last written (`managedFields`), when the webhook container started, and what the webhook and cert-controller each logged about the certificate. Emitted on every run, fast ones included — a slow run usually *passes*, so a catch-only capture would miss the event it exists for. |
@@ -364,6 +364,16 @@ Nothing here depends on it or needs to know it exists — it pulls, CI never pus
 inbound path and no CI-side secret, and its absence cannot fail anything in this repo. The only
 consequence of forgetting it is the one above: a prefix added here and not there is simply never
 kept.
+
+**Adding a `key=value` field to a row that already exists is not that obligation, and the
+difference is worth knowing before reaching for a new prefix.** Both readers match the
+line-leading prefix and then keep the line whole, and the `ci-diagnostics` ingester lifts every
+`key=value` on it into Loki structured metadata — so a field on a published line arrives at both,
+and at the dashboard, with no code change in either repo, and it adds no Loki stream label. That
+is why `MODE` carries `resync=` rather than a prefix of its own. What it costs is announcement:
+a new field is only visible to a query that names it, and nothing flags its arrival. What is
+*not* free is moving or renaming an existing field — that is a breaking change to whichever
+parser reads that position, and `MODE`'s verdict token is read positionally.
 
 ### Say which duration you mean
 
