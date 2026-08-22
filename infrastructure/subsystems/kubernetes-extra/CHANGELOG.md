@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.31](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.30...infra-kubernetes-extra-v0.0.31) (2026-08-22)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* shorten spec.interval on the six HelmReleases that declare dependsOn ([#3686](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3686)) ([76b1812](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/76b1812955b9828911cb5c18f624e093ec4768cb))
+
 ## [0.0.30](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.29...infra-kubernetes-extra-v0.0.30) (2026-06-15)
 
 
