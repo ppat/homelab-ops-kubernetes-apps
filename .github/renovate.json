@@ -13,7 +13,20 @@
     "on this.",
     "",
     "The flux and kubernetes managerFilePatterns include ci/ and components/: fixtures and",
-    "shared components carry pins of their own."
+    "shared components carry pins of their own.",
+    "",
+    "rebaseWhen 'conflicted', NOT 'behind-base-branch': main's branch protection has",
+    "required_status_checks.strict = false, so being behind base does not block a merge and",
+    "rebasing for freshness alone costs a full CI re-run. Measured from a real scheduled run",
+    "(2026-08-22T00:21Z): 'Branch is behind base branch and needs rebasing' fired for 12 of 12",
+    "open branches, every one was force-pushed, and seconds later the same run read the status it",
+    "had just invalidated -- 'Branch status yellow' on all six PRs it then considered for",
+    "automerge, so none merged. With ~12 merges/day into main and a 6-hourly schedule, main moves",
+    "again before the next evaluation and the cycle repeats: Renovate never sees one of its own",
+    "branches green. The trade this makes is explicit: a bot PR now merges having been tested",
+    "against the main it branched from rather than the current tip. That is the same staleness",
+    "strict = false already accepts for human PRs, and scheduled-baseline.yaml re-runs the suites",
+    "against main. Restore 'behind-base-branch' if strict is ever turned back on."
   ],
   "extends": [
     "abandonments:recommended",
@@ -66,7 +79,7 @@
   "prConcurrentLimit": 0,
   "prHourlyLimit": 0,
   "printConfig": true,
-  "rebaseWhen": "behind-base-branch",
+  "rebaseWhen": "conflicted",
   "suppressNotifications": [
     "prEditedNotification",
     "prIgnoreNotification"
