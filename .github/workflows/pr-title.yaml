@@ -1,0 +1,104 @@
+---
+# yamllint disable rule:line-length
+name: pr-title
+
+# WHY THIS WORKFLOW EXISTS
+# The repository squashes every PR (merge and rebase merges are disabled), and
+# `squash_merge_commit_title` is COMMIT_OR_PR_TITLE. Measured against the real
+# setting: a PR with exactly ONE commit lands that commit's subject, and a PR
+# with MORE THAN ONE lands the PULL REQUEST TITLE -- in both cases with " (#N)"
+# appended. `lint.yaml`'s commit-messages job lints branch commits, so it covers
+# the one-commit case and only that case. Nothing has ever examined the PR title,
+# which is the string that actually lands on main for every multi-commit PR
+# (19% of merged human PRs, measured over the last 114 merges; bot PRs are always
+# single-commit). #3516's comma scope is the clean instance of what gets through.
+#
+# WHY IT IS A SEPARATE WORKFLOW AND NOT A JOB IN lint.yaml
+# A title can change after the last push, so this has to run on `edited` as well
+# as on `synchronize`. `edited` also fires for BODY-only edits, which Renovate
+# does routinely. Putting the `edited` trigger on lint.yaml would re-run all
+# twelve of its jobs every time a bot touches a PR body; here it re-runs one
+# short job.
+#
+# WHY IT HAS NO `if:` AND NO `needs:`
+# A job skipped by an `if:` reports conclusion "skipped", and a skipped check run
+# SATISFIES a required status check. Any gate on this job would therefore make it
+# silently pass rather than visibly skip -- and because GitHub resolves a required
+# context to the newest check suite per workflow, a later body-only edit that
+# skipped would erase an earlier title failure. It must always run.
+#
+# WHY IT LINTS THE TITLE EVEN WHEN THE TITLE WILL NOT LAND
+# On a single-commit PR the title is not the landed subject. Linting it anyway
+# costs one job and removes a conditional from the author's model of the rules:
+# the PR title is always conformant, full stop. It costs the bots nothing --
+# measured, Renovate's and release-please's PR titles are byte-identical to their
+# single commit's subject.
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pr-title:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      # renovate: datasource=npm depName=bun
+      BUN_VERSION: "1.3.14"
+      # renovate: datasource=node-version depName=node
+      NODE_VERSION: "24.11.1"
+    steps:
+    # Same commitlint the commit-messages job resolves: this repo's committed
+    # package.json + bun.lock, installed with a bun supplied by mise. The point is
+    # that the title and the branch commits are judged by one config, not two.
+    - name: Setup repository and tools
+      uses: ppat/homelab-ops-actions/actions/setup-repository-tools@9c16506c3c527478b6314c86ca961c0011d9f94a # v2.2.0
+      with:
+        current_fetch_depth: 1
+        current_git_ref: ${{ github.head_ref || github.ref }}
+        current_repository: ${{ github.repository }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        # yamllint disable-line rule:indentation
+        mise_toml: |
+          [tools]
+          bun               = "${{ env.BUN_VERSION }}"
+          node              = "${{ env.NODE_VERSION }}"
+          [settings.npm]
+          bun               = true
+
+    - name: Install node packages
+      shell: bash
+      working-directory: ./current
+      run: bun install --frozen-lockfile
+
+    # The title arrives through the environment, never through ${{ }} inside the
+    # script body: it is attacker-controllable text and interpolating it would be
+    # a shell-injection sink.
+    - name: Lint the pull request title
+      shell: bash
+      working-directory: ./current
+      env:
+        PR_TITLE: ${{ github.event.pull_request.title }}
+      # yamllint disable-line rule:indentation
+      run: |
+        echo "PR title: ${PR_TITLE}"
+        if printf '%s' "${PR_TITLE}" | ./node_modules/.bin/commitlint --verbose; then
+          exit 0
+        fi
+        cat >&2 <<'EOF'
+
+        The pull request title is the commit subject that lands on main whenever a
+        PR has more than one commit -- and it is the one string in a PR that no
+        other check looks at. Fix the title in the GitHub UI; editing it re-runs
+        this check on the same commit, so no push is needed.
+
+        The vocabulary and the pairing rules are in .claude/rules/commits.md.
+        EOF
+        exit 1

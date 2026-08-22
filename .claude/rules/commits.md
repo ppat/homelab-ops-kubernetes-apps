@@ -18,8 +18,18 @@ Consequences that follow directly:
 - The release-facing string is the **squash title**: a single-commit PR lands its commit header, a
   multi-commit PR lands its **PR title** (`squash_merge_commit_title: COMMIT_OR_PR_TITLE`). Keep the
   PR title conforming — it is the header that lands on `main`, and it is what release-please parses.
+- The PR title is checked by the `pr-title` CI job on every pull request, including the ones where it
+  will not land — so "the PR title conforms" is unconditional and you never have to work out which
+  case you are in.
 - Interior commit bodies and GitHub's `*`-prefixed squash bullets are inert to release-please. Only the title
   line carries release semantics; bodies are for humans.
+- The **body** that lands is the concatenation of the branch commits' messages
+  (`squash_merge_commit_message: COMMIT_MESSAGES`). With one commit it is that commit's body,
+  verbatim. With several it becomes one `* <subject>` block per commit — a log of how the change was
+  reached rather than a description of what it is. **If you want the landed commit to read well, land
+  one commit.** Rewriting history on a PR branch is allowed and expected; `main` is not (force-push is
+  refused and linear history is required), so there is no fixing the message after the merge. Squash
+  and rewrite on the branch before the PR is ready, not after.
 
 ## Scopes
 
@@ -152,10 +162,11 @@ consumer at once, the enum must always move **before** the preset pin, never aft
 
 ## Gotchas
 
-- **The scope enum constrains humans and bots through different doors** — commitlint on branch
-  commits for humans, the emission-closure check for Renovate config. Editing
-  `commitlint.config.js` without re-running the closure check (or vice versa) reopens the gap between
-  what can be emitted and what would be accepted.
+- **The scope enum constrains humans and bots through three different doors** — commitlint on branch
+  commits (`commit-messages`), commitlint on the PR title (`pr-title`), and the emission-closure check
+  for Renovate config (`commit-taxonomy`). All three read the same `commitlint.config.js`. Editing it
+  without re-running the closure check (or vice versa) reopens the gap between what can be emitted and
+  what would be accepted.
 - **A scope naming a module is a version claim.** `fix(apps-media):` on a diff that never touches
   `apps/subsystems/media/` is the lie this whole rule exists to prevent — check the paths, not your
   memory of where something lives.
