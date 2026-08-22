@@ -16,7 +16,14 @@ resources:
 
 patches:
 ###########################################################
-# drop all resource kinds except CRDs
+# Drop everything but CRDs: modules own their namespaces and
+# runtime objects, and any namespaced leftover breaks bootstrap
+# by targeting a namespace that does not exist yet. Kustomize
+# targets match with Go's RE2 regexp, which cannot express "any
+# kind except CustomResourceDefinition", so this must be a
+# denylist; a kind an upstream release ships past it is caught
+# by ci/scripts/verify-bootstrap-crds.sh in the lint workflow
+# (#3803 shipped six NetworkPolicies through it).
 ###########################################################
 # yamllint disable-line rule:indentation
 - patch: |-
@@ -25,4 +32,4 @@ patches:
     metadata:
       name: irrelevant
   target:
-    kind: "(Certificate|ConfigMap|ClusterRole|ClusterRoleBinding|DaemonSet|Deployment|Issuer|MutatingWebhookConfiguration|Namespace|PriorityClass|Role|RoleBinding|Secret|Service|ServiceAccount|ValidatingWebhookConfiguration)"
+    kind: "(Certificate|ConfigMap|ClusterRole|ClusterRoleBinding|DaemonSet|Deployment|Issuer|MutatingWebhookConfiguration|Namespace|NetworkPolicy|PriorityClass|Role|RoleBinding|Secret|Service|ServiceAccount|ValidatingWebhookConfiguration)"

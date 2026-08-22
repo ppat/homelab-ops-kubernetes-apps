@@ -33,6 +33,9 @@ jobs:
         - 'ci/**/*.yaml'
         - 'components/**/*.yaml'
         - 'infrastructure/**/*.yaml'
+        # the bootstrap-CRD gate's own input, so a change to the gate is exercised
+        # by the PR that makes it (same reasoning as the alloy gate)
+        - ci/scripts/verify-bootstrap-crds.sh
         markdown:
         - '**.md'
         - '!**/CHANGELOG.md'
@@ -214,6 +217,20 @@ jobs:
           echo "files_json=[]" >> "${GITHUB_OUTPUT}"
           echo "validate_k8s_manifests=true" >> "${GITHUB_OUTPUT}"
         fi
+
+    # The kubeconform validation below deliberately excludes infrastructure/bootstrap/crds
+    # (pkg-exclude), so no other check ever builds that bundle before an operator applies it
+    # during first-time setup or disaster recovery. This step is the fail-closed half of the
+    # bundle's kind filter -- the filter is a denylist because kustomize targets cannot express
+    # "any kind except CustomResourceDefinition" -- and the self-test runs first so the verdict
+    # comes from a checker that has just demonstrated it can see an escaped kind.
+    - name: Verify bootstrap CRD bundle emits only CRDs
+      if: ${{ steps.select-files.outputs.validate_k8s_manifests == 'true' }}
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        ./ci/scripts/verify-bootstrap-crds.sh --self-test
+        ./ci/scripts/verify-bootstrap-crds.sh
 
     - name: Validate Kubernetes Manifests
       if: ${{ steps.select-files.outputs.validate_k8s_manifests == 'true' }}
