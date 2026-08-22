@@ -75,7 +75,11 @@
 // cannot see an injected defect is vacuous, so CI runs this mode first.
 // --dump-headers prints every candidate header with its provenance.
 // --offline-presets uses pre-downloaded preset files (dir containing <name>.json)
-// instead of fetching from raw.githubusercontent.com.
+// instead of fetching from raw.githubusercontent.com. The live fetch carries a
+// per-attempt timeout and retries transient failures (network errors, timeouts,
+// 5xx, 429) with backoff; a 404 is terminal and fails on the first attempt,
+// because at a pinned ref it means the pin, the preset name, or the file is
+// wrong -- the very conditions the check exists to catch.
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -142,10 +146,40 @@ const UPDATE_TYPES = [
 // 1. Load the config closure, in extends order.
 // ---------------------------------------------------------------------------
 
-const fetchText = async (url) => {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`fetch ${url}: HTTP ${res.status}`);
-  return res.text();
+// Preset resolution is this script's only network access, and it rides on
+// someone else's CDN. A transient blip there must cost seconds, not a red
+// check -- so transient failures (network errors, per-attempt timeouts, 5xx,
+// 429) are retried with backoff, bounded far below the CI job's timeout.
+// Terminal failures are NOT retried: a 404 at the pinned ref means the pin is
+// wrong, the preset was renamed, or the file does not exist at that tag --
+// exactly the conditions this check exists to catch at a preset bump, and
+// retrying them would make a real configuration error look like flakiness.
+// (A JSON parse failure at the call site is terminal the same way: the fetch
+// already succeeded, so the body itself is what is wrong.) The stub-injection
+// points exist for the self-test, which falsifies both directions of the
+// classification; production callers pass only the url.
+const FETCH_TIMEOUT_MS = 10_000;
+const FETCH_BACKOFF_MS = [1000, 2000]; // attempts = backoffs + 1
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const fetchText = async (url, { fetchImpl = fetch, backoffMs = FETCH_BACKOFF_MS } = {}) => {
+  for (let attempt = 1; ; attempt++) {
+    let res, failure;
+    try {
+      res = await fetchImpl(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+    } catch (e) {
+      failure = e.message; // network unreachable or per-attempt timeout: transient
+    }
+    if (res) {
+      if (res.ok) return res.text();
+      if (res.status !== 429 && res.status < 500) {
+        throw new Error(`fetch ${url}: HTTP ${res.status} (terminal after ${attempt} attempt(s), not retried)`);
+      }
+      failure = `HTTP ${res.status}`;
+    }
+    if (attempt > backoffMs.length) throw new Error(`fetch ${url}: ${failure} (gave up after ${attempt} attempts)`);
+    console.log(`fetch ${url}: ${failure} -- transient, retrying (attempt ${attempt} of ${backoffMs.length + 1})`);
+    await sleep(backoffMs[attempt - 1]);
+  }
 };
 
 async function loadClosure() {
@@ -777,6 +811,40 @@ async function runSelfTest(lintHeader, rootDefaults, rules, configs, builtins) {
   evalTemplate('{{#unless isMajor}}x{{/unless}}', { packageFileDir: 'a/b/c', updateType: 'minor' }, 'self-test');
   if (failures.length === before) fail('SELF-TEST: unknown handlebars construct was NOT rejected');
   else { failures.pop(); caught++; }
+
+  // fetch-classification injections (see fetchText). The failure taxonomy is
+  // behaviour worth guarding in both directions: retrying a terminal failure
+  // would disguise a wrong pin as flakiness, and not retrying a transient one
+  // would let a CDN blip redden the check. A stub fetch stands in for the
+  // network; zero backoff keeps the self-test fast without changing the
+  // control flow under test.
+  const stubOk = (body) => ({ ok: true, status: 200, text: async () => body });
+  const stubStatus = (status) => ({ ok: false, status });
+  {
+    // (a) transient failure, then success: must retry through to the body
+    let calls = 0;
+    const flaky = async () => (calls++ === 0 ? stubStatus(503) : stubOk('preset-body'));
+    const got = await fetchText('stub://transient-then-ok', { fetchImpl: flaky, backoffMs: [0, 0] }).catch((e) => e.message);
+    if (got !== 'preset-body' || calls !== 2) {
+      fail(`SELF-TEST: transient fetch failure was not retried to success (calls=${calls}, got=${got})`);
+    } else caught++;
+  }
+  {
+    // (b) 404: terminal, must fail on the first attempt with no retry
+    let calls = 0;
+    const notFound = async () => { calls++; return stubStatus(404); };
+    const err = await fetchText('stub://terminal-404', { fetchImpl: notFound, backoffMs: [0, 0] }).then(() => null, (e) => e);
+    if (!err || calls !== 1) fail(`SELF-TEST: terminal 404 was retried or not raised (calls=${calls})`);
+    else caught++;
+  }
+  {
+    // (c) total outage: must give up after the bounded attempts, never hang
+    let calls = 0;
+    const outage = async () => { calls++; throw new TypeError('fetch failed'); };
+    const err = await fetchText('stub://total-outage', { fetchImpl: outage, backoffMs: [0, 0] }).then(() => null, (e) => e);
+    if (!err || calls !== 3) fail(`SELF-TEST: total outage did not give up after the bounded attempts (calls=${calls})`);
+    else caught++;
+  }
   return caught;
 }
 
