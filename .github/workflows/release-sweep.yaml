@@ -1,0 +1,92 @@
+---
+# yamllint disable rule:line-length
+#
+# Auto-lands the release-please PRs a human click adds nothing to. The rule, its guards, and
+# the evidence behind them live in ci/scripts/release-sweep.sh's header; the one-sentence
+# version: a non-breaking release with all checks green and no hold label lands on its
+# class's weekly sweep; anything breaking, first, held, or doubtful waits for the maintainer.
+# OPERATIONS.md "Release Process" documents the operator's view.
+#
+# SCHEDULE
+# One weekly sweep per module class, each handling every eligible PR of its class in one run:
+#   apps-* modules  -> Wednesdays 00:00 UTC
+#   infra-* modules -> Sundays   12:00 UTC
+# Batch merging in a single run is evidenced: release-please's release phase picks up all
+# merged-but-untagged release PRs together (observed at batch size 5 automated -- with the
+# intermediate release.yaml runs cancelled by its concurrency group and the final run cutting
+# every tag -- and at up to 16 in historical manual merge sittings; 906/906 releases tagged).
+#
+# WHY A SCHEDULED DIRECT MERGE AND NOT `allow_auto_merge`
+# The setting is repo-wide: enabling it would activate Renovate's platformAutomerge and
+# downgrade the bot gate from all-checks to required-contexts-only, letting a PR with a red
+# non-required check land (measured live on #3804: suite FAILURE, all four required contexts
+# green). A scheduled sweep gates on whatever it is told to gate on, and the setting stays
+# false. See session note 57 §3/§A0.
+#
+# WHY THE APP TOKEN AND NOT GITHUB_TOKEN
+# The tag is cut by release.yaml reacting to the merge's PUSH event. Pushes made with a
+# workflow's own GITHUB_TOKEN do not trigger workflows, so a GITHUB_TOKEN merge would leave
+# releases permanently untagged. App-token pushes do trigger it (observed: release.yaml runs
+# triggered by the renovate bot's merges).
+name: release-sweep
+
+on:
+  schedule:
+  # Wednesdays 00:00 UTC: apps-* modules. Sundays 12:00 UTC: infra-* modules. Each cron maps
+  # explicitly in the MODULE_CLASS expression below; a cron edited without updating that
+  # expression resolves to '' and the script exits non-zero instead of sweeping a class the
+  # run was not aimed at.
+  - cron: '0 0 * * 3'
+  - cron: '0 12 * * 0'
+
+concurrency:
+  # Never two sweeps at once (double-merge protection); never cancel one mid-merge.
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  sweep:
+    runs-on: ubuntu-24.04
+    # A wedged sweep must not hold the concurrency group for the 6h default.
+    timeout-minutes: 15
+    permissions:
+      # For the checkout only. Everything the script does uses the app token.
+      contents: read
+    steps:
+    - name: Generate app token
+      id: app-token
+      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+      with:
+        app-id: ${{ secrets.HOMELAB_BOT_APP_ID }}
+        private-key: ${{ secrets.HOMELAB_BOT_APP_PRIVATE_KEY }}
+        # The two permissions a squash merge needs, and nothing else. The script's other API
+        # calls (PR list, check runs, commit status) are reads of a public repo and need no
+        # grant.
+        permission-contents: write
+        permission-pull-requests: write
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: main
+        # Full history: the staleness guard walks parent..origin/main per module path.
+        fetch-depth: 0
+        # The script's later `git fetch` of release-please branches is an anonymous read of
+        # a public repo; no credential needs to persist for it.
+        persist-credentials: false
+    - name: Sweep release PRs
+      env:
+        GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        # Scheduled sweeps always run live; DRY_RUN can only be flipped by a local invocation
+        # (which the script's own GITHUB_ACTIONS check forces back to dry-run regardless).
+        DRY_RUN: 'false'
+        # Cron -> class mapping. Both crons match explicitly and nothing is reachable by
+        # fall-through: an unrecognized schedule (e.g. a cron edited to dodge scheduler
+        # congestion without this expression following) maps to '' and the script rejects it.
+        MODULE_CLASS: ${{ (github.event.schedule == '0 0 * * 3' && 'apps') || (github.event.schedule == '0 12 * * 0' && 'infra') || '' }}
+        # Standing per-module opt-out: a module listed here never auto-lands, whatever its
+        # version class. One space-separated line -- editing the set is editing this line,
+        # nothing else.
+        MANUAL_MODULES: 'infra-storage-core infra-networking-core infra-security-core'
+      run: ci/scripts/release-sweep.sh

@@ -158,6 +158,37 @@ for which types are visible.
    - CHANGELOG.md is updated
    - Module gets versioned (git tag)
 
+#### How release PRs land
+
+The `release-sweep` workflow (`.github/workflows/release-sweep.yaml`) squash-merges eligible
+release PRs on a weekly per-class schedule — `apps-*` modules Wednesdays 00:00 UTC, `infra-*`
+modules Sundays 12:00 UTC, each run handling every eligible PR of its class — when all of the
+following hold, and otherwise leaves them for a human. Every guard fails toward "wait", never
+toward "merge":
+
+- the bump is **non-breaking for that module**, resolved from `release-please-config.json`
+  and `.release-please-manifest.json`: a patch bump always qualifies; a minor bump qualifies
+  unless the module is below 1.0.0 with `bump-minor-pre-major` (today: all of them), where a
+  minor is exclusively what a `!` commit produces. A module crossing 1.0.0 makes its minors
+  eligible automatically. Major bumps, version jumps, and first releases always wait;
+- it carries no **`automerge:off`** label (apply that label to park a release indefinitely);
+- its module is not listed in the workflow's `MANUAL_MODULES` line (standing opt-out;
+  currently `infra-storage-core`, `infra-networking-core`, `infra-security-core`);
+- every check on the PR head is green — all checks, not just required contexts, resolved
+  newest-per-name so a stale attempt superseded by a re-run does not count;
+- nothing has landed on main under the module's path since release-please last built the PR.
+
+Release PRs run no chainsaw suites — their diff (CHANGELOG + manifest) sits outside every
+suite's path filter — so suite state is deliberately not a gate here: the "no auto-landing
+over failing suites" property is enforced upstream, on the content PRs that run the suites,
+and is inapplicable to the release PR itself, exactly as it is for a manual merge of the same
+PR. The full reasoning per guard is in `ci/scripts/release-sweep.sh`'s header; each sweep
+writes a per-PR decision table to its run's step summary. A wrongly cut tag deploys nothing
+by itself — both consuming clusters pin exact tags and adopt them through their own reviewed
+deploy PRs — and recovery is forward-only: revert the offending commit, and the resulting
+revert release is itself a patch that lands on its class's next sweep. Tags are never
+deleted.
+
 ## Maintenance Practices
 
 1. Module Archival
