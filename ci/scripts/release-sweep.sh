@@ -94,11 +94,15 @@ fi
 # Anything other than an explicit "false" means dry-run.
 [[ "${DRY_RUN}" == "false" ]] || DRY_RUN="true"
 
-# Which module class this run handles: "apps", "infra", or "all". The workflow maps its two
-# cron entries here; "all" exists for workflow_dispatch.
-MODULE_CLASS="${MODULE_CLASS:-all}"
+# Which module class this run handles: "apps", "infra", or "all" (local runs only -- each of
+# the workflow's cron entries maps explicitly to apps or infra). Defaults to "all" only when
+# UNSET: a set-but-empty value is the workflow signalling a schedule its cron->class mapping
+# did not recognize, and it must fail here rather than widen to "all".
+MODULE_CLASS="${MODULE_CLASS-all}"
 case "${MODULE_CLASS}" in
   apps|infra|all) ;;
+  '') echo "release-sweep: MODULE_CLASS is empty -- the workflow's cron->class mapping did not recognize the schedule that fired; update the MODULE_CLASS expression to match the edited cron" >&2
+      exit 1 ;;
   *) echo "release-sweep: MODULE_CLASS must be apps, infra or all (got '${MODULE_CLASS}')" >&2
      exit 1 ;;
 esac
