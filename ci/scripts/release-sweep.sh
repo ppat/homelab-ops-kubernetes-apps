@@ -73,8 +73,8 @@
 # checkout of main at its current tip (the staleness guard walks `parent..origin/main`).
 #
 # Usage:
-#   DRY_RUN=false MODULE_CLASS=apps|infra|all ci/scripts/release-sweep.sh   # live (CI only)
-#   ci/scripts/release-sweep.sh                                             # dry-run
+#   DRY_RUN=false MODULE_CLASS=apps|infra ci/scripts/release-sweep.sh   # live (CI only)
+#   MODULE_CLASS=apps|infra ci/scripts/release-sweep.sh                 # dry-run
 #
 # DRY_RUN defaults to TRUE: evaluate and report every decision, merge nothing. Merging
 # requires BOTH an explicit DRY_RUN=false AND running inside GitHub Actions -- a local
@@ -94,16 +94,16 @@ fi
 # Anything other than an explicit "false" means dry-run.
 [[ "${DRY_RUN}" == "false" ]] || DRY_RUN="true"
 
-# Which module class this run handles: "apps", "infra", or "all" (local runs only -- each of
-# the workflow's cron entries maps explicitly to apps or infra). Defaults to "all" only when
-# UNSET: a set-but-empty value is the workflow signalling a schedule its cron->class mapping
-# did not recognize, and it must fail here rather than widen to "all".
-MODULE_CLASS="${MODULE_CLASS-all}"
+# Which module class this run handles: "apps" or "infra". Required, with no default and no
+# wider class: each of the workflow's cron entries maps explicitly to apps or infra, and a
+# set-but-empty value is the workflow signalling a schedule its cron->class mapping did not
+# recognize -- so unset or empty must fail here rather than silently select a behaviour.
+MODULE_CLASS="${MODULE_CLASS:-}"
 case "${MODULE_CLASS}" in
-  apps|infra|all) ;;
-  '') echo "release-sweep: MODULE_CLASS is empty -- the workflow's cron->class mapping did not recognize the schedule that fired; update the MODULE_CLASS expression to match the edited cron" >&2
+  apps|infra) ;;
+  '') echo "release-sweep: MODULE_CLASS is unset or empty -- the workflow's cron->class mapping did not recognize the schedule that fired; update the MODULE_CLASS expression to match the edited cron" >&2
       exit 1 ;;
-  *) echo "release-sweep: MODULE_CLASS must be apps, infra or all (got '${MODULE_CLASS}')" >&2
+  *) echo "release-sweep: MODULE_CLASS must be apps or infra (got '${MODULE_CLASS}')" >&2
      exit 1 ;;
 esac
 MANUAL_MODULES="${MANUAL_MODULES:-}"
