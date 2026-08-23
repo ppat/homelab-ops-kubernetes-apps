@@ -37,19 +37,6 @@ on:
   # two in sync when editing either.
   - cron: '0 0 * * 3'
   - cron: '0 12 * * 0'
-  workflow_dispatch:
-    inputs:
-      modules:
-        description: 'Which module class to sweep'
-        required: false
-        default: all
-        type: choice
-        options: [apps, infra, all]
-      dry_run:
-        description: 'Evaluate and report every decision, merge nothing'
-        required: false
-        default: false
-        type: boolean
 
 concurrency:
   # Never two sweeps at once (double-merge protection); never cancel one mid-merge.
@@ -90,9 +77,11 @@ jobs:
     - name: Sweep release PRs
       env:
         GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        DRY_RUN: ${{ inputs.dry_run || 'false' }}
-        # Cron -> class mapping (dispatch passes its input through).
-        MODULE_CLASS: ${{ github.event_name == 'workflow_dispatch' && inputs.modules || (github.event.schedule == '0 0 * * 3' && 'apps' || 'infra') }}
+        # Scheduled sweeps always run live; DRY_RUN can only be flipped by a local invocation
+        # (which the script's own GITHUB_ACTIONS check forces back to dry-run regardless).
+        DRY_RUN: 'false'
+        # Cron -> class mapping.
+        MODULE_CLASS: ${{ github.event.schedule == '0 0 * * 3' && 'apps' || 'infra' }}
         # Standing per-module opt-out: a module listed here never auto-lands, whatever its
         # version class. One space-separated line -- editing the set is editing this line,
         # nothing else.
