@@ -49,7 +49,7 @@ permissions: {}
 jobs:
   sweep:
     runs-on: ubuntu-24.04
-    # A wedged sweep must not hold the concurrency group for the 6h default.
+    # A sweep run that hangs must not hold the concurrency group for the 6h default.
     timeout-minutes: 15
     permissions:
       # For the checkout only. Everything the script does uses the app token.
