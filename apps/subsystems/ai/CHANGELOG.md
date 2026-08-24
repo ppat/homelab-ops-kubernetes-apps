@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.8.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.7.1...apps-ai-v0.8.0) (2026-08-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* **apps-ai:** Open WebUI moves from namespace `ai` to `openwebui`. Its data does not move with it. Consumers must restore the existing Longhorn volume from backup into a new claim in the new namespace, by hand, at rollout time -- there is no GitOps expression of this and the manifests deliberately do not attempt one. Skipping it starts Open WebUI on an empty disk and loses all chat history, uploaded documents and the vector store. Flux prune is disabled fleet-wide, so nothing in the old namespace is cleaned up for you either.
+
+### 🛠 Improvements
+
+* state the behaviour, not the version it was checked at ([#3771](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3771)) ([08b0411](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/08b0411c8d0db0127f56f65f5b1ed639abb0c7ea))
+
+
+### ✨ Features
+
+* **apps-ai:** drop bundled Redis from Open WebUI, shorten JWT expiry to 8h ([#3853](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3853)) ([9e027d0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9e027d0a60b2333608d4f09cfd000385d98233ba))
+* **apps-ai:** update docker.io/grafana/mcp-grafana (1.0.0 -&gt; 1.1.0) ([#3748](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3748)) ([be07a3a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/be07a3a36133a40c998c088f743db5606de4144b))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** move Open WebUI into its own namespace ([#3846](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3846)) ([adb46e0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/adb46e0ae34e9d5f9346ea53ac91e553cc0d8725))
+
 ## [0.7.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.7.0...apps-ai-v0.7.1) (2026-08-10)
 
 
