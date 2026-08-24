@@ -13,11 +13,46 @@ spec:
       - name: namespace
         value: kube-system
       file: ../chainsaw/assertions/daemonset-ready.yaml
+  - description: Assert the tun device is advertised in node capacity/allocatable
+    # `daemonset-ready.yaml` proves the pod is Ready, not that the plugin registered a
+    # device with kubelet: a device plugin that starts, binds its gRPC socket, and then
+    # finds no matching path (a renamed hostPath, a domain the kubelet has never heard of)
+    # is just as Ready. The necessary consequence of a working generic-device-plugin is the
+    # "tun" device showing up in node status capacity/allocatable under the domain it
+    # actually advertises under -- so that is what this checks.
+    #
+    # This is also the regression class that motivated pinning `--domain` explicitly on the
+    # DaemonSet (see daemonset.yaml): upstream v0.2.0 flipped the flag's default from
+    # squat.ai to devic.es (github.com/squat/generic-device-plugin#193), which silently
+    # renamed the resource for any consumer still requesting the old name. Hardcoding the
+    # expected domain here means a future default flip fails this check instead of failing
+    # a consumer pod's scheduling in prod.
+    #
+    # A bare collection assert (no metadata.name) is satisfied the moment ANY ONE Node
+    # matches -- proven in ci/test/assertion-semantics's "collections-match-any-not-all"
+    # arm -- so on a multi-node cluster this alone would NOT prove every node covered by the
+    # DaemonSet advertises the resource; ci/test/chainsaw/scripts/daemonset-node-coverage.sh
+    # is the pattern for that ("every node" needs an explicit count, not a bare assert). This
+    # suite runs single-node (.github/kind-cluster-single-node.yaml), so there is only one
+    # Node for "any" and "all" to agree about -- if a worker node is ever added here, pair
+    # this with a coverage check rather than assume it still proves full coverage.
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Node
+        status:
+          capacity:
+            devic.es/tun: "1k"
+          allocatable:
+            devic.es/tun: "1k"
   catch:
   - describe:
       apiVersion: apps/v1
       kind: DaemonSet
       name: generic-device-plugin
       namespace: kube-system
+  - describe:
+      apiVersion: v1
+      kind: Node
   - events:
       namespace: kube-system
