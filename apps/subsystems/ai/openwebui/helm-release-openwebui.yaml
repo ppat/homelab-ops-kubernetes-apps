@@ -42,6 +42,13 @@ spec:
     extraEnvVars:
     - name: ENABLE_SIGNUP
       value: "false"
+    - name: JWT_EXPIRES_IN
+      value: "8h"
+
+    websocket:
+      manager: ""
+      redis:
+        enabled: false
 
     service:
       appProtocol: kubernetes.io/ws

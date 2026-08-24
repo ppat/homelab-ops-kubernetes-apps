@@ -52,8 +52,6 @@ spec:
   # JMESPath projections rather than a literal `env:` list: chainsaw compares arrays
   # element-wise and requires equal length, so a two-entry list fails against the chart's
   # nine -- and spelling out all nine re-breaks on the next chart bump that adds one.
-  # The Redis URLs are rendered chart internals: on a chart bump, re-derive them, do not
-  # delete the assert.
   - description: Assert cross-namespace references in statefulset/open-webui
     assert:
       resource:
@@ -67,10 +65,16 @@ spec:
             spec:
               # yamllint disable rule:line-length
               (containers[?name == 'open-webui'] | [0].env[?name == 'OPENAI_API_BASE_URL'] | [0].value): http://litellm.ai.svc.cluster.local:4000/v1
-              (containers[?name == 'open-webui'] | [0].env[?name == 'REDIS_URL'] | [0].value): redis://open-webui-redis.openwebui.svc.cluster.local:6379/0
-              (containers[?name == 'open-webui'] | [0].env[?name == 'WEBSOCKET_REDIS_URL'] | [0].value): redis://open-webui-redis.openwebui.svc.cluster.local:6379/0
               (volumes[?name == 'data'] | [0].persistentVolumeClaim.claimName): openwebui
               # yamllint enable rule:line-length
+  - description: Assert no bundled Redis is deployed
+    error:
+      resource:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: open-webui-redis
+          namespace: openwebui
   - description: Assert openwebui-release
     assert:
       bindings:
