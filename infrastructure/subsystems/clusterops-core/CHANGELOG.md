@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-core-v0.3.4...infra-clusterops-core-v0.4.0) (2026-08-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-clusterops-core:** any consuming cluster that carries its own patch removing `resources.limits.cpu` from these Deployments (a JSON6902 `op: remove` targeting that path, as clusters/nas/kustomizations/infra-clusterops-core.yaml in the clusters repo currently does) must delete that patch in the SAME change that bumps `ref.tag` to this release. The module no longer emits `limits.cpu`, so the old patch's target path won't exist and the kustomize build will fail.
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-clusterops-core:** remove cpu limit from flux controllers ([#3848](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3848)) ([6484e5f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6484e5f3c1140335776fef1863440ee0dc926c57))
+
 ## [0.3.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-core-v0.3.3...infra-clusterops-core-v0.3.4) (2026-08-11)
 
 
