@@ -48,8 +48,10 @@ patches:
     kind: HelmRelease
     name: traefik-release
     namespace: traefik
+# A patch target that matches nothing is a silent no-op, so a stale namespace here ships SSO
+# switched off instead of failing the build.
 - path: patch-openwebui.yaml
   target:
     kind: HelmRelease
     name: openwebui-release
-    namespace: ai
+    namespace: openwebui

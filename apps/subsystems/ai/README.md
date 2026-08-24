@@ -62,7 +62,7 @@ flowchart TB
 
     %% Core Components - Module Provided
     subgraph module[AI Module]
-        openwebui[OpenWebUI Interface]:::ui
+        openwebui[OpenWebUI Interface<br/>ns: openwebui]:::ui
         litellm[LiteLLM Gateway]:::gateway
         context7[context7 MCP Server]:::core
         github[GitHub MCP Server]:::core
@@ -147,7 +147,7 @@ flowchart TB
 
 | Component | Type | Primary Role | Key Features | Integration Points |
 | ----------- | ------ | -------------- | -------------- | ------------------- |
-| OpenWebUI | Core | Web Interface | • User-friendly chat interface<br>• Conversation management<br>• Model selection and configuration<br>• Cloud LLM integration via the LiteLLM gateway | • LiteLLM gateway integration for cloud model access<br>• Direct user access via web browser<br>• Persistent storage for settings |
+| OpenWebUI | Core | Web Interface | • User-friendly chat interface (own namespace, `openwebui`)<br>• Conversation management<br>• Model selection and configuration<br>• Cloud LLM integration via the LiteLLM gateway<br>• Chart-deployed Redis alongside it as the websocket session manager | • LiteLLM gateway integration for cloud model access<br>• Direct user access via web browser<br>• Persistent storage for settings |
 | LiteLLM | Gateway | AI Gateway | • Unified routing across multiple LLM providers with automatic failover<br>• Virtual key, team, and budget management<br>• Request caching and cost tracking<br>• Hosts MCP servers for client tool access | • OpenWebUI and other gateway consumer integration<br>• PostgreSQL for persistent configuration and spend data<br>• Redis-compatible cache for response caching<br>• mcp-context7, mcp-github, mcp-grafana, mcp-home-assistant, mcp-kubernetes-homelab, mcp-kubernetes-nas, mcp-kubernetes-sandbox, mcp-obsidian-agent, mcp-obsidian-ingestor, mcp-playwright, mcp-unifi-network, and mcp-unifi-protect integration |
 | mcp-context7 | Core | Documentation MCP Server | • Self-hosted library/API documentation lookup<br>• MCP protocol interface for AI clients<br>• Stateless, lightweight process | • Hosted behind the LiteLLM gateway<br>• Provides documentation context to AI assistants |
 | mcp-github | Core | GitHub MCP Server | • Self-hosted `github/github-mcp-server`, read-broad with a narrow, explicit `--tools` allowlist for writes<br>• Writes limited to issue create/update, issue and PR comments, sub-issue linking, PR review-thread replies, and gist creation<br>• Holds no GitHub credential of its own — LiteLLM injects the PAT as a bearer token on every call<br>• MCP protocol interface for AI clients | • Hosted behind the LiteLLM gateway, which supplies the bearer-token PAT<br>• Provides GitHub issue/PR/repository/search/security-alert context and limited write tools to AI assistants |
@@ -171,7 +171,7 @@ flowchart TB
 
 This module also depends on a PostgreSQL and Redis-compatible cache, provisioned via the cluster's database operators, for the LiteLLM gateway's configuration, spend tracking, and response caching. n8n has its own dedicated PostgreSQL cluster (own namespace, own postBuild variables — see below).
 
-n8n, OpenClaw, and the knowledge vault each run in their own isolated namespace (`n8n`, `openclaw`, `obsidian-vault`) rather than the shared `ai` namespace. Neither ingress is behind SSO forward-auth yet (deferred — requires coordinated Terraform-repo changes); n8n relies on its own owner login, OpenClaw on its gateway auth token. Both are LAN/tailnet-only, same as the rest of this module.
+OpenWebUI, n8n, OpenClaw, and the knowledge vault each run in their own isolated namespace (`openwebui`, `n8n`, `openclaw`, `obsidian-vault`) rather than the shared `ai` namespace, which holds the LiteLLM gateway, its datastores, and the MCP servers behind it. Neither ingress is behind SSO forward-auth yet (deferred — requires coordinated Terraform-repo changes); n8n relies on its own owner login, OpenClaw on its gateway auth token. Both are LAN/tailnet-only, same as the rest of this module.
 
 OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` ConfigMap in the `openclaw` namespace), its `openclaw-config-secrets` Secret, and its `openclaw-data` PVC are all cluster-provided — like `litellm-model-config`, this module mounts them but does not ship them. The image's entrypoint wrapper seeds `openclaw.json` into a writable path (`chmod 600`) at startup, so the module carries no `openclaw.json` of its own.
 
@@ -181,7 +181,7 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | -------- | ------- | ----------- |
    | vault-data | Authoritative knowledge-vault content — the markdown files themselves, not Obsidian's own app state | RWX |
    | vault-git-cache | The git committer's own repository metadata (its `--git-dir`) — never vault content, and never mounted by any other workload | RWO |
-   | openwebui | User settings and conversation history | RWX |
+   | openwebui | OpenWebUI's user settings, conversation history, uploaded documents and vector store | RWO |
    | n8n-data | n8n configuration, workflow static data | RWO |
    | openclaw-data | OpenClaw config, workspace, memory SQLite, WhatsApp Baileys session, and Code Server's own settings | RWO |
 

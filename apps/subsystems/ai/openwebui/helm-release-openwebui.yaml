@@ -3,7 +3,7 @@ apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: openwebui-release
-  namespace: ai
+  namespace: openwebui
 spec:
   chart:
     spec:
@@ -21,7 +21,7 @@ spec:
       retries: 3
   interval: 15m0s
   releaseName: openwebui
-  targetNamespace: ai
+  targetNamespace: openwebui
   upgrade:
     cleanupOnFail: true
     remediation:

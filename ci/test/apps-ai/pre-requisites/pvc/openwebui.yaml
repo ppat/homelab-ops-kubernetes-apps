@@ -3,7 +3,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: openwebui
-  namespace: ai
+  namespace: openwebui
 spec:
   accessModes:
   - ReadWriteOnce
