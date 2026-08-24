@@ -16,14 +16,18 @@ spec:
         app.kubernetes.io/name: generic-device-plugin
     spec:
       priorityClassName: system-node-critical
+      serviceAccountName: generic-device-plugin
       tolerations:
       - operator: "Exists"
         effect: "NoExecute"
       - operator: "Exists"
         effect: "NoSchedule"
       containers:
-      - image: squat/generic-device-plugin:latest@sha256:dc192e164c69b03f156765793a1be62ca437709ae477b27ca7d8f3dcf5021576
+      - image: squat/generic-device-plugin:0.2.0@sha256:66c8d5c270eb2b721f1064c549b9b7898152a6d2f0163380a5d37dc7636c20ff
         args:
+        # v0.2.0 flipped the default --domain from squat.ai to devic.es (upstream #193); pin it
+        # explicitly so a future default flip can't silently rename the advertised resource again.
+        - --domain=devic.es
         - --device
         # yamllint disable-line rule:indentation
         - |

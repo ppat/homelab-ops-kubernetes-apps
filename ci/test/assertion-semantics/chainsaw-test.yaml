@@ -281,3 +281,75 @@ spec:
           chainsaw assert --no-color -f "${d}/assertion.yaml" -r "${d}/resource.yaml"
         check:
           ($error != null): true
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: collections-match-any-not-all
+spec:
+  description: |
+    A resource-shaped assertion that names a Kind but no metadata.name is checked against
+    every object of that Kind (filtered by whatever other metadata it does name, e.g.
+    namespace/labels) and is satisfied the moment ANY ONE of them matches the tree -- not
+    when ALL of them do. Confirmed here with two ConfigMaps carrying opposite values: an
+    assertion for either value passes on its own, which could only happen under any-match
+    (all-match would need every object to carry the SAME value). The paired `error` proves
+    the mechanism can still go red -- a value neither object carries is rejected.
+
+    This is why "every node in the DaemonSet's coverage advertises X" cannot be written as a
+    bare collection assert: on a multi-node cluster, one node satisfying the tree passes the
+    whole assertion even if every other node lacks the resource entirely.
+    ci/test/chainsaw/scripts/daemonset-node-coverage.sh exists for exactly this gap -- an
+    explicit count comparison, not a chainsaw assertion, is what "every node" requires. A
+    single-node suite sidesteps the gap only because there is nothing for "any" and "all" to
+    disagree about; it is not a chainsaw guarantee and does not generalize the moment a suite
+    gains a second node.
+  steps:
+  - try:
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cm-collection-a
+            labels:
+              test: collection
+          data:
+            marker: "yes"
+    - apply:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: cm-collection-b
+            labels:
+              test: collection
+          data:
+            marker: "no"
+    - assert:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            labels:
+              test: collection
+          data:
+            marker: "yes"
+    - assert:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            labels:
+              test: collection
+          data:
+            marker: "no"
+    - error:
+        resource:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            labels:
+              test: collection
+          data:
+            marker: "neither-configmap-has-this-value"
