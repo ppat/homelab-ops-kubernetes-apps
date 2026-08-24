@@ -17,6 +17,22 @@ patches:
     version: v1
     kind: Deployment
     labelSelector: "app.kubernetes.io/part-of=flux"
+# Flux's reconcilers are latency-sensitive with bursty CPU profiles: a reconcile spike is short and
+# idle time is long. A CPU limit converts that burst into CFS throttling -- the controller is
+# descheduled mid-reconcile even when the node has idle CPU -- which shows up as slow reconciliation
+# and timeouts, not as a resource-exhaustion event. CPU is compressible, so the request (left as
+# shipped) is what protects neighbours under contention; the limit only buys throttling. Memory
+# limits are unaffected (memory is incompressible) and stay as shipped.
+#
+# `cpu: null` rather than a JSON6902 `op: remove`: this re-renders against every future Flux release
+# this module vendors, and a strategic-merge null is a no-op if a later release ever stops shipping
+# a default `limits.cpu`, where a JSON6902 remove would hard-fail the kustomize build.
+- path: patches/remove-cpu-limits.yaml
+  target:
+    group: apps
+    version: v1
+    kind: Deployment
+    labelSelector: "app.kubernetes.io/part-of=flux"
 - path: patches/namespace-metadata.yaml
   target:
     kind: Namespace
