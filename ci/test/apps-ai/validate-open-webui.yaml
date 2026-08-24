@@ -11,7 +11,7 @@ spec:
       - name: name
         value: litellm-openwebui-key
       - name: namespace
-        value: ai
+        value: openwebui
       file: ../chainsaw/assertions/externalsecret-ready.yaml
   - description: Assert statefulset/open-webui
     assert:
@@ -19,7 +19,7 @@ spec:
       - name: name
         value: open-webui
       - name: namespace
-        value: ai
+        value: openwebui
       file: ../chainsaw/assertions/statefulset-ready.yaml
       # 5m -> 10m. Unusually for this repo, the tail here is not a guess: this assert has
       # taken 208/238/270s on green runs (0.90 of 5m) and has also burned the full 300s and
@@ -49,24 +49,46 @@ spec:
       # happens here -- all three recorded failures name this StatefulSet and its real
       # status, so the object exists and the message is already the precise one.
       timeout: 10m
+  # JMESPath projections rather than a literal `env:` list: chainsaw compares arrays
+  # element-wise and requires equal length, so a two-entry list fails against the chart's
+  # nine -- and spelling out all nine re-breaks on the next chart bump that adds one.
+  # The Redis URLs are rendered chart internals: on a chart bump, re-derive them, do not
+  # delete the assert.
+  - description: Assert cross-namespace references in statefulset/open-webui
+    assert:
+      resource:
+        apiVersion: apps/v1
+        kind: StatefulSet
+        metadata:
+          name: open-webui
+          namespace: openwebui
+        spec:
+          template:
+            spec:
+              # yamllint disable rule:line-length
+              (containers[?name == 'open-webui'] | [0].env[?name == 'OPENAI_API_BASE_URL'] | [0].value): http://litellm.ai.svc.cluster.local:4000/v1
+              (containers[?name == 'open-webui'] | [0].env[?name == 'REDIS_URL'] | [0].value): redis://open-webui-redis.openwebui.svc.cluster.local:6379/0
+              (containers[?name == 'open-webui'] | [0].env[?name == 'WEBSOCKET_REDIS_URL'] | [0].value): redis://open-webui-redis.openwebui.svc.cluster.local:6379/0
+              (volumes[?name == 'data'] | [0].persistentVolumeClaim.claimName): openwebui
+              # yamllint enable rule:line-length
   - description: Assert openwebui-release
     assert:
       bindings:
       - name: name
         value: openwebui-release
       - name: namespace
-        value: ai
+        value: openwebui
       file: ../chainsaw/assertions/helmrelease-ready.yaml
   catch:
   - describe:
       apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
       name: openwebui-release
-      namespace: ai
+      namespace: openwebui
   - describe:
       apiVersion: apps/v1
       kind: StatefulSet
       name: open-webui
-      namespace: ai
+      namespace: openwebui
   - events:
-      namespace: ai
+      namespace: openwebui

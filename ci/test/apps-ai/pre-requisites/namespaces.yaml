@@ -6,7 +6,7 @@ metadata:
 ---
 # The module creates this namespace itself; it is pre-created here only so the
 # vault-data PVC fixture below it has somewhere to land before the module applies
-# (same reason `n8n` and `openclaw` appear here).
+# (same reason `n8n`, `openclaw` and `openwebui` appear here).
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -28,3 +28,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: openclaw
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openwebui
