@@ -1,11 +1,7 @@
 ---
-# Not assertable against a live Deployment in this repo's chainsaw suites: their kind clusters
-# bootstrap Flux imperatively via the `flux` CLI (field-manager `flux`) before GitOps exists to
-# reconcile anything, and that one-time apply's claim on this field never gets relinquished. SSA
-# only clears a field once every manager that ever declared it stops declaring it, so the live
-# Deployment shows the old limit forever on kind regardless of whether this patch is correct. See
-# flux/kustomization.yaml and PR history for the full mechanism -- don't "fix" a live-cluster
-# assertion here, it will go red for a reason that has nothing to do with this patch.
+# Don't swap this for an assertion against a live Deployment: this repo's kind clusters bootstrap
+# Flux with the `flux` CLI, and SSA keeps that field-manager's claim on limits.cpu forever -- so a
+# live check goes red whether or not this patch is correct.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
