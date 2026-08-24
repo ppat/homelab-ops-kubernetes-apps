@@ -16,19 +16,6 @@
       "matchFileNames": [
         "infrastructure/bootstrap/crds/**"
       ]
-    },
-    {
-      "automerge": false,
-      "addLabels": [
-        "automerge:off"
-      ],
-      "description": "disable automerge for kubevirt -- minor releases have changed behaviour-affecting defaults (e.g. v1.6's VM rollout strategy default flip), every bump gets human review",
-      "matchDatasources": [
-        "github-releases"
-      ],
-      "matchPackageNames": [
-        "kubevirt/kubevirt"
-      ]
     }
   ]
 }
