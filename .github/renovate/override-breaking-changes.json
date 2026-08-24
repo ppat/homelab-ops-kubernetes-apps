@@ -4,7 +4,7 @@
     "'!' is the only read-before-merging signal a consuming cluster gets: modules are consumed at",
     "PINNED tags, and at 0.x '!' cuts a minor instead of a silent patch. The bot cannot read",
     "release notes, so the marker is structural: every module-path major (the shared preset does",
-    "this), plus the two dependencies whose minors historically broke operators (rule below).",
+    "this), plus the dependencies whose minors historically broke operators (rule below).",
     "Not a claim that every such bump breaks, but that a bot may not decide it does not.",
     "Do not re-add a local majors rule: kubernetes-api migrations group into one PR spanning",
     "many modules, where no module scope is true (.claude/rules/commits.md, rule 3 over 4).",
@@ -15,11 +15,12 @@
   "packageRules": [
     {
       "description": [
-        "Flux and Longhorn ship operator-affecting changes in minor releases (a Flux minor can",
-        "require a CRD/API migration; a Longhorn minor, an upgrade path), and the shared preset",
-        "marks only majors -- so this marker is hand-built. The scope is {{semanticCommitScope}} by",
-        "reference, never re-derived from the path. Module paths only, deliberately: a flux CLI pin",
-        "elsewhere ships nothing."
+        "Flux, Longhorn and KubeVirt ship operator-affecting changes in minor releases (a Flux",
+        "minor can require a CRD/API migration; a Longhorn minor, an upgrade path; a KubeVirt",
+        "minor, a changed behaviour-affecting default -- v1.6 flipped the VM rollout strategy",
+        "default from Stage to LiveUpdate), and the shared preset marks only majors -- so this",
+        "marker is hand-built. The scope is {{semanticCommitScope}} by reference, never re-derived",
+        "from the path. Module paths only, deliberately: a flux CLI pin elsewhere ships nothing."
       ],
       "matchFileNames": [
         "apps/subsystems/**",
@@ -28,6 +29,7 @@
       ],
       "matchPackageNames": [
         "fluxcd/flux2",
+        "kubevirt/kubevirt",
         "longhorn",
         "longhorn/longhorn"
       ],

@@ -29,14 +29,15 @@
     },
     {
       "description": [
-        "A Longhorn minor is a breaking release (override-breaking-changes.json marks it): thirty days",
-        "gives dependents time to catch up and the vendor time to patch regressions. Coder is soaked",
-        "for a different reason: it ships stable and experimental releases on one channel, and a",
-        "release only counts as stable after roughly a month, so the soak reconstructs that",
-        "unpublished stable channel."
+        "A Longhorn or KubeVirt minor is a breaking release (override-breaking-changes.json marks",
+        "both): thirty days gives dependents time to catch up and the vendor time to patch",
+        "regressions. Coder is soaked for a different reason: it ships stable and experimental",
+        "releases on one channel, and a release only counts as stable after roughly a month, so the",
+        "soak reconstructs that unpublished stable channel."
       ],
       "matchPackageNames": [
         "coder",
+        "kubevirt/kubevirt",
         "longhorn",
         "longhorn/longhorn"
       ],
