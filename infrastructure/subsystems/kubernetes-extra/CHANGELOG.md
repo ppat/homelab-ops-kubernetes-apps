@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.32](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.31...infra-kubernetes-extra-v0.0.32) (2026-08-24)
+
+
+### ✨ Features
+
+* **infra-kubernetes-extra:** adopt versioned generic-device-plugin image ([#3847](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3847)) ([3b15201](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3b1520152876cb7865a1c72624af7ba9aacb9c6e))
+
 ## [0.0.31](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.30...infra-kubernetes-extra-v0.0.31) (2026-08-22)
 
 
