@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.29.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.29.5...infra-observability-core-v0.29.6) (2026-08-25)
+
+
+### ✨ Features
+
+* **infra-observability-core:** update grafana (12.10.4 -&gt; 12.11.2) ([#3841](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3841)) ([c0721b7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c0721b7033d5e66f74fea5a2200dd856e373e0c4))
+* **infra-observability-core:** update kube-prometheus-stack (88.3.0 -&gt; 88.5.4) ([#3842](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3842)) ([635d3cf](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/635d3cfafc0ab48a858d3a5e4517e8b7c8c9d2bb))
+* **infra-observability-core:** update loki (18.9.1 -&gt; 18.11.2) ([#3843](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3843)) ([676e816](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/676e8163eaff3b20b32e8d7172a487f20cdf8b5c))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** keep loki's s3 credentials out of ConfigMap/loki ([#3856](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3856)) ([162bc1a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/162bc1ab7ed53926c6690d03f75129da3cc04fd2)), refs [#3682](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3682)
+* **infra-observability-core:** update loki (18.9.0 -&gt; 18.9.1) ([#3804](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3804)) ([306287b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/306287ba6bc570d6610c363004ce058d174ec2de))
+
 ## [0.29.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.29.4...infra-observability-core-v0.29.5) (2026-08-22)
 
 
