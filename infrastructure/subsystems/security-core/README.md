@@ -18,6 +18,7 @@ The security-core module provides three main capabilities:
 2. Secret Management
    - Integration with external secret management services
    - Automated synchronization of external secrets to Kubernetes secrets
+   - Nightly restart of external-secrets' own Deployments to recover from sync failures
 
 3. Trust Distribution
    - Enables sharing certificates between namespaces
@@ -34,9 +35,9 @@ The security-core module provides three main capabilities:
 ### Component Details
 
 | Component | Primary Role | Integration Points |
-|-----------|-------------|-------------------|
+| --- | --- | --- |
 | cert-manager | Certificate lifecycle management | • Manages the full lifecycle of certificates within the cluster<br>• Provides a self-signed issuer for development environments<br>• Enables configuration of production certificate issuers like Let's Encrypt |
-| external-secrets | Secret management and synchronization | • Integrates with external secret management services<br>• Synchronizes external secrets into Kubernetes secrets<br>• Supports multiple secret store configurations |
+| external-secrets | Secret management and synchronization | • Integrates with external secret management services<br>• Synchronizes external secrets into Kubernetes secrets<br>• Supports multiple secret store configurations<br>• Nightly CronJob restarts every Deployment in the namespace to recover from sync failures |
 | trust-manager | Certificate trust distribution | • Enables defining certificate distribution rules via bundles<br>• Copies certificates between namespaces based on bundle rules<br> |
 | Bitwarden SDK Server | Bitwarden integration service | • Enables using Bitwarden Secrets Manager as a secret provider<br>• Provides secure access to Bitwarden secrets via external-secrets<br>• Utilized only when using Bitwarden as a secret store |
 | Kyverno | Policy enforcement | • Validates resources against policies<br>• Mutates resources to enforce standards<br>• Generates policy reports<br>• Integrates with Prometheus for metrics<br>• Supports high availability (3 replicas) |
@@ -44,7 +45,11 @@ The security-core module provides three main capabilities:
 
 ## Prerequisites
 
-None
+### RBAC Requirements
+
+| Resource | Access | Purpose |
+| --- | --- | --- |
+| Deployments (`apps`, `external-secrets` namespace) | get, list, patch | Nightly CronJob restarts every Deployment in the namespace to recover from external-secrets sync failures |
 
 ## Usage
 
@@ -53,13 +58,13 @@ This depicts how this module can be used to fetch secret from Bitwarden Secret M
 1. Required Secrets
 
    | Secret Name | Purpose | Required Keys |
-   |-------------|---------|---------------|
+   | --- | --- | --- |
    | bitwarden-machine-account | Bitwarden Secrets Manager access | access-token |
 
 2. Required Variables
 
    | Variable | Purpose | Required By |
-   |----------|---------|-------------|
+   | --- | --- | --- |
    | BITWARDEN_ORGANIZATION_ID | Organization identifier for Bitwarden | external-secrets |
    | BITWARDEN_PROJECT_ID | Project identifier for Bitwarden | external-secrets |
 
