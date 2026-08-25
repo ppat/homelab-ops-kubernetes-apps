@@ -24,4 +24,7 @@ spec:
       content: ../chainsaw/scripts/apply-bootstrap-crds.sh
   catch:
   - script:
-      content: kubectl get crds -o name | sort
+      content: |
+        LOG_FILE="${TMPDIR:-/tmp}/bootstrap-crds-apply-${NAMESPACE}.log"
+        if [ -f "${LOG_FILE}" ]; then cat "${LOG_FILE}"; fi
+        kubectl get crds -o name | sort
