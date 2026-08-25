@@ -35,14 +35,6 @@ spec:
     name: loki-s3-credentials
     valuesKey: loki_s3_endpoint
     targetPath: loki.storage.s3.endpoint
-  - kind: Secret
-    name: loki-s3-credentials
-    valuesKey: loki_s3_accesskeyid
-    targetPath: loki.storage.s3.accessKeyId
-  - kind: Secret
-    name: loki-s3-credentials
-    valuesKey: loki_s3_secretaccesskey
-    targetPath: loki.storage.s3.secretAccessKey
   - kind: ConfigMap
     name: loki-extra-config
     valuesKey: loki-retention.yaml
@@ -118,7 +110,14 @@ spec:
           ruler: homelab-loki-ruler
         s3:
           # see: https://grafana.com/docs/loki/latest/configure/#s3_storage_config
-          # endpoint, accessKeyId, and secretAccessKey injected by helmrelease's spec.valuesFrom
+          # endpoint injected by helmrelease's spec.valuesFrom
+          #
+          # The doubled `$$` is load-bearing: Flux's post-build substitution runs over this
+          # manifest before Helm does, and on a single `$` would consume these references and
+          # substitute the empty string, leaving Loki with no credentials. Escaped, the chart
+          # receives `${...}` for Loki to expand from the pod env.
+          accessKeyId: "$${LOKI_S3_ACCESS_KEY_ID}"
+          secretAccessKey: "$${LOKI_S3_SECRET_ACCESS_KEY}"
           #
           # Left unset, Loki's S3 client (pkg/storage/chunk/client/aws) signs every request
           # with the literal placeholder region "dummy" instead of leaving it blank or
@@ -149,6 +148,28 @@ spec:
             cache:
               memcached_client:
                 addresses: dnssrvnoa+_memcached-client._tcp.loki-results-cache.logging.svc.cluster.local
+
+    ######################################################################################################################
+    # Credential injection
+    #
+    # Because these arrive as env vars rather than Helm values, a rotated Secret does not
+    # re-render the config, so the chart's own config-checksum annotation never rolls the
+    # pods for a credential change. Reloader is what applies it.
+    ######################################################################################################################
+    defaults:
+      extraEnv:
+      - name: LOKI_S3_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: loki-s3-credentials
+            key: loki_s3_accesskeyid
+      - name: LOKI_S3_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: loki-s3-credentials
+            key: loki_s3_secretaccesskey
+      annotations:
+        secret.reloader.stakater.com/reload: loki-s3-credentials
 
     ######################################################################################################################
     # Deployment mode: Monolithic (HA, 3 replicas)

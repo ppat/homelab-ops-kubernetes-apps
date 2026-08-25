@@ -270,6 +270,7 @@ flowchart TB
 - [kubernetes-core](../kubernetes-core) (VPA for resource recommendations)
 - [networking-core](../networking-core) (for ingress)
 - Metrics Server [k3s builtin components] (for resource recommendations)
+- [clusterops-core](../clusterops-core) (Reloader, soft: applies rotated credentials)
 
 ## Notes
 
@@ -385,3 +386,9 @@ flowchart TB
   `postRenderers` patch on `helm-release-loki.yaml` rewrites the rendered ClusterRole down to ConfigMaps only,
   verified in CI via the ServiceAccount's actual effective permissions
   (`ci/test/infra-observability/scripts/check-loki-rbac.sh`), not the ClusterRole's YAML.
+
+- **That grant also requires ConfigMaps to hold no credentials, which is why the S3 credentials are not
+  in one.** The chart renders `loki.storage.s3.*` into `ConfigMap/loki`, so both the access key ID and
+  the secret access key are instead `${...}` references Loki expands from its own environment at load
+  time. Rotation is applied by Reloader rather than by a config-checksum roll, since the values are not
+  part of the HelmRelease's values.
