@@ -1,0 +1,40 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: external-secrets-restart
+  namespace: external-secrets
+---
+# Scoped to exactly what `kubectl rollout restart deployment -n external-secrets` (no
+# resource name, so it targets every Deployment in the namespace) does under the hood:
+# list to enumerate them, get + patch (a strategic-merge patch of the pod template
+# annotations) to restart each one. No `update`/`watch`/`create`/`delete` -- rollout
+# restart never calls them.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: external-secrets-restart
+  namespace: external-secrets
+rules:
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: external-secrets-restart
+  namespace: external-secrets
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: external-secrets-restart
+subjects:
+- kind: ServiceAccount
+  name: external-secrets-restart
+  namespace: external-secrets

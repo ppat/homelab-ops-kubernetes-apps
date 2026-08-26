@@ -9,6 +9,8 @@ resources:
 - helm-release-external-secrets.yaml
 - helm-release-trust-manager.yaml
 - bitwarden-ca-cert-bundle.yaml
+- rbac-restart.yaml
+- cronjob-restart.yaml
 
 commonAnnotations:
   # as this is a critical infrastructure component, prevent pruning unintentionally
