@@ -46,4 +46,9 @@ fi
 #
 # --force-conflicts because this step is emulating the bootstrap that precedes everything else,
 # so it must win outright rather than fail on a field another manager already owns.
-kubectl apply --server-side --force-conflicts -k "${CRDS_DIR}"
+#
+# Output goes to a file, not the test log -- the bootstrap-crds.yaml StepTemplate's `catch`
+# prints it, so it only surfaces on failure. Keyed on $NAMESPACE (injected by chainsaw, unique
+# per test) so sequential suites in the same environment never collide on the path.
+LOG_FILE="${TMPDIR:-/tmp}/bootstrap-crds-apply-${NAMESPACE}.log"
+kubectl apply --server-side --force-conflicts -k "${CRDS_DIR}" >"${LOG_FILE}" 2>&1
