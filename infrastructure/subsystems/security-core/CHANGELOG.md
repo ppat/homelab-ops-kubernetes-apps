@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.2.11...infra-security-core-v0.2.12) (2026-08-27)
+
+
+### ✨ Features
+
+* **infra-security-core:** add nightly restart CronJob for external-secrets ([#3855](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3855)) ([8d1409a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8d1409a52aeb98d7c691afaefe75b9496fd7c718))
+
 ## [0.2.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.2.10...infra-security-core-v0.2.11) (2026-08-17)
 
 
