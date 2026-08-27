@@ -51,7 +51,7 @@ jobs:
     timeout-minutes: 5
     env:
       # renovate: datasource=npm depName=bun
-      BUN_VERSION: "1.3.14"
+      BUN_VERSION: "1.4.0"
       # renovate: datasource=node-version depName=node
       NODE_VERSION: "24.19.0"
     steps:
