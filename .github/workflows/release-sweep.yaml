@@ -1,14 +1,14 @@
 ---
 # yamllint disable rule:line-length
 #
-# Auto-lands the release-please PRs a human click adds nothing to. The rule, its guards, and
-# the evidence behind them live in ci/scripts/release-sweep.sh's header; the one-sentence
-# version: a non-breaking release with all checks green and no hold label lands on its
-# class's weekly sweep; anything breaking, first, held, or doubtful waits for the maintainer.
-# OPERATIONS.md "Release Process" documents the operator's view.
+# Auto-lands the release-please PRs a human click adds nothing to. The reusable action owns the
+# guards; this workflow owns when each component selector runs and which components remain manual.
+# A non-breaking release with all checks green and no hold label lands; anything breaking, first,
+# held, conflicting, or doubtful waits for the maintainer. OPERATIONS.md "Release Process"
+# documents the operator's view.
 #
 # SCHEDULE
-# One weekly sweep per module class, each handling every eligible PR of its class in one run:
+# One weekly sweep per component selector, each handling every eligible PR it selects in one run:
 #   apps-* modules  -> Wednesdays 00:00 UTC
 #   infra-* modules -> Sundays   12:00 UTC
 # Batch merging in a single run is evidenced: release-please's release phase picks up all
@@ -31,21 +31,21 @@
 name: release-sweep
 
 on:
+  pull_request:
+    paths:
+    - '.github/workflows/release-sweep.yaml'
   schedule:
-  # Wednesdays 00:00 UTC: apps-* modules. Sundays 12:00 UTC: infra-* modules. Each cron maps
-  # explicitly in the MODULE_CLASS expression below; a cron edited without updating that
-  # expression resolves to '' and the script exits non-zero instead of sweeping a class the
-  # run was not aimed at.
+  # Wednesdays 00:00 UTC: apps-* components. Sundays 12:00 UTC: infra-* components.
   - cron: '0 0 * * 3'
   - cron: '0 12 * * 0'
   workflow_dispatch:
     inputs:
-      module_class:
-        description: 'Module class to sweep'
+      component_selector:
+        description: 'Release-please component selector'
         required: true
-        default: infra
+        default: '^infra-'
         type: choice
-        options: [apps, infra]
+        options: ['^apps-', '^infra-']
       dry_run:
         description: 'Evaluate and report every decision, merge nothing'
         required: true
@@ -89,16 +89,11 @@ jobs:
         # a public repo; no credential needs to persist for it.
         persist-credentials: false
     - name: Sweep release PRs
-      env:
-        GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        # Scheduled sweeps always run live; a dispatch can opt into dry-run.
-        DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
-        # Cron -> class mapping. Dispatches select one of the same two classes explicitly.
-        # An unrecognized schedule maps to '' and the script rejects it rather than sweeping
-        # a class the run was not aimed at.
-        MODULE_CLASS: ${{ (github.event_name == 'workflow_dispatch' && inputs.module_class) || (github.event.schedule == '0 0 * * 3' && 'apps') || (github.event.schedule == '0 12 * * 0' && 'infra') || '' }}
-        # Standing per-module opt-out: a module listed here never auto-lands, whatever its
-        # version class. One space-separated line -- editing the set is editing this line,
-        # nothing else.
-        MANUAL_MODULES: 'infra-storage-core infra-networking-core infra-security-core'
-      run: ci/scripts/release-sweep.sh
+      uses: ppat/homelab-ops-actions/actions/release-sweep@47d363ded547a8107df939280d19083927b78793 # v2.3.0
+      with:
+        token: ${{ steps.app-token.outputs.token }}
+        # Pull-request runs exercise the action safely. Scheduled runs stay live; dispatches
+        # choose whether to dry-run.
+        dry_run: ${{ github.event_name == 'pull_request' && 'true' || (github.event_name == 'workflow_dispatch' && inputs.dry_run) || 'false' }}
+        component_selector: ${{ (github.event_name == 'pull_request' && '.*') || (github.event_name == 'workflow_dispatch' && inputs.component_selector) || (github.event.schedule == '0 0 * * 3' && '^apps-') || (github.event.schedule == '0 12 * * 0' && '^infra-') || '' }}
+        manual_components: 'infra-storage-core infra-networking-core infra-security-core'
