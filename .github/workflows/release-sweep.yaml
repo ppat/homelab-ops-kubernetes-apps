@@ -89,7 +89,7 @@ jobs:
         # a public repo; no credential needs to persist for it.
         persist-credentials: false
     - name: Sweep release PRs
-      uses: ppat/homelab-ops-actions/actions/release-sweep@8202493e95d97b0283026f4e5f69ab7c51c161bb # v2.3.1
+      uses: ppat/homelab-ops-actions/actions/release-sweep@f66c9acb40309305e0e1fd3179406b85647aa54c # v2.3.2
       with:
         token: ${{ steps.app-token.outputs.token }}
         # Pull-request runs exercise the action safely. Scheduled runs stay live; dispatches
