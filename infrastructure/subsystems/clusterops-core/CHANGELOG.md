@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-core-v0.4.0...infra-clusterops-core-v0.4.1) (2026-08-31)
+
+
+### 🛠 Improvements
+
+* **infra-clusterops-core:** trim remove-cpu-limits.yaml comment, drop dead pointers ([#3851](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3851)) ([fc6fc99](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fc6fc99f98c34336544e239bc966d9315d35771c))
+
 ## [0.4.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-core-v0.3.4...infra-clusterops-core-v0.4.0) (2026-08-24)
 
 
