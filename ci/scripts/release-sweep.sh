@@ -62,10 +62,11 @@
 # removed as a maintainer decision -- under a weekly cadence, two suites' ~40% single-run
 # flake would have blocked their modules for a week at a time.
 #
-# The merge is a plain squash with no title/body override, so it lands exactly what a human
-# click lands: the bot's single-commit subject and body, verbatim. `--match-head-commit` pins
-# the merge to the evaluated head, so a PR that release-please force-pushes between evaluation
-# and merge is skipped rather than merged sight-unseen.
+# The merge uses GitHub's REST pull-request merge endpoint -- the same endpoint Renovate used to
+# bypass this ruleset as its authorized App. The App's bypass remains the server-side authority;
+# the endpoint grants none. `sha` pins the merge to the evaluated head, so a PR that
+# release-please force-pushes between evaluation and merge is skipped rather than merged
+# sight-unseen.
 #
 # Requires: GH_TOKEN = the homelab bot APP token, not GITHUB_TOKEN -- pushes made with a
 # workflow's own GITHUB_TOKEN do not trigger workflows, so a GITHUB_TOKEN merge would never
@@ -240,11 +241,12 @@ while IFS=$'\t' read -r number title labels head_sha head_ref; do
     continue
   fi
 
-  if gh pr merge "${number}" --repo "${REPO}" --squash --match-head-commit "${head_sha}" < /dev/null; then
+  if gh api --method PUT "repos/${REPO}/pulls/${number}/merge" \
+      -f sha="${head_sha}" -f merge_method=squash < /dev/null; then
     summary_row "${number}" "${module}" "${version}" "merged" "${bump} bump over ${current}"
   else
     # A refused merge because the head moved (release-please force-pushed mid-sweep) is the
-    # designed outcome of --match-head-commit, not a malfunction: report it as a skip and
+    # designed outcome of the REST API's sha guard, not a malfunction: report it as a skip and
     # let the next sweep re-evaluate. Anything else is a real failure and reddens the run.
     now_head="$(gh pr view "${number}" --repo "${REPO}" --json headRefOid --jq .headRefOid 2>/dev/null || echo unknown)"
     if [[ "${now_head}" != "${head_sha}" ]]; then
