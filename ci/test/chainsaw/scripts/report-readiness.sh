@@ -16,7 +16,7 @@
 #   READY   T0+<secs> <rfc3339> <True|False> <kind>/<ns>/<name>
 #   MODE    <fast|slow|intermediate|none> ctrl_webhook_gap_s=<n|-> ctrl= webhook= certctrl=
 #           resync=<no-wait|ambiguous|one-short|unexplained|one-long|none>
-#   RESTART <count>   <kind>/<ns>/<name> [<container>]
+#   RESTART <count>   <kind>/<ns>/<name> [<container>] reason=<name|-|none> exit_code=<n|none>
 #   PULL    <pull_s>  <incl_wait_s> <ns>/<pod> <image>
 #   PULL    ?         ?             <ns>/<pod> :: <unparsed message>
 #   ESOCERT secret <created|absent> ... | ESOCERT pod <name> [<container>] containerStarted=
@@ -192,8 +192,48 @@ echo '--- RESTART: container restarts (empty = none) ---'
 # the assertion reports only the end state. That is exactly the blind spot created by sizing a
 # budget to ride out a known crash-restart cycle (infra-storage's longhorn-manager, #3643).
 # Tolerating something is defensible; tolerating it silently is not.
+#
+# `reason=` and `exit_code=` are kubelet's own classification of the previous instance's death,
+# read from the SAME response the count is read from -- `lastState.terminated` is already in it,
+# so the wider projection costs no extra API call. They are what makes the count actionable:
+# `Error` is the modal reason and says only "exited non-zero", so the exit code is what
+# separates a config crash from a signal, and the pair is what separates the two cases neither
+# field settles alone -- `OOMKilled` arrives with exit 0 as readily as 137, and a 137 under
+# `Error` is a kill that was not an OOM (probe failure, grace-period expiry). Different repair
+# in each case. No CI run has ever reported an OOM kill, and until now that was a property of
+# the instrument rather than a finding, because nothing was reading the field. On the live
+# cluster kube-state-metrics sees OOMKilled routinely -- longhorn-manager included, which is
+# the very container #3643 taught this block to ride out. Whether CI's restarts are the same
+# thing is not assumable in either direction; this is what makes it answerable.
+#
+# Fields on the existing line, NOT a prefix of their own, and that is a consumer decision --
+# the same one `resync=` on MODE turns on. Both readers of this grammar match a line-leading
+# prefix and then keep the line whole, so a field arrives at both with no edit in either,
+# whereas a new prefix must be added to ci/scripts/baseline-harvest.sh here AND to the
+# ci-diagnostics ingester in the clusters repo or the line is silently retained nowhere. What
+# a field costs instead is announcement: nothing flags its arrival, and it is only as queryable
+# as the reader that names it -- RESTART's field parser there does not yet scrape key=value the
+# way MODE's and CONTENTION's do, so until it does these live in the stored line rather than in
+# structured metadata. Every pre-existing token keeps its position and width.
+#
+# Three outcomes, deliberately distinct, because "kubelet recorded no previous termination" and
+# "it recorded one but named no reason" are different findings and one glyph for both is how an
+# instrument stops being able to surprise you:
+#   reason=<name> exit_code=<n>     a previous termination, classified
+#   reason=- exit_code=<n>          a termination record carrying no reason (the dash convention)
+#   reason=none exit_code=none      no previous termination recorded -- also what a `lastState`
+#                                   holding only `waiting` looks like
+#
+# The `with` nesting is the guard, and the shorter `{{if .lastState.terminated}}` is NOT an
+# equivalent of it: that form walks `.terminated` on a `lastState` which may not be there, and
+# text/template makes exactly that a hard error under `missingkey=zero` -- whereupon the template
+# aborts the whole call part-way through, taking every RESTART line after the first offender with
+# it, which is strictly worse than the blind spot this block exists to close. kubectl's printer
+# does not set that option today, so today the same walk degrades to a `%!s(<nil>)` token
+# instead: not fatal, but a token both readers would ingest as though it were a reason. Measured
+# both ways rather than assumed.
 # shellcheck disable=SC2016  # go-template, not shell
-restarts=$(kubectl get pods -A "${KOPTS[@]}" -o go-template='{{range .items}}{{if .status}}{{$p := printf "pod/%s/%s" .metadata.namespace .metadata.name}}{{range .status.containerStatuses}}{{if gt .restartCount 0}}{{printf "RESTART %-6d %s [%s]\n" .restartCount $p .name}}{{end}}{{end}}{{end}}{{end}}' 2>/dev/null | sort -k2 -rn)
+restarts=$(kubectl get pods -A "${KOPTS[@]}" -o go-template='{{range .items}}{{if .status}}{{$p := printf "pod/%s/%s" .metadata.namespace .metadata.name}}{{range .status.containerStatuses}}{{if gt .restartCount 0}}{{$why := "reason=none exit_code=none"}}{{with .lastState}}{{with .terminated}}{{$why = printf "reason=%s exit_code=%v" (or .reason "-") .exitCode}}{{end}}{{end}}{{printf "RESTART %-6d %s [%s] %s\n" .restartCount $p .name $why}}{{end}}{{end}}{{end}}{{end}}' 2>/dev/null | sort -k2 -rn)
 echo "${restarts}"
 
 # WHY a container restarted, not just that it did. The count above says a crash happened; the
@@ -217,7 +257,11 @@ if [[ -n "${restarts}" ]]; then
   echo '--- RESTART-LOG: last lines from the PREVIOUS instance of each restarted container ---'
   shown=0
   skipped=0
-  while read -r _ _ ref container; do
+  # The trailing `_` is what keeps the classification fields off `container`: without it `read`
+  # packs every remaining field into the last variable, `[name] reason=... exit_code=...` would
+  # survive the bracket strip below, and `kubectl logs -c` would be handed a container name that
+  # cannot exist -- silently costing this block every log it is here to capture.
+  while read -r _ _ ref container _; do
     [[ -n "${ref}" ]] || continue
     if [[ ${shown} -ge ${MAX_RESTART_LOGS} ]]; then
       skipped=$((skipped + 1))
