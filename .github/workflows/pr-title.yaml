@@ -59,7 +59,7 @@ jobs:
     # package.json + bun.lock, installed with a bun supplied by mise. The point is
     # that the title and the branch commits are judged by one config, not two.
     - name: Setup repository and tools
-      uses: ppat/homelab-ops-actions/actions/setup-repository-tools@9c16506c3c527478b6314c86ca961c0011d9f94a # v2.2.0
+      uses: ppat/homelab-ops-actions/actions/setup-repository-tools@f66c9acb40309305e0e1fd3179406b85647aa54c # v2.3.2
       with:
         current_fetch_depth: 1
         current_git_ref: ${{ github.head_ref || github.ref }}
