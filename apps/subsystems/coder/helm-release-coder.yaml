@@ -56,6 +56,28 @@ spec:
         value: "false"
       ingress:
         enable: false
+      # provisionerd resolves its provisioning binary purely by LookPath("terraform")
+      # on the coderd pod - no config surface exists to point it at a differently
+      # named binary (see ppat/coder#897, which does the same thing against this
+      # image's bundled Terraform in a disposable test control plane). This
+      # cluster's containerd (2.3.2-k3s2) only supports directory-level subPath on
+      # Kubernetes image volumes, not file-level ("ImageVolumeMountFailed: ... only
+      # directory subpath is supported"), and a directory-level mount here would
+      # replace the whole /usr/local/bin with the OpenTofu image's own, which names
+      # the binary `tofu`, not `terraform` - so an image volume can't deliver a file
+      # named `terraform` directly. The init container below instead sources the
+      # binary from the official OpenTofu image and copies (and renames) it into a
+      # plain emptyDir, whose file-level subPath support is universal.
+      initContainers:
+      - name: opentofu-binary
+        image: "ghcr.io/opentofu/opentofu:1.12.6"
+        command:
+        - sh
+        - -c
+        - cp "$(command -v tofu)" /opentofu-binary/terraform
+        volumeMounts:
+        - name: opentofu-binary
+          mountPath: /opentofu-binary
       replicaCount: 1
       resources:
         requests:
@@ -67,3 +89,18 @@ spec:
       serviceAccount:
         workspacePerms: true
         enableDeployments: true
+      volumeMounts:
+      - name: opentofu-binary
+        mountPath: /usr/local/bin/terraform
+        subPath: terraform
+        readOnly: true
+      volumes:
+      - name: opentofu-binary
+        # Tracks the `opentofu` version pinned in ppat/coder's mise.toml (the
+        # template authoring toolchain this is meant to track) - not
+        # Renovate-managed, since Renovate's kubernetes manager only recognizes
+        # image volumes on raw Pod/Deployment/etc. manifests, not values embedded
+        # in a HelmRelease's `values:` blob, and this isn't an image volume anyway
+        # (see the initContainers comment above). Bump the initContainer's image
+        # tag by hand alongside that pin.
+        emptyDir: {}
