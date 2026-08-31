@@ -1,6 +1,34 @@
 ---
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+# kubelet rewrites an ALREADY-MOUNTED secret volume only when it re-syncs the pod, and each
+# pod's next re-sync is scheduled at a jittered [syncFrequency, 1.5 x syncFrequency). At the
+# stock 1m that is 60-90s of dead time for any container waiting on a key written into a Secret
+# it had already mounted, however promptly the API was updated. The shape that triggers it is a
+# chart shipping an EMPTY placeholder Secret in the same release as the Deployment that mounts
+# it: the mount succeeds against no content instead of blocking until content exists, so the
+# container starts and then waits out the interval. A Secret that is merely absent is benign --
+# kubelet holds the pod in ContainerCreating and mounts it populated. Watch-based secret
+# caching does not help either: the watch keeps kubelet's cache fresh, the pod-sync tick is
+# what gates rewriting the file.
+#
+# Why not leave the stock value alone: a long-lived cluster amortises a 60-90s quantum over
+# days of uptime; a cluster built, converged, asserted and destroyed inside ten minutes pays it
+# straight out of the only thing it measures.
+#
+# Measured on the pinned node image, one cluster, only this value changed between arms -- an
+# empty Secret mounted, the key added 5s after the container started, the file's appearance
+# timed from inside the pod: 52.3-78.9s (n=10) at the stock value against 3.0-8.0s (n=12) here.
+# In both arms every pod's own elapsed time from container start fell inside the jitter
+# interval predicted for that setting, which is what identifies this timer and not another one.
+#
+# The 6x more frequent pod syncs were not measurable against a node carrying 73 pods of which
+# 15 were crashlooping: 16.8 kubelet CPU-seconds per 300s either way. The largest difference
+# seen on any arm was +1.7 CPU-seconds per kubelet per 300s, under 0.6% of one core.
+kubeadmConfigPatches:
+- |
+    kind: KubeletConfiguration
+    syncFrequency: 10s
 nodes:
 - role: control-plane
   extraMounts:

@@ -1,6 +1,16 @@
 ---
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+# See kind-cluster-single-node.yaml for the mechanism and the measurement. A cluster-level
+# patch does reach worker kubelets -- confirmed by reading /configz on all three nodes, not by
+# checking that the YAML parsed. Three kubelets on one runner is where extra sync work would
+# show up first if it were going to: measured across all three at once, 16.7 -> 21.8 kubelet
+# CPU-seconds per 300s, i.e. +1.7% of one core between them, and the arm carrying the higher
+# figure also carried twelve more pods.
+kubeadmConfigPatches:
+- |
+    kind: KubeletConfiguration
+    syncFrequency: 10s
 nodes:
 - role: control-plane
 - role: worker
