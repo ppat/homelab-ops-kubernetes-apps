@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.5.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.4.1...infra-observability-extra-v0.5.0) (2026-08-31)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-observability-extra:** update ghcr.io/unpoller/unpoller (v3.5.0 -> v4.0.1) ([#3894](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3894))
+
+### 🛠 Improvements
+
+* **infra-observability-extra:** drop stale event-exporter diagram node ([#3664](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3664)) ([39415be](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/39415bee0a94fde93c6ce60cf8bb9009579bbd2b))
+
+
+### ✨ Features
+
+* **infra-observability-extra:** update ghcr.io/unpoller/unpoller (v3.4.1 -&gt; v3.5.0) ([#3844](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3844)) ([1ff5af3](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1ff5af3b61012bf8b98debf27193653e726003d2))
+* **infra-observability-extra:** update ghcr.io/unpoller/unpoller (v3.5.0 -&gt; v4.0.1) ([#3894](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3894)) ([40a915b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/40a915b2a864c8192123527922abb61133866d75))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-extra:** update digest balabit/syslog-ng (8f6fe38 -&gt; 4d6aeca) ([#3888](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3888)) ([929fbd1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/929fbd1b3678e333e93b88aea936bab957423396))
+* **infra-observability-extra:** update digest balabit/syslog-ng (af9c8d2 -&gt; b177f01) ([#3749](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3749)) ([5994b3f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5994b3f4cccc2101926ea394dba02dd2f1a6b297))
+* **infra-observability-extra:** update digest balabit/syslog-ng (b177f01 -&gt; 8f6fe38) ([#3829](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3829)) ([748da6c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/748da6cce0c8f5354ea6352886ff4cb3f8c107e5))
+
 ## [0.4.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.4.0...infra-observability-extra-v0.4.1) (2026-08-13)
 
 
