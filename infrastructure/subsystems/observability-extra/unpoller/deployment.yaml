@@ -56,7 +56,7 @@ spec:
           value: "http://loki.logging.svc.cluster.local.:3100"
         - name: UP_PROMETHEUS_DISABLE
           value: "false"
-        image: ghcr.io/unpoller/unpoller:v3.5.0@sha256:9f1d7912e9981c0491f50545d513067c4e6206806895cdaa5e0228d94ccb550b
+        image: ghcr.io/unpoller/unpoller:v4.0.1@sha256:b2763042859c15301c0db5056de789d75e148b9df25fce97fdb35b854f21edb1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
