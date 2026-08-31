@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.8.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.8.0...apps-ai-v0.8.1) (2026-08-31)
+
+
+### ✨ Features
+
+* **apps-ai:** update docker.n8n.io/n8nio/n8n (2.34.4 -&gt; 2.37.6) ([#3896](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3896)) ([b38c52b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b38c52bfa6b184fda13e6a2af082ef9b18ac7c88))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** update digest docker.io/ppatlabs/obsidian (a9eb80a -&gt; 62fb382) ([#3895](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3895)) ([51ea9c4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/51ea9c4a9f7be7518095c1b3a2cb7a8bb89dfdbe))
+
 ## [0.8.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.7.1...apps-ai-v0.8.0) (2026-08-24)
 
 
