@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.58...apps-coder-v0.1.0) (2026-09-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* **apps-coder:** this Deployment's provisioner now applies every workspace template - not just homelab-workspace - with OpenTofu instead of the image's bundled Terraform. OpenTofu's compatibility promise covers standard HCL, but any template (present or future) relying on Terraform-specific behavior outside that promise now behaves differently in this live deployment and needs re-verification against OpenTofu, the same way ppat/coder#898 verified homelab-workspace.
+
+### ✨ Features
+
+* **apps-coder:** apply workspace templates under OpenTofu ([#3900](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3900)) ([ed92960](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ed92960b9e97fa97da4b094f54255ed7bb7b9c17))
+
 ## [0.0.58](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.0.57...apps-coder-v0.0.58) (2026-08-31)
 
 
