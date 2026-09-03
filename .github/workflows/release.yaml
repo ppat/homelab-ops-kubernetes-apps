@@ -3,6 +3,10 @@
 name: release
 
 on:
+  pull_request:
+    paths:
+    - '.github/workflows/release.yaml'
+    - 'release-please-config.json'
   push:
     branches:
     - main
@@ -22,6 +26,8 @@ permissions: {}
 jobs:
   release:
     uses: ppat/github-workflows/.github/workflows/release-please.yaml@b0d4d41a875d2a1a062dc3bebf2907734f6351c6 # v7.0.0
+    with:
+      dry_run: ${{ github.event_name == 'pull_request' }}
     secrets:
       client_id: ${{ secrets.HOMELAB_BOT_CLIENT_ID }}
       app_private_key: ${{ secrets.HOMELAB_BOT_APP_PRIVATE_KEY }}
