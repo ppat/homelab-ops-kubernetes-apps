@@ -241,6 +241,17 @@ flowchart TB
        namespace: logging
    ```
 
+   Repointing the write destination uses environment variables rather than that seam. Both instances read
+   them, set via `alloy.extraEnv` on the HelmRelease:
+
+   | Variable | Unset | Set |
+   | -------- | ----- | --- |
+   | `LOKI_WRITE_URL` | the in-cluster Loki service | that URL, for both the node collector and the event singleton |
+   | `K8S_CLUSTER_LABEL` | no label is added at all | a `k8s_cluster` external label on every stream |
+
+   Loki discards a label whose value is empty *before* computing the stream hash, so leaving
+   `K8S_CLUSTER_LABEL` unset leaves existing stream identities untouched.
+
    The contract for those fragments:
 
    - `loki.write.default` is the stable anchor to forward into. It lives in its own `write.alloy` precisely so
@@ -278,7 +289,9 @@ flowchart TB
   `filename`, `host`, `instance`, `job`, `namespace`, `node_name`, `pod`, `service_name`, `severity`, `stream`,
   `syslog_identifier` and `systemd_unit`. Changing any of them gives the existing Loki series a new identity
   rather than extending it, and breaks the dashboards and `retention_stream` selectors that key off them -
-  which is also why no `collector`-style marker label is pushed. `ci/test/infra-observability` asserts the set
+  which is also why no `collector`-style marker label is pushed. The one addition a consumer may make is
+  `k8s_cluster` via `K8S_CLUSTER_LABEL` (above), opt-in because setting it re-mints that consumer's own
+  stream identities. `ci/test/infra-observability` asserts the set
   for exact equality against a fixture pod, so a leaked extra label fails as loudly as a missing one. The three
   journal-only labels (`severity`, `syslog_identifier`, `systemd_unit`) are out of scope there because kind
   nodes have no systemd journal to read.

@@ -4,15 +4,25 @@
 
 loki.write "default" {
 	endpoint {
-		// Trailing dot is deliberate and currently working in production:
-		// it makes the name fully qualified and skips ndots search-domain
-		// expansion. Do not "clean it up".
-		url = "http://loki.logging.svc.cluster.local.:3100/loki/api/v1/push"
+		// Trailing dot is deliberate: it makes the name fully qualified and skips
+		// ndots search-domain expansion. Do not "clean it up".
+		//
+		// `LOKI_WRITE_URL` is set via `alloy.extraEnv` on the HelmRelease, where
+		// post-build substitution runs; this ConfigMap has it disabled.
+		url = coalesce(sys.env("LOKI_WRITE_URL"), "http://loki.logging.svc.cluster.local.:3100/loki/api/v1/push")
 	}
 
 	external_labels = {
 		// The node name, injected by the chart from spec.nodeName.
 		// NOT constants.hostname - that is os.Hostname(), i.e. the pod name.
 		host = sys.env("K8S_NODE_NAME"),
+
+		// Loki drops an empty-valued label before computing the stream hash, so leaving
+		// this unset adds no label and existing stream identities are untouched.
+		//
+		// `k8s_cluster` and not `cluster`: `cluster` already carries CloudNativePG's
+		// Postgres-cluster name on live series, and one label with two meanings is not
+		// recoverable.
+		k8s_cluster = sys.env("K8S_CLUSTER_LABEL"),
 	}
 }
