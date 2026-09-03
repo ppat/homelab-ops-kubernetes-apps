@@ -1,0 +1,241 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-versitygw
+spec:
+  try:
+  - description: Assert pvc/versitygw-data-test
+    assert:
+      bindings:
+      - name: name
+        value: versitygw-data-test
+      - name: namespace
+        value: versitygw
+      file: ../chainsaw/assertions/pvc-bound.yaml
+      timeout: 2m
+  - description: Assert externalsecret/versitygw-credentials
+    assert:
+      bindings:
+      - name: name
+        value: versitygw-credentials
+      - name: namespace
+        value: versitygw
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
+  - description: Assert deployment/versitygw
+    assert:
+      bindings:
+      - name: name
+        value: versitygw
+      - name: namespace
+        value: versitygw
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 5m
+  - description: Assert deployment/versitygw-metrics
+    assert:
+      bindings:
+      - name: name
+        value: versitygw-metrics
+      - name: namespace
+        value: versitygw
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 3m
+  - description: Assert helmrelease/versitygw-release
+    assert:
+      bindings:
+      - name: name
+        value: versitygw-release
+      - name: namespace
+        value: versitygw
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+      timeout: 90s
+  - description: Assert service/versitygw
+    assert:
+      bindings:
+      - name: name
+        value: versitygw
+      - name: namespace
+        value: versitygw
+      file: ../chainsaw/assertions/service-clusterip-ready.yaml
+  - description: Assert the postRenderer patches landed on deployment/versitygw
+    assert:
+      resource:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: versitygw
+          namespace: versitygw
+        spec:
+          template:
+            spec:
+              initContainers:
+              - name: verify-store-identity
+              - name: verify-xattr
+              containers:
+              - name: versitygw
+                livenessProbe:
+                  httpGet:
+                    path: /_/health
+  - description: Assert the gateway root is a subpath, not the volume root
+    assert:
+      resource:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: versitygw
+          namespace: versitygw
+        spec:
+          template:
+            spec:
+              containers:
+              - name: versitygw
+                (env[?name == 'VGW_BACKEND_ARGS'].value): [/mnt/data]
+                (env[?name == 'VGW_IAM_DIR'].value): [/mnt/iam]
+                (volumeMounts[?mountPath == '/mnt/data'].subPath): [data]
+                (volumeMounts[?mountPath == '/mnt/iam'].subPath): [iam]
+  - description: Assert the pod carries the fsGroup the gateway's writes depend on
+    assert:
+      resource:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: versitygw
+          namespace: versitygw
+        spec:
+          template:
+            spec:
+              securityContext:
+                fsGroup: 1000
+                fsGroupChangePolicy: OnRootMismatch
+  - description: Assert the three ingresses, one per listener
+    assert:
+      resource:
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: versitygw
+          namespace: versitygw
+          annotations:
+            external-dns.alpha.kubernetes.io/hostname: versitygw-s3.cluster.example.com
+        spec:
+          rules:
+          - host: versitygw-s3.cluster.example.com
+            http:
+              paths:
+              - backend:
+                  service:
+                    name: versitygw
+                    port:
+                      name: s3-api
+  - description: Assert ingress/versitygw-admin
+    assert:
+      resource:
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: versitygw-admin
+          namespace: versitygw
+        spec:
+          rules:
+          - host: versitygw-admin.cluster.example.com
+            http:
+              paths:
+              - backend:
+                  service:
+                    name: versitygw
+                    port:
+                      name: admin
+  - description: Assert ingress/versitygw-webui
+    assert:
+      resource:
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: versitygw-webui
+          namespace: versitygw
+        spec:
+          rules:
+          - host: versitygw.cluster.example.com
+            http:
+              paths:
+              - backend:
+                  service:
+                    name: versitygw
+                    port:
+                      name: webui
+  - description: Provision the store and assert account removal never removes a bucket
+    script:
+      content: ../chainsaw/scripts/versitygw/provision.sh
+      timeout: 5m
+  - description: Assert the S3 API serves, isolates consumers, hides the IAM store, and moves its counters
+    script:
+      content: ../chainsaw/scripts/versitygw/roundtrip.sh
+      timeout: 5m
+  - description: Assert the object is one file at its 1:1 unencoded path with its metadata attached
+    script:
+      content: ../chainsaw/scripts/versitygw/stored-form.sh
+      timeout: 5m
+  - description: Assert the sweep reclaims aged residue and leaves in-flight state intact
+    script:
+      content: ../chainsaw/scripts/versitygw/sweep.sh
+      timeout: 8m
+  - description: Assert the startup xattr guard fails on a read-only mount
+    script:
+      content: ../chainsaw/scripts/versitygw/xattr-guard.sh
+      timeout: 5m
+  - description: Assert the store-identity guard refuses a blank volume
+    script:
+      content: ../chainsaw/scripts/versitygw/identity-guard.sh
+      timeout: 5m
+
+  catch:
+  - describe:
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      name: versitygw-data-test
+      namespace: versitygw
+  - describe:
+      apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      name: versitygw-credentials
+      namespace: versitygw
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: versitygw-release
+      namespace: versitygw
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: versitygw
+      namespace: versitygw
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: versitygw-metrics
+      namespace: versitygw
+  # yamllint disable rule:line-length
+  - script:
+      timeout: 1m
+      content: |
+        echo '--- versitygw init container (verify-xattr) ---'
+        for p in $(kubectl get pods -n versitygw -l app.kubernetes.io/name=versitygw -o name); do
+        echo "=== $p ==="
+        kubectl logs -n versitygw "$p" -c verify-xattr --tail=50 2>&1 || true
+        done
+        echo '--- provisioning and sweep jobs ---'
+        kubectl get jobs,pods -n versitygw
+        for j in $(kubectl get jobs -n versitygw -o name); do
+        echo "=== $j ==="
+        kubectl logs -n versitygw "$j" --tail=50 2>&1 || true
+        done
+  # yamllint enable rule:line-length
+  - podLogs:
+      selector: app.kubernetes.io/name=versitygw
+      namespace: versitygw
+      container: versitygw
+  - podLogs:
+      selector: app.kubernetes.io/name=versitygw-metrics
+      namespace: versitygw
+  - events:
+      namespace: versitygw

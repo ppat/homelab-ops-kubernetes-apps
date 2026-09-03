@@ -1,0 +1,22 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Deliberately absent from ../kustomization.yaml. A component with new required
+# postBuild variables in the module-root build takes down every other component
+# in it, at any cluster lacking those variables.
+resources:
+- namespace.yaml
+- scripts/
+- secrets.yaml
+- oci-repository-versitygw.yaml
+- helm-release-versitygw.yaml
+- deployment-statsd-exporter.yaml
+- service-statsd-exporter.yaml
+- cronjob-sweep.yaml
+
+commonAnnotations:
+  kustomize.toolkit.fluxcd.io/prune: disabled
+
+sortOptions:
+  order: fifo

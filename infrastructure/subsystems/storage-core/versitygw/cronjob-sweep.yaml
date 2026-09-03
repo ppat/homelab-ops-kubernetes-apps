@@ -1,0 +1,90 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: versitygw-sweep
+  namespace: versitygw
+  labels:
+    app.kubernetes.io/name: versitygw-sweep
+spec:
+  schedule: "0 */6 * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    metadata:
+      labels:
+        app.kubernetes.io/name: versitygw-sweep
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 3600
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: versitygw-sweep
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: OnFailure
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: versitygw
+                    app.kubernetes.io/instance: versitygw
+                topologyKey: kubernetes.io/hostname
+          containers:
+          - name: sweep
+            image: ghcr.io/versity/versitygw:v1.7.0@sha256:c4cbd9d9cb8dedbb055ac788dbd02635651b9b1cebac95b095b3217231aa87ad
+            imagePullPolicy: IfNotPresent
+            command: [/bin/sh, /scripts/sweep.sh]
+            env:
+            - name: VERSITYGW_GATEWAY_ROOT
+              value: /mnt/data
+            - name: VERSITYGW_SWEEP_AGE_MINUTES
+              value: "360"
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              readOnlyRootFilesystem: true
+              runAsNonRoot: true
+              # Must equal the gateway's uid or the sweep finds residue it cannot remove: the
+              # directories are gateway-owned 0755, and a shared fsGroup grants r-x, not write
+              # on the parent.
+              runAsUser: 1000
+              runAsGroup: 1000
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                memory: 128Mi
+            volumeMounts:
+            - name: data
+              mountPath: /mnt/data
+              subPath: data
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+          securityContext:
+            # Must match the gateway pod's fsGroup: under OnRootMismatch, two pods declaring
+            # different fsGroups on one volume make every mount a mismatch, so each
+            # recursively chowns the whole tree at every start.
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+            seccompProfile:
+              type: RuntimeDefault
+          volumes:
+          - name: data
+            persistentVolumeClaim:
+              claimName: ${versitygw_data_claim}
+          - name: scripts
+            configMap:
+              name: versitygw-scripts
+              defaultMode: 0555
+          tolerations:
+          - key: node-role.kubernetes.io/control-plane
+            operator: Exists

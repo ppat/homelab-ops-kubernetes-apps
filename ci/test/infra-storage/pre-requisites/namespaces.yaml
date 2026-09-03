@@ -1,8 +1,10 @@
 ---
-# Stands in for infra-storage-core's own namespace.yaml (garage), which doesn't
-# exist yet at pre-requisites time -- see pvc/garage-metadata-test.yaml for why
-# these PVCs need the namespace to exist this early.
 apiVersion: v1
 kind: Namespace
 metadata:
   name: garage
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: versitygw

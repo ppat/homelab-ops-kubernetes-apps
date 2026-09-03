@@ -1,0 +1,62 @@
+---
+apiVersion: apps/v1
+# The path is lossy by construction -- the gateway drops datapoints silently when
+# its channel fills, and a dead collector produces no error -- so a zero on these
+# counters means "no traffic OR no path".
+kind: Deployment
+metadata:
+  name: versitygw-metrics
+  namespace: versitygw
+  labels:
+    app.kubernetes.io/name: versitygw-metrics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: versitygw-metrics
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: versitygw-metrics
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: statsd-exporter
+        image: quay.io/prometheus/statsd-exporter:v0.31.0@sha256:1d5d341c4eb7abdd3445a3f85c3d498402b676ad29b4cf0421f5d280943871ab
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: statsd
+          containerPort: 9125
+          protocol: UDP
+        - name: metrics
+          containerPort: 9102
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+          readOnlyRootFilesystem: true
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists

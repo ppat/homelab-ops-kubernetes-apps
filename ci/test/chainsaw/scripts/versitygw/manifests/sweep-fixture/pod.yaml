@@ -1,0 +1,54 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ${SWEEP_POD}
+  namespace: ${SWEEP_NAMESPACE}
+spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  containers:
+  - name: fixture
+    image: docker.io/alpine/k8s:1.36.4@sha256:358ddfc2d6ff3f00dd461dbd79aaa6d6738709f225b8da0945bb63bd4dbc304e
+    command: [python3, /fixture/fixture.py]
+    env:
+    - name: MODE
+      value: ${SWEEP_MODE}
+    - name: BUCKET_ONE
+      value: ${SWEEP_BUCKET}
+    - name: AGE_MINUTES
+      value: "${SWEEP_AGE_MINUTES}"
+    - name: PYTHONDONTWRITEBYTECODE
+      value: "1"
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+    volumeMounts:
+    - name: data
+      mountPath: /pvc
+    - name: fixture
+      mountPath: /fixture
+      readOnly: true
+  securityContext:
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
+    seccompProfile:
+      type: RuntimeDefault
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      # Defaulted only so CI's kubeconform pass over ci/test, which knows the modules'
+      # variables and not the fixtures', renders a string rather than a null.
+      claimName: ${SWEEP_CLAIM:=claim-name-was-not-supplied}
+  - name: fixture
+    configMap:
+      name: versitygw-sweep-fixture
+      defaultMode: 0555
+  tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists

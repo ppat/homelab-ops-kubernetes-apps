@@ -1,0 +1,15 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: versitygw
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: oci://ghcr.io/versity/versitygw/charts/versitygw
+  ref:
+    tag: 0.4.1
+    # The HelmRelease's JSON6902 fence no-ops silently when its target is reshaped,
+    # so an unpinned chart could take the fence with it. This forces every chart
+    # move through a commit.
+    digest: sha256:e558f6a90d6d7e4d09c090115bf68ce46c1b82daf90255f0ad09bd908737c428

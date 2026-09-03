@@ -1,0 +1,56 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: versitygw-store-prepare
+  namespace: versitygw
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      restartPolicy: OnFailure
+      automountServiceAccountToken: false
+      containers:
+      - name: prepare
+        image: docker.io/alpine/k8s:1.36.4@sha256:358ddfc2d6ff3f00dd461dbd79aaa6d6738709f225b8da0945bb63bd4dbc304e
+        command: [sh, /scripts/prepare-store.sh]
+        env:
+        - name: VERSITYGW_STORE_ROOT
+          value: /mnt/store
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+        volumeMounts:
+        - name: data
+          mountPath: /mnt/store
+        - name: scripts
+          mountPath: /scripts
+          readOnly: true
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: versitygw-data-test
+      - name: scripts
+        configMap:
+          name: versitygw-store-prepare-scripts
+          defaultMode: 0555
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists

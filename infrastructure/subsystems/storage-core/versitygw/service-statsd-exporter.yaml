@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: versitygw-metrics
+  namespace: versitygw
+  labels:
+    app.kubernetes.io/name: versitygw-metrics
+spec:
+  selector:
+    app.kubernetes.io/name: versitygw-metrics
+  ports:
+  - name: statsd
+    port: 9125
+    protocol: UDP
+    targetPort: statsd
+  - name: metrics
+    port: 9102
+    targetPort: metrics
