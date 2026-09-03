@@ -5,3 +5,4 @@ kind: Kustomization
 resources:
 - configmap-loki-rule-demo.yaml
 - helm-release-kube-prometheus-stack.yaml
+- ingress-prometheus-remote-write.yaml

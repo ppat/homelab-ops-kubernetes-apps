@@ -1,0 +1,26 @@
+---
+# The chart renders a single `/` Ingress and Traefik binds auth per-Ingress, so ingest needs its
+# own object.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prometheus-remote-write
+  namespace: monitoring
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    # No external-dns hostname: the chart's Ingress already owns this record.
+spec:
+  rules:
+  - host: prometheus.${domain_name}
+    http:
+      paths:
+      # `Exact`: `Prefix` would also route `/api/v1/write/anything` past the catch-all's auth.
+      - path: /api/v1/write
+        pathType: Exact
+        backend:
+          service:
+            name: kube-prometheus-stack-prometheus
+            port:
+              number: 9090
+  tls: []
