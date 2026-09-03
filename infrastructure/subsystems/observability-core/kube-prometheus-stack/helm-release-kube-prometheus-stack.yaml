@@ -172,6 +172,8 @@ spec:
           targetLabel: job
           replacement: prometheus
 
+      # Middleware here covers every path on this host, ingest included; that is what
+      # ingress-prometheus-remote-write.yaml exists to work around.
       ingress:
         enabled: true
         annotations:
