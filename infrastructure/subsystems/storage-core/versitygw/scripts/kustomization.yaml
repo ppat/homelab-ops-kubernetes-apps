@@ -10,13 +10,25 @@ configMapGenerator:
   - verify-store-identity.py
   - verify-xattr.py
   - sweep.sh
+  options:
+    # The init container mounts this through a HelmRelease postRenderer patch,
+    # built separately from this one, and kustomize's name-reference rewriting
+    # does not cross that boundary -- a hashed name leaves the patch pointing at
+    # nothing. Set per entry rather than in generatorOptions because a global
+    # `true` merges DOWN into every entry and an entry cannot take it back,
+    # which would silently unhash the generator below.
+    disableNameSuffixHash: true
+
+# Hashed, unlike its neighbour, because the inventory exporter is the only
+# consumer here that reads its script once and holds it for the life of a
+# long-running process: without a name change, a corrected walker never reaches
+# the running pod and the failure is an unchanged number that looks healthy.
+- name: versitygw-inventory-script
+  files:
+  - store-inventory.py
 
 generatorOptions:
-  # The init container mounts this through a HelmRelease postRenderer patch, built
-  # separately from this one, and kustomize's name-reference rewriting does not
-  # cross that boundary -- a hashed name leaves the patch pointing at nothing.
-  disableNameSuffixHash: true
   annotations:
-    # Flux's postBuild substitution expands bare $NAME as well as ${NAME}, so without
-    # this every shell variable in these scripts becomes an empty string.
+    # Flux's postBuild substitution expands bare $NAME as well as ${NAME}, so
+    # without this every shell variable in these scripts becomes an empty string.
     kustomize.toolkit.fluxcd.io/substitute: disabled
