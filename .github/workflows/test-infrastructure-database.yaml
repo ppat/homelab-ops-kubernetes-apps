@@ -10,7 +10,16 @@ on:
     - 'ci/test/infra-database/**'
     - 'ci/test/chainsaw/**'
     - 'infrastructure/subsystems/database-core/**'
+    # The components this suite's test-resources apply to its CNPG Cluster. A component is not
+    # a released artifact and has no suite of its own, so the only run that can fail on one is
+    # the suite that deploys it -- and that has to be triggered from the component's own path.
+    # Kept true by ci/scripts/verify-component-test-coverage.sh, which derives the pairing from
+    # spec.components rather than trusting this list.
+    - 'components/db-backups/**'
+    - 'components/db-restore/**'
     - '!infrastructure/subsystems/database-core/**.md'
+    - '!components/db-backups/**.md'
+    - '!components/db-restore/**.md'
     - '!ci/test/chainsaw/**.md'
   workflow_dispatch:
 
