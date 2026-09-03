@@ -143,20 +143,6 @@ spec:
             # module's README for the dummy value CI substitutes.
             - name: GIT_REMOTE_ORIGIN_URL
               value: ${git_committer_remote_origin_url}
-            # GIT_REMOTE_NAS_URL is deliberately NOT set -- absent, not forgotten.
-            #
-            # The NAS bare repository is a second push target for independence insurance: a
-            # plain-markdown copy readable with grep and nothing else, so no single service is
-            # load-bearing for recovery (docs/DESIGN.md, the git committer component). Real
-            # value, but not needed for the committer's primary job, and it carries the bulk
-            # of the operator setup -- SSH access to the NAS, an authorized_keys entry, a bare
-            # repository created by hand, and a host key published nowhere so it would have to
-            # be supplied via GIT_SSH_KNOWN_HOSTS_EXTRA. Requiring all of that before this can
-            # run once is disproportionate; insurance can be added later without redeploying
-            # anything else.
-            #
-            # Setting it is the whole change: obsidian-tools treats it as optional and pushes
-            # to whichever remotes are configured, logging which ones on every run.
             - name: HOME
               value: /home/git-committer
             volumeMounts:
