@@ -29,5 +29,5 @@ jobs:
     with:
       dry_run: ${{ github.event_name == 'pull_request' }}
     secrets:
-      client_id: ${{ secrets.HOMELAB_BOT_CLIENT_ID }}
+      app_client_id: ${{ secrets.HOMELAB_BOT_CLIENT_ID }}
       app_private_key: ${{ secrets.HOMELAB_BOT_APP_PRIVATE_KEY }}
