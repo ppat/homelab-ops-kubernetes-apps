@@ -14,7 +14,11 @@ on:
     - 'ci/test/fixtures/minio/**'
     - '!ci/test/fixtures/**.md'
     - 'infrastructure/subsystems/database-core/**'
+    - 'components/db-backups/**'
+    - 'components/db-restore/**'
     - '!infrastructure/subsystems/database-core/**.md'
+    - '!components/db-backups/**.md'
+    - '!components/db-restore/**.md'
   workflow_dispatch:
 
 concurrency:
