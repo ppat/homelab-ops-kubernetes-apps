@@ -27,7 +27,7 @@ patches:
   target:
     kind: Ingress
     name: pihole-admin-https
-    namespace: dns
+    namespace: pihole
 - path: patch-grafana.yaml
   target:
     kind: HelmRelease
