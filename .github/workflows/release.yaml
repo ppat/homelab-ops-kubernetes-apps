@@ -21,7 +21,7 @@ permissions: {}
 
 jobs:
   release:
-    uses: ppat/github-workflows/.github/workflows/release-please.yaml@54ce2e4ac00927d6164d032b321f0142aab01c69 # v6.1.0
+    uses: ppat/github-workflows/.github/workflows/release-please.yaml@b0d4d41a875d2a1a062dc3bebf2907734f6351c6 # v7.0.0
     secrets:
-      app_id: ${{ secrets.HOMELAB_BOT_APP_ID }}
+      client_id: ${{ secrets.HOMELAB_BOT_CLIENT_ID }}
       app_private_key: ${{ secrets.HOMELAB_BOT_APP_PRIVATE_KEY }}
