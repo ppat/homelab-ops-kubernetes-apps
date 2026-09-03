@@ -11,7 +11,7 @@ spec:
     # trailing slash here produces a double-slashed prefix that MinIO's ListObjectsV2 rejects —
     # retention pruning then fails on every cycle while base backups and WAL archiving keep
     # succeeding, so nothing looks broken. https://github.com/cloudnative-pg/cloudnative-pg/issues/4890
-    destinationPath: s3://nas-cloudnativepg-backups/${db_name}
+    destinationPath: s3://nas-cloudnativepg-backups/${db_name}/
     endpointURL: https://s3.nas.${dns_zone}
     s3Credentials:
       accessKeyId:
