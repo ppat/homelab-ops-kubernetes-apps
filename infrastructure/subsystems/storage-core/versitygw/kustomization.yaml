@@ -16,6 +16,7 @@ resources:
 - deployment-store-inventory.yaml
 - service-store-inventory.yaml
 - cronjob-sweep.yaml
+- job-recovery-export.yaml
 
 commonAnnotations:
   kustomize.toolkit.fluxcd.io/prune: disabled
