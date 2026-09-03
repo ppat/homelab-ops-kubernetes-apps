@@ -136,7 +136,7 @@ jobs:
 
     - name: Flux Diff
       id: flux-diff
-      uses: ppat/homelab-ops-actions/actions/flux-diff@f66c9acb40309305e0e1fd3179406b85647aa54c # v2.3.2
+      uses: ppat/homelab-ops-actions/actions/flux-diff@26cdd23c133bd8db2f408be4c6ef225509d6e8c4 # v2.5.0
       with:
         log_level: DEBUG
         other_params: ${{ matrix.resource == 'helmrelease' && '--api-versions monitoring.coreos.com/v1' || '' }}
@@ -146,7 +146,7 @@ jobs:
         sources: "test-source=./"
 
     - name: Comment on PR w/ diff
-      uses: ppat/homelab-ops-actions/actions/comment-on-pr@f66c9acb40309305e0e1fd3179406b85647aa54c # v2.3.2
+      uses: ppat/homelab-ops-actions/actions/comment-on-pr@26cdd23c133bd8db2f408be4c6ef225509d6e8c4 # v2.5.0
       if: ${{ steps.flux-diff.outputs.diff != '' }}
       continue-on-error: true
       with:
