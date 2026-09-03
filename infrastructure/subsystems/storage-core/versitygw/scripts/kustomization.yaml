@@ -10,6 +10,12 @@ configMapGenerator:
   - verify-store-identity.py
   - verify-xattr.py
   - sweep.sh
+  - export-recovery-image.sh
+  - recovery-check.sh
+  # Ships INSIDE the kit, not just alongside it: the scripts cite it for the
+  # values that arm their checks, and a procedure that lives only in the
+  # repository is unreachable on the host this path is designed for.
+  - RECOVERY-RUNBOOK.md
   options:
     # The init container mounts this through a HelmRelease postRenderer patch,
     # built separately from this one, and kustomize's name-reference rewriting

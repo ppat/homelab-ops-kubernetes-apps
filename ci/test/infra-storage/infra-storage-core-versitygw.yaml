@@ -15,6 +15,22 @@ spec:
       versitygw_s3_region: us-east-1
       versitygw_root_accesskey_key: versitygw_root_accesskey
       versitygw_root_secretkey_key: versitygw_root_secretkey
+  # The recovery-export Job is removed here rather than exercised. Unlike the
+  # sweep CronJob beside it, a Job runs the moment it is applied -- so leaving it
+  # in would have every run of this suite pull ~150 MiB from ghcr.io and
+  # docker.io, adding an anonymous-pull rate limit to a suite that otherwise
+  # depends on neither. What it would prove is nothing the manifest does not
+  # already state: the export needs registry egress and a real object volume, and
+  # a green result over a path kind cannot exercise is not evidence.
+  patches:
+  - target:
+      kind: Job
+      name: versitygw-recovery-export
+    patch: |
+      $patch: delete
+      apiVersion: batch/v1
+      kind: Job
+      metadata: {name: versitygw-recovery-export}
   prune: false
   sourceRef:
     kind: GitRepository
