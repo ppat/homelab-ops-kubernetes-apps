@@ -15,6 +15,8 @@ resources:
 - service-statsd-exporter.yaml
 - deployment-store-inventory.yaml
 - service-store-inventory.yaml
+- deployment-wal-continuity.yaml
+- service-wal-continuity.yaml
 - cronjob-sweep.yaml
 
 commonAnnotations:

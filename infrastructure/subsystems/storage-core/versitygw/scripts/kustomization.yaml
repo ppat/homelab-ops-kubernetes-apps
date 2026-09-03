@@ -27,6 +27,13 @@ configMapGenerator:
   files:
   - store-inventory.py
 
+# Its OWN generator, not a second file above: one ConfigMap would make an edit
+# to either script roll both pods, and the inventory pod restarts into a full
+# tree walk.
+- name: versitygw-wal-continuity-script
+  files:
+  - wal-continuity.py
+
 generatorOptions:
   annotations:
     # Flux's postBuild substitution expands bare $NAME as well as ${NAME}, so
