@@ -11,6 +11,11 @@ on:
     - 'ci/test/chainsaw/**'
     - 'infrastructure/subsystems/networking-core/**'
     - 'infrastructure/subsystems/networking-extra/**'
+    # The external-dns provider variant this suite deploys. Note it is NOT the variant either
+    # cluster runs -- both run the unifi one, whose webhook sidecar cannot start without a
+    # reachable controller; ci/scripts/verify-component-test-coverage.sh records that gap and
+    # keeps this line honest against spec.components.
+    - 'components/external-dns-provider/pihole/**'
     - '!infrastructure/subsystems/networking-core/**.md'
     - '!infrastructure/subsystems/networking-extra/**.md'
     - '!ci/test/chainsaw/**.md'

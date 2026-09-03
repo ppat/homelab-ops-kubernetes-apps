@@ -200,6 +200,64 @@ jobs:
         ./ci/scripts/verify-bootstrap-crds.sh --self-test
         ./ci/scripts/verify-bootstrap-crds.sh
 
+  # WHY THIS JOB EXISTS
+  # A components/ directory is not a released artifact and owns no test suite. It is exercised
+  # only where a suite's Flux Kustomization names it in spec.components, and nothing connected
+  # that to the path filters deciding which suites run -- so a pull request touching only
+  # components/ ran no suite at all and went green (#3870: sixteen suites, zero executed).
+  # kubeconform does not cover it either: it excludes components/* as non-standalone
+  # kustomizations. components/db-backups feeds six live CNPG backup configurations across two
+  # clusters, so that is a change to every database backup in the estate with nothing rendering
+  # it and nothing running it.
+  #
+  # GitHub evaluates on.pull_request.paths from static YAML, so the component paths must be
+  # written into each test-*.yaml by hand. This job is what keeps that hand-written half true:
+  # it derives the real pairing from spec.components and from each workflow's own test_path,
+  # and fails when the two disagree in EITHER direction -- a component exercised but not
+  # triggered, or triggered but not exercised. It also refuses a components/ directory that no
+  # suite runs and the script's UNCOVERED table does not name, so a new component cannot arrive
+  # with no coverage and no record of it.
+  #
+  # WHY IT IS UNGATED
+  # Same reason as commit-taxonomy: its input is repository state, not a diff. Adding a
+  # components/ directory, adding a spec.components line, or moving a suite each change the
+  # answer without touching any file a path filter could name. It costs seconds.
+  #
+  # The self-test runs FIRST, so the zero-defect verdict comes from a checker that has just
+  # demonstrated it can see each of the defects it claims to catch.
+  # THE SECOND CHECK, AND WHY IT IS NOT THE SAME ONE
+  # The coverage check above asks whether a suite that could fail on a component is triggered by
+  # it. It cannot ask whether the component does anything, and for a component built entirely out
+  # of `patches:` that is the question that matters -- a target selector matching nothing is a
+  # SILENT no-op. Measured on kustomize 5.8.1: exit 0, no warning, and the resource simply keeps
+  # what it had. For components/sso that means the authentik forward-auth middleware is absent
+  # from an Ingress that reports a clean build -- an authentication control silently missing.
+  # No chainsaw suite can close this: each reaches only the one or two targets whose module it
+  # deploys, and sso alone declares ten across seven modules.
+  components:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: 1
+        persist-credentials: false
+
+    - name: Verify component coverage matches the suites that trigger on it
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        ./ci/scripts/verify-component-test-coverage.sh --self-test
+        ./ci/scripts/verify-component-test-coverage.sh
+
+    - name: Verify component patch targets resolve and take effect
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        ./ci/scripts/verify-component-patch-targets.sh --self-test
+        ./ci/scripts/verify-component-patch-targets.sh
+
   kubernetes-manifests:
     needs: [detect-changes]
     runs-on: ubuntu-24.04
