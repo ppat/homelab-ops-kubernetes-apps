@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.29.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.29.7...infra-observability-core-v0.29.8) (2026-09-03)
+
+
+### ✨ Features
+
+* **infra-observability-core:** keep Prometheus's remote-write path off the UI's Ingress ([#3935](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3935)) ([f493e4c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f493e4c3303cc1115a268185d1fc26bc62eedca8))
+* **infra-observability-core:** make Alloy's write destination and cluster label injectable ([#3934](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3934)) ([63eb709](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/63eb709d1cff72abfb3cb2e3009125af4fa70280))
+* **infra-observability-core:** update alloy (1.11.1 -&gt; 1.12.0) ([#3898](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3898)) ([7b34612](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7b3461256500877ce70da68fdbeb326167dfaf22))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** update alloy (1.12.0 -&gt; 1.12.1) ([#3901](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3901)) ([b80f783](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b80f783652cb332309f94ec622f1c2694aae16ef))
+
 ## [0.29.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.29.6...infra-observability-core-v0.29.7) (2026-08-31)
 
 
