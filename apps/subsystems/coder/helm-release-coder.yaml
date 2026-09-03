@@ -70,7 +70,7 @@ spec:
       # plain emptyDir, whose file-level subPath support is universal.
       initContainers:
       - name: opentofu-binary
-        image: "ghcr.io/opentofu/opentofu:1.12.6"
+        image: "ghcr.io/opentofu/opentofu:1.12.6@sha256:22cb52f6c5bf5c72a48a8f56d993d8df3e9462b1cdfb5db7e77143c87e8d159f"
         command:
         - sh
         - -c
