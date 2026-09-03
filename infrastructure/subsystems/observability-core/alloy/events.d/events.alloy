@@ -15,10 +15,13 @@
 
 loki.write "default" {
 	endpoint {
-		// Trailing dot is deliberate: it makes the name fully qualified and skips
-		// ndots search-domain expansion. Same reasoning as conf.d/write.alloy.
-		// Do not "clean it up".
-		url = "http://loki.logging.svc.cluster.local.:3100/loki/api/v1/push"
+		// See conf.d/write.alloy for the trailing dot and the env override.
+		url = coalesce(sys.env("LOKI_WRITE_URL"), "http://loki.logging.svc.cluster.local.:3100/loki/api/v1/push")
+	}
+
+	external_labels = {
+		// See conf.d/write.alloy.
+		k8s_cluster = sys.env("K8S_CLUSTER_LABEL"),
 	}
 
 	// Deliberately no `host` external label, unlike conf.d/write.alloy. An Event is a
