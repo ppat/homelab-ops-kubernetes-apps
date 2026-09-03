@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: versitygw-wal-continuity
+  namespace: versitygw
+  labels:
+    app.kubernetes.io/name: versitygw-wal-continuity
+spec:
+  selector:
+    app.kubernetes.io/name: versitygw-wal-continuity
+  ports:
+  - name: metrics
+    port: 9104
+    targetPort: metrics
