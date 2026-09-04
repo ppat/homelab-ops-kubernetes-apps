@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
 - n8n-data.yaml
+- obsidian-vault-nats-jetstream.yaml
 - openclaw-data.yaml
 - openwebui.yaml
 - vault-data.yaml

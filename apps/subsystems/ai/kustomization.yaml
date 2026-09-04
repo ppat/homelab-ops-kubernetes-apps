@@ -18,6 +18,7 @@ resources:
 - mcp-unifi-protect/
 - n8n/
 - obsidian-vault/
+- obsidian-vault-nats/
 - openclaw/
 - openwebui/
 
