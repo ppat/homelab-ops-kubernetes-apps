@@ -13,6 +13,8 @@ resources:
 - helm-release-versitygw.yaml
 - deployment-statsd-exporter.yaml
 - service-statsd-exporter.yaml
+- deployment-store-inventory.yaml
+- service-store-inventory.yaml
 - cronjob-sweep.yaml
 
 commonAnnotations:
