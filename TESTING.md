@@ -42,6 +42,37 @@ name.
 the direction that looks like *more* coverage rather than less, which is how every mapping of
 this kind actually dies.
 
+### A patch target that matches nothing is a silent no-op
+
+Suite coverage is not the whole problem, and for `components/sso` it is not even the main one. A
+component built out of `patches:` fails in exactly one way, and that way is invisible. Measured on
+kustomize 5.8.1 (`kubectl kustomize` 1.36.4 produces byte-identical output):
+
+| situation | what kustomize does |
+| --- | --- |
+| target matches nothing | **exit 0, no warning**; the resource keeps whatever it had |
+| `op: replace` on a key that is absent | **the key is created** — `replace` behaves as upsert |
+| `op: add` on a key that exists | overwritten |
+
+So a stale name or namespace in `components/sso` leaves the target Ingress serving with whatever
+middleware it already had — for a newly-added Ingress, **none at all** — and reports success. That
+is an authentication control silently absent on a green build, and this repository has already
+moved a namespace underneath one of those targets once (PR #1141, pihole `pihole` → `dns`).
+
+No suite can close this. Each reaches only the one or two targets whose module it deploys, and
+`sso` alone declares ten across seven modules. `ci/scripts/verify-component-patch-targets.sh`
+covers all of them in about four seconds, asserting **both** halves of the property — because
+"the target resolves" and "the patch took effect" are exactly the two states the no-op separates:
+
+1. some module in this repository builds a resource the selector matches;
+2. applying that one patch to that module actually changes the output.
+
+Both sides are derived — targets from each component's own `kustomization.yaml`, resources from
+`kubectl kustomize` over every module — so drift in **either** direction goes red: a component
+whose target is stale, or a module that renames a `HelmRelease`, moves a namespace, or drops an
+Ingress. What it deliberately does not claim is that any cluster mixes the component into that
+module; `spec.components` lives in the clusters repository and is not this repository's business.
+
 What is exercised today, and what covering the rest would take:
 
 | component | exercised by | note |
@@ -49,8 +80,8 @@ What is exercised today, and what covering the rest would take:
 | `db-backups`, `db-restore` | `infra-database` | the full bare → backups → restore rotation on a real CNPG `Cluster` |
 | `external-dns-provider/pihole` | `infra-networking` | the provider is in-tree, so external-dns starts without the server answering |
 | `external-dns-provider/unifi` | — | the variant **both clusters actually run**, and the most frequently bumped. Its webhook sidecar exits non-zero at startup when it cannot reach a controller (measured on 0.10.12: `initializing provider … no such host`, exit 1), so covering it needs a stub UniFi API in `pre-requisites/`, not just a `spec.components` line |
-| `sso` | — | what a suite would add is proof the patched output is accepted by a live API server. `apps-coder` cannot host it: **Coder performs OIDC discovery at startup and exits 1 when the issuer is unreachable** (measured on v2.35.7 against a real Postgres — `create oidc config: configure oidc provider: Get …/.well-known/openid-configuration: no such host`), so it needs a TLS-serving stub IdP, not a `spec.components` line |
-| `cert-issuer/letsencrypt` | — | the `ClusterIssuer`s it creates need an ACME account and a delegable zone |
+| `sso` | — (all ten patch targets checked statically) | what a suite would add is proof the patched output is accepted by a live API server. `apps-coder` cannot host it: **Coder performs OIDC discovery at startup and exits 1 when the issuer is unreachable** (measured on v2.35.7 against a real Postgres — `create oidc config: configure oidc provider: Get …/.well-known/openid-configuration: no such host`), so it needs a TLS-serving stub IdP, not a `spec.components` line |
+| `cert-issuer/letsencrypt` | — (its one patch target checked statically) | the `ClusterIssuer`s it creates need an ACME account and a delegable zone |
 | `oidc-credentials/*` | — | one `ExternalSecret` each; needs the consuming module's suite to adopt the component and its fake-store keys |
 
 ## Test Process

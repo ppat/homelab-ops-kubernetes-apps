@@ -220,6 +220,13 @@ jobs:
         ./ci/scripts/verify-component-test-coverage.sh --self-test
         ./ci/scripts/verify-component-test-coverage.sh
 
+    - name: Verify component patch targets resolve and take effect
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        ./ci/scripts/verify-component-patch-targets.sh --self-test
+        ./ci/scripts/verify-component-patch-targets.sh
+
   kubernetes-manifests:
     needs: [detect-changes]
     runs-on: ubuntu-24.04
