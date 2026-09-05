@@ -1,0 +1,37 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-vault-loaded-exporter
+spec:
+  try:
+  # Readiness here proves the /metrics listener answers -- deliberately not that the vault
+  # enumeration succeeded. The exporter polls on a background loop and serves cached state, so
+  # a vault it cannot open leaves this Deployment Ready and shows up only in the exposed
+  # series. That is the component's whole design (ppat/obsidian-tools ADR-0037): if this
+  # assertion could go red on an unopenable vault, the signal would have been wired to
+  # something that restarts a pod, which is exactly what it must not be.
+  - description: Assert deployment/vault-loaded-exporter
+    assert:
+      bindings:
+      - name: name
+        value: vault-loaded-exporter
+      - name: namespace
+        value: obsidian-vault
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 5m
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: vault-loaded-exporter
+      namespace: obsidian-vault
+  # The pod logs distinguish the two ways this step goes red that the Deployment status cannot:
+  # a missing OBSIDIAN_API_KEY (the ExternalSecret never synced) never starts the container,
+  # while a bound port that the probe cannot reach starts it and fails readiness.
+  - podLogs:
+      selector: app.kubernetes.io/name=vault-loaded-exporter
+      namespace: obsidian-vault
+      tail: 200
+  - events:
+      namespace: obsidian-vault
