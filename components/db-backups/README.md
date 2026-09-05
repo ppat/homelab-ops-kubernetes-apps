@@ -67,15 +67,10 @@ flowchart LR
    | db_suffix_current | Current cluster generation suffix; forms the archived `serverName` | v20251018 |
    | dns_zone | Used to build the S3 endpoint URL | example.com |
    | secret_store | `ClusterSecretStore` name providing S3 credentials | bitwarden-secret-manager-store |
+   | backup_s3_accesskeyid_key | Bitwarden key naming the S3 access key id for the backup bucket; defaults to `cluster_nas_minio_cloudnativepg_accesskeyid` if unset | cluster_nas_minio_cloudnativepg_accesskeyid |
+   | backup_s3_secretkey_key | Bitwarden key naming the S3 secret access key for the backup bucket; defaults to `cluster_nas_minio_cloudnativepg_secretkey` if unset | cluster_nas_minio_cloudnativepg_secretkey |
 
-2. Required Secret Store Keys
-
-   | Key | Purpose |
-   | --- | ------- |
-   | cluster_nas_minio_cloudnativepg_accesskeyid | S3 access key id for the backup bucket |
-   | cluster_nas_minio_cloudnativepg_secretkey | S3 secret access key for the backup bucket |
-
-3. Required Infrastructure
+2. Required Infrastructure
 
    | Component | Purpose | Provided By |
    | --------- | ------- | ----------- |
