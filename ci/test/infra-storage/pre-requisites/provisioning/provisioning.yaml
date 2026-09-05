@@ -1,0 +1,16 @@
+---
+accounts:
+- access: chainsaw-consumer-cnpg
+  secret: chainsaw-consumer-cnpg-secret-placeholder
+  role: user
+- access: chainsaw-consumer-longhorn
+  secret: chainsaw-consumer-longhorn-secret-placeholder
+  role: user
+- access: chainsaw-versitygw-uiadmin
+  secret: chainsaw-uiadmin-secret-placeholder
+  role: admin
+buckets:
+- name: chainsaw-backups-cnpg
+  owner: chainsaw-consumer-cnpg
+- name: chainsaw-backups-longhorn
+  owner: chainsaw-consumer-longhorn

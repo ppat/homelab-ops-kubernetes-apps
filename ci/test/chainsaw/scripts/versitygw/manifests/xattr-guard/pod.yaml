@@ -1,0 +1,50 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ${GUARD_POD}
+  namespace: ${GUARD_NAMESPACE}
+spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  containers:
+  - name: verify-xattr
+    image: docker.io/alpine/k8s:1.36.4@sha256:358ddfc2d6ff3f00dd461dbd79aaa6d6738709f225b8da0945bb63bd4dbc304e
+    command: [python3, /scripts/verify-xattr.py]
+    env:
+    - name: VERSITYGW_GATEWAY_ROOT
+      value: /mnt/data
+    - name: PYTHONDONTWRITEBYTECODE
+      value: "1"
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+    volumeMounts:
+    - name: data
+      mountPath: /mnt/data
+      subPath: data
+      readOnly: true
+    - name: scripts
+      mountPath: /scripts
+      readOnly: true
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      # Defaulted only so CI's kubeconform pass over ci/test, which knows the modules'
+      # variables and not the fixtures', renders a string rather than a null.
+      claimName: ${GUARD_CLAIM:=claim-name-was-not-supplied}
+  - name: scripts
+    configMap:
+      name: versitygw-scripts
+      defaultMode: 0555
+  tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists

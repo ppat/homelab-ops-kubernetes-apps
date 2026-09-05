@@ -1,0 +1,8 @@
+---
+# The WebUI Ingress only. The S3 endpoint carries backup producers, which cannot
+# follow a redirect to a login form, and the admin endpoint is called by the
+# BROWSER cross-origin -- requests carrying no forward-auth session for that
+# hostname, so the middleware there fails every call while looking protected.
+- op: add
+  path: /spec/values/webui/ingress/annotations/traefik.ingress.kubernetes.io~1router.middlewares
+  value: authentik-forward-auth@kubernetescrd

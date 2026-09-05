@@ -1,0 +1,45 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ${GUARD_POD_BLANK}
+  namespace: ${GUARD_NAMESPACE}
+spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  containers:
+  - name: verify-store-identity
+    image: docker.io/alpine/k8s:1.36.4@sha256:358ddfc2d6ff3f00dd461dbd79aaa6d6738709f225b8da0945bb63bd4dbc304e
+    command: [python3, /scripts/verify-store-identity.py]
+    env:
+    - name: VERSITYGW_STORE_IDENTITY
+      value: /mnt/store/.versitygw-store-identity
+    - name: PYTHONDONTWRITEBYTECODE
+      value: "1"
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+    volumeMounts:
+    - name: blank
+      mountPath: /mnt/store
+    - name: scripts
+      mountPath: /scripts
+      readOnly: true
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  volumes:
+  - name: blank
+    emptyDir: {}
+  - name: scripts
+    configMap:
+      name: versitygw-scripts
+      defaultMode: 0555
+  tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists

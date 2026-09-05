@@ -1,0 +1,302 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: versitygw-release
+  namespace: versitygw
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: versitygw
+    namespace: flux-system
+  install:
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 30m0s
+  releaseName: versitygw
+  targetNamespace: versitygw
+  timeout: 10m0s
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+
+  values:
+    fullnameOverride: versitygw
+
+    replicaCount: 1
+    strategy:
+      type: Recreate
+
+    image:
+      # No `# renovate:` directive: with `repository` set the flux manager already
+      # identifies this pair, and adding one extracts the same line twice.
+      repository: ghcr.io/versity/versitygw
+      tag: "v1.7.0"
+
+    persistence:
+      enabled: true
+      create: false
+      claimName: ${versitygw_data_claim}
+
+    auth:
+      existingSecret: versitygw-credentials
+
+    deploymentAnnotations:
+      # Both are read once at process start, and nothing else rolls the pod: without
+      # these, a completed key rotation leaves the old key still accepted.
+      secret.reloader.stakater.com/reload: versitygw-credentials
+      configmap.reloader.stakater.com/reload: versitygw-scripts
+
+    gateway:
+      backend:
+        type: posix
+        # The IAM directory is a SIBLING of this path inside the PVC, not a child, which
+        # is the only thing keeping users.json out of the S3 object namespace. Pointing
+        # this at the PVC root re-opens it.
+        args: /mnt/data
+      port: 7070
+      region: ${versitygw_s3_region}
+      # Unset, the WebUI sets `Access-Control-Allow-Origin: *` on the S3 AND admin
+      # APIs, warning only to stderr.
+      corsAllowOrigin: https://versitygw.${domain_name}
+
+    admin:
+      enabled: true
+      port: 7071
+      ingress:
+        enabled: true
+        className: traefik
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: versitygw-admin.${domain_name}
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+        hosts:
+        - host: versitygw-admin.${domain_name}
+          paths:
+          - path: /
+            pathType: Prefix
+
+    webui:
+      enabled: true
+      port: 8080
+      noTls: true
+      apiGateways:
+      - https://versitygw-s3.${domain_name}
+      adminGateways:
+      - https://versitygw-admin.${domain_name}
+      ingress:
+        enabled: true
+        className: traefik
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: versitygw.${domain_name}
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+        hosts:
+        - host: versitygw.${domain_name}
+          paths:
+          - path: /
+            pathType: Prefix
+
+    iam:
+      enabled: true
+      type: internal
+
+    ingress:
+      enabled: true
+      className: traefik
+      annotations:
+        external-dns.alpha.kubernetes.io/hostname: versitygw-s3.${domain_name}
+        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        traefik.ingress.kubernetes.io/router.tls: "true"
+      hosts:
+      - host: versitygw-s3.${domain_name}
+        paths:
+        - path: /
+          pathType: Prefix
+      # Renders no `spec.tls`: the chart treats an empty list as false, so the
+      # `tls: []` idiom used elsewhere in this module is not expressible here.
+      tls: []
+
+    podSecurityContext:
+      # Restated in full because the chart renders this with `toYaml`. Without
+      # fsGroupChangePolicy the kubelet chowns every file at every mount, which at
+      # this store's object count is a startup that does not finish.
+      fsGroup: 1000
+      fsGroupChangePolicy: OnRootMismatch
+      seccompProfile:
+        type: RuntimeDefault
+
+    resources:
+      # The container securityContext is deliberately unset: the chart's defaults are
+      # restrictive and keep tightening. Its uid is load-bearing beyond this pod --
+      # the sweep CronJob must match it or it cannot unlink residue.
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: "${versitygw_memory_limit:=1Gi}"
+
+    podLabels:
+      # The invariant: anything mounting this ReadWriteOnce volume carries this label
+      # and this affinity, and is thereby co-located with whatever already holds it.
+      versitygw.storage/shares-object-volume: "true"
+    affinity:
+      podAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              versitygw.storage/shares-object-volume: "true"
+          topologyKey: kubernetes.io/hostname
+
+    tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+
+    extraEnv:
+    - name: VGW_POSIX_CONCURRENCY
+      # This number and the memory limit above are an unmeasured pair: the gateway's
+      # per-operation footprint has never been observed, so whether 256 concurrent
+      # operations backpressure or OOMKill against that limit is not established here.
+      # The migration copy is the designated first real load to measure it on.
+      value: "256"
+    - name: VGW_METRICS_STATSD_SERVERS
+      value: versitygw-metrics.versitygw.svc.cluster.local:9125
+    - name: VGW_METRICS_SERVICE_NAME
+      value: versitygw
+
+  postRenderers:
+  - kustomize:
+      patches:
+      - target:
+          kind: Deployment
+          name: versitygw
+        # yamllint disable-line rule:indentation
+        patch: |-
+          # Asserts, changes nothing. mountPath AND subPath, because only the pair carries
+          # the containment: subPath alone still passes `mountPath: /mnt/data/iam`.
+          # A JSON6902 patch whose target matches nothing is a SILENT no-op, so a renamed
+          # Deployment drops this fence and both startup checks at once.
+          - op: test
+            path: /spec/template/spec/containers/0/name
+            value: versitygw
+          - op: test
+            path: /spec/template/spec/containers/0/volumeMounts/0/mountPath
+            value: /mnt/data
+          - op: test
+            path: /spec/template/spec/containers/0/volumeMounts/0/subPath
+            value: data
+          - op: test
+            path: /spec/template/spec/containers/0/volumeMounts/1/mountPath
+            value: /mnt/iam
+          - op: test
+            path: /spec/template/spec/containers/0/volumeMounts/1/subPath
+            value: iam
+          - op: test
+            # The sweep CronJob's podAffinity selects this exact pair, so `releaseName`
+            # above is load-bearing in a second place with nothing else tying the two
+            # together. Change it and the sweep schedules nowhere.
+            path: /spec/template/metadata/labels/app.kubernetes.io~1instance
+            value: versitygw
+          - op: test
+            # No test can cover this -- kind's local-path root is world-writable, so CI is
+            # green either way -- which leaves a shape assertion as the only instrument.
+            path: /spec/template/spec/securityContext/fsGroup
+            value: 1000
+          - op: test
+            path: /spec/template/spec/securityContext/fsGroupChangePolicy
+            value: OnRootMismatch
+  - kustomize:
+      patches:
+      - target:
+          kind: Deployment
+          name: versitygw
+        # yamllint disable-line rule:indentation
+        patch: |-
+          # If the chart renames its container this stops merging and contributes an
+          # imageless container, which the API server rejects outright.
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: versitygw
+          spec:
+            template:
+              spec:
+                initContainers:
+                - name: verify-store-identity
+                  image: docker.io/alpine/k8s:1.36.4@sha256:358ddfc2d6ff3f00dd461dbd79aaa6d6738709f225b8da0945bb63bd4dbc304e
+                  imagePullPolicy: IfNotPresent
+                  command: [python3, /scripts/verify-store-identity.py]
+                  env:
+                  - name: VERSITYGW_STORE_IDENTITY
+                    value: /mnt/store/.versitygw-store-identity
+                  - name: PYTHONDONTWRITEBYTECODE
+                    value: "1"
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    capabilities:
+                      drop: [ALL]
+                    readOnlyRootFilesystem: true
+                    runAsNonRoot: true
+                    runAsUser: 1000
+                    runAsGroup: 1000
+                  resources:
+                    requests:
+                      cpu: 10m
+                      memory: 32Mi
+                    limits:
+                      memory: 64Mi
+                  volumeMounts:
+                  - name: data
+                    mountPath: /mnt/store
+                    readOnly: true
+                  - name: scripts
+                    mountPath: /scripts
+                    readOnly: true
+                - name: verify-xattr
+                  image: docker.io/alpine/k8s:1.36.4@sha256:358ddfc2d6ff3f00dd461dbd79aaa6d6738709f225b8da0945bb63bd4dbc304e
+                  imagePullPolicy: IfNotPresent
+                  command: [python3, /scripts/verify-xattr.py]
+                  env:
+                  - name: VERSITYGW_GATEWAY_ROOT
+                    value: /mnt/data
+                  - name: PYTHONDONTWRITEBYTECODE
+                    value: "1"
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    capabilities:
+                      drop: [ALL]
+                    readOnlyRootFilesystem: true
+                    runAsNonRoot: true
+                    runAsUser: 1000
+                    runAsGroup: 1000
+                  resources:
+                    requests:
+                      cpu: 10m
+                      memory: 32Mi
+                    limits:
+                      memory: 64Mi
+                  volumeMounts:
+                  - name: data
+                    mountPath: /mnt/data
+                    subPath: data
+                  - name: scripts
+                    mountPath: /scripts
+                    readOnly: true
+                containers:
+                - name: versitygw
+                  livenessProbe:
+                    httpGet:
+                      path: /_/health
+                      port: s3-api
+                    initialDelaySeconds: 30
+                    periodSeconds: 30
+                    failureThreshold: 3
+                volumes:
+                - name: scripts
+                  configMap:
+                    name: versitygw-scripts
+                    defaultMode: 0555

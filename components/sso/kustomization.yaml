@@ -43,6 +43,11 @@ patches:
     kind: HelmRelease
     name: minio-release
     namespace: minio
+- path: patch-versitygw.yaml
+  target:
+    kind: HelmRelease
+    name: versitygw-release
+    namespace: versitygw
 - path: patch-traefik.yaml
   target:
     kind: HelmRelease

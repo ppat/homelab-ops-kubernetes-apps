@@ -1,0 +1,107 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ${PROVISION_JOB}
+  namespace: ${PROVISION_NAMESPACE}
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      restartPolicy: OnFailure
+      automountServiceAccountToken: false
+      initContainers:
+      - name: validate
+        image: docker.io/alpine/k8s:1.36.4@sha256:358ddfc2d6ff3f00dd461dbd79aaa6d6738709f225b8da0945bb63bd4dbc304e
+        command: [sh, -c, "python3 /scripts/provision-plan.py < /document/provisioning.yaml > /plan/plan.tsv"]
+        env:
+        - name: PYTHONDONTWRITEBYTECODE
+          value: "1"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+          readOnly: true
+        - name: document
+          mountPath: /document
+          readOnly: true
+        - name: plan
+          mountPath: /plan
+      containers:
+      - name: provision
+        image: ghcr.io/versity/versitygw:v1.7.0@sha256:c4cbd9d9cb8dedbb055ac788dbd02635651b9b1cebac95b095b3217231aa87ad
+        command: [/bin/sh, /scripts/provision-store.sh]
+        env:
+        - name: ADMIN_ENDPOINT_URL
+          value: http://versitygw.versitygw.svc.cluster.local:7071
+        - name: ADMIN_REGION
+          value: ${PROVISION_REGION}
+        - name: ADMIN_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: versitygw-credentials
+              key: rootAccessKeyId
+        - name: ADMIN_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: versitygw-credentials
+              key: rootSecretAccessKey
+        - name: VERSITYGW_PLAN
+          value: /plan/plan.tsv
+        - name: VERSITYGW_READY_DEADLINE_SECONDS
+          value: "300"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+          readOnly: true
+        - name: plan
+          mountPath: /plan
+          readOnly: true
+      securityContext:
+        # Without this the 0440 document is unreadable: a Secret volume is owned by root
+        # and the pod's fsGroup, so a non-root uid is "other".
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - name: scripts
+        configMap:
+          name: versitygw-provision-scripts
+          defaultMode: 0555
+      - name: document
+        secret:
+          secretName: versitygw-provisioning
+          defaultMode: 0440
+      - name: plan
+        emptyDir: {}
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
