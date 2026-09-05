@@ -1,0 +1,100 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: versitygw-wal-continuity
+  namespace: versitygw
+  labels:
+    app.kubernetes.io/name: versitygw-wal-continuity
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: versitygw-wal-continuity
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: versitygw-wal-continuity
+        versitygw.storage/shares-object-volume: "true"
+    spec:
+      automountServiceAccountToken: false
+      # A Service of this name reserves VERSITYGW_WAL_CONTINUITY_PORT and
+      # friends as environment names.
+      enableServiceLinks: false
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                versitygw.storage/shares-object-volume: "true"
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - name: wal-continuity
+        image: docker.io/alpine/k8s:1.36.4@sha256:358ddfc2d6ff3f00dd461dbd79aaa6d6738709f225b8da0945bb63bd4dbc304e
+        imagePullPolicy: IfNotPresent
+        command: [python3, /scripts/wal-continuity.py]
+        env:
+        - name: VERSITYGW_GATEWAY_ROOT
+          value: /mnt/store/data
+        - name: VERSITYGW_WAL_INTERVAL_SECONDS
+          value: "3600"
+        - name: PYTHONDONTWRITEBYTECODE
+          value: "1"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        ports:
+        - name: metrics
+          containerPort: 9104
+        # Readiness only: restarting a process whose pass is slow is what stops
+        # it ever finishing.
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            # Grows with the store: one integer per segment.
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+        volumeMounts:
+        - name: data
+          mountPath: /mnt/store
+          # The volume root, NOT `subPath: data`: the kubelet creates a missing
+          # subPath, manufacturing an empty gateway root on a volume that lost
+          # one. Read-only, this refuses to start instead.
+          readOnly: true
+        - name: scripts
+          mountPath: /scripts
+          readOnly: true
+      # No fsGroup: under fsGroupChangePolicy OnRootMismatch, two pods declaring
+      # different fsGroups on one volume each recursively chown the whole tree at
+      # every start.
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: ${versitygw_data_claim}
+      - name: scripts
+        # Hashed: this script is read once and held, so an unhashed name leaves
+        # a corrected reader unread while the running pod keeps reporting.
+        configMap:
+          name: versitygw-wal-continuity-script
+          defaultMode: 0555
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists

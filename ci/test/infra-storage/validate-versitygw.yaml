@@ -40,6 +40,15 @@ spec:
         value: versitygw
       file: ../chainsaw/assertions/deployment-ready.yaml
       timeout: 3m
+  - description: Assert deployment/versitygw-wal-continuity
+    assert:
+      bindings:
+      - name: name
+        value: versitygw-wal-continuity
+      - name: namespace
+        value: versitygw
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 3m
   - description: Assert deployment/versitygw-metrics
     assert:
       bindings:
@@ -195,6 +204,12 @@ spec:
     script:
       content: ../chainsaw/scripts/versitygw/inventory.sh
       timeout: 10m
+  # Must follow the inventory check: it breaks a probe archive in the same
+  # bucket whose object count that check asserts.
+  - description: Assert the WAL chain's continuity is exported and goes red on a break
+    script:
+      content: ./scripts/versitygw-wal-continuity.sh
+      timeout: 15m
   - description: Assert the startup xattr guard fails on a read-only mount
     script:
       content: ../chainsaw/scripts/versitygw/xattr-guard.sh
@@ -235,6 +250,11 @@ spec:
       kind: Deployment
       name: versitygw-inventory
       namespace: versitygw
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: versitygw-wal-continuity
+      namespace: versitygw
   # yamllint disable rule:line-length
   - script:
       timeout: 1m
@@ -260,6 +280,9 @@ spec:
       namespace: versitygw
   - podLogs:
       selector: app.kubernetes.io/name=versitygw-inventory
+      namespace: versitygw
+  - podLogs:
+      selector: app.kubernetes.io/name=versitygw-wal-continuity
       namespace: versitygw
   - events:
       namespace: versitygw
