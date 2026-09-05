@@ -1,0 +1,111 @@
+---
+apiVersion: apps/v1
+# Its own Deployment rather than a sidecar in the gateway pod: an instrument that
+# crash-loops there takes the gateway out of its Service endpoints.
+kind: Deployment
+metadata:
+  name: versitygw-inventory
+  namespace: versitygw
+  labels:
+    app.kubernetes.io/name: versitygw-inventory
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: versitygw-inventory
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: versitygw-inventory
+        versitygw.storage/shares-object-volume: "true"
+    spec:
+      automountServiceAccountToken: false
+      # A Service named `versitygw-inventory` reserves VERSITYGW_INVENTORY_PORT
+      # and friends as injected env names meaning `tcp://<clusterIP>:9103`.
+      # Nothing here resolves by environment, so close the channel entirely.
+      enableServiceLinks: false
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                versitygw.storage/shares-object-volume: "true"
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - name: inventory
+        image: docker.io/alpine/k8s:1.36.4@sha256:358ddfc2d6ff3f00dd461dbd79aaa6d6738709f225b8da0945bb63bd4dbc304e
+        imagePullPolicy: IfNotPresent
+        command: [python3, /scripts/store-inventory.py]
+        env:
+        - name: VERSITYGW_GATEWAY_ROOT
+          value: /mnt/store/data
+        # A floor, not a schedule: the sleep starts AFTER a walk returns, so a
+        # slow walk degrades cadence instead of stacking walks. Daily because the
+        # cost recurs in full every time -- ~367,000 read requests over ~1.7 GiB
+        # of metadata, never warm.
+        - name: VERSITYGW_INVENTORY_INTERVAL_SECONDS
+          value: "86400"
+        - name: PYTHONDONTWRITEBYTECODE
+          value: "1"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        ports:
+        - name: metrics
+          containerPort: 9103
+        # No livenessProbe: restarting a process whose walk is slow is the one
+        # intervention guaranteed to stop it ever finishing.
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            # ~10x the walker's ~21 MiB peak, which does not grow with the tree.
+            # Raising it does not warm the metadata cache -- that is reclaimable
+            # slab, and the measured threshold is 2-4Gi -- so anything short of
+            # that is waste.
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+        volumeMounts:
+        - name: data
+          mountPath: /mnt/store
+          # The volume root, NOT `subPath: data` the way the gateway mounts it:
+          # the kubelet creates a missing subPath, so this pod would manufacture
+          # an empty gateway root on a volume that had lost one and then report a
+          # store with nothing in it. Read-only on the parent makes that
+          # impossible; the walker refuses to start instead.
+          readOnly: true
+        - name: scripts
+          mountPath: /scripts
+          readOnly: true
+      # No fsGroup, unlike every other pod over this volume, which needs one to
+      # write. Two pods declaring different fsGroups make every mount look like a
+      # mismatch under fsGroupChangePolicy OnRootMismatch, and each then
+      # recursively chowns the whole tree at every start.
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: ${versitygw_data_claim}
+      - name: scripts
+        configMap:
+          name: versitygw-inventory-script
+          defaultMode: 0555
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists

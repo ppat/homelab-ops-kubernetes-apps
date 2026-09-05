@@ -31,6 +31,15 @@ spec:
         value: versitygw
       file: ../chainsaw/assertions/deployment-ready.yaml
       timeout: 5m
+  - description: Assert deployment/versitygw-inventory
+    assert:
+      bindings:
+      - name: name
+        value: versitygw-inventory
+      - name: namespace
+        value: versitygw
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 3m
   - description: Assert deployment/versitygw-metrics
     assert:
       bindings:
@@ -179,6 +188,13 @@ spec:
     script:
       content: ../chainsaw/scripts/versitygw/sweep.sh
       timeout: 8m
+  # Ordering is load-bearing: after the round-trip for a store with known
+  # contents, and after the sweep, whose residue would otherwise move under the
+  # walk.
+  - description: Assert the exported object counts are the store's and track it
+    script:
+      content: ../chainsaw/scripts/versitygw/inventory.sh
+      timeout: 10m
   - description: Assert the startup xattr guard fails on a read-only mount
     script:
       content: ../chainsaw/scripts/versitygw/xattr-guard.sh
@@ -214,6 +230,11 @@ spec:
       kind: Deployment
       name: versitygw-metrics
       namespace: versitygw
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: versitygw-inventory
+      namespace: versitygw
   # yamllint disable rule:line-length
   - script:
       timeout: 1m
@@ -236,6 +257,9 @@ spec:
       container: versitygw
   - podLogs:
       selector: app.kubernetes.io/name=versitygw-metrics
+      namespace: versitygw
+  - podLogs:
+      selector: app.kubernetes.io/name=versitygw-inventory
       namespace: versitygw
   - events:
       namespace: versitygw
