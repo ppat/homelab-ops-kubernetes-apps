@@ -9,8 +9,8 @@ REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 
 # Components no suite exercises. TESTING.md 'Component Coverage' holds what covering each takes.
 declare -A UNCOVERED=(
-  ["components/sso"]="a suite would need a TLS-serving stub IdP"
-  ["components/cert-issuer/letsencrypt"]="its ClusterIssuers need ACME and a delegable zone"
+  ["components/sso"]="patch targets checked statically; a suite would need a TLS-serving stub IdP"
+  ["components/cert-issuer/letsencrypt"]="patch target checked statically; its ClusterIssuers need ACME and a delegable zone"
   ["components/external-dns-provider/unifi"]="its webhook sidecar exits non-zero without a reachable controller; needs a stub UniFi API"
   ["components/oidc-credentials/coder"]="needs the consuming module's suite to adopt the component and its fake-store keys"
   ["components/oidc-credentials/grafana"]="as oidc-credentials/coder"
