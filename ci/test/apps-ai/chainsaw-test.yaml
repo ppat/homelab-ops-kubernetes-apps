@@ -208,6 +208,17 @@ spec:
     use:
       template: ./validate-mcp-grafana.yaml
 
+  # At the tail of the band above on measured readiness, not appended to the end: T0+146 and
+  # T0+151 over two runs, against T0+103-150 for the twelve mcp-* pods and T0+201 for obsidian
+  # in both. Its position *inside* the band is as arbitrary as theirs and swaps with
+  # mcp-unifi-protect between the two runs; what both settle, and what this slot turns on, is
+  # the 50s gap to everything behind it. Those readings are from a local kind rig, so their T0
+  # scale is not the one the block comment above quotes. The pod waits on no volume and no
+  # other workload -- a ~45s image pull is its whole cost to reach Ready.
+  - name: Validate vault-loaded-exporter
+    use:
+      template: ./validate-vault-loaded-exporter.yaml
+
   # This assertion was deliberately withheld (see ppat/homelab-ops-kubernetes-apps#3440)
   # over an untested readiness chain (Xvfb, Electron, a DevTools attach that disables
   # Restricted Mode) and a registry `kind` couldn't pull from. Both reasons are gone: the
