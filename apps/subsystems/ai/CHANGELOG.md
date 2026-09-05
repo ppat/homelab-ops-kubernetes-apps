@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.8.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.8.1...apps-ai-v0.8.2) (2026-09-05)
+
+
+### 🛠 Improvements
+
+* **apps-ai:** remove retired NAS git-remote references ([#3937](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3937)) ([1a1347b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1a1347b411512cdd2a6234b8f6c48d922d3ebf5a))
+
+
+### ✨ Features
+
+* **apps-ai:** add the NATS JetStream work-queue substrate and its account machinery ([#3947](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3947)) ([2ade574](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2ade574a1b3763ab8acfe2719544c00dc201899e))
+* **apps-ai:** update docker.io/grafana/mcp-grafana (1.1.0 -&gt; 1.2.0) ([#3905](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3905)) ([ab60ec2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ab60ec2ebd95e9d6953319a34a3a56582e1cac79))
+* **apps-ai:** update docker.io/grafana/mcp-grafana (1.2.0 -&gt; 1.3.0) ([#3944](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3944)) ([cad42b2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/cad42b2af3818124191cb3578c7b1df387aaefdf))
+
 ## [0.8.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.8.0...apps-ai-v0.8.1) (2026-08-31)
 
 
