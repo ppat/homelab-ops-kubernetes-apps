@@ -3,17 +3,19 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-# Two shared fixtures in place of the whole security-core module. storage-core needs
-# cert-manager for garage/certificate-web.yaml (the only Certificate in the module) and
-# external-secrets for the minio and garage ExternalSecrets. Everything else security-core
-# ships -- kyverno, policy-reporter, trust-manager, the Bitwarden certificate chain -- was
-# already being patch-deleted or left inert here; the fixtures do not install it at all.
-# See ../../chainsaw/pre-requisites/README.md.
 - ../../chainsaw/pre-requisites/cert-manager/
 - ../../chainsaw/pre-requisites/external-secrets/
 - fake-secret-store.yaml
 - namespaces.yaml
 - pvc/
+- versitygw-store-prepare.yaml
+- provisioning/
+
+configMapGenerator:
+- name: versitygw-store-prepare-scripts
+  namespace: versitygw
+  files:
+  - scripts/prepare-store.sh
 
 sortOptions:
   order: fifo

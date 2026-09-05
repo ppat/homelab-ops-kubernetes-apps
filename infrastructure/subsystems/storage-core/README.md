@@ -4,7 +4,7 @@ Provides storage capabilities for the cluster through distributed block storage,
 
 ## Quick Links
 
-<a href="https://garagehq.deuxfleurs.fr/" target="_blank"><img src="../../../.static/images/logos/garage.svg" width="32" height="32" alt="Garage"></a> <a href="https://longhorn.io/" target="_blank"><img src="../../../.static/images/logos/longhorn.svg" width="32" height="32" alt="Longhorn"></a> <a href="https://min.io/" target="_blank"><img src="../../../.static/images/logos/minio.svg" width="32" height="32" alt="MinIO"></a> <a href="https://github.com/kubernetes-csi/csi-driver-nfs" target="_blank"><img src="../../../.static/images/logos/nfs-csi-driver.png" width="32" height="32" alt="NFS CSI Driver"></a>
+<a href="https://garagehq.deuxfleurs.fr/" target="_blank"><img src="../../../.static/images/logos/garage.svg" width="32" height="32" alt="Garage"></a> <a href="https://longhorn.io/" target="_blank"><img src="../../../.static/images/logos/longhorn.svg" width="32" height="32" alt="Longhorn"></a> <a href="https://min.io/" target="_blank"><img src="../../../.static/images/logos/minio.svg" width="32" height="32" alt="MinIO"></a> <a href="https://github.com/kubernetes-csi/csi-driver-nfs" target="_blank"><img src="../../../.static/images/logos/nfs-csi-driver.png" width="32" height="32" alt="NFS CSI Driver"></a> <a href="https://www.versity.com/products/versitygw/" target="_blank"><img src="../../../.static/images/logos/versitygw.svg" width="32" height="32" alt="VersityGW"></a>
 
 ## Overview
 
@@ -39,6 +39,13 @@ The storage-core module provides four main capabilities:
    - `PrometheusRule` alerting on node reachability, internal RPC error rate, block resync health, and disk space -- queryable state only, since this estate has no AlertManager routing configured
    - Grafana dashboard shipped with the module, covering capacity, disk reclamation, S3 workload and integrity -- Garage has no admin UI of its own, so this is the operator's console
 
+5. Backup Object Storage (VersityGW)
+   - An S3 API served directly over a plain POSIX tree: one object is one ordinary file, the key is its path beneath the bucket directory unencoded and 1:1, and per-object metadata lives in `user.*` extended attributes on the inode -- so the stored form is readable by anything that can read a filesystem, with no index to lose
+   - S3 API, WebUI, and admin API on three separate listeners, each behind its own Ingress hostname, so the endpoint the backup producers use carries no account-management surface
+   - Only the gateway's own root credential is owned here; consumer accounts and bucket ownership have no declarative representation and are converged outside the module, because which accounts and buckets exist is a cluster fact rather than a property of the gateway
+   - A startup gate that refuses to serve over a tree it cannot write extended attributes to, and a scheduled sweep that reclaims the multipart residue no S3 API can reach
+   - Prometheus metrics via a StatsD translator deployed alongside, since the gateway itself publishes only UDP counters
+
 ### Component Details
 
 | Component | Primary Role | Integration Points |
@@ -47,23 +54,25 @@ The storage-core module provides four main capabilities:
 | MinIO | S3-compatible object storage | • Provides S3-compatible storage for applications<br>• Manages bucket policies and user access<br>• Enables object lifecycle management<br>• Exposes metrics for monitoring |
 | Garage | Single-node S3-compatible object storage | • Runs as a plain single-replica `Deployment` with `Recreate` strategy, referencing externally-provisioned metadata/data PVCs by claim name<br>• Started with `garage server --single-node`, which assigns and applies its one-time cluster layout in-process before any listener binds, gated by a `startupProbe` on `/health`<br>• Serves opted-in bucket contents anonymously through Garage's website hosting module<br>• Exposes S3, website, and admin APIs through three separate Ingresses (`garage-s3`, `garage-web`, `garage-admin`); the admin Ingress's hostname is `garage.${domain_name}` (its resource name stays `garage-admin` to avoid stranding an orphaned object under `prune: false`), scoped to the `/v2` path only to keep Garage's unauthenticated `/metrics`/`/health`/`/check` off that hostname<br>• The website Ingress carries both an apex and a wildcard host (`garage-web.${domain_name}` and `*.garage-web.${domain_name}`), covered by one `cert-manager` `Certificate`, so any bucket is reachable by name as a subdomain with no per-bucket Ingress or alias<br>• Exposes Prometheus metrics scraped via a `ServiceMonitor`<br>• A `PrometheusRule` alerts on node-down, RPC error rate, block resync errors/queue depth, and low disk space, and separately records recovery-event KPI series (block corruptions, currently-errored blocks)<br>• Ships a Grafana dashboard as a labelled `ConfigMap`, discovered by the Grafana sidecar deployed by observability-core<br>• Bucket/key provisioning is out of this module's scope |
 | CSI Driver NFS | External NFS share integration | • Enables using external NFS shares as persistent volumes<br>• Supports dynamic volume provisioning from NFS shares<br>• Manages mount options and access modes<br>• Integrates with Kubernetes storage classes |
+| VersityGW | S3 gateway over a POSIX filesystem | • Deployed from the upstream chart via an `OCIRepository` + `HelmRelease`, over a PVC this module references by claim name and never provisions<br>• Serves S3, the WebUI, and the admin API on three listeners behind three Ingresses (`versitygw-s3`, `versitygw`, `versitygw-admin`); setting the admin port is what keeps account-management routes off the listener the backup producers use<br>• Backend data and file-backed IAM are separate subpaths of one volume, so the IAM store is not inside the gateway root and `users.json` is not reachable as an object -- asserted both by a postRenderer tripwire and by the module's test suite<br>• An init container writes, reads back and removes an extended attribute before the gateway starts, so a tree that cannot hold per-object metadata holds the pod in `Init` instead of being served over<br>• A six-hourly `CronJob` -- the only one this component ships -- reclaims aged multipart residue, including the two forms invisible to every S3 API<br>• Holds a single `ExternalSecret` for the gateway's root credential; consumer accounts and bucket ownership are provisioned outside the module<br>• A `statsd_exporter` `Deployment` and `Service` translate the gateway's UDP counters into a scrapeable endpoint; no `ServiceMonitor` ships here<br>• Reachable only at this module's component path -- it is deliberately absent from the module-root `kustomization.yaml` |
 
 ## Prerequisites
 
 1. Required Secrets
 
-   | Secret Name                | Purpose                                                    | Required Keys             |
-   | -------------------------- | ---------------------------------------------------------- | ------------------------- |
-   | minio-admin-credentials    | MinIO administrator access                                 | rootUser, rootPassword    |
-   | garage-credentials         | Garage admin API token and inter-node RPC shared secret    | admin-token, rpc-secret   |
+   | Secret Name             | Purpose                                                             | Required Keys                        |
+   | ----------------------- | ------------------------------------------------------------------- | ------------------------------------ |
+   | minio-admin-credentials | MinIO administrator access                                          | rootUser, rootPassword               |
+   | garage-credentials      | Garage admin API token and inter-node RPC shared secret             | admin-token, rpc-secret              |
+   | versitygw-credentials   | VersityGW's root S3 credential -- the only account this module owns | rootAccessKeyId, rootSecretAccessKey |
 
 2. Required Variables
 
    | Variable | Purpose | Required By |
    | ---------- | --------- | ------------- |
-   | domain_name | Base domain used to compose every Ingress hostname in this module | MinIO ingress and console ingress, Longhorn UI ingress, Garage S3 API, website, and admin ingresses, Garage's `[s3_web]` root_domain |
+   | domain_name | Base domain used to compose every Ingress hostname in this module | MinIO ingress and console ingress, Longhorn UI ingress, Garage S3 API, website, and admin ingresses, Garage's `[s3_web]` root_domain, VersityGW's S3/WebUI/admin ingresses and the WebUI's CORS origin and gateway URLs |
    | cert_issuer | `ClusterIssuer` name used to request the Garage website endpoint's TLS certificate | Garage's `garage-web-tls-cert` Certificate (`certificate-web.yaml`) |
-   | secret_store | Bitwarden `ClusterSecretStore` name | minio-admin-credentials and garage-credentials ExternalSecrets |
+   | secret_store | Bitwarden `ClusterSecretStore` name | minio-admin-credentials, garage-credentials and versitygw-credentials ExternalSecrets |
    | minio_admin_username_key | Bitwarden key for the MinIO root username | minio-admin-credentials ExternalSecret |
    | minio_admin_password_key | Bitwarden key for the MinIO root password | minio-admin-credentials ExternalSecret |
    | garage_admin_token_key | Bitwarden key for the Garage admin API token | garage-credentials ExternalSecret |
@@ -71,6 +80,10 @@ The storage-core module provides four main capabilities:
    | garage_metadata_claim | Name of the pre-provisioned PVC to use for Garage's metadata volume | Garage Deployment |
    | garage_data_claim | Name of the pre-provisioned PVC to use for Garage's data volume | Garage Deployment |
    | garage_s3_region | AWS-style region Garage signs/validates S3 requests against; must match every S3 client's own configured region (e.g. `loki_s3_region` at Loki's eventual cutover) | Garage `[s3_api]` config |
+   | versitygw_s3_region | Region VersityGW validates SigV4 credential scopes against; a client whose configured region differs is rejected outright | VersityGW HelmRelease values (`gateway.region`) |
+   | versitygw_data_claim | Name of the pre-provisioned PVC holding the object tree | VersityGW HelmRelease values, sweep CronJob |
+   | versitygw_root_accesskey_key | Bitwarden key for VersityGW's root access key | versitygw-credentials ExternalSecret |
+   | versitygw_root_secretkey_key | Bitwarden key for VersityGW's root secret key | versitygw-credentials ExternalSecret |
 
 3. Storage Requirements
 
@@ -78,6 +91,53 @@ The storage-core module provides four main capabilities:
    | ---------------------- | --------- | ------------- |
    | ${garage_metadata_claim} | Garage's metadata volume (its LMDB database) | Provisioned externally by the cluster; not defined by this module |
    | ${garage_data_claim} | Garage's object data volume | Provisioned externally by the cluster; not defined by this module |
+   | ${versitygw_data_claim} | VersityGW's object tree, plus its file-backed IAM store as a sibling subpath | Provisioned externally by the cluster; not defined by this module. **Must carry a store-identity sentinel — see below** |
+
+4. Filesystem Preparation (VersityGW)
+
+   VersityGW's volume is the one prerequisite in this module that is not satisfied by supplying a
+   Kubernetes object. Before the gateway is deployed for the first time, the prepared filesystem must
+   carry a `.versitygw-store-identity` file at the **volume root** — a sibling of the `data` and `iam`
+   subpaths, never inside either, because anything at the top of the gateway root is served as a
+   bucket.
+
+   | Requirement | Detail |
+   | ------------- | -------- |
+   | Path | `.versitygw-store-identity`, at the root of the volume |
+   | Written by | The operator, once, as part of preparing the filesystem — alongside `mkfs`, before the gateway first runs |
+   | Contents | `key=value` lines, one per line, no quoting. A `store_id` of exactly 32 lowercase hex characters is **required**; a sentinel without one is rejected, because it says a store was prepared without saying which |
+   | Never written by | The gateway, the module, or any check in it |
+
+   The `data/` and `iam/` subdirectories are not part of what must be prepared by hand: the kubelet
+   creates a missing subPath directory at mount, and it lands group-owned by the pod's `fsGroup`
+   because `fsGroup` leaves the setgid bit on the volume root. That inheritance is the whole reason
+   the gateway can write into directories nothing explicitly chowned — and it is why the root's
+   ownership matters more than it looks. Under `fsGroupChangePolicy: OnRootMismatch` the kubelet
+   inspects only the volume root and skips the recursive pass when it already matches, so **a
+   successful mount is not evidence that the ownership pass ran.** Restore the tree from a clone
+   whose root ownership differs and the first mount walks and chowns every object on the volume —
+   precisely the startup `OnRootMismatch` was chosen to avoid. What catches a tree the gateway
+   cannot write is not the mount but the write-check init container, which fails the pod at `Init`
+   rather than letting it serve reads and fail at the first write.
+
+   `store_id` identifies the **tree**, not the device, and that distinction is the whole point of it.
+   Generated once when the store is prepared and never regenerated, it is carried unchanged by a
+   volume-level clone — so it still answers "is this the store I am recovering" on the recovery path
+   that goes through one. A device identifier in its place would be guaranteed to mismatch on every
+   legitimate clone, i.e. go red during the one operation the check exists to protect, which is how a
+   check teaches an operator to bypass it. Whether a volume is the original LUN or a copy of it is a
+   different question, answered against the identifier the operator's runbook recorded.
+
+   The gateway asserts that a well-formed `store_id` is present and prints it on every start; it does
+   not compare it to an expected value. Which store this cluster should be mounting is a cluster fact
+   and not the module's, and the comparison belongs to the operator holding the runbook.
+
+   **The gateway refuses to start without it**, and that refusal reads two ways. On a **new store** it
+   means the preparation step has not been done yet — do it, and the pod proceeds. On a store that was
+   **already serving** it means the volume presented is not that store, and the file must not be
+   created. The two are indistinguishable from disk, which is why the sentinel exists at all and why
+   nothing automates it: a check that created what it verifies would accept every blank volume
+   thereafter, silently and permanently.
 
 ## Usage
 
@@ -169,6 +229,18 @@ mountOptions:
 
 ## Notes
 
+- **VersityGW is reachable only at its own component path, and is deliberately absent from the module-root `kustomization.yaml`.** A cluster consuming this module at its root builds everything in that list, so adding a component with new required post-build variables there puts them into a reconciliation shared with Longhorn, MinIO and Garage — the failure this module has already taken twice (see the `cert_issuer` note in `CHANGELOG.md` 0.6.0). A cluster that wants VersityGW declares a second Flux `Kustomization` pointing at `storage-core/versitygw`, the way the single-component consumers of this module already do. The consequence to know: anything VersityGW needs must live inside that directory, including its own namespace, which is why its `namespace.yaml` is there rather than in the module root with the others.
+- **The backend root and the file-backed IAM store are separate subpaths of one volume, and that is a security boundary rather than a layout preference.** The gateway serves `/mnt/data` (the volume's `data/` subpath) and keeps accounts in `/mnt/iam` (its `iam/` subpath), so IAM is a sibling of the object namespace rather than inside it. Put an IAM directory *inside* the gateway root and it is enumerated as a bucket, and `users.json` — which holds every account secret in cleartext — becomes readable as an ordinary S3 object by the root account. That was confirmed in both directions against a live gateway. Two independent guards hold the arrangement in place: a `postRenderers` JSON6902 `test` operation that fails the build if the two mount subpaths ever stop being what they are, and a suite assertion that root's `ListBuckets` returns exactly the provisioned buckets and nothing else.
+- **Two `postRenderers` patches sit on top of the chart, and they are the whole of what the chart's values cannot express.** One is assertion-only — it changes nothing and exists to turn a silent drift in the chart's pod template into a red `Kustomization`. The other is a strategic-merge patch adding a liveness probe (the chart renders none at any version) and the startup extended-attribute check (the chart has no hook for extra containers). Strategic merge was chosen over JSON6902 for the mutating patch specifically because it keys containers, init containers and volumes by name: a future chart-supplied entry is merged alongside rather than silently replaced.
+- **The gateway's readiness probe cannot mean what it appears to.** The chart wires readiness to the gateway's health endpoint and does not make it overridable — and that endpoint is a constant `200` that consults no backend, no mount, and no filesystem. It stays green through an unmounted volume, a read-only remount and a full disk. What actually gates serving is the init container, which creates a file in the gateway root, writes an extended attribute, reads it back, compares it and removes it, failing the pod on anything else. The gateway's own startup check refuses to start on a filesystem with no extended-attribute support at all, but a read-only mount passes it: the process starts clean, serves reads, and fails only at the first write. That gap is what the init container exists to close, and the test suite proves it can go red rather than only that it passes.
+- **Accounts and bucket ownership can be converged but not declared, which is why neither ships here.** Bucket ownership has no file representation anywhere — it is the `Owner` field inside the `user.acl` extended attribute on the bucket directory, and the running gateway's admin API is the only thing that writes it. A `role: user` account cannot create buckets at all, so buckets must be pre-provisioned with an owner before any consumer can use them. Which accounts and buckets exist is a cluster fact rather than a property of the gateway, so convergence is driven against the admin API from outside the module; the module owns only the root credential that convergence authenticates as. The gotcha for whatever drives it: `change-bucket-owner` discards the bucket's existing ACL and policy, so it must be issued only when the observed owner actually differs. That distinction is invisible from outside — a converger that reassigns on every run leaves the same owner and the same green result — so the test suite drives a second run and asserts it reports the ownership already correct.
+- **Interrupted multipart uploads leave residue that no S3 API can see or reclaim, which is why a sweep ships with the deployment rather than being left to operations.** Three forms exist. An abandoned upload is visible to `ListMultipartUploads` and reclaimable through `AbortMultipartUpload`. An assembly interrupted by a crash leaves a renamed `.inprogress` directory that is invisible to every listing, that `AbortMultipartUpload` answers `NoSuchUpload` for, and that nothing upstream ever collects — observed stranding gigabytes. An overwrite interrupted between its link and its rename leaves a full-size file in the object's *own* directory, outside the hidden `.sgwtmp` prefix, so it is returned by `ListObjectsV2` as an ordinary key. Nothing on disk marks residue as such, so age is the only discriminator — and the clock it reads is not the intuitive one. An upload directory's modification time is set by the last part written and never moves again: the rename that claims the assembly slot leaves it alone, and the assembly only reads the part files. So the threshold has to clear the *sum* of the client's gap between its last part and its completion request and the assembly's own duration, not the assembly duration alone. That distinction is the one a later reader would get wrong while tuning the threshold down. The sweep must run as the same uid as the gateway: the directories are `0755` and owned by it, unlinking needs write on the parent, and a shared `fsGroup` grants traverse but not unlink — so a mismatched uid produces a sweep that finds everything and removes nothing.
+- **The gateway refuses to start over a volume that does not carry a store-identity sentinel, and this is deliberately not self-healing.** The in-tree iSCSI plugin identifies its device by portal, IQN and LUN index and by nothing else, then formats it if no filesystem is found — silently, with no Kubernetes event. So a blank device re-presented at the same address yields a bound volume, a running gateway, green reconciliation, and a store serving zero objects. A prepared store always carries a `.versitygw-store-identity` file at the volume root, so its absence is proof rather than suspicion. Three properties are load-bearing: the check **never creates** the file (creating it is exactly how a reformatted volume would be accepted), it reads the **volume root** rather than the gateway root (a file at the top of the gateway root would be enumerated as a bucket and be deletable over S3 by the root credential), and **deleting the sentinel stops the store from starting** — which is the right side of the trade here, but means it must not be removed while debugging a start-up failure. What it does not prove is currency: a stale but populated clone carries a valid sentinel and passes. Identity is asserted from the tree rather than from the device precisely because the sanctioned recovery path mounts a *clone*, whose device identity is expected to differ.
+- **Pods sharing the object volume are held to one node by pod affinity, in two deliberately different ways.** The volume is `ReadWriteOnce` and the topology puts more than one pod over it — the gateway read-write and, in a later project, an off-site replication pod read-only — so they must land on the same node. A single-node cluster satisfies that by accident; stating it means the constraint still holds when the cluster grows, and fails at scheduling rather than at attach. The **long-running peers** — the gateway, and later an off-site replication pod — carry `versitygw.storage/shares-object-volume` and an affinity matching it: symmetric, so it binds whichever schedules second, and self-satisfying for a lone pod, so it is inert until that second pod exists. The sweep `CronJob` deliberately does **not** carry that label; it targets the gateway's own identity instead, because a symmetric rule would let a sweep with no gateway schedule anywhere, and a sweep with nothing to reclaim against should stay `Pending` rather than start where the volume is not.
+- **`fsGroupChangePolicy` is set to `OnRootMismatch`, and at this volume's size that is not a tuning detail.** The default walks and chowns every file on the volume at every mount; on a store holding hundreds of thousands of backup objects that is a startup that does not finish. Every pod mounting this volume must declare the *same* `fsGroup` for the same reason — two different values make each mount look like a mismatch to the other, and each would then re-walk the whole tree on every start.
+- **No `ServiceMonitor` or `PrometheusRule` ships with VersityGW, deliberately.** The gateway publishes no Prometheus endpoint at all — its entire metric surface is six counters emitted as UDP StatsD datapoints — so a `statsd_exporter` is deployed alongside to translate them, and that translator's `Service` is the seam a collector attaches to. How this cluster gets scraped is decided elsewhere; inventing a scrape configuration here would be guessing at it. Note what the counters cannot tell you either way: the transport is UDP and the gateway drops datapoints silently when its buffer fills, so a zero is equally consistent with "idle" and "the path is broken" — only a counter that was driven and is expected to be non-zero detects its own failure.
+- **The WebUI holds no credential; the browser does.** It is a static page embedded in the gateway binary with no login of its own and no server-side session: the user types an S3 key into a form, it is kept in the browser's `sessionStorage` in cleartext for the life of the tab, and every request is signed client-side and sent directly to the S3 and admin APIs. Its management pages require an admin-role or root key, and with one the UI can delete any object or bucket in the store. This module ships only the gateway's root credential; the admin-role account the WebUI is meant to be driven with is a cluster fact, provisioned outside the module, and exists so that the *root* key — the identity the recovery path depends on — never has to be typed into a browser. Putting SSO in front of the WebUI Ingress (via `components/sso`) gates who reaches the login form and nothing more; the admin and S3 Ingresses are deliberately excluded, the first because the browser's cross-origin calls carry no forward-auth session and would all fail, the second because its clients authenticate with SigV4 and cannot follow a redirect to a login page.
+- **The gateway never calls `fsync`.** An acknowledged write becomes durable at the next filesystem journal commit, not at acknowledgement, so a crash inside that window loses a completed, acknowledged object. Nothing in this module closes that window — narrowing it is a mount-option and power-protection concern belonging to the cluster that provides the volume.
 - **Garage runs as plain Kubernetes resources, with no operator and no CRDs.** A single-replica `Deployment`, a config `ConfigMap`, an `ExternalSecret`-sourced `Secret`, a `Service`, three `Ingress`es (S3 API, website, admin), a `ServiceMonitor`, a `PrometheusRule`, and a dashboard `ConfigMap` are the entire module — nothing reconciles a custom resource, and nothing needs cluster-wide RBAC.
 - **A `Deployment`, not a `StatefulSet`.** Nothing in this module depends on stable per-pod network identity: Garage's node identity comes from a key persisted in its metadata volume, not from the pod's hostname, and the RPC address it advertises points at the `Service`, never a per-pod DNS name. That makes this the same single-instance-on-RWO-volumes shape as MinIO, including MinIO's `Recreate` update strategy — Garage's LMDB metadata store does not tolerate two processes writing to the same volume.
 - **Metadata and data PVCs are provisioned externally and referenced by claim name**, matching this repo's storage convention (a module never owns a PVC's lifecycle) — the cluster can pre-provision or statically bind either volume instead of the Deployment forcing dynamic provisioning.

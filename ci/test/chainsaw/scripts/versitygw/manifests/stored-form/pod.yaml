@@ -1,0 +1,52 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ${STORED_FORM_POD}
+  namespace: ${STORED_FORM_NAMESPACE}
+spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  containers:
+  - name: inspect
+    image: docker.io/alpine/k8s:1.36.4@sha256:358ddfc2d6ff3f00dd461dbd79aaa6d6738709f225b8da0945bb63bd4dbc304e
+    command: [python3, /inspect/inspect.py]
+    env:
+    - name: BUCKET_ONE
+      value: ${STORED_FORM_BUCKET}
+    - name: CLIENT1_ACCESS
+      value: ${STORED_FORM_OWNER}
+    - name: PYTHONDONTWRITEBYTECODE
+      value: "1"
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+    volumeMounts:
+    - name: data
+      mountPath: /pvc
+    - name: inspect
+      mountPath: /inspect
+      readOnly: true
+  securityContext:
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
+    seccompProfile:
+      type: RuntimeDefault
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      # Defaulted only so CI's kubeconform pass over ci/test, which knows the modules'
+      # variables and not the fixtures', renders a string rather than a null.
+      claimName: ${STORED_FORM_CLAIM:=claim-name-was-not-supplied}
+  - name: inspect
+    configMap:
+      name: versitygw-stored-form
+      defaultMode: 0555
+  tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists

@@ -38,17 +38,39 @@ spec:
         # yamllint disable-line rule:line-length
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=5m
         timeout: 5m
+    - description: Assert job/versitygw-store-prepare wrote the store-identity sentinel
+      assert:
+        timeout: 3m
+        resource:
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: versitygw-store-prepare
+            namespace: versitygw
+          status:
+            # Must have COMPLETED, not merely been applied: a Kustomization reports Ready for
+            # a Job it has only created, and the gateway refuses to start without the
+            # sentinel this Job writes.
+            (succeeded > `0`): true
 
   - name: Apply infra-storage modules
     try:
     - description: Apply infra-storage-core
       apply:
         file: ./infra-storage-core.yaml
+    - description: Apply infra-storage-core-versitygw
+      apply:
+        file: ./infra-storage-core-versitygw.yaml
     catch:
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
         name: infra-storage-core
+        namespace: flux-system
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: infra-storage-core-versitygw
         namespace: flux-system
     - events:
         namespace: flux-system
@@ -125,13 +147,18 @@ spec:
   - name: Validate csi-driver-nfs
     use:
       template: ./validate-csi-driver-nfs.yaml
-  # Correctly last of the workload steps: the five Longhorn CSI Deployments are the
-  # latest-created objects in the suite by a wide margin (t+76..125s across six failure
+  # Correctly last of the module-root workload steps: the five Longhorn CSI Deployments are
+  # the latest-created objects among them by a wide margin (t+76..125s across six failure
   # dumps, against t+1..18s for everything else), because longhorn-driver-deployer does not
   # create them until longhorn-manager reports ready.
   - name: Validate longhorn
     use:
       template: ./validate-longhorn.yaml
+  - name: Validate versitygw
+    use:
+      # Provisional: local runs put versitygw ahead of longhorn's csi-attacher, which
+      # argues for moving this above it. What settles it is three CI runs.
+      template: ./validate-versitygw.yaml
   # Stays last despite returning in 0.1s. It asserts the recording rule that spans MinIO and
   # Garage, so it is an end-of-suite outcome check, not a cheap step to be sorted forward.
   - name: Validate object-store
