@@ -1,0 +1,23 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: vault-loaded-exporter
+  namespace: obsidian-vault
+  labels:
+    app.kubernetes.io/name: vault-loaded-exporter
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vault-loaded-exporter
+  endpoints:
+  # 60s rather than this module's usual 30s, matching the exporter's own poll cadence: the
+  # enumeration runs on a background loop and /metrics replays the last result, so a faster
+  # scrape resamples the same value. Worst-case age of the success timestamp is therefore one
+  # poll plus one scrape, which is the quantity a query judges staleness on.
+  #
+  # No alert rule accompanies this, here or anywhere: emission first, alerting only once there
+  # is triage for it (ppat/obsidian-tools ADR-0036).
+  - port: metrics
+    interval: 60s
+    path: /metrics
