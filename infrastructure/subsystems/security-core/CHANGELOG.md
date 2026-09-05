@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.13](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.2.12...infra-security-core-v0.2.13) (2026-09-05)
+
+
+### ✨ Features
+
+* **infra-security-core:** update external-secrets (2.9.0 -&gt; 2.10.0) ([#3945](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3945)) ([574a0db](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/574a0db03ac21631a6de7a1d359dc8110c0cb97e))
+* **infra-security-core:** update kyverno (3.8.2 -&gt; 3.9.0) ([#3867](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3867)) ([f54f5fa](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f54f5fa68b368988abe1beb3e1879b0e02d57aec))
+* **infra-security-core:** update policy-reporter (3.9.1 -&gt; 3.10.0) ([#3916](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3916)) ([79a8628](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/79a86280be4c4bc4d56191db675b2a22072072ab))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-core:** update docker.io/alpine/k8s (1.36.2 -&gt; 1.36.4) ([#3913](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3913)) ([203cec7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/203cec7fc2652b6b8e2fce902c3a5ea2d64847d7))
+
 ## [0.2.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.2.11...infra-security-core-v0.2.12) (2026-08-27)
 
 
