@@ -1,0 +1,168 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: obsidian-vault-nats
+  namespace: ai
+  labels:
+    app.kubernetes.io/name: obsidian-vault-nats
+  annotations:
+    # The ConfigMap is generated with a stable name (see kustomization.yaml), so a config
+    # edit does not change the volume reference and would otherwise leave the running server
+    # on its old accounts indefinitely. The Secret's hashes are read once at startup.
+    secret.reloader.stakater.com/reload: obsidian-vault-nats-server-credentials
+    configmap.reloader.stakater.com/reload: obsidian-vault-nats-config
+spec:
+  replicas: 1
+  # Recreate: the JetStream store is single-writer on an RWO claim, and a rolling update
+  # would either block on multi-attach or put two servers on one message store.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: obsidian-vault-nats
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: obsidian-vault-nats
+        # Deliberately NOT app.kubernetes.io/component: mcp-server. That label is this
+        # namespace's NetworkPolicy selector (../network-policy.yaml) and admits only
+        # LiteLLM and Prometheus -- applying it here would deny every producer the broker
+        # exists to serve.
+        app.kubernetes.io/component: message-broker
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      # No `command`/`args`: the image's own Cmd is already
+      # `nats-server --config /etc/nats/nats-server.conf`, which is why the ConfigMap is
+      # mounted at exactly that path below rather than an arbitrary one.
+      - name: nats
+        image: docker.io/library/nats:2.14.6-alpine@sha256:ad7a43eb7e3337c3c38ce5d784d1461791f95f730f252d2b25eee699752a0ca3
+        env:
+        - name: NATS_SYSADMIN_PASSWORD_HASH
+          valueFrom:
+            secretKeyRef:
+              name: obsidian-vault-nats-server-credentials
+              key: sysadmin_password_hash
+        - name: NATS_QUEUE_ADMIN_PASSWORD_HASH
+          valueFrom:
+            secretKeyRef:
+              name: obsidian-vault-nats-server-credentials
+              key: queue_admin_password_hash
+        - name: NATS_BATCH_PRODUCER_PASSWORD_HASH
+          valueFrom:
+            secretKeyRef:
+              name: obsidian-vault-nats-server-credentials
+              key: batch_producer_password_hash
+        - name: NATS_PROMOTION_PRODUCER_PASSWORD_HASH
+          valueFrom:
+            secretKeyRef:
+              name: obsidian-vault-nats-server-credentials
+              key: promotion_producer_password_hash
+        - name: NATS_DRIFT_PRODUCER_PASSWORD_HASH
+          valueFrom:
+            secretKeyRef:
+              name: obsidian-vault-nats-server-credentials
+              key: drift_producer_password_hash
+        ports:
+        - name: client
+          containerPort: 4222
+          protocol: TCP
+        - name: monitor
+          containerPort: 8222
+          protocol: TCP
+        # httpGet, not the tcpSocket probe a plaintext broker such as
+        # ../../home-automation/nanomq uses: this client port requires TLS, so a bare TCP
+        # connect-and-close logs `TLS handshake error: EOF` on every probe, forever.
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: monitor
+          periodSeconds: 5
+          failureThreshold: 12
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: monitor
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: monitor
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 25m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nats/nats-server.conf
+          subPath: nats-server.conf
+          readOnly: true
+        - name: tls
+          mountPath: /tls
+          readOnly: true
+        - name: data
+          mountPath: /data
+      # NATS's monitoring port serves JSON and answers 404 on /metrics, so a ServiceMonitor
+      # aimed at the broker itself would scrape-fail permanently while every manifest looked
+      # correct. This sidecar translates it. `-jsz all` is the flag that emits the per-stream
+      # and per-consumer series (depth, ack, redelivery, backlog, keyed by stream_name and
+      # consumer_name); without it only server-level gnatsd_varz_* series appear.
+      - name: metrics
+        image: docker.io/natsio/prometheus-nats-exporter:0.20.2@sha256:c623b608e148e31e1c1c878673a197f1828e58ce90de4f01d22f1baa84c8fee9
+        args:
+        - -varz
+        - -jsz
+        - all
+        - -port
+        - "7777"
+        - http://127.0.0.1:8222
+        ports:
+        - name: metrics
+          containerPort: 7777
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: config
+        configMap:
+          name: obsidian-vault-nats-config
+      - name: tls
+        secret:
+          secretName: obsidian-vault-nats-tls-cert
+      # Cluster-provisioned: the claim itself lives in the clusters repo, not here.
+      - name: data
+        persistentVolumeClaim:
+          claimName: obsidian-vault-nats-jetstream

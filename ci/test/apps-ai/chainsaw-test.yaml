@@ -23,6 +23,16 @@ spec:
 
   - name: Reconcile pre-requisites
     try:
+    # Waited for explicitly, unlike in suites that get cert-manager for free: the
+    # external-secrets fixture this suite composes drops the `dependsOn: cert-manager-release`
+    # edge. The broker's Deployment mounts a cert-manager-issued Secret, so without this the
+    # pod never starts. 3m matches apps-misc's budget for the same operation; the two waits
+    # below run in series but the two installs do not.
+    - description: Reconcile helmrelease/cert-manager-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cert-manager-release --namespace=cert-manager --timeout=3m
+        timeout: 3m
     - description: Reconcile helmrelease/external-secrets-release
       script:
         # yamllint disable-line rule:line-length
@@ -135,6 +145,15 @@ spec:
     use:
       template: ./validate-git-committer.yaml
 
+  # An object-shape assert like the three above it and placed for the same reason: it reads
+  # the applied ConfigMap and waits for no pod, so it absorbs none of the convergence. Kept
+  # separate from `Validate obsidian-vault-nats` below, which does wait, so that a widened or
+  # typo'd subject grant is reported in seconds rather than behind a broker that may be slow
+  # for unrelated reasons.
+  - name: Validate obsidian-vault-nats permissions
+    use:
+      template: ./validate-obsidian-vault-nats-permissions.yaml
+
   # The twelve mcp-* Deployments are Ready within a ~40s band and are ordered inside it by
   # that measurement, but the gaps between neighbours are 0-8s -- smaller than the run-to-run
   # variation two reports can resolve, and four pairs already swap between them. Treat their
@@ -209,6 +228,18 @@ spec:
   - name: Validate obsidian
     use:
       template: ./validate-obsidian.yaml
+
+  # Ready at T0+259, between obsidian and openclaw, so this slot is strict ascending order
+  # against the two steps that follow. It sits here rather than with the mcp-* block despite
+  # carrying the module's two smallest images: the pod is Ready ~22s after its claim binds on
+  # an uncontended cluster, and the rest is queueing behind twenty-odd other image pulls on a
+  # four-core node. Image bytes do not predict position in this suite; only the readiness
+  # report does. The step's exposure is the Deployment assert alone -- the ExternalSecret and
+  # Certificate ahead of it return in 0s from this slot -- so promoting it would only charge
+  # that wait to a step that cannot use it.
+  - name: Validate obsidian-vault-nats
+    use:
+      template: ./validate-obsidian-vault-nats.yaml
 
   # The tail deviates from strict ascending readiness twice, both times for a reason that is
   # not readiness, and both are one block move away from being reversed.
