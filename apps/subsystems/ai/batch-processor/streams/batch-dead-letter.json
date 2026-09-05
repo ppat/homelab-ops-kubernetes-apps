@@ -1,0 +1,12 @@
+{
+  "name": "batch-dead-letter",
+  "subjects": ["batch-dead-letter.>"],
+  "retention": "limits",
+  "discard": "old",
+  "storage": "file",
+  "max_bytes": 268435456,
+  "max_msgs": -1,
+  "max_msgs_per_subject": -1,
+  "max_age": 2592000000000000,
+  "num_replicas": 1
+}

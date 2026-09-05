@@ -1,0 +1,164 @@
+---
+# One invocation is one batch run: the agent handle goes down, the batch stream drains in strict
+# FIFO through the gated MCP path, the handle comes back up (ppat/obsidian-tools ADR-0022). A
+# CronJob and not a Deployment, on two grounds that both come from the run shape rather than from
+# convention. `process-batch` disables the agent handle before it looks at the stream and exits
+# when the stream is empty, so under a controller that restarts it the handle would be down
+# essentially always -- the outage the watchdog beside this file exists to end, self-inflicted on a
+# loop. And ADR-0022's triggering policy is "once a day when non-empty, inside a permitted window",
+# which is a schedule; the tool carries no code for it because this field is where it lives.
+#
+# It runs alone because a patch on this stream confers this component's own write scope on
+# whoever enqueued it (ADR-0023), not because of traffic volume.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: batch-processor
+  namespace: ai
+  labels:
+    app.kubernetes.io/name: batch-processor
+spec:
+  schedule: "30 3 * * *"
+  timeZone: Etc/UTC
+  # Two runs at once would both take the handle down and race each other's lease.
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    metadata:
+      labels:
+        app.kubernetes.io/name: batch-processor
+    spec:
+      # No retry, and no activeDeadlineSeconds. A run drains the stream to the end and exits
+      # non-zero if any chunk was dead-lettered or left pending -- a reported outcome, not a crash.
+      # Retrying it here would change nothing: whatever refused the chunk still refuses it, and the
+      # handle goes down again for the same result. Recovery is the producer regenerating and a
+      # later run, which converges because already-applied chunks settle rather than reject.
+      # A maximum run duration is a separate designed mechanism that does not exist yet
+      # (ppat/obsidian-tools#89); a deadline here would be that mechanism, undocumented, and a run
+      # killed by it leaves the handle to the watchdog anyway.
+      backoffLimit: 0
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: batch-processor
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            # The image declares its user by name; the kubelet cannot verify a non-numeric user
+            # against runAsNonRoot.
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+          - name: batch-processor
+            # Docker Hub for the CI-reachability reason recorded in
+            # ../obsidian-vault/git-committer/cronjob.yaml.
+            image: docker.io/ppatlabs/obsidian-tools:0.5.1@sha256:e92a5708d1406f05e58b27ecc4924b602f589a01ee55a1d7af61f969dca7d2c4
+            imagePullPolicy: IfNotPresent
+            # args, not command: the image's ENTRYPOINT is tini, and replacing it would make
+            # CPython PID 1, where SIGTERM sits at its default disposition and is never delivered.
+            args:
+            - process-batch
+            env:
+            # These four strings are the tool's own defaults, restated because they are not free
+            # to move: the same literals appear in the stream definitions
+            # (streams/batch.json, streams/batch-dead-letter.json) and, for the stream and durable
+            # names, inside the subject grant in ../obsidian-vault-nats/conf.d/nats-server.conf.
+            # Changing one here without the others produces a client timeout that reads as an
+            # unreachable broker.
+            - name: BATCH_PROCESSOR_NATS_USER
+              value: batch-processor
+            - name: BATCH_STREAM
+              value: batch
+            - name: BATCH_CONSUMER_DURABLE
+              value: batch-processor
+            - name: BATCH_SUBJECT_PREFIX
+              value: batch
+            # A separate top-level token, and therefore a separate stream. Inside the batch
+            # stream's own subject list a dead-lettered chunk would be re-consumed by the consumer
+            # that just gave up on it with its delivery count reset -- an infinite, silent loop.
+            # `process-batch` refuses to start if the two prefixes overlap.
+            - name: BATCH_DEAD_LETTER_SUBJECT_PREFIX
+              value: batch-dead-letter
+            # The hostname the broker's certificate is issued for; in-cluster clients use it too,
+            # because a public issuer cannot sign for .cluster.local
+            # (../obsidian-vault-nats/certificate.yaml).
+            - name: BATCH_NATS_URL
+              value: tls://obsidian-vault-nats.${domain_name}:4222
+            - name: BATCH_PROCESSOR_NATS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: batch-processor-secrets
+                  key: BATCH_PROCESSOR_NATS_PASSWORD
+            # Every vault read and write crosses the gateway, never the MCP server directly: only
+            # the LiteLLM pod may reach mcp-obsidian-ingestor (../obsidian-vault/network-policy.yaml),
+            # and which server a key may call is gateway-side scoping (this module's README).
+            - name: BATCH_MCP_URL
+              value: http://litellm.ai.svc.cluster.local:4000/mcp
+            - name: BATCH_MCP_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: batch-processor-secrets
+                  key: BATCH_MCP_API_KEY
+            # UNVERIFIED against the deployed gateway, and required with no defaults precisely so
+            # this file has to state a value rather than inherit a guess. What is confirmed:
+            # `obsidian_delete_note` is the server-side tool name (it appears verbatim in
+            # ../litellm/helm-release-litellm.yaml's disallowed_tools for the agent instance), and
+            # LiteLLM prefixes a tool with `<server_name>-` (which is why the server names there
+            # carry no hyphen). What is inferred and may be wrong: the read and write tool names,
+            # and the two argument keys below. A wrong value here presents as a gate refusal at
+            # every call site, so check these against `tools/list` on the deployed gateway before
+            # the first real run.
+            - name: BATCH_MCP_TOOL_READ
+              value: obsidian_ingestor_mcp-obsidian_read_note
+            - name: BATCH_MCP_TOOL_WRITE
+              value: obsidian_ingestor_mcp-obsidian_update_note
+            - name: BATCH_MCP_TOOL_DELETE
+              value: obsidian_ingestor_mcp-obsidian_delete_note
+            - name: BATCH_MCP_PATH_ARGUMENT
+              value: filePath
+            - name: BATCH_MCP_CONTENT_ARGUMENT
+              value: content
+            # The gateway's key-management API, and the key a run blocks for its duration. The
+            # admin key is the gateway's own, never the handle's: this component turns the handle
+            # off and on and never calls through it.
+            - name: BATCH_GATEWAY_URL
+              value: http://litellm.ai.svc.cluster.local:4000
+            - name: BATCH_GATEWAY_ADMIN_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: batch-processor-secrets
+                  key: BATCH_GATEWAY_ADMIN_KEY
+            - name: BATCH_AGENT_HANDLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: batch-processor-secrets
+                  key: BATCH_AGENT_HANDLE_KEY
+            # BATCH_PROMOTION_STREAM and BATCH_PROMOTION_CONSUMER are deliberately unset until
+            # promotion-processor exists (unit A3, #3876). Absent, the run says once that it is
+            # not yielding to interactive work; set, an unreadable stream stops the run rather
+            # than letting bulk proceed blind.
+            volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 50m
+                memory: 128Mi
+              limits:
+                memory: 256Mi
+          volumes:
+          - name: tmp
+            emptyDir: {}
