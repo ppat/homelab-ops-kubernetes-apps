@@ -1,0 +1,160 @@
+---
+# Writes the local-recovery kit onto the object volume. scripts/export-recovery-image.sh
+# carries the reasoning for what it writes; this file carries the reasoning for
+# WHEN, which is the part that is easy to get wrong.
+#
+# A one-shot `Job`, not a CronJob on a schedule. What has to be true is "the kit
+# on the volume holds the version that wrote the tree", and that is a fact about
+# this directory in git, known at commit time. A CronJob polling a registry to
+# discover whether a string in a YAML file moved is a runtime mechanism answering
+# a question the repository had already answered -- and every part of the digest
+# comparison, the reuse branch and the retention window existed only to serve
+# that inversion.
+#
+# What re-runs it is the `force` annotation below, and the three behaviours it
+# depends on were measured against this estate's Flux (kustomize-controller
+# v1.9.4) rather than assumed, because getting any of them wrong is either a
+# kit that never refreshes or one that re-pulls 150 MiB on every reconcile:
+#
+#  - `spec.template` is IMMUTABLE, so re-applying a CHANGED Job is rejected with
+#    `field is immutable`. Without the annotation the Kustomization simply goes
+#    red -- measured, as the control.
+#  - WITH the annotation, Flux recognises that specific error and deletes then
+#    recreates the object, so an image-pin bump re-runs the export and refreshes
+#    the tarballs. Measured: the Job's UID changed and it ran again.
+#  - Force applies ONLY on an immutable-field error, so an identical apply stays
+#    an ordinary no-op: a completed Job stays completed and Flux reconciles over
+#    it indefinitely without re-running. Measured across repeated reconciles
+#    before and after the recreate.
+#
+# The consequence worth stating: the version lives in exactly ONE place on this
+# path -- RECOVERY_VERSITYGW_VERSION below -- so a Renovate bump is a normal,
+# automergeable update that also refreshes the kit. Encoding the version in the
+# Job's NAME instead would work, but it would make every gateway bump require a
+# hand edit here, and until someone made it the Kustomization would sit red.
+#
+# INVARIANT: RECOVERY_VERSITYGW_VERSION, the HelmRelease's `image.tag` and the
+# sweep CronJob's `image:` all name the same gateway build. All three are
+# Renovate-tracked for the same dependency, so they move in one update; a kit
+# holding a version other than the one that wrote the tree reintroduces the
+# failure it exists to prevent.
+#
+# No `ttlSecondsAfterFinished`: the TTL controller would delete the completed
+# Job, Flux would recreate it from the same desired state, and the export would
+# loop forever. The completed object is the record that the kit was written, and
+# `kube_job_status_succeeded` is how that is read.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: versitygw-recovery-export
+  namespace: versitygw
+  labels:
+    app.kubernetes.io/name: versitygw-recovery-export
+  annotations:
+    kustomize.toolkit.fluxcd.io/force: enabled
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 1800
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: versitygw-recovery-export
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: OnFailure
+      # Targets the gateway's identity rather than the symmetric
+      # `shares-object-volume` label, so with no gateway on the node this
+      # stays Pending instead of failing at attach.
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: versitygw
+                app.kubernetes.io/instance: versitygw
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - name: export
+        # The `debug` variant, because the plain tag is distroless and
+        # cannot run a shell script. No `# renovate:` directive: the kubernetes
+        # manager already reads `image:` fields under this path, and the custom
+        # manager cannot see an unquoted value anyway -- an annotation here would
+        # be decoration a reviewer reads as tracking.
+        image: gcr.io/go-containerregistry/crane/debug:v0.22.0@sha256:fcf134969f70b86febd0ec78528e3a9f2a8e6b59a110b44694dc6fa2c553e4a1
+        imagePullPolicy: IfNotPresent
+        command: [/busybox/sh, /scripts/export-recovery-image.sh]
+        env:
+        - name: RECOVERY_DIR
+          value: /mnt/recovery
+        # The gateway build the recovery path has to be able to run. Both pins
+        # below put the annotation BETWEEN `- name:` and `value:`, and both quote
+        # the value: the repo's custom manager matches a quoted version on the
+        # line IMMEDIATELY after the annotation, so an annotation sitting above
+        # `- name:` -- or a value that is an unquoted scalar, or a full image
+        # reference rather than a bare version -- matches nothing and reads as
+        # tracking while tracking nothing.
+        - name: RECOVERY_VERSITYGW_VERSION
+          # renovate: datasource=docker depName=ghcr.io/versity/versitygw
+          value: "v1.7.0@sha256:c4cbd9d9cb8dedbb055ac788dbd02635651b9b1cebac95b095b3217231aa87ad"
+        # Not redundancy with the gateway: restoring over S3 needs a client, and
+        # on a host with no registry a client is as unavailable as the gateway.
+        - name: RECOVERY_AWSCLI_VERSION
+          # renovate: datasource=docker depName=amazon/aws-cli
+          value: "2.32.9@sha256:734684f3fc98bbac0e7796c34f44c375c01f05febac52a10649a55eef1e96c24"
+        - name: CHECK_SCRIPT
+          value: /scripts/recovery-check.sh
+        - name: RUNBOOK
+          value: /scripts/RECOVERY-RUNBOOK.md
+        # crane's anonymous registry token needs a writable HOME.
+        - name: HOME
+          value: /tmp
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          # The gateway's uid, so exported files carry the ownership every
+          # other writer on this volume uses.
+          runAsUser: 1000
+          runAsGroup: 1000
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            memory: 512Mi
+        volumeMounts:
+        - name: data
+          mountPath: /mnt/recovery
+          # A sibling of the gateway root, so what this writes can never
+          # appear as an S3 object and this job can never reach one.
+          subPath: recovery
+        - name: scripts
+          mountPath: /scripts
+          readOnly: true
+        - name: tmp
+          mountPath: /tmp
+      securityContext:
+        # Must equal the gateway pod's: under OnRootMismatch, two pods
+        # declaring different fsGroups on one volume make every mount look
+        # like a mismatch and each recursively chowns the whole tree.
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: ${versitygw_data_claim}
+      - name: scripts
+        configMap:
+          name: versitygw-scripts
+          defaultMode: 0555
+      - name: tmp
+        emptyDir:
+          medium: Memory
+          sizeLimit: 64Mi
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
