@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.16](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.2.15...infra-security-extra-v0.2.16) (2026-09-06)
+
+
+### ✨ Features
+
+* **infra-security-extra:** update authentik (2026.5.6 -&gt; 2026.8.0) ([#3914](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3914)) ([0ce75e2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0ce75e2002a3d17b1af7eb211f56dcae464330a8))
+
 ## [0.2.15](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.2.14...infra-security-extra-v0.2.15) (2026-08-07)
 
 
