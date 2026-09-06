@@ -100,7 +100,7 @@ spec:
         # on a host with no registry a client is as unavailable as the gateway.
         - name: RECOVERY_AWSCLI_VERSION
           # renovate: datasource=docker depName=amazon/aws-cli
-          value: "2.32.34@sha256:ef3bba47102d9c46599a77f033cc5ec1450b0b7365902b8dbd9a254083ad82a3"
+          value: "2.34.64@sha256:61beb8d127f3955415f866d647a0d9a3377497069e086af0594a6b1443970b5a"
         - name: CHECK_SCRIPT
           value: /scripts/recovery-check.sh
         - name: RUNBOOK
