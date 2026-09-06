@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.8.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.8.1...apps-ai-v0.8.2) (2026-09-06)
+
+
+### 🛠 Improvements
+
+* **apps-ai:** remove retired NAS git-remote references ([#3937](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3937)) ([1a1347b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1a1347b411512cdd2a6234b8f6c48d922d3ebf5a))
+
+
+### ✨ Features
+
+* **apps-ai:** add the batch stream, its consumer grant, and the batch-processor workload ([#3956](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3956)) ([6a0b441](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6a0b441df7114863bb21f6b712d133ac2bbf9db4))
+* **apps-ai:** add the NATS JetStream work-queue substrate and its account machinery ([#3947](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3947)) ([2ade574](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2ade574a1b3763ab8acfe2719544c00dc201899e))
+* **apps-ai:** add the vault-loaded exporter, an independent observer of whether the vault opened ([#3953](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3953)) ([d5f260e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d5f260e2f7a4d261c314420da2e93e6b3bae3f74))
+* **apps-ai:** update docker.io/grafana/mcp-grafana (1.1.0 -&gt; 1.2.0) ([#3905](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3905)) ([ab60ec2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ab60ec2ebd95e9d6953319a34a3a56582e1cac79))
+* **apps-ai:** update docker.io/grafana/mcp-grafana (1.2.0 -&gt; 1.3.0) ([#3944](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3944)) ([cad42b2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/cad42b2af3818124191cb3578c7b1df387aaefdf))
+* **apps-ai:** update docker.io/ppatlabs/obsidian-tools (0.4.0 -&gt; 0.5.0) ([#3958](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3958)) ([a2fd97c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a2fd97c273e514a201408caa73fb681e55eaa465))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** update docker.io/ppatlabs/obsidian-tools (0.5.0 -&gt; 0.5.1) ([#3966](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3966)) ([c8a02ec](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c8a02ec4e7a31453f161465dd6c530b0cf8dda8b))
+
 ## [0.8.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.8.0...apps-ai-v0.8.1) (2026-08-31)
 
 
