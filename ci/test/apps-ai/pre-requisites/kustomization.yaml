@@ -5,21 +5,18 @@ kind: Kustomization
 resources:
 - namespaces.yaml
 - pvc/
-# Four shared fixtures in place of the whole database-core and security-core modules.
-# Audited against the module: `apps/subsystems/ai` ships two `Cluster` objects (litellm,
-# n8n), one `Dragonfly` (litellm's cache), twelve `ExternalSecret` objects and one
-# `Certificate` (`obsidian-vault-nats-tls`, against `${cert_issuer}` -- substituted to the
-# `selfsigned-issuer` the cert-manager fixture provides). The broker's Deployment mounts the
-# Secret that Certificate issues, so cert-manager is not droppable here. Consequence for
-# chainsaw-test.yaml: the external-secrets fixture drops the `dependsOn: cert-manager-release`
-# edge, so cert-manager has to be waited for explicitly rather than arriving for free.
+# Three shared fixtures in place of the whole database-core and security-core modules.
+# Audited against the module: `apps/subsystems/ai` ships two `Cluster` objects (litellm, n8n),
+# one `Dragonfly` (litellm's cache) and twelve `ExternalSecret` objects. It ships no
+# `Certificate` and references no `${cert_issuer}`, so the cert-manager fixture is deliberately
+# absent -- the external-secrets fixture patches out every cert-manager object it would
+# otherwise carry, so nothing composed here needs cert-manager running.
 #
 # The cnpg-operator fixture omits the Barman Cloud plugin. Neither `Cluster` declares a
 # plugin and this suite applies neither components/db-backups nor components/db-restore,
 # so nothing here reaches the barmancloud.cnpg.io API.
 #
 # See ../../chainsaw/pre-requisites/README.md.
-- ../../chainsaw/pre-requisites/cert-manager/
 - ../../chainsaw/pre-requisites/cnpg-operator/
 - ../../chainsaw/pre-requisites/dragonfly-operator/
 - ../../chainsaw/pre-requisites/external-secrets/

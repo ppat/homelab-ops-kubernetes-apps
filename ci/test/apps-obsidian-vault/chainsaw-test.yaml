@@ -1,0 +1,125 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: apps-obsidian-vault
+spec:
+  steps:
+  - name: Bootstrap FluxCD
+    use:
+      template: ../chainsaw/steps/bootstrap-flux.yaml
+
+  - name: Bootstrap CRDs
+    use:
+      template: ../chainsaw/steps/bootstrap-crds.yaml
+
+  - name: Bootstrap pre-requisites
+    use:
+      template: ../chainsaw/steps/bootstrap-prerequisites.yaml
+      with:
+        bindings:
+        - name: prerequisites_path
+          value: ./ci/test/apps-obsidian-vault/pre-requisites
+
+  - name: Reconcile pre-requisites
+    try:
+    # Waited for explicitly, unlike in suites that get cert-manager for free: the
+    # external-secrets fixture this suite composes drops the `dependsOn: cert-manager-release`
+    # edge. The broker's Deployment mounts a cert-manager-issued Secret, so without this the
+    # pod never starts. The two waits below run in series but the two installs do not.
+    - description: Reconcile helmrelease/cert-manager-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cert-manager-release --namespace=cert-manager --timeout=3m
+        timeout: 3m
+    - description: Reconcile helmrelease/external-secrets-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=4m
+        timeout: 4m
+
+  - name: Apply apps-obsidian-vault module
+    try:
+    - description: Apply apps-obsidian-vault
+      apply:
+        file: ./apps-obsidian-vault.yaml
+    catch:
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: apps-obsidian-vault
+        namespace: flux-system
+    - events:
+        namespace: flux-system
+
+  # ORDERING. TESTING.md is emphatic that validate steps are ordered by MEASURED pod readiness,
+  # never by source order and never by image size -- guessing produces the accidental-protection
+  # pattern this repo has spent effort undoing, where one step silently absorbs the whole
+  # module's convergence and every step behind it measures 0s and looks safe.
+  #
+  # The pod-waiting order below comes from this suite's own `Report readiness ordering` step,
+  # in seconds after the first pod in the cluster went Ready (T0). The first validate step
+  # begins at T0+82, when the module's Kustomization reconciles:
+  #
+  #   mcp-obsidian-agent 99 . mcp-obsidian-ingestor 100 . vault-loaded-exporter 105 .
+  #   obsidian-vault-nats 112 . obsidian 117
+  #
+  # ONE RUN, on a local kind rig rather than a CI runner, so treat the absolutes as
+  # indicative and the order as the claim. Widen it with the readiness report from real CI
+  # runs before defending any position here from a number. Do NOT transplant apps-ai's order:
+  # that one was measured against a suite carrying twelve MCP pods, two Postgres clusters and
+  # a Dragonfly, none of which exist here.
+  #
+  # The block structure rests on no measurement at all. The four object-shape steps lead because
+  # they wait for no pod at all -- they read objects kustomize-controller has already applied --
+  # so they absorb none of the convergence, and whichever runs first is the step that reports a
+  # Kustomization that never reconciles. Only the pod-waiting steps behind them are ordered by a
+  # measurement.
+  - name: Validate vault network policies
+    use:
+      template: ./validate-vault-network-policy.yaml
+
+  - name: Validate git-committer
+    use:
+      template: ./validate-git-committer.yaml
+
+  # An object-shape assert like the two above, and kept separate from `Validate
+  # obsidian-vault-nats` below, which does wait: a widened or typo'd subject grant should be
+  # reported in seconds rather than behind a broker that may be slow for unrelated reasons.
+  - name: Validate obsidian-vault-nats permissions
+    use:
+      template: ./validate-obsidian-vault-nats-permissions.yaml
+
+  - name: Validate batch-processor
+    use:
+      template: ./validate-batch-processor.yaml
+
+  # The pod-waiting block, in measured ascending readiness. The whole band is 18 seconds wide
+  # and the two MCP servers are one second apart, so their relative order is arbitrary; what the
+  # measurement settles is that both sit ahead of the broker (which binds a volume) and of
+  # Obsidian (whose boot chain is Xvfb, Electron, a DevTools attach, then the plugin binding its
+  # listener). Obsidian is last on readiness, not on image size -- that predictor is the one
+  # TESTING.md warns against, and it happens to agree here only by coincidence.
+  - name: Validate mcp-obsidian-agent
+    use:
+      template: ./validate-mcp-obsidian-agent.yaml
+
+  - name: Validate mcp-obsidian-ingestor
+    use:
+      template: ./validate-mcp-obsidian-ingestor.yaml
+
+  - name: Validate vault-loaded-exporter
+    use:
+      template: ./validate-vault-loaded-exporter.yaml
+
+  - name: Validate obsidian-vault-nats
+    use:
+      template: ./validate-obsidian-vault-nats.yaml
+
+  - name: Validate obsidian
+    use:
+      template: ./validate-obsidian.yaml
+
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml

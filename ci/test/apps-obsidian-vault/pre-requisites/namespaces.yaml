@@ -1,0 +1,11 @@
+---
+# The module creates this namespace itself; it is pre-created here only so the three PVC
+# fixtures below have somewhere to land before the module applies.
+#
+# Do NOT also declare `cert-manager` or `external-secrets` here -- the composed fixtures under
+# ../../chainsaw/pre-requisites/ declare their own, and two declarations of one namespace is a
+# duplicate-resource-id build failure that stops the whole directory from loading.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: obsidian-vault

@@ -245,6 +245,13 @@ spec:
         # of a REST API with no path permissions of its own, so an unauthenticated caller
         # reaching one would have the vault's bearer token spent on its behalf. The tokens
         # are pre-minted JWTs signed with each instance's own MCP_AUTH_SECRET_KEY.
+        #
+        # That JWT trust spans a MODULE boundary, not just a namespace one: this module holds
+        # the tokens (obsidian_agent_mcp_jwt / obsidian_ingestor_mcp_jwt), and
+        # apps/subsystems/obsidian-vault holds the keys they are verified against
+        # (obsidian_agent_mcp_auth_secret / obsidian_ingestor_mcp_auth_secret). Rotating a
+        # signing secret is therefore a two-module, two-release operation, and doing it in the
+        # wrong order returns 401 on every vault tool call.
         obsidian_agent_mcp:                                  # NOT "obsidian-agent-mcp": LiteLLM rejects
                                                                # server names containing its "-" prefix separator
           url: "http://mcp-obsidian-agent.obsidian-vault.svc.cluster.local:3010/mcp"

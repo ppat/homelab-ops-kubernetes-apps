@@ -1,0 +1,56 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-obsidian-vault-nats
+spec:
+  try:
+  # The ExternalSecret and the Certificate are asserted ahead of the Deployment rather than
+  # left implicit in it: either one failing leaves the pod stuck on a missing mount, and
+  # asserting them separately says which of the three happened.
+  - description: Assert externalsecret/obsidian-vault-nats-server-credentials
+    assert:
+      bindings:
+      - name: name
+        value: obsidian-vault-nats-server-credentials
+      - name: namespace
+        value: obsidian-vault
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
+  - description: Assert certificate/obsidian-vault-nats-tls
+    assert:
+      bindings:
+      - name: name
+        value: obsidian-vault-nats-tls
+      - name: namespace
+        value: obsidian-vault
+      file: ../chainsaw/assertions/certificate-ready.yaml
+  - description: Assert deployment/obsidian-vault-nats
+    assert:
+      bindings:
+      - name: name
+        value: obsidian-vault-nats
+      - name: namespace
+        value: obsidian-vault
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      # Two containers to pull and a volume to bind; the startupProbe's own budget is ~60s,
+      # so this leaves room for the pulls without dragging the suite through restart cycles.
+      timeout: 5m
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: obsidian-vault-nats
+      namespace: obsidian-vault
+  - describe:
+      apiVersion: cert-manager.io/v1
+      kind: Certificate
+      name: obsidian-vault-nats-tls
+      namespace: obsidian-vault
+  # Both containers, deliberately: an exporter that cannot reach the broker's monitoring
+  # port looks identical from the Deployment's status to a broker that never started.
+  - podLogs:
+      selector: app.kubernetes.io/name=obsidian-vault-nats
+      namespace: obsidian-vault
+      tail: 200
+  - events:
+      namespace: obsidian-vault

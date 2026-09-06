@@ -1,0 +1,235 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-vault-network-policy
+spec:
+  try:
+  # kind's default CNI (kindnetd) does not implement NetworkPolicy enforcement, so every
+  # assertion here proves the objects' SHAPE and never that they bite. That is permanent, not a
+  # gap to close: the CI cluster's CNI is not the platform's enforcement engine, so a passing
+  # packet test on kind would validate the wrong machinery. Enforcement is proven by deliberate
+  # violation on a real cluster -- see TESTING.md and ppat/obsidian-tools ADR-0006.
+  #
+  # Every peer list below is asserted LITERALLY rather than by presence. A widened peer list is
+  # precisely what an assertion here exists to catch, and it is invisible to a check that only
+  # asks whether the policy exists.
+  - description: Assert networkpolicy/default-deny-ingress
+    assert:
+      # 60s is the inherited default made explicit rather than a raise. This is the suite's
+      # first validate step, so it is what reports a Kustomization that never reconciles; the
+      # module's objects are present seconds after the apply, so x3 sizing lands well below the
+      # smallest rung and 60s is where the "module did not apply" signal belongs.
+      timeout: 60s
+      resource:
+        apiVersion: networking.k8s.io/v1
+        kind: NetworkPolicy
+        metadata:
+          name: default-deny-ingress
+          namespace: obsidian-vault
+        spec:
+          podSelector: {}
+          policyTypes:
+          - Ingress
+  # The sole control on Obsidian's Local REST API and its undisableable /mcp/ endpoint. Three
+  # admitted pods across two peers, both same-namespace and both scoped to 27124. The absent
+  # namespaceSelector is load-bearing: adding one would admit a whole namespace.
+  #
+  # The annotation is asserted too. It is the only form of this warning that survives onto the
+  # live object -- Kubernetes strips YAML comments before etcd -- so losing it is silent.
+  - description: Assert networkpolicy/obsidian-rest-api-ingress admits exactly the writers and the observer
+    assert:
+      resource:
+        apiVersion: networking.k8s.io/v1
+        kind: NetworkPolicy
+        metadata:
+          name: obsidian-rest-api-ingress
+          namespace: obsidian-vault
+          # yamllint disable-line rule:line-length
+          (keys(annotations) | contains(@, 'homelab-ops.internal/netpol-caveat')): true
+        spec:
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: obsidian
+          policyTypes:
+          - Ingress
+          ingress:
+          - from:
+            - podSelector:
+                matchLabels:
+                  homelab-ops.internal/vault-access: writer
+            ports:
+            - protocol: TCP
+              port: 27124
+          - from:
+            - podSelector:
+                matchLabels:
+                  homelab-ops.internal/vault-access: observer
+            ports:
+            - protocol: TCP
+              port: 27124
+  # LiteLLM only. The namespaceSelector and podSelector must sit in the SAME `from` element --
+  # as two list entries this would admit every pod in `ai`, which is why the shape is asserted
+  # rather than just the labels. There is deliberately no Prometheus peer; whoever adds a
+  # ServiceMonitor for these pods adds the peer in the same change (see the module's
+  # network-policy.yaml), and this assertion is what makes a peer added for any other reason
+  # visible.
+  - description: Assert networkpolicy/vault-writers-ingress admits LiteLLM and nothing else
+    assert:
+      resource:
+        apiVersion: networking.k8s.io/v1
+        kind: NetworkPolicy
+        metadata:
+          name: vault-writers-ingress
+          namespace: obsidian-vault
+        spec:
+          podSelector:
+            matchLabels:
+              homelab-ops.internal/vault-access: writer
+          policyTypes:
+          - Ingress
+          ingress:
+          - from:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: ai
+              podSelector:
+                matchLabels:
+                  app.kubernetes.io/name: litellm
+                  app.kubernetes.io/instance: litellm
+            ports:
+            - protocol: TCP
+              port: 3010
+  - description: Assert networkpolicy/vault-observer-ingress admits the Prometheus scrape
+    assert:
+      resource:
+        apiVersion: networking.k8s.io/v1
+        kind: NetworkPolicy
+        metadata:
+          name: vault-observer-ingress
+          namespace: obsidian-vault
+        spec:
+          podSelector:
+            matchLabels:
+              homelab-ops.internal/vault-access: observer
+          policyTypes:
+          - Ingress
+          ingress:
+          - from:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: monitoring
+              podSelector:
+                matchLabels:
+                  app.kubernetes.io/name: prometheus
+            ports:
+            - protocol: TCP
+              port: 9877
+  # The one rule in this module that admits every source, and the one whose absence is the most
+  # dangerous thing that can happen to this file: under the namespace default-deny, a broker
+  # with no allow rule denies every producer -- in-cluster and off -- as a connection timeout
+  # that reads as "broker unreachable".
+  #
+  # `ports` on that rule is asserted for the opposite reason: without it the catch-all would
+  # also open the monitoring port 8222, which nothing outside the pod has any business reaching.
+  - description: Assert networkpolicy/obsidian-vault-nats-ingress opens 4222 to all and 7777 to Prometheus
+    assert:
+      resource:
+        apiVersion: networking.k8s.io/v1
+        kind: NetworkPolicy
+        metadata:
+          name: obsidian-vault-nats-ingress
+          namespace: obsidian-vault
+        spec:
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: obsidian-vault-nats
+          policyTypes:
+          - Ingress
+          ingress:
+          - ports:
+            - protocol: TCP
+              port: 4222
+          - from:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: monitoring
+              podSelector:
+                matchLabels:
+                  app.kubernetes.io/name: prometheus
+            ports:
+            - protocol: TCP
+              port: 7777
+  # A policy is only as good as the labels its peers select on, and a pod that loses one keeps
+  # running while failing closed and silently. These four asserts are what turn that into a CI
+  # failure: they bind each Deployment's POD TEMPLATE label to the peer that selects it.
+  #
+  # The negative assert on the exporter is the one that would otherwise rot. Carrying
+  # `component: mcp-server` there is how this workload used to be admitted, and re-adding it
+  # would put a non-MCP pod back into the answer to "which pods speak MCP"
+  # (ppat/homelab-ops-kubernetes-clusters#841).
+  - description: Assert the vault-access labels the policies above select on are actually applied
+    assert:
+      resource:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: mcp-obsidian-agent
+          namespace: obsidian-vault
+        spec:
+          template:
+            metadata:
+              labels:
+                homelab-ops.internal/vault-access: writer
+                app.kubernetes.io/component: mcp-server
+  - description: Assert mcp-obsidian-ingestor carries the writer label
+    assert:
+      resource:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: mcp-obsidian-ingestor
+          namespace: obsidian-vault
+        spec:
+          template:
+            metadata:
+              labels:
+                homelab-ops.internal/vault-access: writer
+                app.kubernetes.io/component: mcp-server
+  - description: Assert vault-loaded-exporter carries the observer label and NOT the mcp-server label
+    assert:
+      resource:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: vault-loaded-exporter
+          namespace: obsidian-vault
+        spec:
+          template:
+            metadata:
+              labels:
+                homelab-ops.internal/vault-access: observer
+                # yamllint disable-line rule:line-length
+                (keys(@) | contains(@, 'app.kubernetes.io/component')): false
+  # The broker must carry neither value: grants are additive, so either one would widen it --
+  # `writer` would put a message broker into the sole control's peer list.
+  - description: Assert obsidian-vault-nats carries no vault-access label
+    assert:
+      resource:
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: obsidian-vault-nats
+          namespace: obsidian-vault
+        spec:
+          template:
+            metadata:
+              labels:
+                # yamllint disable-line rule:line-length
+                (keys(@) | contains(@, 'homelab-ops.internal/vault-access')): false
+  # `catch` is a sibling of `try` on the StepTemplate spec, not a key inside a try entry -- see
+  # validate-git-committer.yaml. Nesting it one level deeper fails the whole suite at load time,
+  # before any test in this directory runs.
+  catch:
+  - events:
+      namespace: obsidian-vault
