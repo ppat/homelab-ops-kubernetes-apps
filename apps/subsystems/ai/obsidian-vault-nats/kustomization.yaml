@@ -19,10 +19,11 @@ configMapGenerator:
       app.kubernetes.io/name: obsidian-vault-nats
     annotations:
       # MANDATORY. Flux's post-build substitution expands bare `$NAME` as well as `${NAME}`,
-      # and this config references five bcrypt hashes as bare `$NAME` environment variables
-      # that only nats-server may resolve. Without this annotation every one of them is
-      # substituted to an empty string and the server starts with five blank passwords -- a
-      # silent, total loss of authentication.
+      # and this config references every account's bcrypt hash as a bare `$NAME` environment
+      # variable that only nats-server may resolve. Without this annotation every one of them
+      # is substituted to an empty string and the server starts with blank passwords -- a
+      # silent, total loss of authentication. The JetStream API subjects in the consumer's
+      # grant are `$JS.…` and would be erased the same way.
       kustomize.toolkit.fluxcd.io/substitute: disabled
     # A stable name, for two reasons. Flux prune is disabled cluster-wide, so a
     # content-hashed name would strand the previous ConfigMap as an orphan on every edit to

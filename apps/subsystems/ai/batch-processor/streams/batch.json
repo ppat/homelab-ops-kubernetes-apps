@@ -1,0 +1,12 @@
+{
+  "name": "batch",
+  "subjects": ["batch.>"],
+  "retention": "workqueue",
+  "discard": "new",
+  "storage": "file",
+  "max_bytes": 2147483648,
+  "max_msgs": -1,
+  "max_msgs_per_subject": -1,
+  "max_age": 0,
+  "num_replicas": 1
+}

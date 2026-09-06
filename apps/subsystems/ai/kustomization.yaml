@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
 - namespace.yaml
 - network-policy.yaml
+- batch-processor/
 - litellm/
 - mcp-context7/
 - mcp-github/

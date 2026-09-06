@@ -57,6 +57,11 @@ spec:
             secretKeyRef:
               name: obsidian-vault-nats-server-credentials
               key: queue_admin_password_hash
+        - name: NATS_BATCH_PROCESSOR_PASSWORD_HASH
+          valueFrom:
+            secretKeyRef:
+              name: obsidian-vault-nats-server-credentials
+              key: batch_processor_password_hash
         - name: NATS_BATCH_PRODUCER_PASSWORD_HASH
           valueFrom:
             secretKeyRef:

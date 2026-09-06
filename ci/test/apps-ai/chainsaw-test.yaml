@@ -154,6 +154,17 @@ spec:
     use:
       template: ./validate-obsidian-vault-nats-permissions.yaml
 
+  # In the object-shape block for the same reason as the four steps above it: three CronJobs and
+  # a ConfigMap are satisfied the moment kustomize-controller applies the module, and the two
+  # ExternalSecret waits that open it settle with the rest of ESO's first sync -- the same 2s the
+  # block comment above measures for the `litellm-openwebui-key` assert this suite used to open
+  # with. Measured in this slot on a local kind rig: every assert in the step, the two
+  # ExternalSecret waits included, completes inside the second the step begins -- so it absorbs
+  # none of the convergence and would gain nothing from a later position.
+  - name: Validate batch-processor
+    use:
+      template: ./validate-batch-processor.yaml
+
   # The twelve mcp-* Deployments are Ready within a ~40s band and are ordered inside it by
   # that measurement, but the gaps between neighbours are 0-8s -- smaller than the run-to-run
   # variation two reports can resolve, and four pairs already swap between them. Treat their

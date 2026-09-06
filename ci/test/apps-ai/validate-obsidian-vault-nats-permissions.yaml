@@ -13,13 +13,17 @@ spec:
   #
   # Each grant is matched as a whole literal line, so a widened subject, a typo, an added
   # `$JS.API.>` or a grant pointed at another message shape all fail. The three counts are
-  # what catch an ADDITION rather than an edit: every user needs a password, so a sixth
-  # `password: $NATS_` is a sixth user, and three permission blocks with three subscribe
-  # grants mean no producer user can be added without one. The subscribe count is matched on
+  # what catch an ADDITION rather than an edit: every user needs a password, so a seventh
+  # `password: $NATS_` is a seventh user, and four permission blocks with four subscribe
+  # grants mean no user can be added without one. The subscribe count is matched on
   # the key prefix alone so a `deny:` block swapped in cannot satisfy it. That count also
   # constrains the config file's own prose -- a comment quoting the grant text literally
   # counts as a grant, which is why the config describes the empty-allow-list trap rather
   # than writing it out.
+  #
+  # The consumer's grant is asserted the same way plus one absence: `$JS.API.STREAM.UPDATE`
+  # must never appear, because that subject is what would let the component with the widest
+  # write scope in the system widen its own stream's subject list.
   #
   # Asserted by unsuffixed name, which depends on `disableNameSuffixHash` in the module's
   # kustomization.yaml -- see there for why that is load-bearing rather than incidental.
@@ -46,11 +50,15 @@ spec:
         "(contains(data.\"nats-server.conf\", 'subscribe: { allow: [ \"_INBOX_BATCH.*.*\" ] }'))": true
         "(contains(data.\"nats-server.conf\", 'subscribe: { allow: [ \"_INBOX_PROMOTION.*.*\" ] }'))": true
         "(contains(data.\"nats-server.conf\", 'subscribe: { allow: [ \"_INBOX_DRIFT.*.*\" ] }'))": true
-        # `length(split(...))` is occurrences + 1: five users, three permission blocks,
-        # three subscribe grants.
-        "(length(split(data.\"nats-server.conf\", 'password: $NATS_')))": 6
-        "(length(split(data.\"nats-server.conf\", 'permissions: {')))": 4
-        "(length(split(data.\"nats-server.conf\", 'subscribe: { allow:')))": 4
+        "(contains(data.\"nats-server.conf\", '\"$JS.API.CONSUMER.MSG.NEXT.batch.batch-processor\"'))": true
+        "(contains(data.\"nats-server.conf\", '\"$JS.ACK.batch.batch-processor.>\"'))": true
+        "(contains(data.\"nats-server.conf\", 'subscribe: { allow: [ \"_INBOX.*\", \"_INBOX.*.*\" ] }'))": true
+        "(contains(data.\"nats-server.conf\", '$JS.API.STREAM.UPDATE'))": false
+        # `length(split(...))` is occurrences + 1: six users, four permission blocks,
+        # four subscribe grants.
+        "(length(split(data.\"nats-server.conf\", 'password: $NATS_')))": 7
+        "(length(split(data.\"nats-server.conf\", 'permissions: {')))": 5
+        "(length(split(data.\"nats-server.conf\", 'subscribe: { allow:')))": 5
         # yamllint enable rule:line-length
   # `catch` is a sibling of `try` on the StepTemplate spec, not a key inside a try entry --
   # see validate-git-committer.yaml. Nesting it one level deeper fails the whole suite at
