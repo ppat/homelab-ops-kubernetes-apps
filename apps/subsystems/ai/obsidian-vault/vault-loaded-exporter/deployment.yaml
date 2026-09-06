@@ -40,7 +40,7 @@ spec:
       - name: vault-loaded-exporter
         # Same image and registry as ../git-committer/cronjob.yaml, and Docker Hub for the
         # same CI-reachability reason recorded there.
-        image: docker.io/ppatlabs/obsidian-tools:0.5.0@sha256:e2fd39af8a68ae30160c437ec77f4434754ecb89d68932692b1f2591af9e5b22
+        image: docker.io/ppatlabs/obsidian-tools:0.5.1@sha256:e92a5708d1406f05e58b27ecc4924b602f589a01ee55a1d7af61f969dca7d2c4
         imagePullPolicy: IfNotPresent
         # args, not command: the image's ENTRYPOINT is tini, and replacing it would make
         # CPython PID 1, where SIGTERM sits at its default disposition and is never delivered.
