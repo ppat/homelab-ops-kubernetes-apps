@@ -1,0 +1,25 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- namespaces.yaml
+- pvc/
+# Two shared fixtures in place of the whole security-core module. Audited against the module:
+# it ships nine `ExternalSecret` objects and one `Certificate` (`obsidian-vault-nats-tls`,
+# against `${cert_issuer}` -- substituted to the `selfsigned-issuer` the cert-manager fixture
+# provides). The broker's Deployment mounts the Secret that Certificate issues, so cert-manager
+# is not droppable here. Consequence for chainsaw-test.yaml: the external-secrets fixture drops
+# the `dependsOn: cert-manager-release` edge, so cert-manager has to be waited for explicitly
+# rather than arriving for free.
+#
+# Deliberately NOT cnpg-operator or dragonfly-operator: this module ships no `Cluster` and no
+# `Dragonfly`, so nothing here reaches either API.
+#
+# See ../../chainsaw/pre-requisites/README.md.
+- ../../chainsaw/pre-requisites/cert-manager/
+- ../../chainsaw/pre-requisites/external-secrets/
+- fake-secret-store.yaml
+
+sortOptions:
+  order: fifo

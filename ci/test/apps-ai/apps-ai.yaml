@@ -19,15 +19,8 @@ spec:
       n8n_db_storage_size: 1Gi
       n8n_db_suffix_current: test
       secret_store: fake
-      # Provided by ../chainsaw/pre-requisites/cert-manager/, composed into this suite's
-      # pre-requisites.
-      cert_issuer: selfsigned-issuer
       dns_zone: example.com
       domain_name: cluster.example.com
-      # Deliberately unreachable -- this suite only asserts the CronJob's shape (see
-      # validate-git-committer.yaml), never a triggered run, so these just need to be
-      # valid-looking values the ExternalSecret/env substitution can render.
-      git_committer_remote_origin_url: git@example.com:example/unreachable-in-ci.git
   sourceRef:
     kind: GitRepository
     name: test-source

@@ -4,14 +4,6 @@ kind: Namespace
 metadata:
   name: ai
 ---
-# The module creates this namespace itself; it is pre-created here only so the
-# vault-data PVC fixture below it has somewhere to land before the module applies
-# (same reason `n8n`, `openclaw` and `openwebui` appear here).
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: obsidian-vault
----
 # Home of the simulated remote-cluster identity in mcp-kubernetes-rbac.yaml, mirroring
 # the dedicated namespace the real nas cluster uses for it.
 apiVersion: v1
