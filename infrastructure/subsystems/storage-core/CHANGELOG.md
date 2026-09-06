@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.7.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.7.1...infra-storage-core-v0.7.2) (2026-09-06)
+
+
+### ✨ Features
+
+* **infra-storage-core:** add versitygw S3 gateway over a POSIX object tree ([#3920](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3920)) ([171380d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/171380dfd47dfbd616590b94439649ea78b77940))
+* **infra-storage-core:** export the object store's contents as metrics ([#3922](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3922)) ([8f63aba](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8f63abaa78b0ea13324bb84ecf9da18fec5ef2e9))
+* **infra-storage-core:** export WAL-chain continuity from the object store ([#3925](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3925)) ([47b6ad2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/47b6ad20305cafb16bb39034fe66820bbd044976))
+* **infra-storage-core:** ship the local-recovery kit, its instruments and its runbook on the object volume ([#3923](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3923)) ([210e66c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/210e66c40320ee474b14e2da68167f4373a96ceb))
+
 ## [0.7.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.7.0...infra-storage-core-v0.7.1) (2026-08-22)
 
 
