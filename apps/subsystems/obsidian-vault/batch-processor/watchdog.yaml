@@ -1,0 +1,86 @@
+---
+# Re-enables the agent handle when the batch run holding it down has stopped renewing its lease.
+# Without it, a `batch-processor` that dies mid-run leaves every agent write blocked silently and
+# indefinitely -- worse than a slow batch, and the reason this ships with the stream rather than
+# with later hardening (ppat/obsidian-tools ADR-0022, unit D4).
+#
+# Its own pod and its own Secret, deliberately: what it watches is precisely the thing that may be
+# broken, so it must not need the broker, the queue credential or the vault write key to start. A
+# handle disabled with no lease is an operator's own hold and is left exactly as found.
+#
+# Worst-case recovery is the lease TTL plus this period, both of which an operator trades against
+# how long an ordinary pause between chunks may look like a death.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: batch-mode-watchdog
+  namespace: obsidian-vault
+  labels:
+    app.kubernetes.io/name: batch-mode-watchdog
+spec:
+  schedule: "*/5 * * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 120
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    metadata:
+      labels:
+        app.kubernetes.io/name: batch-mode-watchdog
+    spec:
+      # A pass that could not read the handle exits non-zero and has learned nothing; the next
+      # tick is the retry, and re-enabling on no evidence would open agent writes mid-run.
+      backoffLimit: 0
+      activeDeadlineSeconds: 120
+      ttlSecondsAfterFinished: 3600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: batch-mode-watchdog
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+          - name: batch-mode-watchdog
+            image: docker.io/ppatlabs/obsidian-tools:0.5.1@sha256:e92a5708d1406f05e58b27ecc4924b602f589a01ee55a1d7af61f969dca7d2c4
+            imagePullPolicy: IfNotPresent
+            args:
+            - watch-agent-handle
+            env:
+            - name: BATCH_GATEWAY_URL
+              value: http://litellm.ai.svc.cluster.local:4000
+            - name: BATCH_GATEWAY_ADMIN_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: batch-mode-watchdog-secrets
+                  key: BATCH_GATEWAY_ADMIN_KEY
+            - name: BATCH_AGENT_HANDLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: batch-mode-watchdog-secrets
+                  key: BATCH_AGENT_HANDLE_KEY
+            volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                memory: 128Mi
+          volumes:
+          - name: tmp
+            emptyDir: {}

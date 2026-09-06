@@ -1,0 +1,26 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: obsidian-vault-nats-tls
+  namespace: obsidian-vault
+  labels:
+    app.kubernetes.io/name: obsidian-vault-nats
+  annotations:
+    # protect against exceeding letsencrypt api limits
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  issuerRef:
+    name: ${cert_issuer}
+    kind: ClusterIssuer
+  # The only name, and in-cluster clients connect to it too rather than to
+  # obsidian-vault-nats.ai.svc.cluster.local -- a public issuer cannot sign for .cluster.local,
+  # so the internal name would be a SAN mismatch every client had to be told to ignore.
+  dnsNames:
+  - 'obsidian-vault-nats.${domain_name}'
+  # Certificate duration is fixed at 90d by LetsEncrypt and cannot be changed via this parameter.
+  # The parameter is set primarily for documentation purposes.
+  duration: 2160h # 90d
+  # Requesting renewal 60d before expiration, essentially configuring certificate renewal to occur every 30 days.
+  renewBefore: 1440h # 60d
+  secretName: obsidian-vault-nats-tls-cert

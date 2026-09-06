@@ -23,16 +23,6 @@ spec:
 
   - name: Reconcile pre-requisites
     try:
-    # Waited for explicitly, unlike in suites that get cert-manager for free: the
-    # external-secrets fixture this suite composes drops the `dependsOn: cert-manager-release`
-    # edge. The broker's Deployment mounts a cert-manager-issued Secret, so without this the
-    # pod never starts. 3m matches apps-misc's budget for the same operation; the two waits
-    # below run in series but the two installs do not.
-    - description: Reconcile helmrelease/cert-manager-release
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cert-manager-release --namespace=cert-manager --timeout=3m
-        timeout: 3m
     - description: Reconcile helmrelease/external-secrets-release
       script:
         # yamllint disable-line rule:line-length
@@ -113,9 +103,14 @@ spec:
   # the first pod in the cluster went Ready (T0), over three runs. The first validate step
   # begins at T0+142 / 143 / 156:
   #
-  #   the twelve mcp-* 164-205 / 167-206 / 172-207 . obsidian 275 / 237 / 233 .
+  #   the twelve mcp-* 164-205 / 167-206 / 172-207 .
   #   n8n-db-test 342 / 342 / 314 . litellm-db-test 356 / 353 / 323 . n8n 353 / 369 / 326 .
   #   open-webui 388 / 384 / 343 . openclaw 407 / 400 / 356 . litellm 443 / 440 / 396
+  #
+  # Those readings were taken with nine more pods on the node than this suite now applies, so
+  # every absolute number is an upper bound and the whole series should shift earlier. The
+  # RELATIVE order is what this file uses and is unaffected; re-derive the absolutes from the
+  # readiness report before quoting them anywhere.
   #
   # The three runs agree on every position except n8n against the two Clusters, which is the
   # one place this file makes an exception; see the tail comment below.
@@ -136,34 +131,6 @@ spec:
   - name: Validate network policy
     use:
       template: ./validate-network-policy.yaml
-
-  - name: Validate vault network policies
-    use:
-      template: ./validate-vault-network-policy.yaml
-
-  - name: Validate git-committer
-    use:
-      template: ./validate-git-committer.yaml
-
-  # An object-shape assert like the three above it and placed for the same reason: it reads
-  # the applied ConfigMap and waits for no pod, so it absorbs none of the convergence. Kept
-  # separate from `Validate obsidian-vault-nats` below, which does wait, so that a widened or
-  # typo'd subject grant is reported in seconds rather than behind a broker that may be slow
-  # for unrelated reasons.
-  - name: Validate obsidian-vault-nats permissions
-    use:
-      template: ./validate-obsidian-vault-nats-permissions.yaml
-
-  # In the object-shape block for the same reason as the four steps above it: three CronJobs and
-  # a ConfigMap are satisfied the moment kustomize-controller applies the module, and the two
-  # ExternalSecret waits that open it settle with the rest of ESO's first sync -- the same 2s the
-  # block comment above measures for the `litellm-openwebui-key` assert this suite used to open
-  # with. Measured in this slot on a local kind rig: every assert in the step, the two
-  # ExternalSecret waits included, completes inside the second the step begins -- so it absorbs
-  # none of the convergence and would gain nothing from a later position.
-  - name: Validate batch-processor
-    use:
-      template: ./validate-batch-processor.yaml
 
   # The twelve mcp-* Deployments are Ready within a ~40s band and are ordered inside it by
   # that measurement, but the gaps between neighbours are 0-8s -- smaller than the run-to-run
@@ -207,61 +174,9 @@ spec:
     use:
       template: ./validate-mcp-unifi-network.yaml
 
-  - name: Validate mcp-obsidian-agent
-    use:
-      template: ./validate-mcp-obsidian-agent.yaml
-
-  - name: Validate mcp-obsidian-ingestor
-    use:
-      template: ./validate-mcp-obsidian-ingestor.yaml
-
   - name: Validate mcp-grafana
     use:
       template: ./validate-mcp-grafana.yaml
-
-  # At the tail of the band above on measured readiness, not appended to the end: T0+146 and
-  # T0+151 over two runs, against T0+103-150 for the twelve mcp-* pods and T0+201 for obsidian
-  # in both. Its position *inside* the band is as arbitrary as theirs and swaps with
-  # mcp-unifi-protect between the two runs; what both settle, and what this slot turns on, is
-  # the 50s gap to everything behind it. Those readings are from a local kind rig, so their T0
-  # scale is not the one the block comment above quotes. The pod waits on no volume and no
-  # other workload -- a ~45s image pull is its whole cost to reach Ready.
-  - name: Validate vault-loaded-exporter
-    use:
-      template: ./validate-vault-loaded-exporter.yaml
-
-  # This assertion was deliberately withheld (see ppat/homelab-ops-kubernetes-apps#3440)
-  # over an untested readiness chain (Xvfb, Electron, a DevTools attach that disables
-  # Restricted Mode) and a registry `kind` couldn't pull from. Both reasons are gone: the
-  # image is public and digest-pinned, and the chain is proven fast on real hardware --
-  # Electron loaded, then the REST API answered about a second later. What forced the
-  # issue: a real defect shipped that this assertion would have caught on its first PR.
-  # The bundled Local REST API plugin defaults its listener to 127.0.0.1, so the
-  # kubelet's probes -- which hit the pod IP, not loopback -- failed every attempt, the
-  # startupProbe exhausted its budget, and the container restart-looped in production
-  # (`dial tcp <pod-ip>:27124: connect: connection refused`). That is a plain probe
-  # failure, not a NetworkPolicy-enforcement gap, so `kind` reproduces it exactly; the
-  # blind spot this step closes is what let it through.
-  #
-  # It no longer runs last. The placement argument used to be "heaviest image, longest boot
-  # chain, so give it the most head start"; the readiness report puts obsidian at T0+275 and
-  # T0+237, mid-pack, ahead of n8n, openclaw, litellm and open-webui. That was a prediction
-  # from image bytes, and bytes lost to measurement here -- 30s of its 6m budget in this slot.
-  - name: Validate obsidian
-    use:
-      template: ./validate-obsidian.yaml
-
-  # Ready at T0+259, between obsidian and openclaw, so this slot is strict ascending order
-  # against the two steps that follow. It sits here rather than with the mcp-* block despite
-  # carrying the module's two smallest images: the pod is Ready ~22s after its claim binds on
-  # an uncontended cluster, and the rest is queueing behind twenty-odd other image pulls on a
-  # four-core node. Image bytes do not predict position in this suite; only the readiness
-  # report does. The step's exposure is the Deployment assert alone -- the ExternalSecret and
-  # Certificate ahead of it return in 0s from this slot -- so promoting it would only charge
-  # that wait to a step that cannot use it.
-  - name: Validate obsidian-vault-nats
-    use:
-      template: ./validate-obsidian-vault-nats.yaml
 
   # The tail deviates from strict ascending readiness twice, both times for a reason that is
   # not readiness, and both are one block move away from being reversed.

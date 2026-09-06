@@ -1,0 +1,19 @@
+---
+# The module references this claim by name alone; the real one is ReadWriteOnce 5Gi on
+# Longhorn (sc-longhorn-replicated), so only the size and storage class differ here. Without
+# the fixture the broker's pod stays Pending on an unbound volume and the validate step times
+# out with nothing to distinguish that from a manifest defect.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: obsidian-vault-nats-jetstream
+  namespace: obsidian-vault
+  labels:
+    app.kubernetes.io/name: obsidian-vault-nats
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeMode: Filesystem

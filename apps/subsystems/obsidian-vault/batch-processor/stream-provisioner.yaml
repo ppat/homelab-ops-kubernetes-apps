@@ -1,0 +1,99 @@
+---
+# The only thing that creates the batch set's two streams. NATS cannot declare a stream in server
+# configuration -- which is why ../obsidian-vault-nats ships none -- so a client must issue
+# `$JS.API.STREAM.CREATE`, and no producer is permitted to (ppat/obsidian-tools ADR-0047). It runs
+# on a schedule rather than once so a first deploy and a lost JetStream volume both converge
+# without an operator.
+#
+# It holds `batch-processor`'s own credential, not `queue-admin`: that credential's grant names
+# these two streams literally, so this pod cannot touch any other stream, and it carries no
+# `$JS.API.STREAM.UPDATE`. Measured against nats-server 2.14.6, that has a consequence worth
+# knowing before editing the JSON below -- `nats stream add` against an existing stream exits 0 for
+# an identical configuration and fails for a changed one, so a live stream's retention or subject
+# list can only be edited by an operator holding `queue-admin`. That is deliberate: granting the
+# update subject here would let the component with the widest write scope in the system widen its
+# own stream's subject list.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: batch-stream-provisioner
+  namespace: obsidian-vault
+  labels:
+    app.kubernetes.io/name: batch-stream-provisioner
+spec:
+  # A durable stream needs creating once; this cadence only bounds how long a fresh deploy waits
+  # before a producer can enqueue.
+  schedule: "*/15 * * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    metadata:
+      labels:
+        app.kubernetes.io/name: batch-stream-provisioner
+    spec:
+      activeDeadlineSeconds: 300
+      ttlSecondsAfterFinished: 3600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: batch-stream-provisioner
+        spec:
+          automountServiceAccountToken: false
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+          - name: nats
+            image: docker.io/natsio/nats-box:0.19.7-nonroot@sha256:e86b9681f330ab1aa45744dd5cb367d44205b28fac2519a2f74ca0255803161a
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -ec
+            - |
+                nats stream add batch --config /etc/streams/batch.json
+                nats stream add batch-dead-letter --config /etc/streams/batch-dead-letter.json
+            env:
+            # The CLI reads all three; passing the password as a flag would put it in the
+            # container's own process list.
+            - name: NATS_URL
+              value: tls://obsidian-vault-nats.${domain_name}:4222
+            - name: NATS_USER
+              value: batch-processor
+            - name: NATS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: batch-processor-secrets
+                  key: BATCH_PROCESSOR_NATS_PASSWORD
+            - name: HOME
+              value: /tmp
+            volumeMounts:
+            - name: streams
+              mountPath: /etc/streams
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                memory: 64Mi
+          volumes:
+          - name: streams
+            configMap:
+              name: batch-streams
+          - name: tmp
+            emptyDir: {}

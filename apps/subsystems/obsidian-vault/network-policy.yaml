@@ -1,0 +1,251 @@
+---
+# INGRESS ONLY, FOR THE WHOLE NAMESPACE, AND THAT IS A DECISION -- not an omission a later
+# reader should close. Egress stays unisolated because every workload here has a legitimate
+# outbound path that an egress default-deny would have to re-admit one at a time: the two MCP
+# servers and the exporter reach Obsidian, `batch-processor` reaches the LiteLLM gateway in the
+# `ai` namespace and the broker over its LoadBalancer hostname, `git-committer` reaches GitHub
+# and api.github.com/meta on the public internet, and everything resolves through cluster DNS.
+#
+# One of those cannot be expressed at all, which is why this is a decision rather than a
+# deferral: an in-cluster packet to this cluster's own LoadBalancer VIP is DNAT'd to a backend
+# pod IP by kube-proxy *before* NetworkPolicy evaluates it, so an egress `ipBlock` naming the
+# MetalLB VIP can never match. That was measured in the clusters repo
+# (clusters/homelab/services/sandbox-talos/network-policy.yaml, `allow-egress-lb-ingress-vips`).
+#
+# Default-deny ingress for the whole namespace. An empty podSelector selects every pod here,
+# and an Ingress policyType with no ingress rules denies everything not explicitly re-admitted
+# by the policies below -- without this, every allow rule further down is decoration, because a
+# pod that no policy selects is unisolated.
+#
+# Kubelet probes are unaffected, here and in every policy below. Every pod firewall chain begins
+# with an unconditional accept for node-local source addresses, and "traffic to and from the node
+# where a Pod is running is always allowed" is a NetworkPolicy conformance requirement, not an
+# implementation detail -- so restricting ingress here cannot break liveness/readiness.
+#
+# Four workloads are selected by this policy and admitted by nothing below, deliberately:
+# `git-committer`, `batch-processor`, `batch-stream-provisioner` and `batch-mode-watchdog`. All
+# four are CronJobs that only ever dial outward; nothing in the cluster connects *to* them, and
+# none carries a listening port or a ServiceMonitor. Denied-by-default is the correct posture
+# for them, not an oversight.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: obsidian-vault
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+---
+# THE SOLE CONTROL. Everything else in this file is defence in depth; this one is not, and its
+# failure is an open door onto the whole vault rather than a hardening regression.
+#
+# The Local REST API plugin in front of Obsidian has no path-scoped write permissions of its own
+# -- any caller reaching it can write anywhere in the vault -- and it additionally registers a
+# second, unscoped MCP endpoint at /mcp/ that upstream provides no way to disable: no such
+# setting exists, it registers unconditionally whenever the REST server is enabled, and the
+# upstream request to split it into a separate plugin was closed the same day with no change.
+# This policy is the only thing standing in front of that endpoint.
+#
+# Three admitted pods, named as two separate peers so each grant stays readable and revocable on
+# its own. Both select `homelab-ops.internal/vault-access`, a label minted for exactly this
+# question and used by no other machinery -- see this module's README. Do NOT re-point this at
+# `app.kubernetes.io/component: mcp-server`: that label answers "is this pod an MCP server", the
+# two populations are not the same set (the exporter is not an MCP server), and one label
+# answering both questions is the overload clusters#841 was opened to undo.
+#
+# Same-namespace peers, so no namespaceSelector: nothing outside `obsidian-vault` may reach
+# Obsidian at all. The operator's GUI path does not transit the pod network and is unaffected --
+# `kubectl port-forward` is served by the kubelet into the pod's own netns.
+#
+# Deliberately no Prometheus peer, unlike the observer policy below. Obsidian exposes exactly one
+# port and it is the port being protected; there are no metrics behind that listener, so
+# admitting `monitoring` would widen the sole control to enable a ServiceMonitor that could never
+# exist. If this policy ever acquires a third peer "for symmetry" with another rule in this file,
+# that is the change to reject.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: obsidian-rest-api-ingress
+  namespace: obsidian-vault
+  annotations:
+    # Kubernetes strips YAML comments before persisting to etcd, so everything above is
+    # invisible to `kubectl get netpol -o yaml` and to any API or MCP client. This annotation
+    # carries the load-bearing half onto the live object. `homelab-ops.internal/*` is this
+    # platform's established self-defined-key prefix; `.internal` is the RFC 9476 reserved,
+    # non-delegatable TLD, so it can never collide with a domain anyone owns.
+    homelab-ops.internal/netpol-caveat: >-
+      SOLE CONTROL, not defence in depth. The Obsidian Local REST API exposes an undisableable,
+      unscoped /mcp/ write endpoint; this policy is the only thing in front of it. Widening the
+      peer list opens the whole vault. Enforcement is never proven by CI -- kind's CNI does not
+      implement NetworkPolicy -- so it is proven by deliberate violation on a real cluster.
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: obsidian
+  policyTypes:
+  - Ingress
+  ingress:
+  # The two MCP servers: the vault's write doors. They spend the REST API bearer token on their
+  # callers' behalf, which is why the listener in front of them is authenticated.
+  - from:
+    - podSelector:
+        matchLabels:
+          homelab-ops.internal/vault-access: writer
+    ports:
+    - protocol: TCP
+      port: 27124
+  # The vault-loaded exporter, and this peer is designed rather than inherited. The signal it
+  # carries is whether the vault actually opened -- a claim that must be able to contradict the
+  # Obsidian pod's own account of itself, since that pod has been observed 1/1 Ready with its
+  # REST API serving while unable to open the vault at all. A signal whose job is to contradict a
+  # pod cannot be that pod's own probe, so it has to be a separate workload, and a separate
+  # workload reaching the REST API needs this exception (ppat/obsidian-tools ADR-0037).
+  #
+  # It holds the same write-anywhere bearer token the two servers do, because that listener has
+  # exactly one token and no narrower credential exists to give it.
+  - from:
+    - podSelector:
+        matchLabels:
+          homelab-ops.internal/vault-access: observer
+    ports:
+    - protocol: TCP
+      port: 27124
+---
+# The two MCP servers are ClusterIP-only and the LiteLLM gateway is the access boundary in front
+# of them -- virtual-key scoping is enforced there. This is what makes that a boundary rather
+# than a convention.
+#
+# Cross-namespace (LiteLLM runs in `ai`), so this needs a namespaceSelector *and* a podSelector
+# in the SAME `from` element -- a bare podSelector would be scoped to `obsidian-vault` and match
+# nothing, and two separate list entries would admit the whole `ai` namespace.
+#
+# The pod labels below are the ones the live litellm pod carries and the litellm Service selects
+# on. The chart names itself `litellm-helm`, so deriving these from the chart rather than from
+# the cluster yields a selector that matches nothing and silently denies the gateway.
+#
+# NO PROMETHEUS PEER, and the omission is deliberate rather than an oversight: nothing scrapes
+# these pods, so a peer for one would be an exception carried for a target that does not exist.
+# The consequence, recorded here so it is not rediscovered as a mystery: WHOEVER ADDS A
+# ServiceMonitor FOR THESE PODS MUST ADD THE INGRESS PEER IN THE SAME CHANGE, or the scrape is
+# denied and the failure presents as a broken target rather than as a policy refusal.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vault-writers-ingress
+  namespace: obsidian-vault
+spec:
+  podSelector:
+    matchLabels:
+      homelab-ops.internal/vault-access: writer
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    # kubernetes.io/metadata.name is applied to every namespace by the control plane.
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ai
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: litellm
+          app.kubernetes.io/instance: litellm
+    ports:
+    - protocol: TCP
+      port: 3010
+---
+# Defence in depth: the exporter serves an unauthenticated /metrics carrying two gauges and no
+# credential, so this policy protects little. It exists because the namespace is default-deny and
+# the scrape has to be re-admitted explicitly -- without it the ServiceMonitor's target fails and
+# the vault-loaded signal goes quiet, which is the one failure mode this component exists to make
+# loud.
+#
+# A separate policy rather than a second peer on the writers' rule above: the two populations
+# answer different questions and diverge (the exporter is scraped and takes no gateway traffic;
+# the writers take gateway traffic and are scraped by nothing today).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vault-observer-ingress
+  namespace: obsidian-vault
+spec:
+  podSelector:
+    matchLabels:
+      homelab-ops.internal/vault-access: observer
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: prometheus
+    ports:
+    - protocol: TCP
+      port: 9877
+---
+# THE CLIENT PORT IS OPEN TO EVERY SOURCE, ON PURPOSE. The broker has a TCP LoadBalancer and is
+# meant to be reachable; authority here is carried by the credential presented on CONNECT and by
+# its subject grant, never by network position. A NetworkPolicy in front of this port could not
+# be the thing keeping anyone out even if it wanted to be: the client this exposure exists for --
+# `local-replicator`'s drainer, on the operator's Mac -- is off-cluster, and no NetworkPolicy can
+# express an off-cluster peer.
+#
+# This rule is what makes "reachable" true inside a default-deny namespace, and it is the whole
+# of it: the deny above selects the broker, and nothing else here would admit anyone. Delete this
+# rule and every producer -- in-cluster and off -- fails as a connection timeout that reads as
+# "broker unreachable" rather than as a policy refusal, because a denied SYN produces no NATS
+# protocol error to log.
+#
+# A named-peer list was considered and rejected on two independent grounds. It would admit
+# nothing this rule does not already admit, so it would be documentation wearing an enforcement
+# object's clothes. And it might not even match its own intended callers: in-cluster clients dial
+# the EXTERNAL hostname `obsidian-vault-nats.${domain_name}` rather than the .svc.cluster.local
+# name (a public issuer cannot sign for .cluster.local -- see certificate.yaml), that hostname
+# resolves to a MetalLB VIP with externalTrafficPolicy: Local, and whether the broker's pod then
+# observes the client pod's IP or a node's is UNVERIFIED. A podSelector peer list would therefore
+# be a rule that *might* match, whose failure mode is a silent, total denial of the batch drain.
+#
+# The register of who those callers are lives here, where being wrong costs nothing:
+#   in-cluster : batch-processor and batch-stream-provisioner (this module, credential
+#                `batch-processor` in the stream-holding account); the batch producer run by hand
+#                from the operator's Coder workspace (credential `batch-producer`)
+#   off-cluster: local-replicator's drainer on the operator's Mac (credential `drift-producer`)
+#   designed   : promotion-processor and drift-processor (this module), and promotion producers
+#                in the `openclaw` and `n8n` namespaces -- none of which will need a policy edit
+#
+# `ports` is not optional here. Without it this rule would admit every source to EVERY port on
+# the broker pod, including the monitoring port 8222 -- which serves server telemetry and is
+# reachable today only because `ai` has no default-deny. Scoping to 4222 is what turns the move
+# into a genuine tightening of 8222 rather than a re-opening of it.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: obsidian-vault-nats-ingress
+  namespace: obsidian-vault
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: obsidian-vault-nats
+  policyTypes:
+  - Ingress
+  ingress:
+  # An ingress rule with `ports` and no `from` admits every source on those ports.
+  - ports:
+    - protocol: TCP
+      port: 4222
+  # The prometheus-nats-exporter sidecar, through the -metrics Service. Without this the broker's
+  # ServiceMonitor scrape is denied by the default-deny above -- a necessary consequence of the
+  # move, since in `ai` nothing blocked it.
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: prometheus
+    ports:
+    - protocol: TCP
+      port: 7777
