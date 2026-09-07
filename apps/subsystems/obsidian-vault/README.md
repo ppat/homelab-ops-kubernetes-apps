@@ -152,7 +152,7 @@ This module needs a LiteLLM gateway reachable at `litellm.ai.svc.cluster.local:4
    | obsidian_vault_nats_drift_producer_password_hash | bcrypt hash of the drift producer's password, held off-cluster by `local-replicator`. Same reasoning as promotion above |
    | obsidian_vault_nats_batch_processor_password_hash | bcrypt hash of the batch consumer's password. The only credential inside the account that holds the streams besides `queue-admin`, and the only one permitted to consume |
    | obsidian_vault_nats_batch_processor_password | The plaintext the hash above was derived from, presented by `batch-processor` and its stream provisioner. The only NATS plaintext this module reads; every other NATS key here is a hash |
-   | apikey_litellm_batch_processor | `batch-processor`'s virtual key for the LiteLLM gateway. It must be scoped to `obsidian_ingestor_mcp` and nothing else — that scoping lives in LiteLLM's own store, not in this repo, so an over-scoped key is not something reviewing this module catches |
+   | apikey_litellm_obsidianvaultbatchprocessor | `batch-processor`'s virtual key for the LiteLLM gateway, scoped to `obsidian_ingestor_mcp` and nothing else. Created by Terraform (`ppat/homelab-ops-terraform`, workspace `litellm`, consumer `obsidian-vault-batch-processor`), which also writes the plaintext back to this store — the name is generated from the consumer with every non-alphanumeric character stripped, which is why it runs together, and it cannot be renamed here alone. The scoping lives in LiteLLM's own store, not in this repo, so an over-scoped key is not something reviewing this module catches |
 
 3. Required Variables
 
