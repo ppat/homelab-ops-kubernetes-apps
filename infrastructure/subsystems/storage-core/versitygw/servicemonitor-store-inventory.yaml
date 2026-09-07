@@ -1,0 +1,20 @@
+---
+# Per-bucket object counts, bytes stored and residue totals, from the read-only walk.
+#
+# The walk's interval is a floor measured in hours, so these gauges are constant between
+# passes: the scrape interval sets the resolution of the freshness rules built on the walk's
+# completion timestamp, not the currency of the values themselves.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: versitygw-inventory
+  namespace: versitygw
+  labels:
+    app.kubernetes.io/name: versitygw-inventory
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: versitygw-inventory
+  endpoints:
+  - port: metrics
+    interval: 60s

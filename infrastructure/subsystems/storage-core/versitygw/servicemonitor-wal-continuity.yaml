@@ -1,0 +1,20 @@
+---
+# Per-server and per-timeline WAL-chain continuity for any barman-cloud archive found in the
+# store: segments held, segments missing between the first and last held, distinct gaps.
+#
+# Unscraped, this reader publishes to nobody and a total archive loss is indistinguishable
+# from a producer that never shipped -- which is the failure the series exist to make visible.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: versitygw-wal-continuity
+  namespace: versitygw
+  labels:
+    app.kubernetes.io/name: versitygw-wal-continuity
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: versitygw-wal-continuity
+  endpoints:
+  - port: metrics
+    interval: 60s
