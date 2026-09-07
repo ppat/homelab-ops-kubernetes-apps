@@ -108,23 +108,56 @@ spec:
             # the LiteLLM pod may reach mcp-obsidian-ingestor (../network-policy.yaml,
             # `vault-writers-ingress`),
             # and which server a key may call is gateway-side scoping (this module's README).
+            #
+            # The gateway's PER-SERVER route, not its multiplexed root at `/mcp`. The root fronts
+            # every server registered on the gateway at once -- GitHub, Grafana, Home Assistant and
+            # the rest -- which is a wider surface than a workload scoped to one server has any
+            # reason to address. `/<server>/mcp` names the one server this CronJob is entitled to,
+            # and `<server>` is the key under `mcp_servers` in ../../ai/litellm/helm-release-litellm.yaml.
+            #
+            # THE TRAILING SLASH IS LOAD-BEARING, AND THE TWO ROUTE FORMS WANT OPPOSITE THINGS.
+            # Measured against the deployed gateway (unauthenticated; 401 = the route exists and
+            # wants a key, 404 = no such route):
+            #
+            #   POST /mcp                  -> 307 to /mcp/            the root REQUIRES the slash
+            #   POST /mcp/                 -> 401
+            #   POST /<server>/mcp         -> 401                     a per-server route REJECTS it
+            #   POST /<server>/mcp/        -> 307 back to /<server>/mcp
+            #   POST /nonexistent_mcp/mcp  -> 404
+            #
+            # Adding a slash here therefore BREAKS this workload, and so did the `/mcp` this
+            # replaced: `obsidian_tools.batch_processor.transport` refuses to follow redirects, on
+            # purpose, because the key is a bearer token sent on every request and a redirect can
+            # retarget it at a host nothing here named -- on the external route the gateway's own
+            # redirect also downgrades https to http. A 307 is consequently a hard failure at the
+            # first write of the first chunk, not a startup error. Fix the URL; never the refusal.
             - name: BATCH_MCP_URL
-              value: http://litellm.ai.svc.cluster.local:4000/mcp
+              value: http://litellm.ai.svc.cluster.local:4000/obsidian_ingestor_mcp/mcp
             - name: BATCH_MCP_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: batch-processor-secrets
                   key: BATCH_MCP_API_KEY
-            # UNVERIFIED against the deployed gateway, and required with no defaults precisely so
-            # this file has to state a value rather than inherit a guess. What is confirmed:
-            # `obsidian_delete_note` is the server-side tool name (it appears verbatim in
-            # ../../ai/litellm/helm-release-litellm.yaml's disallowed_tools for the agent
-            # instance), and
-            # LiteLLM prefixes a tool with `<server_name>-` (which is why the server names there
-            # carry no hyphen). What is inferred and may be wrong: the read and write tool names,
-            # and the two argument keys below. A wrong value here presents as a gate refusal at
-            # every call site, so check these against `tools/list` on the deployed gateway before
-            # the first real run.
+            # Still UNVERIFIED against the deployed gateway, and required with no defaults
+            # precisely so this file has to state a value rather than inherit a guess.
+            #
+            # THE `<server>-` PREFIX STAYS, EVEN THOUGH THE URL ABOVE ADDRESSES ONE SERVER. That
+            # reads backwards -- a prefix disambiguates between servers, and there is only one on
+            # this route -- so it is the thing most likely to be "corrected" into breakage. In
+            # LiteLLM the per-server path is a SCOPE FILTER and not a naming mode: every route
+            # mounts the same handler, the path segment only narrows which servers are queried, and
+            # the listing path adds the prefix unconditionally (`add_prefix=True  # Always add
+            # server prefix`, litellm/proxy/_experimental/mcp_server/server.py). Calls tolerate the
+            # bare name too, but only while a warm name->server mapping happens to hold it, so the
+            # prefixed form is both correct and the robust one.
+            #
+            # What is confirmed: `obsidian_delete_note` is the server-side tool name (it appears
+            # verbatim in ../../ai/litellm/helm-release-litellm.yaml's disallowed_tools for the
+            # agent instance), and the prefix rule above (which is why the server names there carry
+            # no hyphen -- `-` is the prefix separator). What is inferred and may still be wrong:
+            # the read and write tool names, and the two argument keys below. A wrong value here
+            # presents as a gate refusal at every call site, so check these against `tools/list` on
+            # the deployed gateway before the first real run.
             - name: BATCH_MCP_TOOL_READ
               value: obsidian_ingestor_mcp-obsidian_read_note
             - name: BATCH_MCP_TOOL_WRITE
