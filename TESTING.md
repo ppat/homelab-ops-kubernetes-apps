@@ -13,6 +13,46 @@ Each module is tested as a complete unit in CI, even when only one component cha
 - Dependencies are properly satisfied
 - Configuration is valid
 
+## Component Coverage
+
+A `components/` directory is not a released artifact and owns no suite. It ships by proxy —
+each consuming module's next release carries it — and it is *exercised* only where a suite's
+Flux `Kustomization` names it in `spec.components`. Two consequences follow, and neither is
+visible from the component's own directory:
+
+- **`kubeconform` does not cover components at all.** They are excluded as non-standalone
+  kustomizations, and on a components-only pull request the validator checks the
+  `kustomization.yaml` as a file and then prints `Skipping post-build (no kustomization
+  package dirs)`. Nothing renders what the component emits.
+- **A path filter is the only thing that can start the suite that would.** GitHub evaluates
+  `on.pull_request.paths` from static YAML — there is no computing it — so every component a
+  suite exercises has to be written into that suite's workflow by hand.
+
+A hand-written map of that kind is worse than none once it goes stale, because it reads as
+coverage while covering nothing. `ci/scripts/verify-component-test-coverage.sh` is what makes
+it honest: it derives the real pairing from `spec.components` inside `ci/test/**` and from each
+workflow's own `test_path`, and fails on any disagreement — a component exercised but not
+triggered, one triggered but not exercised, a components directory no suite runs that the
+script's `UNCOVERED` table does not name, or an `UNCOVERED` entry that is now covered or gone.
+It runs ungated in `lint.yaml` for the same reason `commit-taxonomy` does: its input is
+repository state, so a new directory changes the answer with no edit to any file a filter could
+name.
+
+**The over-trigger and stale rules are the load-bearing half.** Without them the map decays in
+the direction that looks like *more* coverage rather than less, which is how every mapping of
+this kind actually dies.
+
+What is exercised today, and what covering the rest would take:
+
+| component | exercised by | note |
+| --- | --- | --- |
+| `db-backups`, `db-restore` | `infra-database` | the full bare → backups → restore rotation on a real CNPG `Cluster` |
+| `external-dns-provider/pihole` | `infra-networking` | the provider is in-tree, so external-dns starts without the server answering |
+| `external-dns-provider/unifi` | — | the variant **both clusters actually run**, and the most frequently bumped. Its webhook sidecar exits non-zero at startup when it cannot reach a controller (measured on 0.10.12: `initializing provider … no such host`, exit 1), so covering it needs a stub UniFi API in `pre-requisites/`, not just a `spec.components` line |
+| `sso` | — | what a suite would add is proof the patched output is accepted by a live API server. `apps-coder` cannot host it: **Coder performs OIDC discovery at startup and exits 1 when the issuer is unreachable** (measured on v2.35.7 against a real Postgres — `create oidc config: configure oidc provider: Get …/.well-known/openid-configuration: no such host`), so it needs a TLS-serving stub IdP, not a `spec.components` line |
+| `cert-issuer/letsencrypt` | — | the `ClusterIssuer`s it creates need an ACME account and a delegable zone |
+| `oidc-credentials/*` | — | one `ExternalSecret` each; needs the consuming module's suite to adopt the component and its fake-store keys |
+
 ## Test Process
 
 ```mermaid

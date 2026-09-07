@@ -200,6 +200,26 @@ jobs:
         ./ci/scripts/verify-bootstrap-crds.sh --self-test
         ./ci/scripts/verify-bootstrap-crds.sh
 
+  # Deliberately NOT gated on detect-changes, same as commit-taxonomy: both checks read
+  # repository state, so a new components/ directory or a new spec.components line changes the
+  # answer with no edit to any file a path filter could name -- the cases they exist to catch.
+  components:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: 1
+        persist-credentials: false
+
+    - name: Verify component coverage matches the suites that trigger on it
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        ./ci/scripts/verify-component-test-coverage.sh --self-test
+        ./ci/scripts/verify-component-test-coverage.sh
+
   kubernetes-manifests:
     needs: [detect-changes]
     runs-on: ubuntu-24.04
