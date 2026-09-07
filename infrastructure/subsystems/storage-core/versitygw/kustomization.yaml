@@ -13,10 +13,13 @@ resources:
 - helm-release-versitygw.yaml
 - deployment-statsd-exporter.yaml
 - service-statsd-exporter.yaml
+- servicemonitor-statsd-exporter.yaml
 - deployment-store-inventory.yaml
 - service-store-inventory.yaml
+- servicemonitor-store-inventory.yaml
 - deployment-wal-continuity.yaml
 - service-wal-continuity.yaml
+- servicemonitor-wal-continuity.yaml
 - cronjob-sweep.yaml
 - job-recovery-export.yaml
 

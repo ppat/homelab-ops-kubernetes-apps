@@ -1,0 +1,20 @@
+---
+# The gateway publishes no Prometheus endpoint of its own -- its whole metric surface is six
+# counters emitted as UDP StatsD datapoints -- so this scrapes the translator beside it.
+#
+# `port` names the Service's port rather than numbering it: the same Service also exposes the
+# UDP ingest port, and a scrape sent there fails.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: versitygw-metrics
+  namespace: versitygw
+  labels:
+    app.kubernetes.io/name: versitygw-metrics
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: versitygw-metrics
+  endpoints:
+  - port: metrics
+    interval: 60s

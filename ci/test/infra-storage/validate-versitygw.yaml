@@ -75,6 +75,96 @@ spec:
       - name: namespace
         value: versitygw
       file: ../chainsaw/assertions/service-clusterip-ready.yaml
+  # Asserts each ServiceMonitor's selector AND the labels/port of the Service it selects,
+  # so a rename on either side reddens this step. What it proves: the Prometheus Operator
+  # CRD accepted the resources as written (more than kubeconform's static schema check),
+  # and the two halves of each pairing still agree. What it does NOT prove: that a
+  # collector scrapes them -- kind runs none. The pairing is the part worth holding,
+  # because a selector that stops matching yields no target, no series and no error, so
+  # nothing downstream can tell it from an exporter that never shipped.
+  #
+  # Service ports are probed by name rather than asserted as a literal list: arrays here
+  # are length-strict and index-matched (ci/test/assertion-semantics), so a literal
+  # one-element list would fail against the statsd Service's two ports and would silently
+  # depend on port order for the other two.
+  - description: Assert servicemonitor/versitygw-metrics selects the labels service/versitygw-metrics carries
+    assert:
+      resource:
+        apiVersion: monitoring.coreos.com/v1
+        kind: ServiceMonitor
+        metadata:
+          name: versitygw-metrics
+          namespace: versitygw
+        spec:
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: versitygw-metrics
+          endpoints:
+          - port: metrics
+  - description: Assert service/versitygw-metrics carries that label and a port named metrics
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: versitygw-metrics
+          namespace: versitygw
+          labels:
+            app.kubernetes.io/name: versitygw-metrics
+        spec:
+          (ports[?name == 'metrics'] | [0].port): 9102
+  - description: Assert servicemonitor/versitygw-inventory selects the labels service/versitygw-inventory carries
+    assert:
+      resource:
+        apiVersion: monitoring.coreos.com/v1
+        kind: ServiceMonitor
+        metadata:
+          name: versitygw-inventory
+          namespace: versitygw
+        spec:
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: versitygw-inventory
+          endpoints:
+          - port: metrics
+  - description: Assert service/versitygw-inventory carries that label and a port named metrics
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: versitygw-inventory
+          namespace: versitygw
+          labels:
+            app.kubernetes.io/name: versitygw-inventory
+        spec:
+          (ports[?name == 'metrics'] | [0].port): 9103
+  - description: Assert servicemonitor/versitygw-wal-continuity selects its Service's labels
+    assert:
+      resource:
+        apiVersion: monitoring.coreos.com/v1
+        kind: ServiceMonitor
+        metadata:
+          name: versitygw-wal-continuity
+          namespace: versitygw
+        spec:
+          selector:
+            matchLabels:
+              app.kubernetes.io/name: versitygw-wal-continuity
+          endpoints:
+          - port: metrics
+  - description: Assert service/versitygw-wal-continuity carries that label and a port named metrics
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: versitygw-wal-continuity
+          namespace: versitygw
+          labels:
+            app.kubernetes.io/name: versitygw-wal-continuity
+        spec:
+          (ports[?name == 'metrics'] | [0].port): 9104
   - description: Assert the postRenderer patches landed on deployment/versitygw
     assert:
       resource:
