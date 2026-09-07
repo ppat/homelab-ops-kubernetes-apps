@@ -53,7 +53,7 @@ flowchart LR
 | -------- | ---- | ------- |
 | `${db_name}-backup-store` | `ObjectStore` (barmancloud.cnpg.io) | Declares the S3 destination, credentials, compression, and retention policy the plugin uses |
 | `${db_name}-${db_suffix_current}-backups` | `ScheduledBackup` (postgresql.cnpg.io) | Runs base backups on a schedule (every 8h) via the plugin, taking one immediately on creation |
-| `${db_name}-backup-credentials` | `ExternalSecret` (external-secrets.io) | Materializes the S3 access key / secret key from the cluster secret store, labelled for plugin reload |
+| `${db_name}-backup-credentials` | `ExternalSecret` (external-secrets.io) | Materializes the S3 access key / secret key from the cluster secret store, plus the signing region as a rendered literal, labelled for plugin reload |
 | (patch) | `Cluster` (postgresql.cnpg.io) | Adds the `barman-cloud.cloudnative-pg.io` plugin as WAL archiver, referencing the object store |
 
 ## Prerequisites
@@ -62,18 +62,22 @@ flowchart LR
 
    | Variable | Purpose | Example |
    | -------- | ------- | ------- |
+   | backup_s3_accesskeyid_key | Secret-store key naming the access key id for the store this database uses. Optional; defaults to the estate's shared CloudNativePG item | cluster_nas_minio_cloudnativepg_accesskeyid |
+   | backup_s3_host | Host prefix of the S3 endpoint, joined to `dns_zone` to form the endpoint URL. **Required — the only variable here without a default**, so that naming the store is always a stated decision | s3.nas |
+   | backup_s3_region | SigV4 signing region the plugin passes to barman; must equal the region the object store expects. Optional; defaults to `us-east-1` | us-east-1 |
+   | backup_s3_secretkey_key | Secret-store key naming the secret access key for the store this database uses. Optional; defaults to the estate's shared CloudNativePG item | cluster_nas_minio_cloudnativepg_secretkey |
    | db_name | Base name of the database; keys the S3 path, object store, and credentials | home-automation-db |
    | db_namespace | Namespace the cluster and backup resources live in | home-automation |
    | db_suffix_current | Current cluster generation suffix; forms the archived `serverName` | v20251018 |
-   | dns_zone | Used to build the S3 endpoint URL | example.com |
+   | dns_zone | Supplies the domain half of the S3 endpoint URL | example.com |
    | secret_store | `ClusterSecretStore` name providing S3 credentials | bitwarden-secret-manager-store |
 
 2. Required Secret Store Keys
 
    | Key | Purpose |
    | --- | ------- |
-   | cluster_nas_minio_cloudnativepg_accesskeyid | S3 access key id for the backup bucket |
-   | cluster_nas_minio_cloudnativepg_secretkey | S3 secret access key for the backup bucket |
+   | `${backup_s3_accesskeyid_key}` | S3 access key id for the store this database backs up to |
+   | `${backup_s3_secretkey_key}` | S3 secret access key for the same store |
 
 3. Required Infrastructure
 
@@ -87,4 +91,8 @@ flowchart LR
 
 - Backups are written to `s3://nas-cloudnativepg-backups/${db_name}`, scoped per database, under `serverName` `${db_suffix_current}` — so each cluster generation archives to its own server path within the shared bucket.
 - The `ScheduledBackup` name is suffixed with `${db_suffix_current}` on purpose: in CloudNativePG a `ScheduledBackup`'s `.spec.cluster` is immutable after creation, so rotating a cluster to a new generation must create a new `ScheduledBackup` (and prune the old) rather than mutate the existing one.
+- One variable is undefaulted (`backup_s3_host`) and the rest default to what the estate uses today. The store's identity is the decision worth forcing a consumer to state, so omitting it fails the Kustomization outright rather than quietly backing up to whichever store the component happened to name; its region and credential-key names are attributes of the store you named, and a default keeps them from ever rendering empty. Set `backup_s3_host` on a consumer **before** moving its `ref.tag` to a revision containing it.
+- Moving a database to a different store means overriding `backup_s3_host` **and** both `*_key` variables together — a store is reached with its own credential, so an endpoint moved without one points at a store that will not accept the request.
+- [db-restore](../db-restore) reads the same `ObjectStore`, so it follows the endpoint and credentials without settings of its own, and moving a database back is the same override removed.
+- A `backup_s3_region` disagreeing with the store surfaces as **recovery failing, never as a backup failing** — it is fatal only to `HeadBucket`, which the plugin calls from `barman-cloud-check-wal-archive` on every `bootstrap.recovery` job while archiving and base backups keep succeeding. A store that ignores the signing region hides a wrong value entirely.
 - Pair with [db-restore](../db-restore) to bootstrap a new cluster generation from these backups.
