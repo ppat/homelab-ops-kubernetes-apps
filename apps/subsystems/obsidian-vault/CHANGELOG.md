@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-obsidian-vault-v0.1.0...apps-obsidian-vault-v0.1.1) (2026-09-07)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-obsidian-vault:** dial the ingestor's own MCP route, not the gateway's multiplexed root ([#3976](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3976)) ([009788f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/009788fad8c5ead1b8c1b607e7a1b579634fb9a6))
+
 ## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-obsidian-vault-v0.0.1...apps-obsidian-vault-v0.1.0) (2026-09-07)
 
 
