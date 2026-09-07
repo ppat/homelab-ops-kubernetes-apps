@@ -7,7 +7,18 @@ metadata:
   labels:
     app.kubernetes.io/name: mcp-obsidian-agent
 spec:
-  replicas: 1
+  # `replicas` is deliberately ABSENT. It is runtime state owned by batch mode, not declared
+  # configuration: a run scales this Deployment to zero for its duration and back to one at the end
+  # (ppat/obsidian-tools ADR-0052). Under server-side apply a field absent from the applied manifest
+  # is not owned by the applier, so a reconcile during a run leaves the zero in place; declaring
+  # `replicas: 1` here would restore the pod mid-run and let interactive writers race the batch
+  # through the editor's single event loop -- silently, and in the direction where everything looks
+  # healthy.
+  #
+  # The API server defaults the field to 1, so this reads as one replica whenever no run holds it,
+  # which is what the instance is designed for anyway: a second pod would be a second caller of that
+  # same single event loop. A HorizontalPodAutoscaler pointed at this Deployment would break batch
+  # mode for the identical reason and must never be added.
   selector:
     matchLabels:
       app.kubernetes.io/name: mcp-obsidian-agent

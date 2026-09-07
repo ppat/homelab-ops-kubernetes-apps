@@ -1,0 +1,23 @@
+---
+# Which run, if any, is holding the agent MCP instance stopped. Read by the batch-mode watchdog and
+# written by whichever `batch-processor` run holds it (ppat/obsidian-tools ADR-0052).
+#
+# It exists in git rather than being created by the workload because the grant beside it carries no
+# `create` verb, and it carries none because RBAC cannot restrict `create` by `resourceNames`: the
+# verb that would let this object be self-created is the verb that would let any Lease in the
+# namespace be created. Delete this object and every run and every watchdog pass fails loudly with a
+# message naming it -- which is the correct outcome, since nothing may recreate it.
+#
+# `spec` ships EMPTY, and that is the load-bearing part. Under server-side apply a field absent from
+# the applied manifest is not owned by the applier, so `holderIdentity`, `acquireTime`, `renewTime`
+# and `leaseDurationSeconds` stay owned by the run that writes them and survive every reconcile. A
+# value declared here for any of the four would be restored under a live run and would read as a
+# lease held by nobody.
+apiVersion: coordination.k8s.io/v1
+kind: Lease
+metadata:
+  name: batch-mode
+  namespace: obsidian-vault
+  labels:
+    app.kubernetes.io/name: batch-processor
+spec: {}

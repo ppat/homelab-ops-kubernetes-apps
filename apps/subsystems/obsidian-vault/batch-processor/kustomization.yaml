@@ -4,6 +4,8 @@ kind: Kustomization
 
 resources:
 - secrets.yaml
+- rbac.yaml
+- lease.yaml
 - stream-provisioner.yaml
 - cronjob.yaml
 - watchdog.yaml
