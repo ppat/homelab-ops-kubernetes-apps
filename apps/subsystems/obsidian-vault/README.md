@@ -110,7 +110,7 @@ flowchart TB
 
 ## Prerequisites
 
-This module needs a LiteLLM gateway reachable at `litellm.ai.svc.cluster.local:4000` with the two vault MCP servers registered on it and virtual keys scoped to them. That gateway is `apps/subsystems/ai`, and the coupling is bidirectional but not circular: the gateway calls into this module's MCP servers, and this module's `batch-processor` calls the gateway to reach the ingestor server. The batch-mode watchdog depends on neither — it talks only to the cluster's own API. Declare the hard edge where the module is consumed (`Kustomization.spec.dependsOn`), never inside the module — see [DESIGN.md](../../../DESIGN.md#dependencies).
+This module needs a LiteLLM gateway reachable at `litellm.ai.svc.cluster.local:4000` with the two vault MCP servers registered on it and virtual keys scoped to them. That gateway is `apps/subsystems/ai`, and the coupling is bidirectional but not circular: the gateway calls into this module's MCP servers, and this module's `batch-processor` calls the gateway to reach the ingestor server — at that server's own route on the gateway (`/<server>/mcp`) rather than the gateway's multiplexed root, so the processor addresses only the one server its key is scoped to. Tool names stay `<server>-`-prefixed on that route regardless; see the CronJob's own comments, which record why, and why the trailing slash there is not decoration. The batch-mode watchdog depends on neither — it talks only to the cluster's own API. Declare the hard edge where the module is consumed (`Kustomization.spec.dependsOn`), never inside the module — see [DESIGN.md](../../../DESIGN.md#dependencies).
 
 1. Persistent Storage
 
