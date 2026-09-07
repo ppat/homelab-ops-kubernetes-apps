@@ -1,0 +1,112 @@
+---
+# The whole authority a batch run holds over the cluster: it may ask the agent MCP instance to run,
+# or not to. Nothing else (ppat/obsidian-tools ADR-0052).
+#
+# Every narrowing below is load-bearing rather than hygiene, because the alternative mechanism this
+# replaced -- refusing the agent instance at the network -- was rejected precisely on the authority
+# it required. A workload that can edit NetworkPolicy in this namespace can rewrite
+# `obsidian-rest-api-ingress`, which is the SOLE control in front of an undisableable, unscoped
+# write endpoint; granting a workload power over the fence it stands behind inverts the containment.
+# A scaling grant is acceptable only while it stays this narrow, so a widening here undoes the
+# reasoning that chose it:
+#
+#   * `deployments/scale`, never `deployments`. A caller that can write the Deployment body can
+#     change the image it runs and can change OBSIDIAN_WRITE_PATHS -- which IS the write-scope gate.
+#     `resourceNames` on a subresource matches the parent object's name, which is what makes this
+#     expressible at all.
+#   * `resourceNames` naming the agent instance alone. `mcp-obsidian-ingestor` must stay outside it
+#     or a run can cut its own write path and promotion's; `obsidian` must stay outside it or a run
+#     can stop the only process that writes vault content.
+#   * NO `create` VERB, anywhere. Kubernetes RBAC cannot restrict `create` by `resourceNames` --
+#     `create` on leases would mean every Lease in this namespace -- so the Lease ships in git
+#     (./lease.yaml) and no workload can recreate it. For the same reason there is no `list` and no
+#     `watch`: neither can be resource-named, and `get` addresses the one object by name.
+#   * `patch`, not `update`. Both writes are JSON merge patches naming one field each; `update`
+#     replaces the object wholesale and would let a write carry away whatever it did not send.
+#
+# Two ServiceAccounts and one Role bound twice: the processor and the watchdog hold identical
+# authority, and two copies of a security-relevant rule set is a drift hazard for no gain.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: batch-processor
+  namespace: obsidian-vault
+  labels:
+    app.kubernetes.io/name: batch-processor
+# No `automountServiceAccountToken` here: the pods project their own token volume explicitly, with
+# a bounded expiry, rather than inheriting the legacy always-mounted one.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: batch-mode-watchdog
+  namespace: obsidian-vault
+  labels:
+    app.kubernetes.io/name: batch-mode-watchdog
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: batch-mode-agent-instance
+  namespace: obsidian-vault
+  labels:
+    app.kubernetes.io/name: batch-processor
+  annotations:
+    # Kubernetes strips comments before persisting to etcd, so everything said above is invisible to
+    # `kubectl get role -o yaml` and to every API client. The one sentence that must survive that
+    # trip rides on the object.
+    homelab-ops.internal/authority-note: >-
+      Scaling authority over the agent MCP instance alone. Widening resourceNames, adding the
+      deployments resource itself, or adding create/list/watch undoes ppat/obsidian-tools ADR-0052's
+      reasoning -- see that record before changing any line of this rule set.
+rules:
+- apiGroups:
+  - apps
+  resources:
+  - deployments/scale
+  resourceNames:
+  - mcp-obsidian-agent
+  verbs:
+  - get
+  - patch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  resourceNames:
+  - batch-mode
+  verbs:
+  - get
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: batch-processor-agent-instance
+  namespace: obsidian-vault
+  labels:
+    app.kubernetes.io/name: batch-processor
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: batch-mode-agent-instance
+subjects:
+- kind: ServiceAccount
+  name: batch-processor
+  namespace: obsidian-vault
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: batch-mode-watchdog-agent-instance
+  namespace: obsidian-vault
+  labels:
+    app.kubernetes.io/name: batch-mode-watchdog
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: batch-mode-agent-instance
+subjects:
+- kind: ServiceAccount
+  name: batch-mode-watchdog
+  namespace: obsidian-vault

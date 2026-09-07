@@ -8,9 +8,13 @@ spec:
   # Object shape, no wait -- the same ceiling as validate-git-committer.yaml and for the same
   # reason: these are CronJobs with no Ready condition, and nothing they need exists in this
   # suite. The broker is reachable only at `obsidian-vault-nats.${domain_name}`, which resolves
-  # to a MetalLB address that kind has no controller for, and the gateway's key API needs a
-  # virtual key that lives in LiteLLM's own store. Triggering a one-off Job here would prove
-  # only that a connection fails.
+  # to a MetalLB address that kind has no controller for. Triggering a one-off Job here would
+  # prove only that a connection fails.
+  #
+  # The RBAC assertions below are the same kind of claim and carry the same ceiling: they prove the
+  # Role SAYS what ppat/obsidian-tools ADR-0052 requires, never that the API server refuses what it
+  # omits. Only a `SelfSubjectAccessReview` from the processor's own identity is evidence of that,
+  # and that injection is owed on a real cluster (that repository's docs/VERIFICATIONS.md, §5).
   - description: Assert externalsecret/batch-processor-secrets
     assert:
       bindings:
@@ -19,14 +23,77 @@ spec:
       - name: namespace
         value: obsidian-vault
       file: ../chainsaw/assertions/externalsecret-ready.yaml
-  - description: Assert externalsecret/batch-mode-watchdog-secrets
+  # The whole authority a batch run holds over the cluster, asserted field by field because every
+  # narrowing is load-bearing and a widening would be invisible in a diff that merely "adds a verb".
+  # `create`, `list` and `watch` are called out by name: RBAC cannot restrict any of them by
+  # `resourceNames`, so adding one silently converts this from "the agent instance" to "everything
+  # of that kind in the namespace", which is exactly the grant ADR-0052 refuses.
+  - description: Assert role/batch-mode-agent-instance scales the agent instance and nothing else
     assert:
-      bindings:
-      - name: name
-        value: batch-mode-watchdog-secrets
-      - name: namespace
-        value: obsidian-vault
-      file: ../chainsaw/assertions/externalsecret-ready.yaml
+      resource:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: Role
+        metadata:
+          name: batch-mode-agent-instance
+          namespace: obsidian-vault
+        # yamllint disable rule:line-length
+        (length(rules)): 2
+        (length(rules[?resourceNames])): 2
+        (rules[?contains(resources, 'deployments/scale')] | [0].resourceNames): [mcp-obsidian-agent]
+        (rules[?contains(resources, 'deployments/scale')] | [0].verbs): [get, patch]
+        (rules[?contains(resources, 'leases')] | [0].resourceNames): [batch-mode]
+        (rules[?contains(resources, 'leases')] | [0].verbs): [get, patch]
+        # The Deployment object itself carries OBSIDIAN_WRITE_PATHS and the image; only its `scale`
+        # subresource may be reachable from here.
+        (length(rules[?contains(resources, 'deployments')])): 0
+        (length(rules[?contains(verbs, 'create')])): 0
+        (length(rules[?contains(verbs, 'list')])): 0
+        (length(rules[?contains(verbs, 'watch')])): 0
+        (length(rules[?contains(verbs, 'update')])): 0
+        (length(rules[?contains(verbs, 'delete')])): 0
+        # yamllint enable rule:line-length
+  - description: Assert both bindings carry that one Role and no other
+    assert:
+      resource:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: RoleBinding
+        metadata:
+          name: batch-processor-agent-instance
+          namespace: obsidian-vault
+        roleRef:
+          kind: Role
+          name: batch-mode-agent-instance
+        subjects:
+        - kind: ServiceAccount
+          name: batch-processor
+  - description: Assert the watchdog's binding carries the same Role
+    assert:
+      resource:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: RoleBinding
+        metadata:
+          name: batch-mode-watchdog-agent-instance
+          namespace: obsidian-vault
+        roleRef:
+          kind: Role
+          name: batch-mode-agent-instance
+        subjects:
+        - kind: ServiceAccount
+          name: batch-mode-watchdog
+  # The Lease ships in git because the grant above carries no `create`, and it ships UNHELD because
+  # a holder or a renewal time declared here would be restored under a live run by the reconciler --
+  # a lease held by nobody, which the watchdog would read as a live run and wait on forever.
+  - description: Assert lease/batch-mode exists and ships unheld
+    assert:
+      resource:
+        apiVersion: coordination.k8s.io/v1
+        kind: Lease
+        metadata:
+          name: batch-mode
+          namespace: obsidian-vault
+        (spec.holderIdentity == null): true
+        (spec.renewTime == null): true
+        (spec.leaseDurationSeconds == null): true
   # The two subject lists are asserted against each other, not just individually: a dead-letter
   # subject inside the batch stream's own list would be re-consumed by the consumer that just
   # gave up on it, delivery count reset, forever and silently. `discard: new` is the other
@@ -83,6 +150,10 @@ spec:
               template:
                 spec:
                   restartPolicy: Never
+                  # Without an identity every API call is anonymous and every run fails at its first
+                  # request, with the agent instance still up -- which looks like a broken batch
+                  # rather than like a missing ServiceAccount.
+                  serviceAccountName: batch-processor
                   securityContext:
                     runAsNonRoot: true
                     runAsUser: 1000
@@ -95,11 +166,17 @@ spec:
                     capabilities:
                       drop:
                       - ALL
+                  # The two object names must equal the `resourceNames` entries asserted on the
+                  # Role above, character for character. A one-sided edit is a 403 at the first call
+                  # of every run, which reads as a permissions bug rather than as a typo.
                   # yamllint disable rule:line-length
                   (containers[?name == 'batch-processor'] | [0].env[?name == 'BATCH_SUBJECT_PREFIX'] | [0].value): batch
                   (containers[?name == 'batch-processor'] | [0].env[?name == 'BATCH_DEAD_LETTER_SUBJECT_PREFIX'] | [0].value): batch-dead-letter
+                  (containers[?name == 'batch-processor'] | [0].env[?name == 'BATCH_AGENT_INSTANCE_DEPLOYMENT'] | [0].value): mcp-obsidian-agent
+                  (containers[?name == 'batch-processor'] | [0].env[?name == 'BATCH_AGENT_INSTANCE_LEASE'] | [0].value): batch-mode
+                  (containers[?name == 'batch-processor'] | [0].env[?valueFrom.secretKeyRef.key == 'BATCH_GATEWAY_ADMIN_KEY'] | length(@)): 0
                   # yamllint enable rule:line-length
-  - description: Assert cronjob/batch-mode-watchdog holds only the gateway handle
+  - description: Assert cronjob/batch-mode-watchdog holds no credential at all
     assert:
       resource:
         apiVersion: batch/v1
@@ -112,18 +189,28 @@ spec:
             spec:
               template:
                 spec:
-                  # What this watchdog watches is precisely what may be broken, so it must not
-                  # need the broker credential or the vault write key to start. The gateway URL
-                  # plus the two handle keys is the whole environment; a fourth entry, or any
-                  # entry reaching into the processor's own Secret, means something gave it one.
+                  serviceAccountName: batch-mode-watchdog
+                  # What this watchdog watches is precisely what may be broken, so it must not need
+                  # the broker credential or the vault write key to start. Since ADR-0052 it needs
+                  # NO credential from the secret store either: three object names and the identity
+                  # the cluster mints for it is the whole environment. Any `secretKeyRef` here means
+                  # something gave it one back.
                   # yamllint disable rule:line-length
                   (containers[?name == 'batch-mode-watchdog'] | [0].env | length(@)): 3
-                  (containers[?name == 'batch-mode-watchdog'] | [0].env[?valueFrom.secretKeyRef.name == 'batch-processor-secrets'] | length(@)): 0
+                  (containers[?name == 'batch-mode-watchdog'] | [0].env[?valueFrom.secretKeyRef] | length(@)): 0
+                  (containers[?name == 'batch-mode-watchdog'] | [0].env[?name == 'BATCH_AGENT_INSTANCE_DEPLOYMENT'] | [0].value): mcp-obsidian-agent
+                  (containers[?name == 'batch-mode-watchdog'] | [0].env[?name == 'BATCH_AGENT_INSTANCE_LEASE'] | [0].value): batch-mode
+                  (containers[?name == 'batch-mode-watchdog'] | [0].args): [watch-agent-instance]
                   # yamllint enable rule:line-length
   # `catch` is a sibling of `try` on the StepTemplate spec, not a key inside a try entry -- see
   # validate-git-committer.yaml. Nesting it one level deeper fails the whole suite at load time,
   # before any test in this directory runs.
   catch:
+  - describe:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: Role
+      name: batch-mode-agent-instance
+      namespace: obsidian-vault
   - describe:
       apiVersion: v1
       kind: ConfigMap
