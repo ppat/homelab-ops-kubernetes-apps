@@ -138,36 +138,35 @@ spec:
                 secretKeyRef:
                   name: batch-processor-secrets
                   key: BATCH_MCP_API_KEY
-            # Still UNVERIFIED against the deployed gateway, and required with no defaults
-            # precisely so this file has to state a value rather than inherit a guess.
+            # Read from `tools/list` on the deployed gateway with this key, and still required
+            # with no defaults so this file has to state a value rather than inherit a guess.
             #
-            # THE `<server>-` PREFIX STAYS, EVEN THOUGH THE URL ABOVE ADDRESSES ONE SERVER. That
-            # reads backwards -- a prefix disambiguates between servers, and there is only one on
-            # this route -- so it is the thing most likely to be "corrected" into breakage. In
-            # LiteLLM the per-server path is a SCOPE FILTER and not a naming mode: every route
-            # mounts the same handler, the path segment only narrows which servers are queried, and
-            # the listing path adds the prefix unconditionally (`add_prefix=True  # Always add
-            # server prefix`, litellm/proxy/_experimental/mcp_server/server.py). Calls tolerate the
-            # bare name too, but only while a warm name->server mapping happens to hold it, so the
-            # prefixed form is both correct and the robust one.
+            # A PREFIX STAYS, EVEN THOUGH THE URL ABOVE ADDRESSES ONE SERVER. That reads backwards
+            # -- a prefix disambiguates between servers, and there is only one on this route -- so
+            # it is the thing most likely to be "corrected" into breakage. In LiteLLM the
+            # per-server path is a SCOPE FILTER and not a naming mode: every route mounts the same
+            # handler, the path segment only narrows which servers are queried, and the listing
+            # path adds the prefix unconditionally (`add_prefix=True  # Always add server prefix`,
+            # litellm/proxy/_experimental/mcp_server/server.py).
             #
-            # What is confirmed: `obsidian_delete_note` is the server-side tool name (it appears
-            # verbatim in ../../ai/litellm/helm-release-litellm.yaml's disallowed_tools for the
-            # agent instance), and the prefix rule above (which is why the server names there carry
-            # no hyphen -- `-` is the prefix separator). What is inferred and may still be wrong:
-            # the read and write tool names, and the two argument keys below. A wrong value here
-            # presents as a gate refusal at every call site, so check these against `tools/list` on
-            # the deployed gateway before the first real run.
+            # THE PREFIX IS THE ALIAS, NOT THE SERVER NAME, AND THIS FILE NEEDS BOTH FORMS. The
+            # names below carry `obsidian_ingestor-`, from `mcp_aliases` in
+            # ../../ai/litellm/helm-release-litellm.yaml; the URL above carries
+            # `obsidian_ingestor_mcp`, the `mcp_servers` key the alias maps to. Making the two
+            # agree breaks one of them. Aliasing the server differently renames every tool here
+            # without changing anything about what any of them does.
+            #
+            # What a tool ACCEPTS is not configuration and has no variables here: the argument
+            # shapes are fixed by the tools' own schemas (a note is addressed by a structured
+            # target object, a read names its projection, a whole-file write declares whether it
+            # may overwrite) and live in obsidian-tools'
+            # `obsidian_tools/batch_processor/mcp_client.py`.
             - name: BATCH_MCP_TOOL_READ
-              value: obsidian_ingestor_mcp-obsidian_read_note
+              value: obsidian_ingestor-obsidian_get_note
             - name: BATCH_MCP_TOOL_WRITE
-              value: obsidian_ingestor_mcp-obsidian_update_note
+              value: obsidian_ingestor-obsidian_write_note
             - name: BATCH_MCP_TOOL_DELETE
-              value: obsidian_ingestor_mcp-obsidian_delete_note
-            - name: BATCH_MCP_PATH_ARGUMENT
-              value: filePath
-            - name: BATCH_MCP_CONTENT_ARGUMENT
-              value: content
+              value: obsidian_ingestor-obsidian_delete_note
             # Which objects a run stops and which lease says so. All three are required with no
             # defaults in the tool, because each must equal the matching `resourceNames` entry in
             # ./rbac.yaml character for character -- a mismatch presents as a 403 at the first call
