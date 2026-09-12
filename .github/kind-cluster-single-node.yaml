@@ -1,8 +1,14 @@
 ---
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
-# kubelet rewrites an ALREADY-MOUNTED secret volume only when it re-syncs the pod, and each
-# pod's next re-sync is scheduled at a jittered [syncFrequency, 1.5 x syncFrequency). At the
+# Two independent kubelet defaults are wrong for a cluster that lives ten minutes, and both are
+# corrected in the single patch below. kubeadm applies each `kubeadmConfigPatches` entry as its
+# own document, so two entries naming the same `kind:` is a second patch of the same target
+# rather than a merge of the two -- the keys belong in ONE entry.
+#
+# --- syncFrequency: kubelet rewrites an already-mounted secret volume only at a pod re-sync ---
+#
+# Each pod's next re-sync is scheduled at a jittered [syncFrequency, 1.5 x syncFrequency). At the
 # stock 1m that is 60-90s of dead time for any container waiting on a key written into a Secret
 # it had already mounted, however promptly the API was updated. The shape that triggers it is a
 # chart shipping an EMPTY placeholder Secret in the same release as the Deployment that mounts
@@ -25,10 +31,38 @@ apiVersion: kind.x-k8s.io/v1alpha4
 # The 6x more frequent pod syncs were not measurable against a node carrying 73 pods of which
 # 15 were crashlooping: 16.8 kubelet CPU-seconds per 300s either way. The largest difference
 # seen on any arm was +1.7 CPU-seconds per kubelet per 300s, under 0.6% of one core.
+#
+# Confirmed in the fleet: over 663 classified runs on this value the >=60s wait disappeared
+# entirely, against 69 of 493 carrying it on the stock value.
+#
+# --- serializeImagePulls / maxParallelImagePulls: the pull serializer is the kubelet ---
+#
+# kindest/node ships serializeImagePulls: true and sets neither key in
+# /var/lib/kubelet/config.yaml, so a node pulls ONE image at a time. The serializer is the
+# kubelet, not containerd -- containerd 2.3.1 in this image has use_local_image_pull: false, so
+# a CRI pull never consults the CRI plugin's max_concurrent_downloads and a patch aimed there is
+# accepted and ignored. Read each node's live /configz to tell this took effect; the kubelet
+# config file stays silent either way. 4 is one pull per runner vCPU; containerd's transfer
+# service still bounds unpacking (max_concurrent_unpacks: 1), which is a separate lever.
+#
+# Measured 2026-08-16 by paired dispatch, arms fired at the same instant. On apps-ai (n=8, the
+# fleet's most queue-bound suite) the latest-finishing pull fell 207.4s -> 149.4s and its
+# validate phase 291.6s -> 236.9s, 8 of 8 pairs, t=-18.1 and -6.1; job wall clock -49.0s
+# (t=-3.21). On apps-downloaders (n=12) queued pull time -- the summed gap between the two
+# numbers in each PULL line -- fell 166.4s -> 0.2s, the latest-finishing pull 42.8s -> 28.5s
+# (12/12, t=-6.19) and the validate phase 16.8s (t=-5.88). Suites whose images are nearly all
+# pre-baked into the node image gain nothing here, and that is fine; nothing regressed.
+#
+# It also holds where parallelism could plausibly have been worse: under a 150mbit-shaped link
+# on a 4-vCPU rig, four concurrent pulls finished the same 12 images 19% sooner than one at a
+# time, 2 of 2 replicates. Individual pulls DO get slower under contention, so pull_s alone
+# reads like a regression while the set completes earlier.
 kubeadmConfigPatches:
 - |
     kind: KubeletConfiguration
     syncFrequency: 10s
+    serializeImagePulls: false
+    maxParallelImagePulls: 4
 nodes:
 - role: control-plane
   extraMounts:
