@@ -6,7 +6,7 @@ on:
   pull_request:
     paths:
     - '.github/workflows/test-apps-downloaders.yaml'
-    - '.github/kind-cluster-multi-node.yaml'
+    - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/apps-downloaders/**'
     - 'ci/test/chainsaw/**'
     - 'apps/subsystems/downloaders/**'
@@ -33,4 +33,14 @@ jobs:
       git_ref: ${{ github.head_ref || github.ref_name }}
       test_path: ./ci/test/apps-downloaders
       chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
-      kind_config: .github/kind-cluster-multi-node.yaml
+      # Three nodes bought this suite one thing: three independent kubelet pull queues for its
+      # eleven distinct arr images, none of which is duplicated across nodes. Measured
+      # 2026-08-16 over 12 paired dispatches per arm, that was worth +11.4s on the
+      # latest-finishing pull (t=+3.24, 10 of 12 pairs) -- which is why an earlier audit found
+      # single node 27.0s SLOWER and kept the third node. Parallel pulls (see
+      # .github/kind-cluster-single-node.yaml) remove the queue entirely, and with it the
+      # difference: one node vs three is then +0.2s on the latest-finishing pull (t=0.22) and
+      # -0.7s on the validate phase (t=-0.26), against a per-pair sd that would need ~1100
+      # pairs to resolve. Two node containers and their duplicated system images come off a
+      # 4-vCPU runner for nothing measurable. Reverting is this line.
+      kind_config: .github/kind-cluster-single-node.yaml
