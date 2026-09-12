@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-obsidian-vault-v0.1.1...apps-obsidian-vault-v0.1.2) (2026-09-12)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-obsidian-vault:** update digest docker.io/ppatlabs/obsidian (62fb382 -&gt; 2cd85dd) ([#3990](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3990)) ([ab219f5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ab219f5ee9fb3ada13ca35b801b08211cdf0c718))
+
 ## [0.1.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-obsidian-vault-v0.1.0...apps-obsidian-vault-v0.1.1) (2026-09-07)
 
 
