@@ -103,7 +103,7 @@ its own right.
 
 `minio` is the exception and it is measured rather than sloppy: `infra-database` waits on
 `kustomization/minio` instead of on the release, and that object's `wait: true` / `timeout: 4m0s` pair was
-sized on observed CI (28.1/82.1/94.1s green) and exercised on the branch it came from. Its README says so.
+sized on observed CI — 28.1/82.1/94.1s across three green runs.
 
 ### `retryInterval`
 

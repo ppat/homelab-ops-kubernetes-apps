@@ -77,8 +77,7 @@ Grep the suite for the old name when switching; `infra-observability` had two.
 
 ## Unproven
 
-Least unproven of the six. Every patch here except the namespace is carried verbatim from
-`ci/test/{infra-observability,infra-database}/pre-requisites/minio.yaml` on `fix/chainsaw-timing-and-order`,
-where they were measured across several CI runs and a stress rig (MinIO reconcile 2,2,2,2,2,3s against 42-120s
-before). What has not been run is this **as a fixture directory** with its own `Namespace` and the
+Least unproven of the six. Every patch here except the namespace is carried verbatim from the per-suite
+`ci/test/{infra-observability,infra-database}/pre-requisites/minio.yaml` files this fixture replaced, where they
+were measured across several CI runs and a stress rig (MinIO reconcile 2,2,2,2,2,3s against 42-120s before). What has not been run is this **as a fixture directory** with its own `Namespace` and the
 `pre-requisites-minio` name: no suite consumes it yet.

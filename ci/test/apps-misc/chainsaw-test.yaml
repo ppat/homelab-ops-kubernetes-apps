@@ -34,11 +34,11 @@ spec:
     # default in validate-maddy.yaml.
     #
     # 3m is infra-storage's number for the identical operation, sized there against 36.1s on
-    # four of five green runs and 106.1s on the fifth. Measured here over three green runs on
-    # this branch: 26/27/16s, i.e. 0.15 of the budget -- so it is not what this step costs.
+    # four of five green runs and 106.1s on the fifth. Measured here over three green runs:
+    # 26/27/16s, i.e. 0.15 of the budget -- so it is not what this step costs.
     # The external-secrets wait behind it is (12/82/88s over the same three runs), and the
-    # two together came to 38/109/104s against a baseline of 60-70s on twelve runs of
-    # fix/chainsaw-timing-and-order. The two waits run in series, as all chainsaw operations
+    # two together came to 38/109/104s against a baseline of 60-70s over twelve runs taken
+    # before the dependency was dropped. The two waits run in series, as all chainsaw operations
     # do, but the two installs no longer do, so the step costs whichever release converges
     # last rather than their sum -- which is the whole point of dropping the dependency.
     - description: Reconcile helmrelease/cert-manager-release

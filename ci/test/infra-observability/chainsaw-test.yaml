@@ -108,7 +108,7 @@ spec:
     try:
     # 4m: was 2m, which expired at exactly 120.0s on 4 of the 6 re-run-proven flakes in this
     # suite -- the largest single failure bucket here. Green observations ran 54.3-86.1s, so
-    # a good day already consumed 72% of it, and one run on this branch took 126s.
+    # a good day already consumed 72% of it, and one observed run took 126s.
     - description: Reconcile helmrelease/minio-release
       script:
         # yamllint disable-line rule:line-length
