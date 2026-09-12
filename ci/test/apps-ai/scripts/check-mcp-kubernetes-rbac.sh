@@ -275,6 +275,29 @@ check_sandbox_write_boundary() {
   # direction for a security assertion to fail.
   elif echo "$secret_response" | grep -q '"isError":true' && echo "$secret_response" | grep -q 'resource not allowed: /v1, Kind=Secret'; then
     echo "ok: resources_list(Secret) was denied by denied_resources, despite read_only = false"
+  # A reply can be well-formed, carry `"isError":true`, and still not be an answer: the tool
+  # reached the API server and the API server did not reply. That used to fall into the final
+  # branch and print "was ALLOWED -- denied_resources did not hold", which is the same
+  # misreporting the could-not-ask branch above exists to prevent, arriving by a different route.
+  # Observed on a real run where kubernetes.default.svc was unreachable for five minutes: the
+  # control was reported as failed open while nothing had been read at all (#3899).
+  #
+  # Pinned to the upstream transport, not to "is there an error". A generic `isError` test would
+  # swallow a REWORDED DENIAL -- upstream changing its denial text would stop matching the branch
+  # above and land here as "could not ask" instead of going red, which is the one regression this
+  # fix must not introduce. Requiring the API server's own address alongside a transport phrase
+  # cannot match a denial, because a denial names the resource rather than a dial failure.
+  #
+  # It also cannot manufacture a pass. This branch still sets FAILED=1, exactly like the branch it
+  # was taken from -- the run stays red either way. What changes is only which of two very
+  # different diagnoses the log asserts, and therefore whether a reader learns to ignore it.
+  elif echo "$secret_response" | grep -q '"isError":true' &&
+       echo "$secret_response" | grep -q 'kubernetes\.default\.svc' &&
+       echo "$secret_response" | grep -qE 'context deadline exceeded|connection refused|no such host|i/o timeout|TLS handshake timeout|EOF'; then
+    echo "FAIL: could not ask -- the tool reached the API server and the API server did not answer." >&2
+    echo "      (${#secret_response} bytes returned, carrying an upstream transport error.)" >&2
+    echo "      This is NOT evidence that denied_resources failed open. Nothing was read." >&2
+    FAILED=1
   else
     # The body is deliberately NOT printed here. This branch means the read may have SUCCEEDED,
     # so the response can carry Secret material -- and this repository is public, which makes
