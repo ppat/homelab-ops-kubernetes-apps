@@ -61,7 +61,10 @@ repos:
   - id: validate-k8s
     args:
     - --pkg-include
-    - '["apps/*","infrastructure/*"]'
+    # Must match .github/workflows/lint.yaml exactly. It carried `ci/test/*` and this did
+    # not, so a manifest under ci/test/ passed locally and failed in CI -- the worst
+    # direction for a pre-commit hook to diverge, since the whole point is catching it first.
+    - '["apps/*","infrastructure/*", "ci/test/*"]'
     - --pkg-exclude
     - '["components/*",".archive/*","infrastructure/bootstrap/crds/*"]'
     # Grafana: the ESO generator kind (generators.external-secrets.io/v1alpha1). The
