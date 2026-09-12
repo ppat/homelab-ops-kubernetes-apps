@@ -51,4 +51,46 @@ fi
 # prints it, so it only surfaces on failure. Keyed on $NAMESPACE (injected by chainsaw, unique
 # per test) so sequential suites in the same environment never collide on the path.
 LOG_FILE="${TMPDIR:-/tmp}/bootstrap-crds-apply-${NAMESPACE}.log"
-kubectl apply --server-side --force-conflicts -k "${CRDS_DIR}" >"${LOG_FILE}" 2>&1
+
+# Every one of the ten bundles under infrastructure/bootstrap/crds/ names a CRD manifest by URL,
+# so this one command performs ten network fetches with no retry of its own. Measured over the 13
+# days to 2026-09-12, a failure here took out three suites in a single dispatch -- three of the
+# fleet's eight failures in the window, the largest single contributor.
+#
+# kustomize also reports the failure misleadingly: when an HTTP fetch fails it falls back to
+# treating the URL as a git repository, and the error that finally surfaces says a LOCAL directory
+# "must resolve to a file". So a network blip reads as a broken path in this repo, and the
+# investigation starts in the wrong place. That is why the note below exists.
+#
+# This is not the "auto-retry failed jobs" approach that was considered and rejected for this
+# fleet, and the difference is the point rather than a nicety. Retrying a job re-runs the
+# assertions, so it masks exactly the flakiness the instrumentation exists to surface. There are no
+# assertions here: the fetched artifacts are immutable, pinned by version, and byte-identical on
+# every attempt, so a second attempt cannot turn a real failure green. It can only recover a
+# dropped connection. A genuinely unreachable or removed release asset still fails, having cost 20
+# extra seconds.
+#
+# Server-side apply is declarative, so a partially-applied first attempt converges on the second.
+attempts=3
+for attempt in $(seq 1 "${attempts}"); do
+  if kubectl apply --server-side --force-conflicts -k "${CRDS_DIR}" >>"${LOG_FILE}" 2>&1; then
+    break
+  fi
+
+  if [[ "${attempt}" -eq "${attempts}" ]]; then
+    {
+      echo
+      echo "apply-bootstrap-crds: failed ${attempts} times."
+      echo "Before looking for a path problem in this repo, check the remote fetches -- kustomize"
+      echo "reports a failed download as a local path error. The bundles fetch these:"
+      # Only `resources:` entries from the bundles' own kustomization.yaml files. Matching any
+      # https:// under this tree instead returns ~170 lines, most of them issue links in comments.
+      grep -rhE '^[[:space:]]*-[[:space:]]+https://' --include=kustomization.yaml "${CRDS_DIR}" \
+        2>/dev/null | sed -E 's/^[[:space:]]*-[[:space:]]+/  /' | sort -u
+    } >>"${LOG_FILE}"
+    exit 1
+  fi
+
+  echo "apply-bootstrap-crds: attempt ${attempt} failed, retrying" >>"${LOG_FILE}"
+  sleep $(( attempt * 5 ))
+done
