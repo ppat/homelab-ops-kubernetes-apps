@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-bitwarden-v0.1.5...apps-bitwarden-v0.1.6) (2026-09-12)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-bitwarden:** raise the database migrator Jobs above the memory floor their image needs ([#4005](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4005)) ([cf5a8b6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/cf5a8b6ae924ba57c4729a1f8ab323aea95eb01e))
+
 ## [0.1.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-bitwarden-v0.1.4...apps-bitwarden-v0.1.5) (2026-08-24)
 
 
