@@ -65,6 +65,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
+      max_parallel: ${{ steps.plan.outputs.max_parallel }}
     steps:
     - name: Checkout
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -92,6 +93,21 @@ jobs:
         done < <(echo "${matrix}" | jq -r '.include[] | [.suite, .test_path], [.suite, .chainsaw_config], [.suite, .kind_config] | @tsv')
 
         echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
+
+        # Derived, not a literal: a hand-set cap has to be re-reasoned every time the suite count
+        # changes, and when it is not, the jobs past it queue behind the slot's longest suite and
+        # get sampled 10-25 minutes late -- in a different hour, under different contention, while
+        # still recorded under the slot they were planned for. The `:23` minute and the four-day
+        # rotation exist to keep a sample's hour known, so an under-sized cap silently reintroduces
+        # the confound the instrument is built around. It also lands on the worst job: the displaced
+        # one is last in matrix order, and the planner appends the two every-slot suites last, so it
+        # is one of the only two suites with enough samples to resolve a rate.
+        #
+        # Clamped at 8 for the `suites: all` dispatch only. A slot is at most ceil(17/4)+2 = 7
+        # today, so the clamp never binds on the scheduled path; what it stops is a manual all-suite
+        # run holding the whole parallel-runner budget for 40 minutes, which is the reason this cap
+        # exists at all rather than being omitted. Queuing on a manual dispatch corrupts no hour.
+        echo "max_parallel=$(echo "${matrix}" | jq '[(.include | length), 8] | min')" >> "$GITHUB_OUTPUT"
         {
           echo "### Baseline slot $(date -u '+%Y-%m-%d %H:%M') UTC"
           echo
@@ -110,7 +126,10 @@ jobs:
     name: ${{ matrix.suite }} [${{ matrix.topology }}]
     strategy:
       fail-fast: false
-      max-parallel: 6
+      # Both values come from the same plan output, so the cap cannot fall behind the matrix it is
+      # capping. Why it matters, and the clamp, are at the `max_parallel=` line that computes it.
+      # `fromJSON` because a job output is always a string.
+      max-parallel: ${{ fromJSON(needs.plan.outputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
     uses: ppat/github-workflows/.github/workflows/chainsaw-test.yaml@c22c55c4a2764c23e5de0bd11bbb64e2ae38592b # v8.0.0
     with:
