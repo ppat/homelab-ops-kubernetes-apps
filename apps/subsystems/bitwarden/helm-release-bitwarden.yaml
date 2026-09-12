@@ -40,6 +40,42 @@ spec:
     secrets:
       secretName: bitwarden
 
+    jobs:
+      db:
+        # The chart ships both migrator Jobs at requests 32Mi / limits 64Mi, and
+        # ghcr.io/bitwarden/mssqlmigratorutility self-extracts ~143 MiB into its volume before it
+        # opens a connection -- so the limit is below the floor the image needs just to start.
+        #
+        # Measured: at a 256Mi limit the container's peak cgroup charge is 195.6 MiB. At 64Mi
+        # `memory.peak` equals `memory.max` exactly -- it does not fail outright, it runs pinned at
+        # the ceiling and survives only while the kernel can evict page cache fast enough. Losing
+        # that race is an OOM kill, which takes the Job into backoff and leaves helm waiting on its
+        # own pre-install hook; the release then reports Ready: Unknown, which reads like a slow
+        # install rather than a killed one.
+        #
+        # 195.6 MiB is a LOWER bound: it was measured without a live database performing real
+        # migrations, so the true requirement is higher by whatever the migration itself costs. That
+        # is why 384Mi is headroom over a floor rather than a sized limit -- enough to establish
+        # 64Mi is wrong, not enough to pick a number precisely. The asymmetry favours headroom: a
+        # generous limit on a short-lived hook Job costs nothing, a tight one kills a schema
+        # migration part-way through.
+        #
+        # Verify by reading the container's own cgroup, not by a green test run. `memory.peak`
+        # strictly below `memory.max` establishes headroom; a passing run cannot distinguish a
+        # corrected limit from a reclaim race that happened to be won.
+        preInstallMigrator:
+          resources:
+            requests:
+              memory: 128Mi
+            limits:
+              memory: 384Mi
+        postInstallMigrator:
+          resources:
+            requests:
+              memory: 128Mi
+            limits:
+              memory: 384Mi
+
     volume:
       dataprotection:
         existingClaim: bitwarden-dataprotection
