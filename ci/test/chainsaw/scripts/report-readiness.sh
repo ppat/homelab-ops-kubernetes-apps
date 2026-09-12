@@ -212,9 +212,12 @@ echo '--- RESTART: container restarts (empty = none) ---'
 # whereas a new prefix must be added to ci/scripts/baseline-harvest.sh here AND to the
 # ci-diagnostics ingester in the clusters repo or the line is silently retained nowhere. What
 # a field costs instead is announcement: nothing flags its arrival, and it is only as queryable
-# as the reader that names it -- RESTART's field parser there does not yet scrape key=value the
-# way MODE's and CONTENTION's do, so until it does these live in the stored line rather than in
-# structured metadata. Every pre-existing token keeps its position and width.
+# as the reader that names it. Both fields now arrive as structured metadata: the ingester's
+# RESTART parser was converted to lift its key=value tail the way MODE's and CONTENTION's do, so
+# `{job="ci-diagnostics", instrument="restart"} | reason != ""` returns them and a further field
+# added here needs no clusters-repo change. Confirmed against a live entry carrying
+# reason=Error exit_code=137, not inferred from the parser. Every pre-existing token keeps its
+# position and width.
 #
 # Three outcomes, deliberately distinct, because "kubelet recorded no previous termination" and
 # "it recorded one but named no reason" are different findings and one glyph for both is how an
