@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.1.2...infra-database-core-v0.1.3) (2026-09-12)
+
+
+### ✨ Features
+
+* **infra-database-core:** update plugin-barman-cloud (0.7.1 -&gt; 0.8.0) ([#3992](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3992)) ([bfd824b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/bfd824b4510762882c705aa14564435b0e2748be))
+
 ## [0.1.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.1.1...infra-database-core-v0.1.2) (2026-07-30)
 
 
