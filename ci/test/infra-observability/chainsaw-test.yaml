@@ -250,7 +250,7 @@ spec:
   # nothing about which vmstat fields it was told to collect.
   - name: Validate node-exporter collects reclaim scan/steal counters
     use:
-      template: ../chainsaw/steps/assert-prometheus-query.yaml
+      template: ./steps/assert-prometheus-query.yaml
       with:
         bindings:
         - name: prometheus_query
@@ -263,7 +263,7 @@ spec:
   # proves a line written by a pod is retrievable from Loki afterwards.
   - name: Validate log collection
     use:
-      template: ../chainsaw/steps/assert-loki-query.yaml
+      template: ./steps/assert-loki-query.yaml
       with:
         bindings:
         - name: loki_query
@@ -324,7 +324,7 @@ spec:
   # event that happened in the cluster is retrievable from Loki afterwards.
   - name: Validate kubernetes event collection
     use:
-      template: ../chainsaw/steps/assert-loki-query.yaml
+      template: ./steps/assert-loki-query.yaml
       with:
         bindings:
         - name: loki_query
@@ -383,7 +383,7 @@ spec:
   # cluster. Both values are asserted, which also proves both instances are scraped.
   - name: Validate alloy metrics carry the job label the alert rules select on
     use:
-      template: ../chainsaw/steps/assert-prometheus-query.yaml
+      template: ./steps/assert-prometheus-query.yaml
       with:
         bindings:
         - name: prometheus_query
@@ -392,7 +392,7 @@ spec:
           value: '{__name__="loki_write_sent_entries_total"}'
   - name: Validate the event singleton is scraped under its own job label
     use:
-      template: ../chainsaw/steps/assert-prometheus-query.yaml
+      template: ./steps/assert-prometheus-query.yaml
       with:
         bindings:
         - name: prometheus_query
@@ -409,7 +409,7 @@ spec:
   # meaningfully tested, and why it's shipped from monitoring rather than logging.
   - name: Validate Loki ruler remote_write
     use:
-      template: ../chainsaw/steps/assert-prometheus-query.yaml
+      template: ./steps/assert-prometheus-query.yaml
       with:
         bindings:
         - name: prometheus_query

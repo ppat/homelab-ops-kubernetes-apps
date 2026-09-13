@@ -16,10 +16,10 @@ resources:
 # plugin and this suite applies neither components/db-backups nor components/db-restore,
 # so nothing here reaches the barmancloud.cnpg.io API.
 #
-# See ../../chainsaw/pre-requisites/README.md.
-- ../../chainsaw/pre-requisites/cnpg-operator/
-- ../../chainsaw/pre-requisites/dragonfly-operator/
-- ../../chainsaw/pre-requisites/external-secrets/
+# See ../../fixtures/README.md.
+- ../../fixtures/cnpg-operator/
+- ../../fixtures/dragonfly-operator/
+- ../../fixtures/external-secrets/
 - fake-secret-store.yaml
 - mcp-kubernetes-rbac.yaml
 - openclaw-config.yaml

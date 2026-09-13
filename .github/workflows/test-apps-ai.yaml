@@ -9,9 +9,12 @@ on:
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/apps-ai/**'
     - 'ci/test/chainsaw/**'
+    - 'ci/test/fixtures/cnpg-operator/**'
+    - 'ci/test/fixtures/dragonfly-operator/**'
+    - 'ci/test/fixtures/external-secrets/**'
+    - '!ci/test/fixtures/**.md'
     - 'apps/subsystems/ai/**'
     - '!apps/subsystems/ai/**.md'
-    - '!ci/test/chainsaw/**.md'
   workflow_dispatch:
 
 concurrency:

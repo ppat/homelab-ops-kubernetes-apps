@@ -25,10 +25,10 @@ resources:
 # The fixture's Kustomization is named `pre-requisites-minio`, not `minio`; the reconcile
 # step and its catch block in chainsaw-test.yaml are renamed to match.
 #
-# See ../../chainsaw/pre-requisites/README.md.
-- ../../chainsaw/pre-requisites/cert-manager/
-- ../../chainsaw/pre-requisites/external-secrets/
-- ../../chainsaw/pre-requisites/minio/
+# See ../../fixtures/README.md.
+- ../../fixtures/cert-manager/
+- ../../fixtures/external-secrets/
+- ../../fixtures/minio/
 - fake-secret-store.yaml
 
 sortOptions:

@@ -19,9 +19,9 @@ resources:
 # and the same measured `wait: true` / `timeout: 4m0s` pair. What stays per-suite is
 # minio/, which generates this suite's buckets, users and policies (homelab-loki-chunks)
 # and the Secret/minio-user-credentials they reference -- that is suite data, not fixture.
-# See ../../chainsaw/pre-requisites/README.md.
-- ../../chainsaw/pre-requisites/external-secrets/
-- ../../chainsaw/pre-requisites/minio/
+# See ../../fixtures/README.md.
+- ../../fixtures/external-secrets/
+- ../../fixtures/minio/
 - fake-secret-store.yaml
 
 sortOptions:

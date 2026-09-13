@@ -63,7 +63,7 @@ not from probe timing, so the margin against it is unchanged.
 
 It moves the fast mode only. When the certificate is late, the probe grid is not what the webhook is
 waiting on, so the slow band reported by
-[`report-readiness.sh`](../../scripts/report-readiness.sh) is unaffected — as is its `>= 60`
+[`report-readiness.sh`](../../chainsaw/scripts/report-readiness.sh) is unaffected — as is its `>= 60`
 classifier edge. `infra-security` deploys the whole `security-core` module rather than this fixture
 and keeps the chart default, so its fast band stays where it was.
 

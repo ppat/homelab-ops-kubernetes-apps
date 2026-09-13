@@ -231,14 +231,14 @@ QUERY="${SELECTOR} |= \"${MARKER}\""
 # ---------------------------------------------------------------------------------
 # Fetch the fixture's streams, both views.
 # ---------------------------------------------------------------------------------
-RESULT="$(../chainsaw/scripts/loki-query.sh \
+RESULT="$(./scripts/loki-query.sh \
   --query="$QUERY" \
   --min-streams=2 \
   --limit=200 \
   --deadline=180 \
   --diagnostic-match="{namespace=\"${FIXTURE_NAMESPACE}\"}")"
 
-SERIES="$(../chainsaw/scripts/loki-query.sh \
+SERIES="$(./scripts/loki-query.sh \
   --query="$QUERY" \
   --emit=series \
   --series-match="$SELECTOR" \

@@ -273,26 +273,26 @@ spec:
                       name: webui
   - description: Provision the store and assert account removal never removes a bucket
     script:
-      content: ../chainsaw/scripts/versitygw/provision.sh
+      content: ./scripts/versitygw/provision.sh
       timeout: 5m
   - description: Assert the S3 API serves, isolates consumers, hides the IAM store, and moves its counters
     script:
-      content: ../chainsaw/scripts/versitygw/roundtrip.sh
+      content: ./scripts/versitygw/roundtrip.sh
       timeout: 5m
   - description: Assert the object is one file at its 1:1 unencoded path with its metadata attached
     script:
-      content: ../chainsaw/scripts/versitygw/stored-form.sh
+      content: ./scripts/versitygw/stored-form.sh
       timeout: 5m
   - description: Assert the sweep reclaims aged residue and leaves in-flight state intact
     script:
-      content: ../chainsaw/scripts/versitygw/sweep.sh
+      content: ./scripts/versitygw/sweep.sh
       timeout: 8m
   # Ordering is load-bearing: after the round-trip for a store with known
   # contents, and after the sweep, whose residue would otherwise move under the
   # walk.
   - description: Assert the exported object counts are the store's and track it
     script:
-      content: ../chainsaw/scripts/versitygw/inventory.sh
+      content: ./scripts/versitygw/inventory.sh
       timeout: 10m
   # Must follow the inventory check: it breaks a probe archive in the same
   # bucket whose object count that check asserts.
@@ -302,11 +302,11 @@ spec:
       timeout: 15m
   - description: Assert the startup xattr guard fails on a read-only mount
     script:
-      content: ../chainsaw/scripts/versitygw/xattr-guard.sh
+      content: ./scripts/versitygw/xattr-guard.sh
       timeout: 5m
   - description: Assert the store-identity guard refuses a blank volume
     script:
-      content: ../chainsaw/scripts/versitygw/identity-guard.sh
+      content: ./scripts/versitygw/identity-guard.sh
       timeout: 5m
 
   catch:

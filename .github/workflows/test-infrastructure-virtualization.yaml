@@ -11,7 +11,6 @@ on:
     - 'ci/test/chainsaw/**'
     - 'infrastructure/subsystems/virtualization-core/**'
     - '!infrastructure/subsystems/virtualization-core/**.md'
-    - '!ci/test/chainsaw/**.md'
   workflow_dispatch:
 
 concurrency:

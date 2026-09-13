@@ -16,9 +16,9 @@ resources:
 # policy-reporter, trust-manager, the Bitwarden certificate chain and the
 # bitwarden-sdk-server subchart.
 #
-# See ../../chainsaw/pre-requisites/README.md.
-- ../../chainsaw/pre-requisites/cert-manager/
-- ../../chainsaw/pre-requisites/external-secrets/
+# See ../../fixtures/README.md.
+- ../../fixtures/cert-manager/
+- ../../fixtures/external-secrets/
 - fake-secret-store.yaml
 
 sortOptions:

@@ -197,7 +197,7 @@ EOF
 # 1. The fixture's Warning events are retrievable, and their body is intact.
 # ---------------------------------------------------------------------------------
 WARNING_SELECTOR="{job=\"${JOB}\", namespace=\"${FIXTURE_NAMESPACE}\", severity=\"warning\"}"
-WARNING_RESULT="$(../chainsaw/scripts/loki-query.sh \
+WARNING_RESULT="$(./scripts/loki-query.sh \
   --query="${WARNING_SELECTOR} |= \"${MARKER}\"" \
   --min-streams=1 \
   --limit=200 \
@@ -242,7 +242,7 @@ done
 # what keeps that non-vacuous.
 # ---------------------------------------------------------------------------------
 INFO_SELECTOR="{job=\"${JOB}\", namespace=\"${FIXTURE_NAMESPACE}\", severity=\"info\"}"
-INFO_RESULT="$(../chainsaw/scripts/loki-query.sh \
+INFO_RESULT="$(./scripts/loki-query.sh \
   --query="$INFO_SELECTOR" \
   --min-streams=1 \
   --limit=200 \
@@ -258,7 +258,7 @@ echo "$INFO_RESULT" | jq -S '[.[].stream]'
 # pipeline pushes, and a leaked label would most likely appear on every stream. Gated on
 # the queries above having returned data, so an empty result cannot pass for a clean one.
 # ---------------------------------------------------------------------------------
-SERIES="$(../chainsaw/scripts/loki-query.sh \
+SERIES="$(./scripts/loki-query.sh \
   --query="{job=\"${JOB}\"}" \
   --emit=series \
   --series-match="{job=\"${JOB}\"}" \
@@ -340,7 +340,7 @@ done
 #     comparing it to the Event's lastTimestamp below.
 # The lookback has to exceed the staleness or the query cannot see its own fixture.
 # ---------------------------------------------------------------------------------
-STALE_RESULT="$(../chainsaw/scripts/loki-query.sh \
+STALE_RESULT="$(./scripts/loki-query.sh \
   --query="${WARNING_SELECTOR} |= \"${STALE_MARKER}\"" \
   --min-streams=1 \
   --lookback=90m \
