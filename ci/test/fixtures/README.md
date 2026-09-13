@@ -6,7 +6,7 @@ line to its own `pre-requisites/kustomization.yaml`:
 
 ```yaml
 resources:
-- ../../chainsaw/pre-requisites/cert-manager/
+- ../../fixtures/cert-manager/
 ```
 
 | fixture | provides | module path it points at |
@@ -98,7 +98,7 @@ already do: a `Reconcile pre-requisites` step running
 `../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=<release> ...` with a
 timeout sized from that suite's own measurements. Putting a `wait: true` health-check budget on the fixture
 would mean inventing a number that no run has ever produced, which
-[TESTING.md](../../../../TESTING.md#size-budgets-from-measurement-in-both-directions) treats as a defect in
+[TESTING.md](../../../TESTING.md#size-budgets-from-measurement-in-both-directions) treats as a defect in
 its own right.
 
 `minio` is the exception and it is measured rather than sloppy: `infra-database` waits on

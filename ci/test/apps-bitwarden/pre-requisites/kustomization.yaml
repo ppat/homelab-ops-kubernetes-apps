@@ -23,8 +23,8 @@ resources:
 # security-core's External Secrets provider for it. This suite's `ExternalSecret` objects
 # resolve through the `fake` ClusterSecretStore below, not through that provider.
 #
-# See ../../chainsaw/pre-requisites/README.md.
-- ../../chainsaw/pre-requisites/external-secrets/
+# See ../../fixtures/README.md.
+- ../../fixtures/external-secrets/
 - fake-secret-store.yaml
 
 sortOptions:

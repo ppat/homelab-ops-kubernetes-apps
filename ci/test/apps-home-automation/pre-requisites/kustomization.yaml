@@ -23,9 +23,9 @@ resources:
 # so nothing here reaches the barmancloud.cnpg.io API. It replaces the path patch that
 # already narrowed database-core to its cloudnative-pg component.
 #
-# See ../../chainsaw/pre-requisites/README.md.
-- ../../chainsaw/pre-requisites/cnpg-operator/
-- ../../chainsaw/pre-requisites/external-secrets/
+# See ../../fixtures/README.md.
+- ../../fixtures/cnpg-operator/
+- ../../fixtures/external-secrets/
 - fake-secret-store.yaml
 
 sortOptions:

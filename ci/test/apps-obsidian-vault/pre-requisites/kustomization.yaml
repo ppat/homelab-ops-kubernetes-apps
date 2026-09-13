@@ -16,9 +16,9 @@ resources:
 # Deliberately NOT cnpg-operator or dragonfly-operator: this module ships no `Cluster` and no
 # `Dragonfly`, so nothing here reaches either API.
 #
-# See ../../chainsaw/pre-requisites/README.md.
-- ../../chainsaw/pre-requisites/cert-manager/
-- ../../chainsaw/pre-requisites/external-secrets/
+# See ../../fixtures/README.md.
+- ../../fixtures/cert-manager/
+- ../../fixtures/external-secrets/
 - fake-secret-store.yaml
 
 sortOptions:

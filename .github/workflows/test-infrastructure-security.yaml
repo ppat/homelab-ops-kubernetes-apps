@@ -9,11 +9,12 @@ on:
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/infra-security/**'
     - 'ci/test/chainsaw/**'
+    - 'ci/test/fixtures/cnpg-operator/**'
+    - '!ci/test/fixtures/**.md'
     - 'infrastructure/subsystems/security-core/**'
     - 'infrastructure/subsystems/security-extra/**'
     - '!infrastructure/subsystems/security-core/**.md'
     - '!infrastructure/subsystems/security-extra/**.md'
-    - '!ci/test/chainsaw/**.md'
   workflow_dispatch:
 
 concurrency:

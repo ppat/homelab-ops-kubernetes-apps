@@ -9,11 +9,13 @@ on:
     - '.github/kind-cluster-single-node.yaml'
     - 'ci/test/infra-networking/**'
     - 'ci/test/chainsaw/**'
+    - 'ci/test/fixtures/cert-manager/**'
+    - 'ci/test/fixtures/external-secrets/**'
+    - '!ci/test/fixtures/**.md'
     - 'infrastructure/subsystems/networking-core/**'
     - 'infrastructure/subsystems/networking-extra/**'
     - '!infrastructure/subsystems/networking-core/**.md'
     - '!infrastructure/subsystems/networking-extra/**.md'
-    - '!ci/test/chainsaw/**.md'
   workflow_dispatch:
 
 concurrency:

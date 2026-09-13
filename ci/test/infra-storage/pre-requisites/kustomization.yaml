@@ -3,8 +3,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- ../../chainsaw/pre-requisites/cert-manager/
-- ../../chainsaw/pre-requisites/external-secrets/
+- ../../fixtures/cert-manager/
+- ../../fixtures/external-secrets/
 - fake-secret-store.yaml
 - namespaces.yaml
 - pvc/

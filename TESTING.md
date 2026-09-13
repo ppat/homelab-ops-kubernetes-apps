@@ -73,8 +73,8 @@ flowchart TD
 
 ## Test Data
 
-- Located in `ci/test/<module>/pre-requisites/`, or `ci/test/chainsaw/pre-requisites/<name>/`
-  for a fixture more than one suite needs
+- Located in `ci/test/<module>/pre-requisites/`, or `ci/test/fixtures/<name>/` for a fixture
+  more than one suite needs (see [ci/test/fixtures/README.md](./ci/test/fixtures/README.md))
 - Contains test configurations and secrets
 - No production data or credentials
 - Example:

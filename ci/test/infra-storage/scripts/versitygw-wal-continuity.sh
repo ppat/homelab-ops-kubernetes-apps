@@ -68,7 +68,7 @@ S3_REGION="$(kubectl get deployment -n "$NAMESPACE" versitygw \
 # Off the provisioning plan the module's own suite reads, through the same
 # parser -- the module ships no provisioning CronJob to interrogate: which
 # accounts and buckets exist is a cluster fact, converged from outside.
-BUCKET="$("${HERE}/../../chainsaw/scripts/versitygw/plan.sh" \
+BUCKET="$("${HERE}/versitygw/plan.sh" \
   | awk -F'\t' '$1 == "bucket" { print $2 }' | sed -n 1p)"
 if [ -z "$S3_REGION" ] || [ -z "$BUCKET" ]; then
   echo "FAIL: could not read region and bucket name off live state" >&2

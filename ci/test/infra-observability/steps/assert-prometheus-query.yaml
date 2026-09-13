@@ -26,7 +26,7 @@ spec:
         value: ($prometheus_diagnostic_match)
       # yamllint disable-line rule:indentation
       content: |
-        ../chainsaw/scripts/prometheus-query.sh \
+        ./scripts/prometheus-query.sh \
           --query="${PROMETHEUS_QUERY}" \
           --diagnostic-match="${PROMETHEUS_DIAGNOSTIC_MATCH}"
       timeout: 6m

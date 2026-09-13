@@ -36,7 +36,7 @@ spec:
         value: ($loki_deadline)
       # yamllint disable-line rule:indentation
       content: |
-        ../chainsaw/scripts/loki-query.sh \
+        ./scripts/loki-query.sh \
           --query="${LOKI_QUERY}" \
           --min-streams="${LOKI_MIN_STREAMS}" \
           --diagnostic-match="${LOKI_DIAGNOSTIC_MATCH}" \

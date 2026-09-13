@@ -11,7 +11,7 @@ spec:
   postBuild:
     substitute:
       secret_store: fake
-      # Provided by ../chainsaw/pre-requisites/cert-manager/, composed into this suite's
+      # Provided by ../fixtures/cert-manager/, composed into this suite's
       # pre-requisites.
       cert_issuer: selfsigned-issuer
       domain_name: cluster.example.com
