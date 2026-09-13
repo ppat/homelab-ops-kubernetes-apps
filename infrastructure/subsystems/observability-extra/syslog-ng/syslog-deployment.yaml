@@ -24,7 +24,7 @@ spec:
         env:
         - name: LOKI_URL
           value: ${syslogng_loki_url:=loki.logging.svc.cluster.local:9095}
-        image: balabit/syslog-ng:4.12.0@sha256:f564a6906b03f0dc7fa9edf7925956abf3935a474c86d8a1384367889ce6e090
+        image: balabit/syslog-ng:4.12.0@sha256:2a95c4491a010150416385517f9caaa5f6e8fc39643236cc4d5bdb8ed92993ea
         imagePullPolicy: IfNotPresent
         livenessProbe:
           tcpSocket:
