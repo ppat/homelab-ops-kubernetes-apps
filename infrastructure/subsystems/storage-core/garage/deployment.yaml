@@ -31,7 +31,7 @@ spec:
         # kubernetes manager tracks this bare `image: repo:tag` field on its
         # own, no "# renovate:" directive needed (unlike a tag nested under a
         # Helm values key).
-        image: dxflrs/garage:v2.3.0@sha256:866bd13ed2038ba7e7190e840482bc27234c4afaf77be8cfa439ae088c1e4690
+        image: dxflrs/garage:v2.4.0@sha256:715d176efc35384bf72cf6052fd61b74b3e27a1e31a9dfedabe646bd1e92f137
         # command/args, not the image's own CMD ["/garage", "server"]: --single-node
         # has to be appended, and k8s args replaces CMD outright rather than
         # extending it.
