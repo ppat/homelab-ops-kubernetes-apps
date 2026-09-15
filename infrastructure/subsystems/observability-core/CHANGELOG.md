@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.30.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.29.10...infra-observability-core-v0.30.0) (2026-09-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-observability-core:** update goldilocks (10.6.0 -> 11.0.0) ([#4024](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4024))
+
+### ✨ Features
+
+* **infra-observability-core:** update goldilocks (10.6.0 -&gt; 11.0.0) ([#4024](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4024)) ([62fb892](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/62fb892eb354c02eed0bc99082c8f010a6a4ce77))
+
 ## [0.29.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.29.9...infra-observability-core-v0.29.10) (2026-09-13)
 
 
