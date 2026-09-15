@@ -12,7 +12,16 @@ spec:
     # retention pruning then fails on every cycle while base backups and WAL archiving keep
     # succeeding, so nothing looks broken. https://github.com/cloudnative-pg/cloudnative-pg/issues/4890
     destinationPath: s3://nas-cloudnativepg-backups/${db_name}
-    endpointURL: https://s3.nas.${dns_zone}
+    # The host prefix rather than the whole URL: a postBuild.substitute value is literal replacement
+    # text and is never itself expanded, so a whole-URL variable would put the domain in the
+    # clusters repo, where nothing else does.
+    #
+    # The only variable in this component without a default, and deliberately so: naming the store
+    # is the decision the component exists to expose, so a consumer states it or reconciles not at
+    # all (StrictPostBuildSubstitutions is on by default from kustomize-controller v1.9). A default
+    # would silently keep the previous store when an override is missing or misspelled. Everything
+    # else here is an attribute of the store you named and defaults to what the estate uses today.
+    endpointURL: https://${backup_s3_host}.${dns_zone}
     s3Credentials:
       accessKeyId:
         name: ${db_name}-backup-credentials
@@ -20,7 +29,18 @@ spec:
       secretAccessKey:
         name: ${db_name}-backup-credentials
         key: s3_secretaccesskey
+      # Emits AWS_DEFAULT_REGION; botocore never reads AWS_REGION, so setting that name instead
+      # looks like a fix and changes nothing. A mismatch is fatal only to HeadBucket, so archiving
+      # and base backups keep succeeding while every bootstrap.recovery job's check-wal-archive
+      # aborts — wrong here surfaces as recovery failing, never as a backup failing.
+      # Not instanceSidecarConfiguration.env: that enters the sidecar's pod spec and rolls every
+      # instance. Never set both; the plugin does not de-duplicate the environment.
+      region:
+        name: ${db_name}-backup-credentials
+        key: s3_region
     data:
+      # Integrity, not just size: base backups are always multipart and multipart checksum
+      # validation is silent, so framed Snappy's per-chunk CRC-32C is what detects corruption here.
       compression: snappy
     wal:
       compression: snappy
