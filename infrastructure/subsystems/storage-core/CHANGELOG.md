@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.7.4...infra-storage-core-v0.7.5) (2026-09-16)
+
+
+### ✨ Features
+
+* **infra-storage-core:** update dxflrs/garage (v2.3.0 -&gt; v2.4.0) ([#4023](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4023)) ([f1efaca](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f1efacaae878f596be985d872e51b2ca63c1eb87))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** update dxflrs/garage (v2.4.0 -&gt; v2.4.1) ([#4027](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4027)) ([233f94c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/233f94cfe2115fb3627eeeb768982dcaa5c89a01))
+
 ## [0.7.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.7.3...infra-storage-core-v0.7.4) (2026-09-13)
 
 
