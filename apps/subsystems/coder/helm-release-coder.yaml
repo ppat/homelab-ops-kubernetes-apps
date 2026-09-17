@@ -37,6 +37,8 @@ spec:
       env:
       - name: CODER_ACCESS_URL
         value: "https://coder.${domain_name}"
+      - name: CODER_WILDCARD_ACCESS_URL
+        value: "*.coder.${domain_name}"
       - name: CODER_PG_CONNECTION_URL
         valueFrom:
           secretKeyRef:
