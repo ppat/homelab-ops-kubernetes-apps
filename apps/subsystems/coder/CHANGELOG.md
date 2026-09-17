@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.1.2...apps-coder-v0.1.3) (2026-09-17)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-coder:** set coder wildcard access url ([#4045](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4045)) ([2284a84](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2284a842761cd02009dfeb5d5591c0084934b755))
+
 ## [0.1.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.1.1...apps-coder-v0.1.2) (2026-09-15)
 
 
