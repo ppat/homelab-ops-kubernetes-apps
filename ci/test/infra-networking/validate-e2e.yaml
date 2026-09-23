@@ -1,0 +1,135 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-e2e
+spec:
+  # What a green step here does NOT prove, because kind cannot show it:
+  # - the production external-dns path. Every consuming cluster uses the unifi webhook
+  #   provider with the txt registry and `policy: sync`; this suite runs the pihole provider
+  #   (noop registry, upsert-only). Sources, domain filtering and target derivation are
+  #   shared; the webhook, ownership records and deletion are not exercised.
+  # - ARP, or any client off the node. See the ServiceL2Status note below.
+  # - `externalTrafficPolicy: Local` source-address preservation. The probe is an in-cluster
+  #   client, which kube-proxy handles as internal traffic, so the source address the backend
+  #   sees says nothing about what an off-node client would get.
+  try:
+  - description: Apply the e2e app
+    apply:
+      file: ./test-resources/e2e-app.yaml
+  - description: Assert deployment/e2e-app
+    assert:
+      bindings:
+      - name: name
+        value: e2e-app
+      - name: namespace
+        value: e2e-app
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert service/e2e-app-lb was allocated from e2e-app-pool
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: e2e-app-lb
+          namespace: e2e-app
+        status:
+          loadBalancer:
+            ingress:
+            - ip: 10.112.2.1
+  # status.loadBalancer is written by the MetalLB controller alone, and a pod reaching a
+  # LoadBalancer address never leaves the node (kube-proxy DNATs it locally), so neither the
+  # address nor the probe below needs the speaker. A ServiceL2Status is the speaker's own
+  # claim of the address. It is not ARP: nothing in kind can observe an announcement.
+  - description: Assert the MetalLB speaker announces service/traefik
+    assert:
+      resource:
+        apiVersion: metallb.io/v1beta1
+        kind: ServiceL2Status
+        metadata:
+          namespace: metallb-system
+          labels:
+            metallb.io/service-name: traefik
+            metallb.io/service-namespace: traefik
+        status:
+          (node != null): true
+  - description: Assert the MetalLB speaker announces service/e2e-app-lb
+    assert:
+      resource:
+        apiVersion: metallb.io/v1beta1
+        kind: ServiceL2Status
+        metadata:
+          namespace: metallb-system
+          labels:
+            metallb.io/service-name: e2e-app-lb
+            metallb.io/service-namespace: e2e-app
+        status:
+          (node != null): true
+  - description: Read what the probe must observe from live state
+    script:
+      content: ./scripts/e2e-expectations.sh
+      outputs:
+      - name: live
+        value: (json_parse($stdout))
+  - description: Create configmap/e2e-probe from scripts/e2e-probe.sh
+    script:
+      content: >-
+        kubectl -n e2e-app create configmap e2e-probe --from-file=probe.sh=./scripts/e2e-probe.sh
+        --dry-run=client -o yaml | kubectl apply -f -
+  - description: Apply job/e2e-probe
+    apply:
+      file: ./test-resources/e2e-probe.yaml
+  # Two asserts so that a failing probe fails the step when it exits rather than when a
+  # budget runs out: the first waits for the Job to finish either way, the second judges it.
+  # 8m covers activeDeadlineSeconds (420s, see e2e-probe.yaml) plus pod start; the probe
+  # reports its own failure well inside that, so only a probe that never starts spends it.
+  - description: Wait for job/e2e-probe to finish
+    assert:
+      timeout: 8m
+      resource:
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: e2e-probe
+          namespace: e2e-app
+        status:
+          (succeeded > `0` || failed > `0`): true
+  - description: Assert job/e2e-probe succeeded
+    assert:
+      timeout: 5s
+      resource:
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: e2e-probe
+          namespace: e2e-app
+        status:
+          (succeeded > `0`): true
+  - description: Print what the probe observed
+    script:
+      content: kubectl -n e2e-app logs job/e2e-probe
+
+  catch:
+  - podLogs:
+      selector: app.kubernetes.io/name=e2e-probe
+      namespace: e2e-app
+  - describe:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      name: e2e-app
+      namespace: e2e-app
+  - describe:
+      apiVersion: v1
+      kind: Service
+      namespace: e2e-app
+  - get:
+      apiVersion: metallb.io/v1beta1
+      kind: ServiceL2Status
+      namespace: metallb-system
+      format: yaml
+  - podLogs:
+      selector: app.kubernetes.io/name=external-dns
+      namespace: external-dns
+      tail: 40
+  - events:
+      namespace: e2e-app

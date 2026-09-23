@@ -1,0 +1,69 @@
+---
+# A client inside the cluster doing what a client on the LAN does: ask pihole for a name,
+# connect to the answer. Every expected value is bound at apply time from live state by
+# validate-e2e.yaml; the probe itself is ../scripts/e2e-probe.sh.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: e2e-probe
+  namespace: e2e-app
+spec:
+  backoffLimit: 0
+  # Above the sum of the probe's own budgets (2 x DNS_BUDGET_S + 2 x CONNECT_BUDGET_S =
+  # 360s) on purpose: the Job controller deletes the pod when this deadline fires, taking the
+  # probe's log with it, so the probe has to reach its own verdict first.
+  activeDeadlineSeconds: 420
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: e2e-probe
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      containers:
+      - name: probe
+        image: curlimages/curl:8.22.0@sha256:58adaa4e8dca9c988bae2aba4ab3434a0bb2da16bbe3f92dec39ec7785166777
+        env:
+        - name: DNS_SERVER
+          value: ($live.dns_server)
+        - name: TRAEFIK_IP
+          value: ($live.traefik_ip)
+        - name: LB_IP
+          value: ($live.lb_ip)
+        - name: BACKEND_POD
+          value: ($live.backend_pod)
+        - name: CA_B64
+          value: ($live.ca_b64)
+        - name: INGRESS_HOST
+          value: e2e-app.cluster.example.com
+        - name: LB_HOST
+          value: e2e-app-lb.cluster.example.com
+        # external-dns runs its 1m poll loop (no --events), so a record appears up to one
+        # interval after the source exists. Measured from applying e2e-app.yaml to both names
+        # resolving: 22s, 47s and 62s (three runs, kind on a sandbox VM; the sync phase is
+        # random relative to the apply).
+        # 150s is 2.5 intervals.
+        - name: DNS_BUDGET_S
+          value: "150"
+        # Every green run connected on the first attempt once the name resolved.
+        - name: CONNECT_BUDGET_S
+          value: "30"
+        command:
+        - /bin/sh
+        - /probe/probe.sh
+        volumeMounts:
+        - name: probe
+          mountPath: /probe
+          readOnly: true
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 65532
+      volumes:
+      - name: probe
+        configMap:
+          name: e2e-probe

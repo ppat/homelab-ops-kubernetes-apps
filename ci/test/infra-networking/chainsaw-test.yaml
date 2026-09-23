@@ -97,6 +97,12 @@ spec:
     use:
       template: ./validate-freeradius.yaml
 
+  # End to end, so last: a client resolves the app's names through pihole and connects
+  # through MetalLB and Traefik. Every step above validates one of the hops it crosses.
+  - name: Validate end-to-end reachability
+    use:
+      template: ./validate-e2e.yaml
+
   # Asserts nothing; prints the readiness ordering this suite's step order is derived from,
   # so the next person to tune it has current data rather than an archaeology exercise. The
   # existing failure dumps are all one content bug on `renovate/traefik-41.x`, which makes
