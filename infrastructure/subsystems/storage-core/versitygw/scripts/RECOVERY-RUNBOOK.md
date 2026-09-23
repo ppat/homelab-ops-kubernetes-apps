@@ -9,8 +9,8 @@ carries the values the instruments ask for and the steps no script performs.
 
 ## Before you start: what has to be filled in
 
-Two facts cannot be derived at recovery time and must be recorded here, in this repository, when the
-store is prepared. **A blank slot is not a missing detail — it disarms a check.**
+Three facts cannot be derived at recovery time and must be recorded here, in this repository, as the
+store is built. **A blank slot is not a missing detail — it disarms a check.**
 
 | Slot | Fill with | Recorded when | Used for |
 | --- | --- | --- | --- |
@@ -44,13 +44,17 @@ Recorded values:
 
 <!-- markdownlint-disable MD034 -->
 
-| | |
-| --- | --- |
-| `EXPECT_STORE_ID` | *(record at store preparation)* |
-| Original LUN WWID | *(record at volume preparation)* |
-| Buckets | *(record at cluster provisioning)* |
+| Slot | Value | Recorded |
+| --- | --- | --- |
+| `EXPECT_STORE_ID` | `eff3c42e5bf7817fe89739941c2e6036` | 2026-09-07T23:50:42Z, from the store-preparation job's log, where it printed the sentinel it had just written on first mount |
+| Original LUN WWID — a **match** means production, so stop | `/dev/disk/by-id/scsi-3600140503bc3dbbd0a40d4299da2a7d6` (canonical NAA)<br>`/dev/disk/by-id/scsi-1SYNOLOGYStorage:03bc3dbb-0a40-4299-a2a7-6cd0292dd69a`<br>`/dev/disk/by-id/scsi-SSYNOLOGY_Storage_03bc3dbb-0a40-4299-a2a7-6cd0292dd69a` | 2026-09-07, on the host at format time, by the snippet above; all three links resolved to the same kernel device |
+| Buckets | `nas-cloudnativepg-backups` `nas-longhorn-backups` | Created 2026-09-08T00:18:03Z at provisioning; re-read 2026-09-13 from the store-inventory walk and its `versitygw_store_buckets` / `versitygw_store_objects` series, which is how to re-read it |
 
 <!-- markdownlint-enable MD034 -->
+
+The three WWID links are **aliases of one device, not three devices**, and a recovery host may present
+any subset of them. Match against all three: the check only ever fires to stop you, so an alias you
+did not compare is a stop you did not get.
 
 ## Step 1 — clone the LUN on DSM
 
@@ -179,7 +183,7 @@ cannot exist here.
 
 | Check | A failure means |
 | --- | --- |
-| 6. the listed buckets are exactly the expected set | The gateway is not rooted on the object tree. If `data`, `iam` or `recovery` appear, it is rooted on the **volume root** — stop it now, `iam/users.json` is being served. If a bucket's own key prefix appears as a bucket, it is rooted one level too deep |
+| 6. the listed buckets are exactly the expected set | The gateway is not rooted on the object tree. If `data`, `iam` or `recovery` appear, it is rooted on the **volume root** — stop it now, `iam/users.json` is being served. If a bucket's own key prefix appears as a bucket, it is rooted one level too deep. If the difference is an ordinary bucket name on either side, the gateway is rooted correctly and the recorded set has gone stale instead — the store's bucket set has moved before and can again |
 | 7. per bucket, the S3 object count equals the file count on disk | The gateway is not serving what is on disk |
 
 Then restore normally, over S3, against `http://127.0.0.1:7070` — CloudNativePG's `barman-cloud`
