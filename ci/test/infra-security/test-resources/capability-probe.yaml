@@ -1,0 +1,64 @@
+---
+# A consumer mounting what cert-manager issued, and a client doing what external-secrets'
+# controller does with the trust-manager bundle: verify bitwarden-sdk-server's certificate.
+# Every expected value is bound at apply time from live state by validate-capabilities.yaml;
+# the probe itself is ../scripts/capability-probe.sh.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: capability-probe
+  namespace: security-probe
+spec:
+  backoffLimit: 0
+  # Above the probe's own TLS budget (TLS_BUDGET_S) so the probe reaches its verdict before
+  # the Job controller deletes the pod and its log.
+  activeDeadlineSeconds: 120
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: capability-probe
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      containers:
+      - name: probe
+        image: alpine/openssl:3.5.8@sha256:6aa2be0ed55a61fff35583e5763c2ea8288bcd3549d316b954b01eec32fb7006
+        env:
+        - name: EXPECT_SANS
+          value: ($live.sans)
+        - name: EXPECT_DURATION_S
+          value: ($live.duration_s)
+        # The URL every cluster's Bitwarden ClusterSecretStore names as bitwardenServerSDKURL.
+        - name: SDK_HOST
+          value: bitwarden-sdk-server.external-secrets.svc.cluster.local
+        - name: SDK_PORT
+          value: "9998"
+        # Every green run connected on the first attempt; the retry covers a server pod
+        # restarted by the nightly-restart check shortly before this step.
+        - name: TLS_BUDGET_S
+          value: "60"
+        command:
+        - /bin/sh
+        - /probe/probe.sh
+        volumeMounts:
+        - name: probe
+          mountPath: /probe
+          readOnly: true
+        - name: tls
+          mountPath: /tls
+          readOnly: true
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 65532
+      volumes:
+      - name: probe
+        configMap:
+          name: capability-probe
+      - name: tls
+        secret:
+          secretName: probe-tls

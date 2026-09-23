@@ -98,6 +98,12 @@ spec:
     use:
       template: ./validate-external-secrets.yaml
 
+  # Needs everything above it Ready -- the ClusterIssuer, the Bundle's ConfigMap, the
+  # bitwarden-sdk-server it dials -- and nothing below it.
+  - name: Validate security-core capabilities
+    use:
+      template: ./validate-capabilities.yaml
+
   - name: Validate authentik
     use:
       template: ./validate-authentik.yaml

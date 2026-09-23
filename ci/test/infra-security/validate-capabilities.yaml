@@ -1,0 +1,246 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-capabilities
+spec:
+  # What consumers of security-core receive, checked from the consumer's side: a certificate
+  # issued, renewed and usable; a templated Secret materialised, fenced and refreshed; a CA
+  # bundle that verifies the server external-secrets dials. The steps before this one prove
+  # the controllers are Ready, which each of them can be while the capability is broken.
+  #
+  # What a green step here does NOT prove, because kind cannot show it:
+  # - ACME. Every consuming cluster sets `cert_issuer: letsencrypt-production-issuer` (DNS-01
+  #   through Cloudflare); this suite issues through selfsigned-issuer. The Certificate
+  #   lifecycle is shared; the ACME order, challenge and solver are not exercised.
+  # - The Bitwarden provider. The ExternalSecrets here read the `fake` provider. The probe
+  #   stands in for external-secrets' own TLS client on the bundle leg: it verifies the same
+  #   ConfigMap against the same server name with openssl, not with the controller's code.
+  try:
+  - description: Apply the capability consumers
+    apply:
+      file: ./test-resources/capability-consumers.yaml
+
+  # ---- cert-manager ---------------------------------------------------------------------
+  - description: Assert certificate/probe-tls
+    assert:
+      bindings:
+      - name: name
+        value: probe-tls
+      - name: namespace
+        value: security-probe
+      file: ../chainsaw/assertions/certificate-ready.yaml
+  - description: Assert secret/probe-tls came from selfsigned-issuer
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Secret
+        type: kubernetes.io/tls
+        metadata:
+          name: probe-tls
+          namespace: security-probe
+          annotations:
+            cert-manager.io/issuer-kind: ClusterIssuer
+            cert-manager.io/issuer-name: selfsigned-issuer
+
+  # ---- external-secrets -----------------------------------------------------------------
+  - description: Assert externalsecret/probe-credentials
+    assert:
+      bindings:
+      - name: name
+        value: probe-credentials
+      - name: namespace
+        value: security-probe
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
+  # The length guard is what catches the raw remote keys leaking in beside the template's.
+  # `|| ''` keeps an absent key retryable: base64_decode(null) is an evaluation ERROR that
+  # aborts the assert instead of retrying it, so without the fallback this would fail
+  # outright if chainsaw arrived before external-secrets wrote the key.
+  - description: Assert secret/probe-credentials is the rendered template
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Secret
+        type: Opaque
+        metadata:
+          name: probe-credentials
+          namespace: security-probe
+          labels:
+            security-probe/reload: "1"
+        (length(data)): 2
+        data:
+          (base64_decode(s3_accesskeyid || '')): probe-access-key-v1
+          (base64_decode(s3_endpoint_url || '')): https://s3.probe.example.com/bucket
+  # The allowlist is the only access boundary on each cluster's Bitwarden store. The
+  # refusal's cause appears only in an Event: the Ready condition reads "could not get
+  # secret data from provider", which is also what a missing key or an unreachable store
+  # produces. If a release rewords the Event this goes red, not vacuously green.
+  - description: Assert the store refuses externalsecret/probe-credentials outside its allowlist
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Event
+        metadata:
+          namespace: security-probe-denied
+        involvedObject:
+          kind: ExternalSecret
+          name: probe-credentials
+        (contains(message, 'denied by spec.condition')): true
+  - description: Assert externalsecret/probe-credentials outside the allowlist is not Ready
+    assert:
+      resource:
+        apiVersion: external-secrets.io/v1
+        kind: ExternalSecret
+        metadata:
+          name: probe-credentials
+          namespace: security-probe-denied
+        status:
+          (conditions[?type == 'Ready']):
+          - status: 'False'
+  - description: Assert no secret/probe-credentials was written outside the allowlist
+    error:
+      resource:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: probe-credentials
+          namespace: security-probe-denied
+
+  # ---- cert-manager + trust-manager, from inside the cluster ----------------------------
+  - description: Read what the probe must observe from live state
+    script:
+      content: ./scripts/capability-expectations.sh
+      outputs:
+      - name: live
+        value: (json_parse($stdout))
+  - description: Create configmap/capability-probe with the probe and the trust bundle
+    script:
+      content: ./scripts/capability-probe-configmap.sh
+  - description: Apply job/capability-probe
+    apply:
+      file: ./test-resources/capability-probe.yaml
+  # Two asserts so a failing probe fails the step when it exits rather than when a budget
+  # runs out: the first waits for the Job to finish either way, the second judges it.
+  # 3m covers activeDeadlineSeconds (120s) plus an image pull; a green probe finished 3s after
+  # its apply with the image cached, and a failing one reports within TLS_BUDGET_S (60s).
+  - description: Wait for job/capability-probe to finish
+    assert:
+      timeout: 3m
+      resource:
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: capability-probe
+          namespace: security-probe
+        status:
+          (succeeded > `0` || failed > `0`): true
+  - description: Print what the probe observed
+    script:
+      content: kubectl -n security-probe logs job/capability-probe
+  - description: Assert job/capability-probe succeeded
+    assert:
+      timeout: 5s
+      resource:
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: capability-probe
+          namespace: security-probe
+        status:
+          (succeeded > `0`): true
+
+  # ---- external-secrets: a change in the store reaches the Secret ------------------------
+  - description: Rotate security_probe_access_key_id in the store
+    patch:
+      resource:
+        apiVersion: external-secrets.io/v1
+        kind: ClusterSecretStore
+        metadata:
+          name: security-probe-fake
+        spec:
+          provider:
+            fake:
+              data:
+              - key: security_probe_access_key_id
+                value: probe-access-key-v2
+              - key: security_probe_endpoint
+                value: s3.probe.example.com
+  # The shared 1m default is six refresh intervals; the Secret changed 7s after the patch on
+  # a kind cluster on a 4-vCPU VM.
+  - description: Assert secret/probe-credentials picked up the rotation on refresh
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: probe-credentials
+          namespace: security-probe
+        data:
+          (base64_decode(s3_accesskeyid || '')): probe-access-key-v2
+
+  # ---- cert-manager: time-based renewal --------------------------------------------------
+  # status.revision counts completed issuances, so 2 is only reachable by a renewal the
+  # trigger controller scheduled from renewBefore. Ready alone would be satisfied by the
+  # first issuance.
+  #
+  # The renewal lands 30s after the first issuance by construction, and was measured there
+  # (apply to revision 2: 30s, kind on a 4-vCPU VM); this assert starts ~10s after the apply.
+  # 2m is x4 of that 30s, left generous because a late renewal costs nothing on a green run.
+  - description: Assert certificate/probe-renewal renewed on schedule
+    assert:
+      timeout: 2m
+      resource:
+        apiVersion: cert-manager.io/v1
+        kind: Certificate
+        metadata:
+          name: probe-renewal
+          namespace: security-probe
+        status:
+          (revision >= `2`): true
+          (conditions[?type == 'Ready']):
+          - status: 'True'
+  # It would otherwise renew every 30s for the rest of the suite.
+  - description: Delete certificate/probe-renewal
+    delete:
+      ref:
+        apiVersion: cert-manager.io/v1
+        kind: Certificate
+        name: probe-renewal
+        namespace: security-probe
+
+  catch:
+  - podLogs:
+      selector: app.kubernetes.io/name=capability-probe
+      namespace: security-probe
+  - describe:
+      apiVersion: cert-manager.io/v1
+      kind: Certificate
+      namespace: security-probe
+  - describe:
+      apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      namespace: security-probe
+  - describe:
+      apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      namespace: security-probe-denied
+  - describe:
+      apiVersion: external-secrets.io/v1
+      kind: ClusterSecretStore
+      name: security-probe-fake
+  - describe:
+      apiVersion: trust.cert-manager.io/v1alpha1
+      kind: Bundle
+      name: bitwarden-ca-cert
+  - podLogs:
+      selector: app.kubernetes.io/instance=cert-manager
+      namespace: cert-manager
+      tail: 40
+  - podLogs:
+      selector: app.kubernetes.io/name=external-secrets
+      namespace: external-secrets
+      tail: 40
+  - events:
+      namespace: security-probe
+  - events:
+      namespace: security-probe-denied
