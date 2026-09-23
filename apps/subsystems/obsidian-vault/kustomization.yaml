@@ -12,6 +12,7 @@ resources:
 - vault-loaded-exporter/
 - obsidian-vault-nats/
 - batch-processor/
+- lint-pass/
 
 sortOptions:
   order: fifo

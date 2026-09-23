@@ -1,0 +1,147 @@
+---
+# One invocation is one pass over the whole vault: read every note from the read-only mount,
+# normalise frontmatter through the gated MCP path, write the day's report and audit notes, append
+# one `log.md` line, and push a capped review digest to OpenClaw (ppat/obsidian-tools unit A5). It
+# never relocates, renames, deletes, quarantines or edits a body.
+#
+# It is the third of exactly three processes permitted to mount `vault-data` (ppat/obsidian-tools
+# ADR-0001), and the second read-only one after ../git-committer/cronjob.yaml. A fourth mounter is a
+# design change, not a manifest detail.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: lint-pass
+  namespace: obsidian-vault
+  labels:
+    app.kubernetes.io/name: lint-pass
+spec:
+  # Daily ("nightly" in the vault's schema file), clear of batch-processor's 03:30 run so the pass
+  # reads a vault the batch drain is not writing into.
+  schedule: "30 5 * * *"
+  timeZone: Etc/UTC
+  # Two passes at once would each write the same day's report and race each other's fixes.
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    metadata:
+      labels:
+        app.kubernetes.io/name: lint-pass
+    spec:
+      # No retry. A pass exits non-zero when a fix is refused or when its report, audit trail, log
+      # line or digest push fails, and is read from that exit and its `lint_pass_complete` log line.
+      # A retry would append a second `log.md` line and push a second digest for the same day --
+      # the append is not idempotent -- while whatever failed still fails. Findings alone exit 0.
+      backoffLimit: 0
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          # NO `homelab-ops.internal/vault-access` label, deliberately. That label is the peer
+          # selector of `obsidian-rest-api-ingress`, the sole control in front of Obsidian's REST
+          # API (../network-policy.yaml). The lint pass never reaches that API: it reads the mount
+          # and writes through the gateway. Adding the label would widen the sole control for a
+          # workload with no use for it.
+          labels:
+            app.kubernetes.io/name: lint-pass
+        spec:
+          # No cluster identity at all: nothing the pass does calls the Kubernetes API, so no
+          # ServiceAccount, Role or token is given to it.
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            # The git committer's reasoning, verbatim in effect (../git-committer/cronjob.yaml):
+            # vault files are group-read and never group-write, so this pod reads content only
+            # because its group matches the one Obsidian's own fsGroup set; and the kubelet skips
+            # fsGroup ownership management on a readOnly volume, so this never chowns the vault.
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+          - name: lint-pass
+            # Docker Hub for the CI-reachability reason recorded in
+            # ../git-committer/cronjob.yaml.
+            image: docker.io/ppatlabs/obsidian-tools:0.8.0@sha256:64ed3533a61ec9a74498190d86c15905040105df29f3cff36a98141723dd192f
+            imagePullPolicy: IfNotPresent
+            # args, not command: the image's ENTRYPOINT is tini, and replacing it would make
+            # CPython PID 1, where SIGTERM sits at its default disposition and is never delivered.
+            args:
+            - lint
+            # LINT_VAULT_DIR is left at the tool's default, /vault/brain -- the mount below plus the
+            # one directory the PVC root needs (see the mount's comment). Restating it would be a
+            # second source of truth that can drift from the mount.
+            env:
+            # The ingestor's own route on the gateway, WITHOUT a trailing slash, for exactly the
+            # reasons recorded on BATCH_MCP_URL in ../batch-processor/cronjob.yaml: a per-server
+            # route answers a trailing slash with a 307, and the client refuses redirects because
+            # the key is a bearer token. Adding a slash breaks the first call of every pass.
+            - name: LINT_MCP_URL
+              value: http://litellm.ai.svc.cluster.local:4000/obsidian_ingestor_mcp/mcp
+            - name: LINT_MCP_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: lint-pass-secrets
+                  key: LINT_MCP_API_KEY
+            # The gateway's listed names, alias-prefixed, as on batch-processor's (see that file
+            # for why the prefix stays on a single-server route). The key's tool allowlist in
+            # ppat/homelab-ops-terraform stores the same three WITHOUT the prefix -- the gateway
+            # strips it before checking -- so the two spellings differing is correct.
+            #
+            # There is no delete variable: the tool has no delete setting for this component, and
+            # the key cannot call one.
+            - name: LINT_MCP_TOOL_READ
+              value: obsidian_ingestor-obsidian_get_note
+            - name: LINT_MCP_TOOL_WRITE
+              value: obsidian_ingestor-obsidian_write_note
+            - name: LINT_MCP_TOOL_APPEND
+              value: obsidian_ingestor-obsidian_append_to_note
+            # OpenClaw's inbound hook, the path n8n's notify subworkflow and the Alertmanager relay
+            # already use to reach the operator over WhatsApp. Plain HTTP inside the cluster, as
+            # theirs is. Nothing in the `openclaw` namespace restricts ingress, and this namespace
+            # does not restrict egress (../network-policy.yaml), so no policy is involved.
+            - name: LINT_DIGEST_HOOK_URL
+              value: http://openclaw.openclaw.svc.cluster.local:18789/hooks/agent
+            - name: LINT_DIGEST_HOOK_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: lint-pass-secrets
+                  key: LINT_DIGEST_HOOK_TOKEN
+            volumeMounts:
+            # readOnly at the mount AND at the volume below: the git committer's stanza, and the
+            # structural half of the single-writer invariant (this module's README). A bug in the
+            # pass cannot make it a second writer of vault content, because the kernel refuses the
+            # write; every change it makes goes through the gated MCP path instead.
+            #
+            # /vault, not /vault/brain: the PVC root carries an ext4 lost+found this uid cannot
+            # read, and the vault lives one directory down (../git-committer/cronjob.yaml).
+            - name: vault
+              mountPath: /vault
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                - ALL
+            # batch-processor's figures. Not measured for this workload: the pass holds the whole
+            # vault's markdown in memory, so revisit the limit from the summary line's duration and
+            # the pod's peak once the vault's full import has landed.
+            resources:
+              requests:
+                cpu: 50m
+                memory: 128Mi
+              limits:
+                memory: 256Mi
+          volumes:
+          - name: vault
+            persistentVolumeClaim:
+              claimName: vault-data
+              readOnly: true
+          - name: tmp
+            emptyDir: {}

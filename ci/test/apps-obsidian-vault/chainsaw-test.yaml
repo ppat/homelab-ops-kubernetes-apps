@@ -70,7 +70,7 @@ spec:
   # that one was measured against a suite carrying twelve MCP pods, two Postgres clusters and
   # a Dragonfly, none of which exist here.
   #
-  # The block structure rests on no measurement at all. The four object-shape steps lead because
+  # The block structure rests on no measurement at all. The five object-shape steps lead because
   # they wait for no pod at all -- they read objects kustomize-controller has already applied --
   # so they absorb none of the convergence, and whichever runs first is the step that reports a
   # Kustomization that never reconciles. Only the pod-waiting steps behind them are ordered by a
@@ -93,6 +93,10 @@ spec:
   - name: Validate batch-processor
     use:
       template: ./validate-batch-processor.yaml
+
+  - name: Validate lint-pass
+    use:
+      template: ./validate-lint-pass.yaml
 
   # The pod-waiting block, in measured ascending readiness. The whole band is 18 seconds wide
   # and the two MCP servers are one second apart, so their relative order is arbitrary; what the
