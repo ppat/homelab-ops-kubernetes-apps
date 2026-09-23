@@ -1,0 +1,120 @@
+---
+# A consumer app standing where every app in the estate stands: its own namespace, an
+# Ingress in the estate's dominant shape, and a LoadBalancer Service carrying its own
+# external-dns hostname, allocated from an app-scoped pool (plex/jellyfin/pihole shape) that
+# the module's selector-less L2Advertisement has to pick up. validate-e2e.yaml probes it.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: e2e-app
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: e2e-app-pool
+  namespace: metallb-system
+spec:
+  # Outside standard-pool (10.112.0.0/24), so an address from here can only have come
+  # through this pool's serviceAllocation.
+  addresses:
+  - 10.112.2.1/32
+  avoidBuggyIPs: true
+  serviceAllocation:
+    namespaces:
+    - e2e-app
+    serviceSelectors:
+    - matchLabels:
+        app.kubernetes.io/name: e2e-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e2e-app
+  namespace: e2e-app
+  labels:
+    app.kubernetes.io/name: e2e-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: e2e-app
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: e2e-app
+    spec:
+      containers:
+      - name: whoami
+        image: traefik/whoami@sha256:c4717a8d1f0134a7444e24f881160e033991f23027c6c5a9a3f8fd22e70d1d44
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: e2e-app
+  namespace: e2e-app
+  labels:
+    app.kubernetes.io/name: e2e-app
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: e2e-app
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: e2e-app-lb
+  namespace: e2e-app
+  labels:
+    app.kubernetes.io/name: e2e-app
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: e2e-app-lb.cluster.example.com
+    metallb.io/address-pool: e2e-app-pool
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  selector:
+    app.kubernetes.io/name: e2e-app
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: e2e-app
+  namespace: e2e-app
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: e2e-app.cluster.example.com
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  # Empty on purpose: the probe verifies that Traefik's default certificate is what gets
+  # served for a host with no tls entry of its own.
+  tls: []
+  rules:
+  - host: e2e-app.cluster.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: e2e-app
+            port:
+              number: 80
