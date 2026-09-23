@@ -111,7 +111,7 @@ flowchart TB
 ### Component Details
 
 | Component | Type | Primary Role | Key Features | Integration Points |
-|-----------|------|--------------|--------------|-------------------|
+| --- | --- | --- | --- | --- |
 | Home Assistant | Core | Automation Platform | • Comprehensive device state management and tracking<br>• Advanced automation engine with scripting<br>• Modern web interface for configuration<br>• Persistent state in PostgreSQL database | • Bi-directional MQTT communication for devices<br>• State persistence through PostgreSQL<br>• Configuration management via Code Server<br>• Voice processing via Wyoming components |
 | Code Server | Core | Configuration IDE | • Real-time YAML configuration editing<br>• Integrated syntax highlighting and validation<br>• Built-in version control capabilities<br>• Immediate config validation feedback | • Direct mount of Home Assistant configuration<br>• Secure internal-only access<br>• Efficient resource utilization |
 | NanoMQ | Infrastructure | Message Broker | • Full MQTT v3.1.1/v5.0 protocol support<br>• Integrated WebSocket connectivity<br>• RESTful HTTP API interface<br>• Granular access control system | • Secure message routing between components<br>• Multi-protocol device communication<br>• Role-based authentication and ACL |
@@ -123,30 +123,53 @@ flowchart TB
 
 ## Prerequisites
 
-1. Persistent Storage
+1. Required Flux Post-Build Variables
+
+   The PostgreSQL cluster is always part of this module; its backups and its bootstrap-from-backup come from composing it with the [`db-backups`](../../../components/db-backups/README.md) and [`db-restore`](../../../components/db-restore/README.md) components. Those components reference several of the module's defaulted variables without a default of their own, so under strict post-build substitution a variable marked *required with `<component>`* must be supplied whenever that component is composed, even though the module alone would fall back to its default.
+
+   | Name | Purpose | Used By |
+   | --- | --- | --- |
+   | domain_name | Hostname suffix for the Home Assistant ingresses and the NanoMQ service. Required | Home Assistant, NanoMQ |
+   | secret_store | `ClusterSecretStore` the ExternalSecrets resolve against. Required | home-automation-secrets, db-backups |
+   | db_name | PostgreSQL cluster name prefix. Defaults to `home-automation-db`; required with `db-backups` or `db-restore` | PostgreSQL, db-backups, db-restore |
+   | db_suffix_current | PostgreSQL cluster name suffix (blue/green rotation), and the backup `serverName` it archives under. Defaults to `default`; required with `db-backups` | PostgreSQL, db-backups |
+   | db_bootstrap_database | Initial database name created on bootstrap. Defaults to `home-assistant`; required with `db-restore` | PostgreSQL, db-restore |
+   | db_bootstrap_owner | Initial database owner role created on bootstrap. Defaults to `home-assistant`; required with `db-restore` | PostgreSQL, db-restore |
+   | db_replicas | PostgreSQL instance count. Defaults to `2` | PostgreSQL |
+   | db_storage_size | PostgreSQL volume size. Required | PostgreSQL |
+   | db_storage_class | PostgreSQL volume storage class. Required | PostgreSQL |
+   | db_namespace | Namespace of the backup `ObjectStore`, credential and `ScheduledBackup`; must be this module's namespace. Required with `db-backups` | db-backups |
+   | db_suffix_restore | `serverName` of the backup to bootstrap from. Required with `db-restore` | db-restore |
+   | backup_s3_host | Host prefix of the backup object store; the endpoint is `https://<backup_s3_host>.<dns_zone>`. No default — required with `db-backups` | db-backups |
+   | backup_s3_region | Region the backup store's requests are signed with. Defaults to `us-east-1` | db-backups |
+   | backup_s3_accesskeyid_key | Secret-store item holding the backup store's access key ID. Defaults to `cluster_nas_minio_cloudnativepg_accesskeyid`; override together with `backup_s3_host` when changing stores | db-backups |
+   | backup_s3_secretkey_key | Secret-store item holding the backup store's secret key. Defaults to `cluster_nas_minio_cloudnativepg_secretkey`; override together with `backup_s3_host` when changing stores | db-backups |
+   | dns_zone | Domain the backup store endpoint is built under. Required with `db-backups` | db-backups |
+
+2. Persistent Storage
 
    | PVC Name | Purpose | Access Mode |
-   |----------|---------|-------------|
+   | --- | --- | --- |
    | home-assistant-data | Configuration and code-server data | RWX |
    | wyoming-piper-data | Text-to-speech model storage | RWO |
    | wyoming-whisper-data | Speech-to-text model storage | RWO |
 
-2. Required Secrets
+3. Required Secrets
 
    | Secret Name | Purpose | Required Keys |
-   |-------------|---------|---------------|
+   | --- | --- | --- |
    | home-automation-secrets | Service configuration | homeassistant_secrets.yaml, nanomq_admin_password, nanomq_pwd.conf |
 
-3. Required ConfigMaps
+4. Required ConfigMaps
 
    | ConfigMap Name | Purpose | Required Keys |
-   |----------------|---------|---------------|
+   | --- | --- | --- |
    | nanomq-config | MQTT broker config | nanomq.conf, nanomq_acl.conf |
 
-4. MQTT Authentication
+5. MQTT Authentication
 
    | Username | Purpose | Access |
-   |----------|---------|---------|
+   | --- | --- | --- |
    | homeassistant | Core platform | Allow |
    | zwavejs | Z-Wave integration | Allow |
    | zigbee2mqtt | Zigbee integration | Allow |
