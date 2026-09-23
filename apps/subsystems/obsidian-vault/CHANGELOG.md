@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-obsidian-vault-v0.1.2...apps-obsidian-vault-v0.1.3) (2026-09-22)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-obsidian-vault:** run obsidian-tools 0.7.0 and name batch-processor's vault tools as the gateway lists them ([#3978](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3978)) ([a26fe07](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a26fe07e5d26adbfe5c52b5e8f6aaf574575f744))
+
 ## [0.1.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-obsidian-vault-v0.1.1...apps-obsidian-vault-v0.1.2) (2026-09-15)
 
 
