@@ -17,6 +17,20 @@ spec:
       db_suffix_current: test
       dns_zone: example.com
       domain_name: cluster.example.com
+  # Test-only: an admin API token from first start, so the OIDC step can wait on authentik's
+  # own record of its default blueprints before touching anything they create (see
+  # validate-authentik-oidc.yaml). The estate's clusters set no bootstrap credentials.
+  patches:
+  - target:
+      kind: HelmRelease
+      name: authentik-release
+    # yamllint disable-line rule:indentation
+    patch: |-
+      - op: add
+        path: /spec/values/global/env/-
+        value:
+          name: AUTHENTIK_BOOTSTRAP_TOKEN
+          value: oidc-e2e-bootstrap-token-3f9c1d7a52b64e08a1c7
   prune: false
   sourceRef:
     kind: GitRepository

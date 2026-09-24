@@ -1,0 +1,101 @@
+---
+# One manifest, applied twice by validate-authentik-oidc.yaml with $mode bound to `setup`
+# (the administrator creating the client) and then `login` (a browser signing in through
+# oidc-test-client). The probe itself is ../scripts/authentik-oidc-probe.py.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: (join('-', ['authentik-oidc', $mode]))
+  namespace: authentik-oidc-e2e
+spec:
+  backoffLimit: 0
+  # Above the probe's own budgets (BLUEPRINT_BUDGET_S + DISCOVERY_BUDGET_S = 240s) on purpose:
+  # the Job controller deletes the pod when this deadline fires, taking the probe's log with
+  # it, so the probe has to reach its own verdict first.
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: authentik-oidc-probe
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      hostAliases:
+      - ip: ($live.authentik_ip)
+        hostnames:
+        - ($live.issuer_host)
+      containers:
+      - name: probe
+        image: python:3.14.7-alpine3.24@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01
+        command:
+        - python3
+        - /probe/probe.py
+        - ($mode)
+        env:
+        - name: ISSUER_HOST
+          value: ($live.issuer_host)
+        - name: SIGNING_CERT_PEM
+          value: ($live.cert_b64)
+        - name: APP_SLUG
+          value: ($app_slug)
+        - name: RP_URL
+          value: ($rp_url)
+        - name: REDIRECT_URI
+          value: (join('', [$rp_url, '/auth/callback']))
+        - name: GROUP
+          value: oidc-e2e-users
+        - name: MEMBER_USERNAME
+          value: oidc-e2e-member
+        - name: OUTSIDER_USERNAME
+          value: oidc-e2e-outsider
+        - name: EMAIL_DOMAIN
+          value: example.com
+        - name: ADMIN_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: authentik-oidc-e2e
+              key: admin_token
+        - name: USER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: authentik-oidc-e2e
+              key: user_password
+        - name: CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: authentik-oidc-e2e
+              key: client_id
+        - name: CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: authentik-oidc-e2e
+              key: client_secret
+        # The worker keeps applying its default blueprints after it reports Ready; the probe
+        # waits for all of them (see the probe's setup()). Measured on the rig: 92 apply
+        # tasks for 31 blueprints ran from 5s before to 26s after the worker went Ready, and
+        # the gate passed 11s after this Job started.
+        - name: BLUEPRINT_BUDGET_S
+          value: "150"
+        # Certificate discovery is an hourly schedule with no startup trigger, but a new
+        # schedule is due at creation. Measured on a rig run: it ran 7s before the worker
+        # reported Ready, so the pair was already there at the probe's first look.
+        - name: DISCOVERY_BUDGET_S
+          value: "90"
+        - name: PYTHONDONTWRITEBYTECODE
+          value: "1"
+        volumeMounts:
+        - name: probe
+          mountPath: /probe
+          readOnly: true
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65532
+      volumes:
+      - name: probe
+        configMap:
+          name: authentik-oidc-probe

@@ -108,6 +108,10 @@ spec:
     use:
       template: ./validate-authentik.yaml
 
+  - name: Validate authentik as an OIDC provider
+    use:
+      template: ./validate-authentik-oidc.yaml
+
   # Asserts nothing; prints the readiness ordering the step order above is derived from.
   # It is what corrected that order: the intermediate steps return in ~0.1s, so their true
   # readiness is censored and the ordering used to rest on upper bounds.

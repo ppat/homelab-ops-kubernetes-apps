@@ -1,0 +1,92 @@
+---
+# A relying party standing where the estate's OIDC clients stand: its own namespace, a
+# confidential client with a strict redirect URI, the issuer URL configured the way
+# components/sso configures coder's (https://<authentik ingress host>/application/o/<slug>/).
+# oidc-test-client is built on coreos/go-oidc, the library behind coder's OIDC login.
+#
+# It fetches discovery at startup and exits on any failure, including an issuer that differs
+# from OIDC_PROVIDER by a single character, so a Ready pod is itself the discovery check.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oidc-test-client
+  namespace: authentik-oidc-e2e
+  labels:
+    app.kubernetes.io/name: oidc-test-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: oidc-test-client
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: oidc-test-client
+    spec:
+      automountServiceAccountToken: false
+      # The issuer host resolves to the authentik-server Service, reached on authentik's own
+      # TLS listener: the requests carry the real Host with no Traefik in the path.
+      hostAliases:
+      - ip: ($live.authentik_ip)
+        hostnames:
+        - ($live.issuer_host)
+      containers:
+      - name: client
+        image: ghcr.io/beryju/oidc-test-client:2.7.1@sha256:285e474974a92809ff12fd9e41b621a3bd4470bf4a275ef8c9b4503670d7ac43
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: OIDC_BIND
+          value: 0.0.0.0:9009
+        - name: OIDC_PROVIDER
+          value: (join('', ['https://', $live.issuer_host, '/application/o/', $app_slug, '/']))
+        - name: OIDC_ROOT_URL
+          value: ($rp_url)
+        - name: OIDC_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: authentik-oidc-e2e
+              key: client_id
+        - name: OIDC_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: authentik-oidc-e2e
+              key: client_secret
+        # authentik's listener presents its own self-signed certificate.
+        - name: OIDC_TLS_VERIFY
+          value: "false"
+        # No client in the estate calls the introspection endpoint.
+        - name: OIDC_DO_INTROSPECTION
+          value: "false"
+        ports:
+        - name: http
+          containerPort: 9009
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65532
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oidc-test-client
+  namespace: authentik-oidc-e2e
+  labels:
+    app.kubernetes.io/name: oidc-test-client
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: oidc-test-client
+  ports:
+  - name: http
+    port: 9009
+    targetPort: http
+    protocol: TCP

@@ -1,0 +1,151 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-authentik-oidc
+spec:
+  # authentik as the OIDC provider behind coder, grafana, openwebui, harbor, minio and the
+  # kubernetes logins. Their providers are not in this repo: the Terraform workspace that
+  # manages them creates each one in a single shape (confidential client, strict redirect
+  # URI, implicit-consent authorization flow, openid/email/profile scopes plus
+  # offline_access for some, signing key "jwt-signing", access bound to groups), and the
+  # setup Job creates this test's client in that shape over the same REST API.
+  #
+  # What a green step here does NOT prove:
+  # - the Traefik hop. Clients reach authentik through the Ingress; here they reach the
+  #   Service directly, on authentik's own TLS listener, with the Ingress host resolved to it.
+  # - TLS verification. authentik's listener presents its own self-signed certificate, so
+  #   the clients skip verification; in the estate they verify Traefik's.
+  # - custom scope mappings (minio's `policy` claim), explicit consent, or proxy providers.
+  # - a signing-certificate rotation: nothing restarts authentik here when the Secret changes.
+  bindings:
+  - name: app_slug
+    value: oidc-e2e
+  - name: rp_url
+    value: http://oidc-test-client.authentik-oidc-e2e.svc.cluster.local:9009
+  try:
+  - description: Create namespace/authentik-oidc-e2e
+    apply:
+      resource:
+        apiVersion: v1
+        kind: Namespace
+        metadata:
+          name: authentik-oidc-e2e
+  - description: Read what the probe must observe from live state
+    script:
+      content: ./scripts/authentik-oidc-expectations.sh
+      outputs:
+      - name: live
+        value: (json_parse($stdout))
+  - description: Create configmap/authentik-oidc-probe from scripts/authentik-oidc-probe.py
+    script:
+      content: >-
+        kubectl -n authentik-oidc-e2e create configmap authentik-oidc-probe
+        --from-file=probe.py=./scripts/authentik-oidc-probe.py
+        --dry-run=client -o yaml | kubectl apply -f -
+
+  - description: Apply job/authentik-oidc-setup
+    apply:
+      bindings:
+      - name: mode
+        value: setup
+      file: ./test-resources/authentik-oidc-probe.yaml
+  # Two asserts so that a failing probe fails the step when it exits rather than when a
+  # budget runs out: the first waits for the Job to finish either way, the second judges it.
+  # 6m covers activeDeadlineSeconds (300s, see authentik-oidc-probe.yaml) plus pod start.
+  # Measured on the rig: the setup Job finished 27s after it was applied, image pull included.
+  - description: Wait for job/authentik-oidc-setup to finish
+    assert:
+      timeout: 6m
+      resource:
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: authentik-oidc-setup
+          namespace: authentik-oidc-e2e
+        status:
+          (succeeded > `0` || failed > `0`): true
+  - description: Print what the setup Job did
+    script:
+      content: kubectl -n authentik-oidc-e2e logs job/authentik-oidc-setup
+  - description: Assert job/authentik-oidc-setup succeeded
+    assert:
+      timeout: 5s
+      resource:
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: authentik-oidc-setup
+          namespace: authentik-oidc-e2e
+        status:
+          (succeeded > `0`): true
+
+  - description: Apply the relying party
+    apply:
+      file: ./test-resources/authentik-oidc-client.yaml
+  # Ready means go-oidc accepted the discovery document, issuer included. Measured Ready 12s
+  # after apply, image pull included.
+  - description: Assert deployment/oidc-test-client
+    assert:
+      bindings:
+      - name: name
+        value: oidc-test-client
+      - name: namespace
+        value: authentik-oidc-e2e
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 2m
+
+  - description: Apply job/authentik-oidc-login
+    apply:
+      bindings:
+      - name: mode
+        value: login
+      file: ./test-resources/authentik-oidc-probe.yaml
+  - description: Wait for job/authentik-oidc-login to finish
+    assert:
+      timeout: 6m
+      resource:
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: authentik-oidc-login
+          namespace: authentik-oidc-e2e
+        status:
+          (succeeded > `0` || failed > `0`): true
+  - description: Print what the login Job observed
+    script:
+      content: kubectl -n authentik-oidc-e2e logs job/authentik-oidc-login
+  - description: Assert job/authentik-oidc-login succeeded
+    assert:
+      timeout: 5s
+      resource:
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: authentik-oidc-login
+          namespace: authentik-oidc-e2e
+        status:
+          (succeeded > `0`): true
+
+  catch:
+  - podLogs:
+      selector: app.kubernetes.io/name=authentik-oidc-probe
+      namespace: authentik-oidc-e2e
+  - podLogs:
+      selector: app.kubernetes.io/name=oidc-test-client
+      namespace: authentik-oidc-e2e
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: oidc-test-client
+      namespace: authentik-oidc-e2e
+  - events:
+      namespace: authentik-oidc-e2e
+  - podLogs:
+      selector: app.kubernetes.io/component=server
+      namespace: authentik
+      tail: 60
+  - podLogs:
+      selector: app.kubernetes.io/component=worker
+      namespace: authentik
+      tail: 60
