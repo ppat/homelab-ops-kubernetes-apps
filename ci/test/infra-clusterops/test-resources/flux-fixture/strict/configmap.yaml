@@ -1,0 +1,10 @@
+---
+# probe_missing is supplied by nothing and has no default: strict substitution must refuse
+# to build this rather than apply it with an empty value.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe-strict
+  namespace: clusterops-probe
+data:
+  value: ${probe_missing}

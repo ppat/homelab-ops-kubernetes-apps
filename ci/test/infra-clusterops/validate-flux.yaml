@@ -5,48 +5,17 @@ metadata:
   name: validate-flux
 spec:
   try:
-  # No first-position budget here, deliberately, against the rule applied to the other infra
-  # suites. Elsewhere the first validate step absorbs the module's initial convergence and
-  # is budgeted for that (25-57s). This one absorbs 2.0s, because the four Deployments it
-  # asserts are the Flux controllers installed by the `Bootstrap FluxCD` step at the top of
-  # the suite: they have been Ready since long before the module was applied, so there is no
-  # convergence for this position to absorb and nothing to size a number from.
-  #
-  # x3 on 2.0s is 6s, which is below every rung available; the shared 1m default is already
-  # 30x the observation. Writing 60s here for symmetry with the other suites would look
-  # measured and would be arbitrary.
-  - description: Assert deployment/helm-controller
-    assert:
-      bindings:
-      - name: name
-        value: helm-controller
-      - name: namespace
-        value: flux-system
-      file: ../chainsaw/assertions/deployment-ready.yaml
-  - description: Assert deployment/kustomize-controller
-    assert:
-      bindings:
-      - name: name
-        value: kustomize-controller
-      - name: namespace
-        value: flux-system
-      file: ../chainsaw/assertions/deployment-ready.yaml
-  - description: Assert deployment/notification-controller
-    assert:
-      bindings:
-      - name: name
-        value: notification-controller
-      - name: namespace
-        value: flux-system
-      file: ../chainsaw/assertions/deployment-ready.yaml
-  - description: Assert deployment/source-controller
-    assert:
-      bindings:
-      - name: name
-        value: source-controller
-      - name: namespace
-        value: flux-system
-      file: ../chainsaw/assertions/deployment-ready.yaml
+  # First, because every Flux check after it would otherwise be exercising whichever Flux
+  # happens to be running. The harness installs Flux before the module is applied, the same
+  # release the module vendors, so until the module's rollout completes the controllers are
+  # the harness's; see the script header for how the two are told apart. It is also the
+  # first step to absorb the module's convergence: applying the module changes every
+  # controller's pod template, so all four roll. Measured 5-28s (mean 13s) over twenty CI runs;
+  # 120s is four times the maximum and costs nothing on a green run.
+  - description: Assert the running Flux controllers are the module's
+    script:
+      content: ./scripts/flux-is-the-module.sh 120
+      timeout: 150s
   - description: Assert deployment/kustomize-controller feature gates
     assert:
       resource:

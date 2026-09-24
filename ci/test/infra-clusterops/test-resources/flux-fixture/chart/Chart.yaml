@@ -1,0 +1,6 @@
+---
+apiVersion: v2
+name: clusterops-probe
+description: Renders its values into ConfigMaps so a test can read what helm-controller merged.
+type: application
+version: 0.1.0

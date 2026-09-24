@@ -1,0 +1,9 @@
+---
+inline: chart-default
+fromConfigMap: chart-default
+secret:
+  token: chart-default
+# A name the API server rejects (uppercase, underscore) fails the upgrade at apply time,
+# after Helm has recorded the release revision -- which is what gives remediation a failed
+# revision to roll back from.
+extraName: probe-release-extra

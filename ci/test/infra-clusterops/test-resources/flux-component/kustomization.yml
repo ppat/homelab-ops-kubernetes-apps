@@ -1,0 +1,18 @@
+---
+# `.yml`, not `.yaml`, and that is load-bearing. The kubernetes-manifests lint job builds
+# every `kustomization.yaml` under ci/test/ as a resource of one base kustomization, and a
+# Component cannot be a resource, so that build fails. Kustomize, and so Flux, reads either
+# spelling; the validator discovers only this one.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+# yamllint disable-line rule:indentation
+- patch: |
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: probe-rendered
+      namespace: clusterops-probe
+    data:
+      component: ${probe_inline}-via-component
