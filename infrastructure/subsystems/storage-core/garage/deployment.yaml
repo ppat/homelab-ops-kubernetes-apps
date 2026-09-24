@@ -23,6 +23,10 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: garage
+      annotations:
+        # Single replica with local state: an eviction is a full S3 outage. A hard exclusion,
+        # not a preference, because kubernetes-extra's descheduler uses noEvictionPolicy: Mandatory.
+        descheduler.alpha.kubernetes.io/prefer-no-eviction: "true"
     spec:
       automountServiceAccountToken: false
       containers:
