@@ -89,8 +89,10 @@ spec:
       # ------------------------- S3 -------------------------
       - name: AUTHENTIK_STORAGE__MEDIA__BACKEND
         value: "s3"
+      # ENDPOINT is Garage's authenticated S3 API; CUSTOM_DOMAIN is its anonymous website
+      # endpoint (Host-routed, no bucket in the path) used to rewrite presigned GET URLs.
       - name: AUTHENTIK_STORAGE__MEDIA__S3__ENDPOINT
-        value: "https://s3.${domain_name}"
+        value: "https://garage-s3.${domain_name}"
       - name: AUTHENTIK_STORAGE__MEDIA__S3__BUCKET_NAME
         value: "homelab-authentik-media"
       - name: AUTHENTIK_STORAGE__MEDIA__S3__ACCESS_KEY
@@ -104,7 +106,11 @@ spec:
             name: authentik-credentials
             key: media_bucket_secretkey
       - name: AUTHENTIK_STORAGE__MEDIA__S3__CUSTOM_DOMAIN
-        value: "s3.${domain_name}/homelab-authentik-media"
+        value: "homelab-authentik-media.garage-web.${domain_name}"
+      # Garage rejects a signed region other than its configured us-east-1
+      # (AuthorizationHeaderMalformed); Authentik defaults to no region, so it must be set.
+      - name: AUTHENTIK_STORAGE__MEDIA__S3__REGION
+        value: "us-east-1"
       # ------------------------------------------------------
       volumeMounts:
       - name: signing-cert
