@@ -1,0 +1,118 @@
+---
+# Consumers standing where the estate's consumers stand, so validate-capabilities.yaml can
+# check what they receive rather than whether the controllers report Ready.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security-probe
+---
+# Outside the store's allowlist below; its ExternalSecret must be refused.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security-probe-denied
+---
+# The shape of every Certificate in the estate: a ClusterIssuer named by `${cert_issuer}`,
+# apex plus wildcard, 90d with renewal at 30d remaining. selfsigned-issuer is the issuer the
+# suites substitute for `${cert_issuer}`; production issues through ACME, which kind cannot.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: probe-tls
+  namespace: security-probe
+spec:
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer
+  dnsNames:
+  - probe.cluster.example.com
+  - '*.probe.cluster.example.com'
+  duration: 2160h # 90d
+  renewBefore: 1440h # 60d
+  secretName: probe-tls
+---
+# Time-based renewal compressed into the suite: 1h is cert-manager's minimum duration, and
+# renewBefore puts the renewal 30s after each issuance. The estate's certificates depend on
+# this path every 30 days; nothing else in the suite lives long enough to reach it.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: probe-renewal
+  namespace: security-probe
+spec:
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer
+  dnsNames:
+  - renewal.probe.cluster.example.com
+  duration: 1h
+  renewBefore: 59m30s
+  secretName: probe-renewal
+---
+# Test-owned rather than the pre-requisites `fake` store: validate-capabilities.yaml mutates
+# its data to prove refresh, and Flux would revert a mutation of the pre-requisites one.
+# `conditions` is how every cluster's Bitwarden store fences namespaces, and it is the only
+# access boundary that store has.
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: security-probe-fake
+spec:
+  conditions:
+  - namespaces:
+    - security-probe
+  provider:
+    fake:
+      data:
+      - key: security_probe_access_key_id
+        value: probe-access-key-v1
+      - key: security_probe_endpoint
+        value: s3.probe.example.com
+---
+# The estate's templated shape (db-backups, loki): keys renamed and composed through
+# target.template, a label on the rendered Secret, and a refresh interval -- short here so a
+# change in the store is observable inside the suite.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: probe-credentials
+  namespace: security-probe
+spec:
+  data:
+  - secretKey: access_key_id
+    remoteRef:
+      key: security_probe_access_key_id
+  - secretKey: endpoint
+    remoteRef:
+      key: security_probe_endpoint
+  refreshInterval: 10s
+  secretStoreRef:
+    name: security-probe-fake
+    kind: ClusterSecretStore
+  target:
+    name: probe-credentials
+    template:
+      type: Opaque
+      metadata:
+        labels:
+          security-probe/reload: "1"
+      data:
+        s3_accesskeyid: "{{ .access_key_id }}"
+        s3_endpoint_url: "https://{{ .endpoint }}/bucket"
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: probe-credentials
+  namespace: security-probe-denied
+spec:
+  data:
+  - secretKey: access_key_id
+    remoteRef:
+      key: security_probe_access_key_id
+  refreshInterval: 10s
+  secretStoreRef:
+    name: security-probe-fake
+    kind: ClusterSecretStore
+  target:
+    name: probe-credentials
