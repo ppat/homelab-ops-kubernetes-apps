@@ -151,6 +151,11 @@ flowchart TB
    | dns_zone | Cookie domain | homelab.local |
    | cert_issuer | Certificate issuer | letsencrypt-prod |
    | db_storage_size | Database size | 10Gi |
+   | authentik_media_s3_host | S3 API host label, prefixed to `domain_name` | garage-s3 |
+   | authentik_media_s3_custom_domain_host | Anonymous media host label, prefixed to `domain_name`; presigned media URLs are rewritten to it | my-bucket.garage-web |
+   | authentik_media_s3_region | S3 signing region; Authentik signs with none unless set | us-east-1 |
+   | authentik_media_s3_accesskey_key | Secret-store key holding the media bucket's access key ID | my_bucket_accesskey |
+   | authentik_media_s3_secretkey_key | Secret-store key holding the media bucket's secret key | my_bucket_secretkey |
 
 3. Required Secrets
 

@@ -90,7 +90,7 @@ spec:
       - name: AUTHENTIK_STORAGE__MEDIA__BACKEND
         value: "s3"
       - name: AUTHENTIK_STORAGE__MEDIA__S3__ENDPOINT
-        value: "https://s3.${domain_name}"
+        value: "https://${authentik_media_s3_host}.${domain_name}"
       - name: AUTHENTIK_STORAGE__MEDIA__S3__BUCKET_NAME
         value: "homelab-authentik-media"
       - name: AUTHENTIK_STORAGE__MEDIA__S3__ACCESS_KEY
@@ -104,7 +104,9 @@ spec:
             name: authentik-credentials
             key: media_bucket_secretkey
       - name: AUTHENTIK_STORAGE__MEDIA__S3__CUSTOM_DOMAIN
-        value: "s3.${domain_name}/homelab-authentik-media"
+        value: "${authentik_media_s3_custom_domain_host}.${domain_name}"
+      - name: AUTHENTIK_STORAGE__MEDIA__S3__REGION
+        value: "${authentik_media_s3_region}"
       # ------------------------------------------------------
       volumeMounts:
       - name: signing-cert

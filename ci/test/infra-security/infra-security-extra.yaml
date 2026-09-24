@@ -17,6 +17,11 @@ spec:
       db_suffix_current: test
       dns_zone: example.com
       domain_name: cluster.example.com
+      authentik_media_s3_host: garage-s3
+      authentik_media_s3_custom_domain_host: homelab-authentik-media.garage-web
+      authentik_media_s3_region: us-east-1
+      authentik_media_s3_accesskey_key: garage_key_authentik_accesskey
+      authentik_media_s3_secretkey_key: garage_key_authentik_secretkey
   # Test-only: an admin API token from first start, so the OIDC step can wait on authentik's
   # own record of its default blueprints before touching anything they create (see
   # validate-authentik-oidc.yaml). The estate's clusters set no bootstrap credentials.
