@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe-release-rendered
+  namespace: "{{ .Release.Namespace }}"
+data:
+  inline: "{{ .Values.inline }}"
+  from_configmap: "{{ .Values.fromConfigMap }}"
+  from_secret: "{{ .Values.secret.token }}"
+  revision: "{{ .Release.Revision }}"

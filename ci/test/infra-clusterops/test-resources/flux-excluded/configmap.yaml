@@ -1,0 +1,10 @@
+---
+# Outside the fixture GitRepository's spec.ignore allowlist. It exists in the repository
+# so that the only thing keeping it out of the artifact is the ignore rule.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe-excluded
+  namespace: clusterops-probe
+data:
+  applied: "true"

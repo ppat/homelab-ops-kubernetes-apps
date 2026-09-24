@@ -1,0 +1,185 @@
+---
+# Workloads standing where the estate's Reloader consumers stand. Every consumer names its
+# Secrets and ConfigMaps explicitly (never `reloader.stakater.com/auto`), several name more
+# than one in a comma-separated list, and the annotation sits on Deployments and, through
+# the loki chart, on a StatefulSet. scripts/reloader-probe.sh changes the inputs and reads
+# what each workload's pods then see.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: reloader-probe
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: probe-secret
+  namespace: reloader-probe
+stringData:
+  value: secret-v1
+---
+# Named first in the annotated Deployment's list, so the Secret that changes is not the
+# first entry.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: other-secret
+  namespace: reloader-probe
+stringData:
+  value: other
+---
+# Named by no workload; changing it must roll nothing.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: bystander-secret
+  namespace: reloader-probe
+stringData:
+  value: bystander-v1
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe-config
+  namespace: reloader-probe
+data:
+  value: config-v1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: annotated
+  namespace: reloader-probe
+  annotations:
+    secret.reloader.stakater.com/reload: other-secret,probe-secret
+    configmap.reloader.stakater.com/reload: probe-config
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: annotated
+  template:
+    metadata:
+      labels:
+        app: annotated
+    spec:
+      automountServiceAccountToken: false
+      # busybox sleep ignores SIGTERM as PID 1; this bounds each roll to about a second.
+      terminationGracePeriodSeconds: 1
+      containers:
+      - name: probe
+        image: busybox@sha256:fd7dc98638c8e305f4dc34e979f1c0fdfdcaeb0fbf8fcff77ae834b6da3d7e6e
+        command:
+        - /bin/sh
+        - -c
+        - echo "PROBE secret=$SECRET_VALUE config=$CONFIG_VALUE"; exec sleep 86400
+        env:
+        - name: SECRET_VALUE
+          valueFrom:
+            secretKeyRef:
+              name: probe-secret
+              key: value
+        - name: CONFIG_VALUE
+          valueFrom:
+            configMapKeyRef:
+              name: probe-config
+              key: value
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65534
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: annotated-sts
+  namespace: reloader-probe
+  annotations:
+    secret.reloader.stakater.com/reload: probe-secret
+spec:
+  replicas: 1
+  serviceName: annotated-sts
+  selector:
+    matchLabels:
+      app: annotated-sts
+  template:
+    metadata:
+      labels:
+        app: annotated-sts
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 1
+      containers:
+      - name: probe
+        image: busybox@sha256:fd7dc98638c8e305f4dc34e979f1c0fdfdcaeb0fbf8fcff77ae834b6da3d7e6e
+        command:
+        - /bin/sh
+        - -c
+        - echo "PROBE secret=$SECRET_VALUE config=$CONFIG_VALUE"; exec sleep 86400
+        env:
+        - name: SECRET_VALUE
+          valueFrom:
+            secretKeyRef:
+              name: probe-secret
+              key: value
+        - name: CONFIG_VALUE
+          valueFrom:
+            configMapKeyRef:
+              name: probe-config
+              key: value
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65534
+---
+# Reads the same Secret and ConfigMap with no annotation: Reloader must leave it alone.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unannotated
+  namespace: reloader-probe
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: unannotated
+  template:
+    metadata:
+      labels:
+        app: unannotated
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 1
+      containers:
+      - name: probe
+        image: busybox@sha256:fd7dc98638c8e305f4dc34e979f1c0fdfdcaeb0fbf8fcff77ae834b6da3d7e6e
+        command:
+        - /bin/sh
+        - -c
+        - echo "PROBE secret=$SECRET_VALUE config=$CONFIG_VALUE"; exec sleep 86400
+        env:
+        - name: SECRET_VALUE
+          valueFrom:
+            secretKeyRef:
+              name: probe-secret
+              key: value
+        - name: CONFIG_VALUE
+          valueFrom:
+            configMapKeyRef:
+              name: probe-config
+              key: value
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65534

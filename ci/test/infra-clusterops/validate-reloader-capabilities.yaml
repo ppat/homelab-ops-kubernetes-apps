@@ -1,0 +1,62 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-reloader-capabilities
+spec:
+  # What Reloader does for the estate's workloads, checked from their side: a change to a
+  # Secret or ConfigMap a workload names rolls it, and its new pod sees the new value; a
+  # change to anything it does not name, or to a workload that names nothing, rolls nothing.
+  # The checks and their reasoning are in scripts/reloader-probe.sh.
+  try:
+  - description: Apply the Reloader consumers
+    apply:
+      file: ./test-resources/reloader-consumers.yaml
+  - description: Assert deployment/annotated
+    assert:
+      bindings:
+      - name: name
+        value: annotated
+      - name: namespace
+        value: reloader-probe
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert statefulset/annotated-sts
+    assert:
+      bindings:
+      - name: name
+        value: annotated-sts
+      - name: namespace
+        value: reloader-probe
+      file: ../chainsaw/assertions/statefulset-ready.yaml
+  - description: Assert deployment/unannotated
+    assert:
+      bindings:
+      - name: name
+        value: unannotated
+      - name: namespace
+        value: reloader-probe
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  # The argument bounds each of the three awaited rolls. The whole probe, all three rolls
+  # included, finished in 7-9s in every CI run inspected; 60s per roll leaves room for a
+  # contended runner.
+  # The step timeout sits above three full budgets so a slow run still prints its verdict
+  # lines: chainsaw holds a script's output until it exits, and a killed script prints none.
+  - description: Change what the consumers read and check who rolled
+    script:
+      content: ./scripts/reloader-probe.sh 60
+      timeout: 4m
+  catch:
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      namespace: reloader-probe
+  - describe:
+      apiVersion: apps/v1
+      kind: StatefulSet
+      namespace: reloader-probe
+  - podLogs:
+      selector: app.kubernetes.io/name=reloader
+      namespace: stakater-reloader
+      tail: 60
+  - events:
+      namespace: reloader-probe

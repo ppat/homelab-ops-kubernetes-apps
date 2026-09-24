@@ -1,0 +1,269 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-flux-capabilities
+spec:
+  # What the module's Flux does for the clusters that consume this repository, checked by
+  # what it produced rather than by its controllers being Ready. validate-flux.yaml must run
+  # first: it is what makes these the module's controllers and not the harness's.
+  #
+  # What a green step here does NOT prove:
+  # - Tag checkout. Every cluster pins its sources by `ref.tag`; the fixture GitRepository
+  #   follows the branch under test, because the tag a PR adds does not exist until release.
+  # - Chart repositories. The fixture chart is packaged from Git. The HTTP HelmRepository path
+  #   is the module's own stakater-reloader release; OCIRepository (three modules) is not run.
+  # - CRD install/upgrade policy, CancelHealthCheckOnNewRevision and OOMWatch. The last two are
+  #   shown to be switched on (validate-flux.yaml), not to behave.
+  # - notification-controller. Nothing in the estate declares a Provider, Alert or Receiver.
+  try:
+  - description: Apply the Flux consumers
+    apply:
+      file: ./test-resources/flux-consumers.yaml
+
+  # ---- held back: nothing may apply until its input exists -------------------------------
+  # Each of these is a Kustomization that must NOT build, so each Ready=False is paired with
+  # the object it would have applied being absent -- and each reason is matched, because a
+  # source not yet fetched is also Ready=False and would satisfy a bare status check.
+  - description: Assert kustomization/probe-base waits for its substituteFrom Secret
+    assert:
+      resource:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        metadata:
+          name: probe-base
+          namespace: flux-system
+        status:
+          (conditions[?type == 'Ready']):
+          - status: 'False'
+            (contains(message, 'probe-secret-vars')): true
+  - description: Assert kustomization/probe-dependent waits for probe-base
+    assert:
+      resource:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        metadata:
+          name: probe-dependent
+          namespace: flux-system
+        status:
+          (conditions[?type == 'Ready']):
+          - status: 'False'
+            reason: DependencyNotReady
+  - description: Assert kustomization/probe-strict refuses an unset variable
+    assert:
+      resource:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        metadata:
+          name: probe-strict
+          namespace: flux-system
+        status:
+          (conditions[?type == 'Ready']):
+          - status: 'False'
+            (contains(message, 'probe_missing')): true
+  - description: Assert kustomization/probe-excluded finds no path outside spec.ignore
+    assert:
+      resource:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        metadata:
+          name: probe-excluded
+          namespace: flux-system
+        status:
+          (conditions[?type == 'Ready']):
+          - status: 'False'
+            (contains(message, 'path not found')): true
+  - description: Assert nothing held back was applied
+    error:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe-dependent
+          namespace: clusterops-probe
+  - error:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe-strict
+          namespace: clusterops-probe
+  - error:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe-excluded
+          namespace: clusterops-probe
+
+  # ---- released: the Secret arrives, and everything downstream of it builds ----------------
+  - description: Create secret/probe-secret-vars
+    create:
+      resource:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: probe-secret-vars
+          namespace: flux-system
+        stringData:
+          probe_from_secret: secret-value
+          probe_precedence: from-secret
+  # Every Kustomization here runs at a 1h interval and retryInterval, so nothing but these
+  # requests moves them. The dependency ordering was shown above, while probe-base could
+  # not build; the requests only save waiting out the controller's dependency requeue.
+  - description: Request reconciliation of probe-base
+    script:
+      content: >-
+        kubectl -n flux-system annotate --overwrite kustomization probe-base
+        "reconcile.fluxcd.io/requestedAt=$(date +%s%N)"
+  - description: Assert kustomization/probe-base
+    assert:
+      bindings:
+      - name: name
+        value: probe-base
+      - name: namespace
+        value: flux-system
+      file: ../chainsaw/assertions/kustomization-ready.yaml
+  # The length guard catches a key the fixture does not declare; each value names the one
+  # mechanism that can produce it.
+  - description: Assert configmap/probe-rendered carries every substitution, component and patch
+    assert:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe-rendered
+          namespace: clusterops-probe
+        (length(data)): 7
+        data:
+          inline: inline-value
+          from_secret: secret-value
+          from_configmap: configmap-value
+          defaulted: fallback
+          precedence: from-inline
+          component: inline-value-via-component
+          patched: inline-value-via-patch
+  - description: Request reconciliation of probe-dependent
+    script:
+      content: >-
+        kubectl -n flux-system annotate --overwrite kustomization probe-dependent
+        "reconcile.fluxcd.io/requestedAt=$(date +%s%N)"
+  - description: Assert kustomization/probe-dependent
+    assert:
+      bindings:
+      - name: name
+        value: probe-dependent
+      - name: namespace
+        value: flux-system
+      file: ../chainsaw/assertions/kustomization-ready.yaml
+  - description: Assert configmap/probe-dependent
+    assert:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe-dependent
+          namespace: clusterops-probe
+        data:
+          applied: 'true'
+
+  # ---- helm-controller ------------------------------------------------------------------
+  - description: Assert helmrelease/probe-release
+    assert:
+      bindings:
+      - name: name
+        value: probe-release
+      - name: namespace
+        value: clusterops-probe
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+  - description: Assert configmap/probe-release-rendered merged values and valuesFrom
+    assert:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe-release-rendered
+          namespace: clusterops-probe
+        data:
+          inline: from-values
+          from_configmap: configmap-v1
+          from_secret: secret-token
+          revision: '1'
+  # The release's interval is 1h and nothing requests a reconcile: only helm-controller's
+  # watch on the labelled ConfigMap can bring revision 2 inside this budget.
+  - description: Change configmap/probe-values
+    patch:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe-values
+          namespace: clusterops-probe
+        data:
+          values.yaml: |
+            fromConfigMap: configmap-v2
+  - description: Assert the labelled valuesFrom change re-rendered the release
+    assert:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe-release-rendered
+          namespace: clusterops-probe
+        data:
+          from_configmap: configmap-v2
+          revision: '2'
+  - description: Break the next upgrade
+    patch:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe-values
+          namespace: clusterops-probe
+        data:
+          values.yaml: |
+            fromConfigMap: configmap-v3
+            extraName: Invalid_Name
+  # The API server rejects the extra ConfigMap's name, after Helm has recorded the upgrade's
+  # revision -- a failure only remediation can undo. Remediated is set by nothing but a
+  # remediation action, and its reason names which strategy ran. Ready would not do: it
+  # is False after a failed upgrade whether or not anything was rolled back.
+  - description: Assert the failed upgrade was rolled back
+    assert:
+      resource:
+        apiVersion: helm.toolkit.fluxcd.io/v2
+        kind: HelmRelease
+        metadata:
+          name: probe-release
+          namespace: clusterops-probe
+        status:
+          (conditions[?type == 'Remediated']):
+          - status: 'True'
+            reason: RollbackSucceeded
+          (history[0].status): deployed
+  catch:
+  - describe:
+      apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      namespace: flux-system
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: probe-release
+      namespace: clusterops-probe
+  - describe:
+      apiVersion: source.toolkit.fluxcd.io/v1
+      kind: GitRepository
+      name: clusterops-fixture
+      namespace: flux-system
+  - podLogs:
+      selector: app=kustomize-controller
+      namespace: flux-system
+      tail: 60
+  - podLogs:
+      selector: app=helm-controller
+      namespace: flux-system
+      tail: 60
+  - events:
+      namespace: clusterops-probe

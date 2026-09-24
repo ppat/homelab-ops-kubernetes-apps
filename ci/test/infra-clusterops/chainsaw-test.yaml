@@ -31,19 +31,27 @@ spec:
     use:
       template: ./validate-flux.yaml
 
+  - name: Validate flux capabilities
+    use:
+      template: ./validate-flux-capabilities.yaml
+
   - name: Validate system-upgrade-controller
     use:
       template: ./validate-system-upgrade-controller.yaml
 
-  # Step order is left as-is, and that is a decision rather than an omission: reloader is the
-  # only component in this suite whose readiness has ever been measured (25s from module
-  # apply, the only assertion here that polls) and it is already validated last. The two
-  # steps ahead of it return in 0.2s and 2.9s, which bounds their readiness from above
-  # without measuring it -- but that is enough to rule out the one arrangement that matters,
-  # a slow step sitting in front of instant ones. So no permutation buys headroom.
+  # Reloader is validated after the Flux steps because it is the slowest component to become
+  # ready (its assert polled for 19-23s when it followed only instant steps) and the Flux
+  # steps ahead of it now wait on real work: 14-32s together over twenty CI runs, which absorbs
+  # most of that startup -- the reloader assert fell to 0-13s. Nothing in the Flux steps
+  # depends on reloader, so no dependency is crossed.
   - name: Validate reloader
     use:
       template: ./validate-reloader.yaml
+
+  # Needs reloader Running, which the step above asserts.
+  - name: Validate reloader capabilities
+    use:
+      template: ./validate-reloader-capabilities.yaml
 
   # Asserts nothing; prints the readiness ordering the step order above is derived from.
   # This suite has no failed runs in the last 100, so the shared catch-block dump has never

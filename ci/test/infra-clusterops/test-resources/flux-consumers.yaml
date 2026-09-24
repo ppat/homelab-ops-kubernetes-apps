@@ -1,0 +1,182 @@
+---
+# Consumers of the module's Flux, shaped like the clusters that consume this repository's
+# modules: a GitRepository scoped by spec.ignore, and Kustomizations that mix in a component,
+# patch, substitute from inline values, a ConfigMap and a Secret, and depend on each other.
+# validate-flux-capabilities.yaml applies this and checks what each one produced.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: clusterops-probe
+---
+# The estate's ignore shape: exclude everything, then re-include one module directory and
+# the components directory. flux-excluded/ is a sibling of both and must stay out.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: clusterops-fixture
+  namespace: flux-system
+spec:
+  ignore: |
+    /*
+    !/ci/test/infra-clusterops/test-resources/flux-component
+    !/ci/test/infra-clusterops/test-resources/flux-fixture
+  interval: 1h
+  ref:
+    branch: ($values.git.branch)
+  url: ($values.git.url)
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe-vars
+  namespace: flux-system
+data:
+  probe_from_configmap: configmap-value
+---
+# Also substituteFrom's Secret/probe-secret-vars, which is deliberately absent at apply
+# time: until the test creates it this Kustomization cannot build, which is what holds
+# probe-dependent back for as long as the test needs to observe it waiting.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: probe-base
+  namespace: flux-system
+spec:
+  interval: 1h
+  retryInterval: 1h
+  path: ./ci/test/infra-clusterops/test-resources/flux-fixture/base
+  components:
+  - ../../flux-component
+  patches:
+  # yamllint disable-line rule:indentation
+  - patch: |
+      - op: add
+        path: /data/patched
+        value: ${probe_inline}-via-patch
+    target:
+      kind: ConfigMap
+      name: probe-rendered
+  postBuild:
+    substitute:
+      probe_inline: inline-value
+      probe_precedence: from-inline
+    substituteFrom:
+    - kind: ConfigMap
+      name: probe-vars
+    - kind: Secret
+      name: probe-secret-vars
+  prune: false
+  sourceRef:
+    kind: GitRepository
+    name: clusterops-fixture
+  timeout: 1m
+  wait: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: probe-dependent
+  namespace: flux-system
+spec:
+  dependsOn:
+  - name: probe-base
+  interval: 1h
+  retryInterval: 1h
+  path: ./ci/test/infra-clusterops/test-resources/flux-fixture/dependent
+  prune: false
+  sourceRef:
+    kind: GitRepository
+    name: clusterops-fixture
+  timeout: 1m
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: probe-strict
+  namespace: flux-system
+spec:
+  interval: 1h
+  retryInterval: 1h
+  path: ./ci/test/infra-clusterops/test-resources/flux-fixture/strict
+  postBuild:
+    substitute:
+      probe_inline: inline-value
+  prune: false
+  sourceRef:
+    kind: GitRepository
+    name: clusterops-fixture
+  timeout: 1m
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: probe-excluded
+  namespace: flux-system
+spec:
+  interval: 1h
+  retryInterval: 1h
+  path: ./ci/test/infra-clusterops/test-resources/flux-excluded
+  prune: false
+  sourceRef:
+    kind: GitRepository
+    name: clusterops-fixture
+  timeout: 1m
+---
+# The estate's valuesFrom shape, and its reload contract: a change to a ConfigMap labelled
+# reconcile.fluxcd.io/watch re-renders the release without waiting for its interval.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe-values
+  namespace: clusterops-probe
+  labels:
+    reconcile.fluxcd.io/watch: Enabled
+data:
+  values.yaml: |
+    fromConfigMap: configmap-v1
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: probe-values-secret
+  namespace: clusterops-probe
+stringData:
+  token: secret-token
+---
+# The chart is packaged from the fixture GitRepository rather than fetched from a chart
+# repository: helm-controller's install, values merge, upgrade and remediation are the same
+# code whatever the chart source, and this keeps the test off the network. The HTTP
+# HelmRepository path is exercised by the module's own stakater-reloader release.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: probe-release
+  namespace: clusterops-probe
+spec:
+  chart:
+    spec:
+      chart: ./ci/test/infra-clusterops/test-resources/flux-fixture/chart
+      interval: 1h
+      sourceRef:
+        kind: GitRepository
+        name: clusterops-fixture
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 1
+  interval: 1h
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 1
+      strategy: rollback
+  values:
+    inline: from-values
+  valuesFrom:
+  - kind: ConfigMap
+    name: probe-values
+    valuesKey: values.yaml
+  - kind: Secret
+    name: probe-values-secret
+    valuesKey: token
+    targetPath: secret.token

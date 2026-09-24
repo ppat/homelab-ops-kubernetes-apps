@@ -1,0 +1,16 @@
+---
+# Each key is filled by a different Flux mechanism; validate-flux-capabilities.yaml asserts
+# the value each one must arrive at. `component` and `patched` are added by the Kustomize
+# Component and by the Kustomization's spec.patches, and carry a variable of their own, so
+# they also prove substitution runs after both.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe-rendered
+  namespace: clusterops-probe
+data:
+  inline: ${probe_inline}
+  from_secret: ${probe_from_secret}
+  from_configmap: ${probe_from_configmap}
+  defaulted: ${probe_unset:=fallback}
+  precedence: ${probe_precedence}

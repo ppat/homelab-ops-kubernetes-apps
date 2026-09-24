@@ -1,0 +1,8 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe-dependent
+  namespace: clusterops-probe
+data:
+  applied: "true"
