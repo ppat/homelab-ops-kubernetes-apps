@@ -536,14 +536,17 @@ the published grammar is all the producer and the consumer share.
   cluster's data plane. Chainsaw assertions for these resources are therefore structural only
   (the object exists and is shaped as expected); real enforcement must be verified on a
   cluster whose CNI implements NetworkPolicy (e.g. k3s's bundled controller).
-- **Longhorn attach and mount**: `iscsiadm` is present in the kind node image but `iscsid` is
-  **inactive**, so `AttachVolume` fails with `DeadlineExceeded` and any consumer pod sits in
-  `ContainerCreating` indefinitely. This is why `infra-storage` asserts `PVC → Bound` and stops
-  there — a limit of the environment, not an oversight, and worth stating because the missing
-  assertion otherwise reads as a gap somebody should close. `Bound` proves only that the
-  provisioner answered; it implies nothing about attach, mount, or a readable filesystem, so CI
-  cannot catch an attach-path regression on a longhorn upgrade. Tracked as
-  [#3718](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3718).
+- **Longhorn attach and mount run through a host-side initiator**: the kernel's iSCSI control
+  channel exists only in the host's initial network namespace, so an `iscsid` inside a kind node
+  starts and then fails at its first login. `infra-storage` therefore runs `iscsid` in a
+  sibling container on the runner (host network, the node's pid namespace) and adjusts the
+  host and node around it (`ci/test/infra-storage/scripts/longhorn/iscsi-initiator.sh` lists
+  each change and the failure it answers). With that in place the suite attaches, writes,
+  detaches, expands, re-attaches and reads back a RWO volume and shares a RWX volume between
+  two pods. What it cannot show is the initiator as a real node runs it: iSCSI traffic comes
+  from the docker host rather than the node, and a test-owned `NetworkPolicy` stands in for
+  the node-local exemption a real node's initiator gets from longhorn's own policies
+  ([#3718](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3718)).
 - **Replica placement across nodes**: not asserted, and deliberately so. A kind cluster's
   topology resembles no real cluster's, so a green "the replicas landed on distinct nodes" would
   mean nothing about production. The storage suite exists to prove *our installation is
