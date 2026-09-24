@@ -42,7 +42,7 @@ The clusterops-core module provides three main capabilities:
 | Source Controller | Git and Helm source management | • Clones repositories and validates checksums<br>• Downloads Helm charts from configured repositories<br>• Maintains local cache of sources in /data<br>• Triggers reconciliation on source changes<br>• Provides metrics on source operations and status |
 | Kustomize Controller | Kubernetes resource management | • Processes kustomizations with strict variable checking<br>• Applies resources using server-side apply merge strategy<br>• Prunes resources removed from source<br>• Cancels a stale health check when a newer revision arrives, rather than waiting it out<br>• Integrates with notification controller for alerts<br>• Reports detailed reconciliation metrics |
 | Helm Controller | Helm release management | • Manages Helm releases with OOM protection (95% threshold)<br>• Handles release upgrades and rollbacks<br>• Monitors memory usage every 500ms<br>• Coordinates with notification system<br>• Exposes detailed release status metrics |
-| System Upgrade Controller | System component upgrades | • Executes upgrade plans with node selection<br>• Manages upgrade job scheduling and ordering<br>• Validates node status pre/post upgrade<br>• Coordinates with notification controller<br>• Integrates with Goldilocks for resource tuning |
+| System Upgrade Controller | System component upgrades | • Executes upgrade plans with node selection<br>• Manages upgrade job scheduling and ordering<br>• Validates node status pre/post upgrade<br>• Coordinates with notification controller |
 | Stakater Reloader | Configuration reload management | • Watches ConfigMaps and Secrets<br>• Triggers pod restarts on config changes<br>• Exposes metrics via PodMonitor<br>• Runs with enhanced security<br>• Uses annotation-based triggers |
 
 ## Prerequisites
@@ -61,7 +61,6 @@ The clusterops-core module provides three main capabilities:
    | -------------- | --------- | ------------ |
    | Control plane tolerations | Schedule on control plane | deployment-tolerations.yaml |
    | SSA merge strategy | Resource merging | namespace-metadata.yaml |
-   | Resource optimization | Goldilocks integration | namespace-metadata.yaml |
    | OOM protection | Helm controller safety | kustomization.yaml |
 
 ## Dependencies

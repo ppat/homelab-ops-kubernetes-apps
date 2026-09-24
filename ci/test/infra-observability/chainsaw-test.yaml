@@ -145,9 +145,8 @@ spec:
   #   . snmp 233 . loki 247-248 (chunks/results caches 210, canary 224-231)
   #   . grafana 254 . alloy 253-264 . node-exporter 274-275
   #
-  # goldilocks is not in that list and is first anyway: it is the step that absorbs the
-  # module's initial convergence, and its budget is sized for that rather than for its own
-  # component (see validate-goldilocks.yaml).
+  # Whichever step is first also absorbs the module's initial convergence, so its budget is
+  # sized for that position rather than for its own component (see validate-unifi-poller.yaml).
   #
   # Two swaps came out of this data: unpoller (191) ahead of syslog (204), and blackbox (220)
   # ahead of snmp (233). Both had been the other way round. node-problem-detector and syslog
@@ -178,10 +177,6 @@ spec:
   #
   # The tail of this list is constrained and must stay put: the Loki/Prometheus query steps
   # further down read from Prometheus and Loki, so those two have to be validated first.
-  - name: Validate goldilocks
-    use:
-      template: ./validate-goldilocks.yaml
-
   - name: Validate UniFi Poller
     use:
       template: ./validate-unifi-poller.yaml

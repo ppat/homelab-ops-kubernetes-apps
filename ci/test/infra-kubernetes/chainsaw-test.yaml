@@ -47,10 +47,6 @@ spec:
     use:
       template: ./validate-node-feature-discovery.yaml
 
-  - name: Validate vpa
-    use:
-      template: ./validate-vpa.yaml
-
   - name: Validate generic-device-plugin
     use:
       template: ./validate-generic-device-plugin.yaml

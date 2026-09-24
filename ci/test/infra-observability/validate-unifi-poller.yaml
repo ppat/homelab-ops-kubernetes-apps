@@ -5,6 +5,13 @@ metadata:
   name: validate-unifi-poller
 spec:
   try:
+  # First assertion after the module is applied (wait: false), so this is where the module's
+  # initial convergence lands -- image pulls for every HelmRelease, on a runner that is also
+  # still installing minio. The budget is sized for that, not for unpoller: convergence was
+  # measured at 25.0s, so 90s by the x3 rule. Both assertions carry it because either can be
+  # the one left waiting. This number belongs to the position, not to unpoller: if the step
+  # order in chainsaw-test.yaml changes so that something else is first, the budget moves with
+  # the position.
   - description: Assert externalsecret/unpoller-credentials
     assert:
       bindings:
@@ -13,6 +20,7 @@ spec:
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/externalsecret-ready.yaml
+      timeout: 90s
   - description: Assert deployment/unpoller
     assert:
       bindings:
@@ -21,6 +29,7 @@ spec:
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 90s
 
   catch:
   - describe:

@@ -13,9 +13,6 @@ patches:
     - op: add
       path: /metadata/annotations/kustomize.toolkit.fluxcd.io~1ssa
       value: merge
-    - op: add
-      path: /metadata/labels/goldilocks.fairwinds.com~1enabled
-      value: "true"
   target:
     kind: Namespace
     name: kubevirt
