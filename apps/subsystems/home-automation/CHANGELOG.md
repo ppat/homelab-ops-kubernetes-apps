@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.20](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.3.19...apps-home-automation-v0.3.20) (2026-09-24)
+
+
+### 🛠 Improvements
+
+* **apps-home-automation:** document the post-build variables the database path requires ([#4083](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4083)) ([90ce4a9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/90ce4a949e760bc1c2a4556b0f8e6a4ff962a17a))
+
 ## [0.3.19](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.3.18...apps-home-automation-v0.3.19) (2026-09-22)
 
 
