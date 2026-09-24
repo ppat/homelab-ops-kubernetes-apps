@@ -115,6 +115,13 @@ spec:
           garage_local_disk_avail/garage_local_disk_total is below 10% on the
           {{ $labels.volume }} volume -- with no second node, there's nowhere else
           for writes to land once this fills.
+  - name: object-store-disk-amplification
+    rules:
+    # Summed by namespace: the claim names are per-cluster values, and Garage splits metadata and data across two PVCs.
+    - record: object_store:disk_used_bytes
+      labels:
+        engine: garage
+      expr: sum(kubelet_volume_stats_used_bytes{namespace="garage"})
   - name: object-store-recovery-events
     rules:
     # Records the recovery-events KPI tracked by homelab-ops-kubernetes-apps#3611
