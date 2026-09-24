@@ -134,25 +134,40 @@ spec:
         value: longhorn-system
       file: ../chainsaw/assertions/helmrelease-ready.yaml
 
-  - description: Apply test-pvc
+  # Everything above proves longhorn's workloads are up, which they can all be while no pod
+  # can use a single volume -- which is exactly what this suite could not see until these
+  # steps existed (#3718). What follows is the capability itself, exercised by test-owned
+  # consumers and judged against live state; each script's header lists its legs.
+  #
+  # What a green run here does NOT prove, because kind cannot show it:
+  # - The initiator as a real node runs it. iscsid runs in a sibling container on the docker
+  #   host, and a test-owned NetworkPolicy stands in for the node-local exemption a real
+  #   node's initiator gets; see scripts/longhorn/iscsi-initiator.sh for each difference.
+  # - Replicas on other nodes, rebuilds, or data locality taking effect: one node, one
+  #   replica (see test-resources/longhorn-consumers.yaml).
+  # - RWX consumers on different nodes, or surviving a share-manager restart.
+  # - Backups, snapshots and recurring jobs: every consuming cluster configures those
+  #   (backup target, RecurringJobs) outside this module.
+  - description: Give the kind node an iSCSI initiator
+    script:
+      content: ./scripts/longhorn/iscsi-initiator.sh
+      timeout: 1m
+  - description: Apply the longhorn consumers
     apply:
-      file: ./test-pvc.yaml
-  - description: Assert storageclass/test-storage-class
-    assert:
-      resource:
-        apiVersion: storage.k8s.io/v1
-        kind: StorageClass
-        metadata:
-          name: test-storage-class
-  - description: Assert persistentvolumeclaim/test-pvc
-    assert:
-      bindings:
-      - name: name
-        value: test-pvc
-      - name: namespace
-        value: default
-      file: ../chainsaw/assertions/pvc-bound.yaml
-      timeout: 3m
+      file: ./test-resources/longhorn-consumers.yaml
+  # Each script enforces its own per-leg budgets (see their headers) and reports which leg
+  # ran out; these timeouts only back them up, at the sum of those budgets plus slack.
+  # Measured over 12 CI runs and the rig: rwo.sh 35-43s; rwx.sh 0-13s, because the RWX pods
+  # start with the writer and usually finish while rwo.sh is still running. The whole
+  # longhorn step went from 44-71s to 81-126s on CI.
+  - description: Assert a RWO volume attaches, persists across detach and re-attach, and expands
+    script:
+      content: ./scripts/longhorn/rwo.sh
+      timeout: 9m
+  - description: Assert a RWX volume is shared by two pods at once
+    script:
+      content: ./scripts/longhorn/rwx.sh
+      timeout: 7m
 
   catch:
   - describe:
@@ -204,15 +219,30 @@ spec:
       namespace: longhorn-system
 
   - describe:
-      apiVersion: storage.k8s.io/v1
-      kind: StorageClass
-      name: test-storage-class
-  - describe:
       apiVersion: v1
       kind: PersistentVolumeClaim
-      name: test-pvc
-      namespace: default
-
+      namespace: longhorn-probe
+  - describe:
+      apiVersion: v1
+      kind: Pod
+      namespace: longhorn-probe
+  - get:
+      apiVersion: longhorn.io/v1beta2
+      kind: Volume
+      namespace: longhorn-system
+      format: yaml
+  # An attach that never completes leaves its cause in the engine's iscsiadm calls and in
+  # iscsid, neither of which is a Kubernetes event.
+  # yamllint disable rule:line-length
+  - script:
+      timeout: 1m
+      content: |
+        echo '--- instance-manager: iscsi / frontend errors ---'
+        kubectl logs -n longhorn-system -l longhorn.io/component=instance-manager --tail=2000 2>&1 | grep -E 'iscsiadm|startup frontend|level=error' | grep -v 'Failed to receive log' | tail -20 || true
+        node="$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')"
+        echo "--- docker logs ${node}-iscsid ---"
+        docker logs --tail 30 "${node}-iscsid" 2>&1 || true
+  # yamllint enable rule:line-length
   - podLogs:
       selector: app=longhorn-manager
       namespace: longhorn-system
@@ -244,4 +274,4 @@ spec:
   - events:
       namespace: longhorn-system
   - events:
-      namespace: default
+      namespace: longhorn-probe

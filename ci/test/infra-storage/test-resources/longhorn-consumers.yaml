@@ -1,0 +1,162 @@
+---
+# Test-owned consumers of longhorn's block storage, applied together so the RWO and RWX
+# attaches run concurrently. What each pod proves is judged on the runner by
+# scripts/longhorn/{rwo,rwx}.sh against live state; the pods only report what they saw.
+#
+# The StorageClasses stand in for the estate's, which are cluster-level objects: same
+# provisioner, fsType, dataLocality and WaitForFirstConsumer binding, and the RWX class
+# carries the estate's nfsOptions. Replica count is the one deliberate difference, below.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: longhorn-probe
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: test-storage-class
+allowVolumeExpansion: true
+parameters:
+  fsType: ext4
+  dataLocality: "best-effort"
+  # 1, matching the single node this suite runs on (#3680). At 2 the volume attaches and
+  # serves while permanently DEGRADED: longhorn places one replica, leaves the second with an
+  # empty nodeID, and resets the Scheduled condition back to True because
+  # allow-volume-creation-with-degraded-availability defaults on. Nothing in the suite would
+  # observe that -- a missing replica has no pod-layer signature, since replicas are processes
+  # inside instance-manager rather than pods. So 2 would mean every run silently exercised a
+  # degraded volume and depended on longhorn continuing to tolerate it.
+  numberOfReplicas: "1"
+provisioner: driver.longhorn.io
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: test-storage-class-rwx
+allowVolumeExpansion: true
+parameters:
+  fsType: ext4
+  nfsOptions: "vers=4.2,noresvport,softerr,timeo=600,retrans=5"
+  numberOfReplicas: "1"
+provisioner: driver.longhorn.io
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: test-pvc
+  namespace: longhorn-probe
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: test-storage-class
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 50Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: test-pvc-rwx
+  namespace: longhorn-probe
+spec:
+  accessModes:
+  - ReadWriteMany
+  storageClassName: test-storage-class-rwx
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 50Mi
+---
+# First attach of test-pvc. Writes random bytes and exits, which is what lets the volume
+# detach before rwo.sh attaches it again to a different pod.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rwo-writer
+  namespace: longhorn-probe
+spec:
+  restartPolicy: Never
+  containers:
+  - name: writer
+    image: docker.io/alpine/k8s:1.37.0@sha256:b421c2e9419edb98db39b6ab641669f4db7bb2acf354f22450c6b7e7176d1ff4
+    command:
+    - /bin/sh
+    - -ec
+    - |
+        awk '$2 == "/data" { print "MOUNT", $1, $3, $4 }' /proc/mounts
+        dd if=/dev/urandom of=/data/payload bs=1M count=8 2>/dev/null
+        sync
+        echo "SHA $(sha256sum /data/payload | cut -d' ' -f1)"
+        echo "SIZE_KB $(df -Pk /data | awk 'NR == 2 { print $2 }')"
+    volumeMounts:
+    - name: data
+      mountPath: /data
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: test-pvc
+---
+# The two RWX pods run at the same time and hand a token through the shared volume in both
+# directions, so each one's success requires the other to have had the volume mounted
+# while it did.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rwx-a
+  namespace: longhorn-probe
+spec:
+  restartPolicy: Never
+  containers:
+  - name: a
+    image: docker.io/alpine/k8s:1.37.0@sha256:b421c2e9419edb98db39b6ab641669f4db7bb2acf354f22450c6b7e7176d1ff4
+    command:
+    - /bin/sh
+    - -ec
+    - |
+        awk '$2 == "/data" { print "MOUNT", $1, $3, $4 }' /proc/mounts
+        token="$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+        echo "$token" >/data/token
+        echo "TOKEN $token"
+        end=$(( $(date +%s) + 150 ))
+        until grep -qx "$token" /data/ack 2>/dev/null; do [ "$(date +%s)" -lt "$end" ] || exit 3; sleep 1; done
+        echo "ACK $token"
+    volumeMounts:
+    - name: data
+      mountPath: /data
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: test-pvc-rwx
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rwx-b
+  namespace: longhorn-probe
+spec:
+  restartPolicy: Never
+  containers:
+  - name: b
+    image: docker.io/alpine/k8s:1.37.0@sha256:b421c2e9419edb98db39b6ab641669f4db7bb2acf354f22450c6b7e7176d1ff4
+    command:
+    - /bin/sh
+    - -ec
+    - |
+        awk '$2 == "/data" { print "MOUNT", $1, $3, $4 }' /proc/mounts
+        end=$(( $(date +%s) + 150 ))
+        until [ -s /data/token ]; do [ "$(date +%s)" -lt "$end" ] || exit 3; sleep 1; done
+        token="$(cat /data/token)"
+        echo "$token" >/data/ack
+        echo "SAW $token"
+    volumeMounts:
+    - name: data
+      mountPath: /data
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: test-pvc-rwx

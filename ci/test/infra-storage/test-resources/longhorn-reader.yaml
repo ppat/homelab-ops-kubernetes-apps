@@ -1,0 +1,28 @@
+---
+# Second attach of test-pvc, applied by scripts/longhorn/rwo.sh only after the writer's
+# attachment is gone and the claim has been expanded. A new pod on a freshly attached volume,
+# so nothing it reads can come from the writer's page cache or mount.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rwo-reader
+  namespace: longhorn-probe
+spec:
+  restartPolicy: Never
+  containers:
+  - name: reader
+    image: docker.io/alpine/k8s:1.37.0@sha256:b421c2e9419edb98db39b6ab641669f4db7bb2acf354f22450c6b7e7176d1ff4
+    command:
+    - /bin/sh
+    - -ec
+    - |
+        awk '$2 == "/data" { print "MOUNT", $1, $3, $4 }' /proc/mounts
+        echo "SHA $(sha256sum /data/payload | cut -d' ' -f1)"
+        echo "SIZE_KB $(df -Pk /data | awk 'NR == 2 { print $2 }')"
+    volumeMounts:
+    - name: data
+      mountPath: /data
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: test-pvc
