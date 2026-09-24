@@ -58,6 +58,9 @@ spec:
     - description: Apply infra-storage-core
       apply:
         file: ./infra-storage-core.yaml
+    - description: Apply infra-storage-core-minio
+      apply:
+        file: ./infra-storage-core-minio.yaml
     - description: Apply infra-storage-core-versitygw
       apply:
         file: ./infra-storage-core-versitygw.yaml
@@ -66,6 +69,11 @@ spec:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
         name: infra-storage-core
+        namespace: flux-system
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: infra-storage-core-minio
         namespace: flux-system
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -159,11 +167,6 @@ spec:
       # Provisional: local runs put versitygw ahead of longhorn's csi-attacher, which
       # argues for moving this above it. What settles it is three CI runs.
       template: ./validate-versitygw.yaml
-  # Stays last despite returning in 0.1s. It asserts the recording rule that spans MinIO and
-  # Garage, so it is an end-of-suite outcome check, not a cheap step to be sorted forward.
-  - name: Validate object-store
-    use:
-      template: ./validate-object-store.yaml
 
   # Asserts nothing; prints real pod Ready transition times. This suite's ordering had only
   # ever been reasoned about from catch dumps of failed runs -- a sample biased entirely
