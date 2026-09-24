@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.7.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.7.4...infra-storage-core-v0.7.5) (2026-09-24)
+
+
+### ✨ Features
+
+* **infra-storage-core:** update dxflrs/garage (v2.3.0 -&gt; v2.4.0) ([#4023](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4023)) ([f1efaca](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f1efacaae878f596be985d872e51b2ca63c1eb87))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** exempt garage from descheduler eviction ([#4090](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4090)) ([caea69e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/caea69e1470df3be33fe319b80808d52173ea3cd)), refs [#3611](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3611)
+* **infra-storage-core:** update amazon/aws-cli (2.36.44 -&gt; 2.36.45) ([#4038](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4038)) ([f5aa105](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f5aa1056ab9a5059fa7c2bce5b6cdad87db6ef07))
+* **infra-storage-core:** update amazon/aws-cli (2.36.45 -&gt; 2.36.46) ([#4042](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4042)) ([d0d2b84](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d0d2b8402829f15882eafd3385bc5246718d8ce3))
+* **infra-storage-core:** update amazon/aws-cli (2.36.46 -&gt; 2.36.47) ([#4055](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4055)) ([6d0b39d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6d0b39d7653668f6a00ef5130f0d0604c175d273))
+* **infra-storage-core:** update amazon/aws-cli (2.36.47 -&gt; 2.36.48) ([#4063](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4063)) ([ddc71b5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ddc71b56569a582fd11c033f49927014e2cda8aa))
+* **infra-storage-core:** update amazon/aws-cli (2.36.48 -&gt; 2.36.49) ([#4069](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4069)) ([b0ebfc9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b0ebfc9b8fadb1409841650a668c210f5dc7f160))
+* **infra-storage-core:** update amazon/aws-cli (2.36.49 -&gt; 2.36.50) ([#4074](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4074)) ([88c0717](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/88c0717fceacc2000f431f7aea87aa35d7550efe))
+* **infra-storage-core:** update dxflrs/garage (v2.4.0 -&gt; v2.4.1) ([#4027](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4027)) ([233f94c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/233f94cfe2115fb3627eeeb768982dcaa5c89a01))
+
 ## [0.7.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.7.3...infra-storage-core-v0.7.4) (2026-09-13)
 
 
