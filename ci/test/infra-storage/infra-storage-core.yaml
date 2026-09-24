@@ -13,8 +13,6 @@ spec:
       cert_issuer: selfsigned-issuer
       dns_zone: example.com
       domain_name: cluster.example.com
-      minio_admin_username_key: minio_admin_username
-      minio_admin_password_key: minio_admin_password
       garage_admin_token_key: garage_admin_token
       garage_data_claim: garage-data-test
       garage_metadata_claim: garage-metadata-test
@@ -31,23 +29,6 @@ spec:
   timeout: 2m0s
   wait: false
   patches:
-  # yamllint disable-line rule:indentation
-  - patch: |-
-      apiVersion: helm.toolkit.fluxcd.io/v2
-      kind: HelmRelease
-      metadata:
-        name: minio-release
-        namespace: minio
-      spec:
-        values:
-          persistence:
-            enabled: true
-            size: 1Gi
-    target:
-      group: helm.toolkit.fluxcd.io
-      kind: HelmRelease
-      name: minio-release
-      namespace: minio
   # yamllint disable-line rule:indentation
   - patch: |-
       apiVersion: helm.toolkit.fluxcd.io/v2
