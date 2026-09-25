@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.46](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.45...apps-media-v0.0.46) (2026-09-25)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** update digest busybox (dc2d74b -&gt; fd7dc98) ([#4077](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4077)) ([7d74b1f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7d74b1f82115e4203b1a136170c66a94a18b5d61))
+
 ## [0.0.45](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.44...apps-media-v0.0.45) (2026-09-15)
 
 
