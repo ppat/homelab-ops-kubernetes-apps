@@ -1,13 +1,6 @@
 # `garage` fixture
 
-Garage as an S3 endpoint. Garage is MinIO's intended successor here: after a planned 30-day trial of
-Loki-on-Garage the intention is to move everything across and decommission MinIO. This fixture exists so that
-it is ready when that happens.
-
-> **This fixture has never been run.** Nothing consumes it, and no CI run has ever deployed Garage in this
-> configuration. The first suite to adopt it should treat run one as **validation, not regression** — a
-> failure is at least as likely to be a defect in this directory as in whatever change is being tested.
-> Details in [Unproven](#unproven).
+Garage as an S3 endpoint for the `infra-database` and `infra-observability` suites.
 
 Shared conventions (naming, namespaces, post-build variables, waiting, `retryInterval`) are in
 [../README.md](../README.md). Only what is specific to this fixture is below.
@@ -59,29 +52,32 @@ Note this goes one step beyond the two removals originally specified for this fi
 
 - `infrastructure/bootstrap/crds/`, for `monitoring.coreos.com` — the component ships a `ServiceMonitor` and
   a `PrometheusRule`. Every suite already includes it.
-- A wait, budgeted generously:
+- The fixture's setup template, called immediately before the first step that uses S3:
 
   ```yaml
-  - description: Assert deployment/garage
-    assert:
-      bindings:
-      - name: name
-        value: garage
-      - name: namespace
-        value: garage
-      file: ../chainsaw/assertions/deployment-ready.yaml
-      timeout: 5m
+  - name: Provision Garage object storage
+    use:
+      template: ../fixtures/garage/setup.yaml
+      with:
+        bindings:
+        - name: garage_secret_store
+          value: fake
+        - name: garage_access_key_store_key
+          value: garage_loki_accesskeyid
+        - name: garage_secret_key_store_key
+          value: garage_loki_secretkey
+        - name: garage_buckets
+          value: homelab-loki-chunks homelab-loki-ruler
   ```
 
-  5m is what `infra-storage` uses. Garage's `readinessProbe` is a cluster-health check and its `startupProbe`
-  suppresses readiness until `/health` first returns 200, so the Deployment cannot report Available until
-  Garage itself is up rather than merely started.
+  The template waits up to 5m for Garage because its `readinessProbe` is a cluster-health check. It then
+  asks Garage to generate a key, creates the requested buckets, grants the key read/write access, and
+  replaces the named access-key and secret-key values in the fake `ClusterSecretStore` before the
+  consuming `ExternalSecret` exists. Each suite declares those keys and their example values in its own
+  fake store. Static connection data such as the endpoint belongs there as well.
 - **A late wait, not an early one.** Garage supplies no CRD and no admission webhook, so by the criterion in
   [TESTING.md](../../../../TESTING.md#move-a-wait-to-where-the-dependency-actually-is) the wait belongs
   immediately before the first step that actually uses S3.
-- **Buckets and access keys.** Unlike MinIO's chart, nothing here creates them; Garage's own admin API does,
-  behind the `GARAGE_ADMIN_TOKEN` in `garage-credentials.yaml`. `ci/test/chainsaw/scripts/garage-roundtrip.sh`
-  is the existing seam for that.
 - A different `domain_name` or `garage_s3_region`, if the suite needs one, by patching this fixture's
   `Kustomization` from the suite's own `pre-requisites/kustomization.yaml`. Note that
   `garage_s3_region` is half of a contract with whatever consumes Garage as an S3 client: a client signing
@@ -89,21 +85,6 @@ Note this goes one step beyond the two removals originally specified for this fi
   `loki_s3_region` must match this exact value or its compactor crashloops on first delete-store init
   (see #3611).
 
-## Unproven
-
-Everything, in the sense that matters. Specifically, none of the following has been observed even once:
-
-- Garage running with `Ingress/garage-web` and `Certificate/garage-web-tls-cert` absent. Nothing in the
-  Deployment, the Service or `garage.toml` references either object, so it is expected to be inert — but the
-  `[s3_web]` listener still binds on 3902 and `root_domain` is still set, so the only thing actually removed
-  is external routing. That reasoning is from reading the manifests, not from a run.
-- Garage taking its credentials from a plain `Secret` rather than through the `ExternalSecret`. The
-  `Deployment`'s `secretKeyRef` names the Secret and its two keys directly, and the values here are the ones
-  `infra-storage`'s fake store already feeds through, so the bytes the container sees should be identical.
-  Read, not run.
-- The PVC names `garage-data` / `garage-metadata`. `infra-storage` uses `-test` suffixes, so these exact
-  names have never been substituted into the Deployment.
-- Garage in any namespace configuration other than `infra-storage`'s.
-
-What *has* been exercised, in `infra-storage` on every run of that suite, is the component itself: the
-Deployment, the `--single-node` layout bootstrap, the S3 and admin APIs, and an S3 round-trip.
+The `infra-storage` suite separately exercises the component as the subject under test, including its
+layout bootstrap, S3 and admin APIs, and an S3 round-trip. The consumer suites exercise this fixture's plain
+Secret, PVC names, generated credentials, bucket permissions, and their own S3 clients.

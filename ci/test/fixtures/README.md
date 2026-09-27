@@ -16,7 +16,7 @@ resources:
 | `cnpg-operator/` | the CloudNativePG operator alone | `database-core/cloudnative-pg` |
 | `dragonfly-operator/` | the Dragonfly operator | `database-core/dragonfly` |
 | `minio/` | MinIO as an S3 endpoint | `storage-core/minio` |
-| `garage/` | Garage as an S3 endpoint (**never yet run**, see its README) | `storage-core/garage` |
+| `garage/` | Garage as an S3 endpoint | `storage-core/garage` |
 
 ## Why these exist
 
@@ -101,9 +101,8 @@ would mean inventing a number that no run has ever produced, which
 [TESTING.md](../../../TESTING.md#size-budgets-from-measurement-in-both-directions) treats as a defect in
 its own right.
 
-`minio` is the exception and it is measured rather than sloppy: `infra-database` waits on
-`kustomization/minio` instead of on the release, and that object's `wait: true` / `timeout: 4m0s` pair was
-sized on observed CI — 28.1/82.1/94.1s across three green runs.
+`minio` is the exception. Its own `wait: true` / `timeout: 4m0s` pair was sized on observed CI —
+28.1/82.1/94.1s across three green runs.
 
 ### `retryInterval`
 

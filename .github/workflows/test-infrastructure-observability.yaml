@@ -10,7 +10,7 @@ on:
     - 'ci/test/infra-observability/**'
     - 'ci/test/chainsaw/**'
     - 'ci/test/fixtures/external-secrets/**'
-    - 'ci/test/fixtures/minio/**'
+    - 'ci/test/fixtures/garage/**'
     - '!ci/test/fixtures/**.md'
     - 'infrastructure/subsystems/observability-core/**'
     - 'infrastructure/subsystems/observability-extra/**'

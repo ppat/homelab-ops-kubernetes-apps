@@ -15,7 +15,7 @@ set -euo pipefail
 # WHICH ENDPOINT, AND WHY TWO
 # ---------------------------
 # Not /loki/api/v1/labels: that reports the union over every stream in the cluster -
-# the collector's own logs, kube-system, Loki, Prometheus, MinIO. It can neither gain nor
+# the collector's own logs, kube-system, Loki, Prometheus, Garage. It can neither gain nor
 # lose a label because of what happened to OUR fixture, so equality against it would be
 # both meaningless and flaky.
 #
