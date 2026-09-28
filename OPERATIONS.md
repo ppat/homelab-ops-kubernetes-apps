@@ -193,9 +193,8 @@ deleted.
 ## Maintenance Practices
 
 1. Module Archival
-   - Unused modules moved to `.archive`
-   - Preserves historical context
-   - Maintains deployment history
+   - Unused modules removed from the deployable tree
+   - Git history preserves prior module definitions
 
 2. Repository Organization
    - Helm repositories split by purpose (infra vs apps)
