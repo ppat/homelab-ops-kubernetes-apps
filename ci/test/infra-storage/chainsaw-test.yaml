@@ -75,7 +75,7 @@ spec:
     - events:
         namespace: flux-system
 
-  # The step order below WAS csi-driver-nfs -> minio -> garage, defended in a long comment
+  # The step order below WAS csi-driver-nfs -> garage, defended in a long comment
   # on the grounds that garage's and minio's readiness had never been observed -- their
   # asserts returned in 0.1s, which is a censored measurement, and reordering on creation
   # times had already been wrong once (grafana, in infra-observability). That was the right
@@ -141,9 +141,6 @@ spec:
   - name: Validate garage
     use:
       template: ./validate-garage.yaml
-  - name: Validate minio
-    use:
-      template: ./validate-minio.yaml
   - name: Validate csi-driver-nfs
     use:
       template: ./validate-csi-driver-nfs.yaml
@@ -159,11 +156,6 @@ spec:
       # Provisional: local runs put versitygw ahead of longhorn's csi-attacher, which
       # argues for moving this above it. What settles it is three CI runs.
       template: ./validate-versitygw.yaml
-  # Stays last despite returning in 0.1s. It asserts the recording rule that spans MinIO and
-  # Garage, so it is an end-of-suite outcome check, not a cheap step to be sorted forward.
-  - name: Validate object-store
-    use:
-      template: ./validate-object-store.yaml
 
   # Asserts nothing; prints real pod Ready transition times. This suite's ordering had only
   # ever been reasoned about from catch dumps of failed runs -- a sample biased entirely

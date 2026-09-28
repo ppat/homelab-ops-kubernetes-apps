@@ -1136,7 +1136,7 @@
         "type": "prometheus",
         "uid": "$datasource"
       },
-      "description": "table_size for the four tables that scale with stored data, the count of referenced blocks, and MinIO's object total as a migration comparator. All are counts, so they share an axis.\n\nThe shapes to watch, each a distinct way disk gets consumed invisibly:\n- version rising faster than object: version rows outliving their objects, i.e. table GC falling behind.\n- block_ref rising while object is flat: block references accumulating with no new objects behind them.\n- multipart_upload climbing and never falling: abandoned multipart uploads. These hold their blocks indefinitely and are the classic silent consumer of S3 disk -- nothing expires them, and no alert covers it.\n- blocks referenced flat while the data volume grows: orphaned block files (see the data-bytes-per-block panel).\n\nThe MinIO series is the source side of the bucket migration -- during cutover, the two converging is what \"the copy finished\" looks like. It vanishes on its own when MinIO is decommissioned, since both engines are deployed by this same module.\n\nNote object counts rows, not live keys: a delete leaves a tombstone row until table GC collects it, and in-flight uploads occupy a row too. It is a good approximation of S3 object count, not an exact one.",
+      "description": "table_size for the four tables that scale with stored data, and the count of referenced blocks. All are counts, so they share an axis.\n\nThe shapes to watch, each a distinct way disk gets consumed invisibly:\n- version rising faster than object: version rows outliving their objects, i.e. table GC falling behind.\n- block_ref rising while object is flat: block references accumulating with no new objects behind them.\n- multipart_upload climbing and never falling: abandoned multipart uploads. These hold their blocks indefinitely and are the classic silent consumer of S3 disk -- nothing expires them, and no alert covers it.\n- blocks referenced flat while the data volume grows: orphaned block files (see the data-bytes-per-block panel).\n\nNote object counts rows, not live keys: a delete leaves a tombstone row until table GC collects it, and in-flight uploads occupy a row too. It is a good approximation of S3 object count, not an exact one.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1188,37 +1188,7 @@
           "unit": "short",
           "min": 0
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "minio objects (migration source)"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "#8e8e8e",
-                  "mode": "fixed"
-                }
-              },
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "dash": [
-                    10,
-                    10
-                  ],
-                  "fill": "dash"
-                }
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 0
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
@@ -1268,18 +1238,6 @@
           "instant": false,
           "refId": "B",
           "legendFormat": "garage blocks referenced"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "editorMode": "code",
-          "expr": "sum(minio_cluster_usage_object_total)",
-          "range": true,
-          "instant": false,
-          "refId": "C",
-          "legendFormat": "minio objects (migration source)"
         }
       ],
       "title": "What is actually stored",

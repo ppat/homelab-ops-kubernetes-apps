@@ -95,6 +95,11 @@ spec:
             - alert: GarageBlockResyncErrors
             - alert: GarageHighBlockResyncQueue
             - alert: GarageLowDiskSpace
+          - name: object-store-disk-amplification
+            rules:
+            - record: object_store:disk_used_bytes
+              labels:
+                engine: garage
           - name: object-store-recovery-events
             rules:
             - record: object_store:garage_up

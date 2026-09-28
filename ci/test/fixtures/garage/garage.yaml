@@ -7,7 +7,7 @@ metadata:
 spec:
   interval: 15m0s
   # The component directory, not ./infrastructure/subsystems/storage-core -- which would also
-  # bring longhorn, csi-driver-nfs and minio.
+  # bring longhorn and csi-driver-nfs.
   path: ./infrastructure/subsystems/storage-core/garage
   postBuild:
     substitute:
@@ -73,8 +73,8 @@ spec:
       namespace: garage
   # Garage's credentials are supplied directly by garage-credentials.yaml in this fixture, so
   # the module's ExternalSecret for them is removed. See that file for why this is scaffolding
-  # rather than a loss of coverage; it is the same trade ../minio/ makes, and it is what lets
-  # a suite use object storage without standing up external-secrets at all.
+  # rather than a loss of coverage; and it is what lets  a suite use object storage without
+  # standing up external-secrets at all.
   # yamllint disable-line rule:indentation
   - patch: |-
       $patch: delete
