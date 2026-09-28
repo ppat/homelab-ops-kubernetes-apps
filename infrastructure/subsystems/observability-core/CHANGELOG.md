@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.31.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.30.0...infra-observability-core-v0.31.0) (2026-09-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* drop Goldilocks and Vertical Pod Autoscaler ([#4133](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4133))
+* **infra-observability-core:** update grafana (12.11.2 -> 13.0.1) ([#4111](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4111))
+* **infra-observability-core:** update kube-prometheus-stack (88.6.5 -> 91.5.1) ([#4096](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4096))
+
+### ✨ Features
+
+* drop Goldilocks and Vertical Pod Autoscaler ([#4133](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4133)) ([738f2aa](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/738f2aade0d6ce4ba2fd829634eb374cd0e08168))
+* **infra-observability-core:** update goldilocks (11.0.0 -&gt; 11.1.0) ([#4036](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4036)) ([0ec95fc](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0ec95fcf3f18b8dbcec1ec98c05604424029c2a6))
+* **infra-observability-core:** update grafana (12.11.2 -&gt; 13.0.1) ([#4111](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4111)) ([fb8b955](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fb8b9552ed274e77ccca4c9f9045c94df04ab7ae))
+* **infra-observability-core:** update grafana (13.0.1 -&gt; 13.2.5) ([#4130](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4130)) ([f2f7d7a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f2f7d7af6b214e52b59462204a67276077a36810))
+* **infra-observability-core:** update kube-prometheus-stack (88.6.5 -&gt; 91.5.1) ([#4096](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4096)) ([c2066d3](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c2066d3be767b26b0d59bb2edfd31ab6625bb547))
+* **infra-observability-core:** update kube-prometheus-stack (91.5.3 -&gt; 91.8.0) ([#4131](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4131)) ([dc0a08f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/dc0a08fa88db386e6a582b524f67a6a7f49fcae0))
+* **infra-observability-core:** update loki (18.12.2 -&gt; 18.13.0) ([#4067](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4067)) ([d364fbd](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d364fbdd231274044f705b0f395bee18716dc7e8))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** update digest busybox (dc2d74b -&gt; fd7dc98) ([#4077](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4077)) ([7d74b1f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7d74b1f82115e4203b1a136170c66a94a18b5d61))
+* **infra-observability-core:** update goldilocks (11.1.0 -&gt; 11.1.1) ([#4054](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4054)) ([b7929cc](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b7929cc210fb293da4cfb3af081233459912df55))
+* **infra-observability-core:** update kube-prometheus-stack (91.5.1 -&gt; 91.5.3) ([#4112](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4112)) ([bc93d30](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/bc93d3027c0217e5f51c61cc275b518d91de841f))
+* **infra-observability-core:** update loki (18.13.0 -&gt; 18.13.3) ([#4068](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4068)) ([b38e129](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b38e12998d9ee1530deb44c53565938ad7e45698))
+* **infra-observability-core:** update loki (18.13.3 -&gt; 18.13.4) ([#4071](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4071)) ([ebb3ea4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ebb3ea433f57b803df8323c302aec77d0919ef12))
+* **infra-observability-core:** update loki (18.13.4 -&gt; 18.13.5) ([#4087](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4087)) ([e7c644e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e7c644e2281a3624b9716265f5dcc42ada124d54))
+
 ## [0.30.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.29.10...infra-observability-core-v0.30.0) (2026-09-15)
 
 
