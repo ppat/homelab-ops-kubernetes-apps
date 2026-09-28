@@ -1,0 +1,46 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: setup-garage
+spec:
+  try:
+  - description: Assert deployment/garage
+    assert:
+      bindings:
+      - name: name
+        value: garage
+      - name: namespace
+        value: garage
+      file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 5m
+  - description: Create Garage buckets and credentials
+    script:
+      env:
+      - name: GARAGE_SECRET_STORE
+        value: ($garage_secret_store)
+      - name: GARAGE_ACCESS_KEY_STORE_KEY
+        value: ($garage_access_key_store_key)
+      - name: GARAGE_SECRET_KEY_STORE_KEY
+        value: ($garage_secret_key_store_key)
+      - name: GARAGE_BUCKETS
+        value: ($garage_buckets)
+      content: ../fixtures/garage/setup.sh
+      timeout: 1m
+  catch:
+  - describe:
+      apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      name: pre-requisites-garage
+      namespace: flux-system
+  - describe:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: garage
+      namespace: garage
+  - podLogs:
+      selector: app.kubernetes.io/name=garage
+      namespace: garage
+      tail: 100
+  - events:
+      namespace: garage

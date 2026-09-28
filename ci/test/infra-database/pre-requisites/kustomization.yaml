@@ -3,12 +3,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-# This suite's own minio data -- the buckets/users/policies ConfigMap and the
-# `minio-user-credentials` Secret the module's backups authenticate with. Deliberately not
-# part of the minio fixture: the bucket names and access keys are per-suite.
-- minio/
-# Three shared fixtures in place of the whole security-core module and this suite's own
-# copy of the minio prerequisite.
+# Three shared fixtures in place of the whole security-core module and an object-storage
+# prerequisite maintained by this suite.
 #
 # cert-manager IS needed here, and not for a reason visible in the module's manifests:
 # database-core installs the Barman Cloud plugin, whose chart issues its own gRPC TLS
@@ -18,17 +14,10 @@ resources:
 # so the audit question has to be asked of the charts a module installs, not only of the
 # YAML it checks in.
 #
-# `Namespace/minio` now comes from the fixture, so this suite's namespaces.yaml is deleted
-# rather than trimmed -- minio was the only namespace in it, and kustomize refuses to build
-# a duplicate resource id (it surfaces as `Assert kustomization/pre-requisites` failing).
-#
-# The fixture's Kustomization is named `pre-requisites-minio`, not `minio`; the reconcile
-# step and its catch block in chainsaw-test.yaml are renamed to match.
-#
 # See ../../fixtures/README.md.
 - ../../fixtures/cert-manager/
 - ../../fixtures/external-secrets/
-- ../../fixtures/minio/
+- ../../fixtures/garage/
 - fake-secret-store.yaml
 
 sortOptions:

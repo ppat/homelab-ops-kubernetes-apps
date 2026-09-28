@@ -11,7 +11,7 @@ on:
     - 'ci/test/chainsaw/**'
     - 'ci/test/fixtures/cert-manager/**'
     - 'ci/test/fixtures/external-secrets/**'
-    - 'ci/test/fixtures/minio/**'
+    - 'ci/test/fixtures/garage/**'
     - '!ci/test/fixtures/**.md'
     - 'infrastructure/subsystems/database-core/**'
     - '!infrastructure/subsystems/database-core/**.md'
@@ -61,5 +61,5 @@ jobs:
       kind_config: .github/kind-cluster-single-node.yaml
       # See the equivalent note in test-infrastructure-observability.yaml. This suite has
       # the highest ceiling utilisation in the repo (p90 0.53) before any change, and its
-      # minio reconcile budget has gone 3m -> 5m, so it has the least margin to give.
+      # object-storage readiness can consume 5m, so it has the least margin to give.
       timeout: 25

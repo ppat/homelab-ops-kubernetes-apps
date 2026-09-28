@@ -5,23 +5,15 @@ kind: Kustomization
 resources:
 - namespaces.yaml
 - pvc/
-- minio/
 - loki/
-# Two shared fixtures in place of the whole security-core module and this suite's own copy
-# of the minio prerequisite. Nothing in observability-core or observability-extra ships a
+# Two shared fixtures in place of the whole security-core module and an object-storage
+# prerequisite maintained by this suite. Nothing in observability-core or observability-extra ships a
 # `Certificate` or an `Issuer`, so cert-manager is not composed here at all -- the module's
 # only external dependency of that kind is its `ExternalSecret` objects (grafana admin,
 # the Loki S3 credentials, unpoller), which still resolve through fake-secret-store.yaml.
-#
-# The minio fixture supersedes the pre-requisites/minio.yaml and
-# pre-requisites/minio-admin-credentials.yaml that used to live here; it carries the same
-# three patches (drop the admin ExternalSecret, persistence 500Gi -> 1Gi, drop the Probes)
-# and the same measured `wait: true` / `timeout: 4m0s` pair. What stays per-suite is
-# minio/, which generates this suite's buckets, users and policies (homelab-loki-chunks)
-# and the Secret/minio-user-credentials they reference -- that is suite data, not fixture.
 # See ../../fixtures/README.md.
 - ../../fixtures/external-secrets/
-- ../../fixtures/minio/
+- ../../fixtures/garage/
 - fake-secret-store.yaml
 
 sortOptions:

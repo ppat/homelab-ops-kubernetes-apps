@@ -4,9 +4,9 @@ kind: Namespace
 metadata:
   name: logging
 ---
-# No `minio` here: the minio fixture owns that namespace, and kustomize refuses to build a
+# No `garage` here: the Garage fixture owns that namespace, and kustomize refuses to build a
 # duplicate resource id -- which would surface as `Assert kustomization/pre-requisites`
-# failing rather than as anything to do with minio. See
+# failing rather than as anything to do with Garage. See
 # ../../fixtures/README.md, "Namespaces".
 apiVersion: v1
 kind: Namespace

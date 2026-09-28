@@ -21,10 +21,7 @@ spec:
         - name: prerequisites_path
           value: ./ci/test/infra-observability/pre-requisites
 
-  # Only external-secrets is waited for here, and that is deliberate -- see the minio step
-  # below the module apply for why the other one moved.
-  #
-  # This one cannot move: the module's own manifests contain `ExternalSecret` objects, so
+  # The module's own manifests contain `ExternalSecret` objects, so
   # the CRD has to be established and the validating webhook has to be serving before the
   # module Kustomization can be applied at all.
   - name: Reconcile pre-requisites
@@ -61,6 +58,24 @@ spec:
     - events:
         namespace: default
 
+  # Loki reads its S3 credentials when its pod starts, so Garage must generate the key and
+  # inject it into the fake secret store before the module creates Loki's ExternalSecret.
+  # This wait cannot move after the module apply without testing a stale Secret
+  # and requiring an implementation-specific Loki restart.
+  - name: Provision Garage object storage
+    use:
+      template: ../fixtures/garage/setup.yaml
+      with:
+        bindings:
+        - name: garage_secret_store
+          value: fake
+        - name: garage_access_key_store_key
+          value: garage_loki_accesskeyid
+        - name: garage_secret_key_store_key
+          value: garage_loki_secretkey
+        - name: garage_buckets
+          value: homelab-loki-chunks homelab-loki-ruler
+
   - name: Apply infra-observability modules
     try:
     - description: Apply infra-observability-core
@@ -73,7 +88,7 @@ spec:
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
-        name: pre-requisites-minio
+        name: pre-requisites-garage
         namespace: flux-system
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -87,46 +102,6 @@ spec:
         namespace: flux-system
     - events:
         namespace: flux-system
-
-  # Deliberately AFTER the module apply, which is the single biggest change to this suite's
-  # wall-clock. minio was previously waited for as a prerequisite, and the readiness data
-  # shows what that cost: external-secrets became ready at T0+117s, minio at T0+188s, and
-  # the module was only applied at T0+202s -- so thirteen HelmReleases sat idle for eighty
-  # seconds, not pulling a single byte, waiting on something none of them needs in order to
-  # be applied. minio ships no CRDs and the module creates no minio resources; what the
-  # module wants from it is an S3 endpoint, and only Loki wants that, minutes later.
-  #
-  # Moving the wait here lets the module's images pull while minio finishes installing, and
-  # the validate steps still cannot start until minio is confirmed, so nothing downstream
-  # loses a guarantee.
-  #
-  # The falsifier, stated because it is not a certainty: this raises peak contention by
-  # overlapping minio's install with thirteen concurrent image pulls on a four-core runner.
-  # If the suite gets *slower* or the minio reconcile starts approaching its budget again,
-  # that is this change, and it should go back.
-  - name: Reconcile helmrelease/minio-release
-    try:
-    # 4m: was 2m, which expired at exactly 120.0s on 4 of the 6 re-run-proven flakes in this
-    # suite -- the largest single failure bucket here. Green observations ran 54.3-86.1s, so
-    # a good day already consumed 72% of it, and one observed run took 126s.
-    - description: Reconcile helmrelease/minio-release
-      script:
-        # yamllint disable-line rule:line-length
-        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=minio-release --namespace=minio --timeout=4m
-        timeout: 4m
-    catch:
-    - describe:
-        apiVersion: helm.toolkit.fluxcd.io/v2
-        kind: HelmRelease
-        name: minio-release
-        namespace: minio
-    - describe:
-        apiVersion: kustomize.toolkit.fluxcd.io/v1
-        kind: Kustomization
-        name: pre-requisites-minio
-        namespace: flux-system
-    - events:
-        namespace: minio
 
   # Validation order below is measured, not arbitrary: ascending by when each component
   # actually became ready, taken from the `kubectl get` dumps of failed runs (creation
