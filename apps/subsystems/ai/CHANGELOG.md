@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.8.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.8.3...apps-ai-v0.8.4) (2026-09-28)
+
+
+### ✨ Features
+
+* **apps-ai:** update docker.io/grafana/mcp-grafana (1.4.2 -&gt; 1.5.1) ([#4103](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4103)) ([370b769](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/370b769c87b61a1dd804caa8bbb151cd8600d9b6))
+* **apps-ai:** update docker.n8n.io/n8nio/n8n (2.37.6 -&gt; 2.41.3) ([#4123](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4123)) ([f0dbb52](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f0dbb527a4189415e7a1d9115a0aa302f1268c5b))
+* **apps-ai:** update ghcr.io/github/github-mcp-server (v1.8.0 -&gt; v1.12.2) ([#4124](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4124)) ([286d682](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/286d682473c998f93c02fcf649b5e3e14e1a0e98))
+* **apps-ai:** update ghcr.io/homeassistant-ai/ha-mcp (8.1.1 -&gt; 8.5.0) ([#4125](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4125)) ([cf73c2a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/cf73c2a1e6dcf4584c1edab60f013fd52068bb45))
+* **apps-ai:** update ghcr.io/sirkirby/unifi-network-mcp (0.25.2 -&gt; 0.35.0) ([#4126](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4126)) ([fb02100](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fb021009f9b1d861a3bb1ea9288365bcf5cf2aa5))
+* **apps-ai:** update ghcr.io/sirkirby/unifi-protect-mcp (0.7.4 -&gt; 0.8.13) ([#4127](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4127)) ([728b0b6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/728b0b635fc02035eac8107466e97a8278bdc29f))
+* **apps-home-automation:** update ghcr.io/coder/code-server (4.128.0 -&gt; 4.139.1) ([#4136](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4136)) ([2b16dbb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2b16dbb830620d4acff4646d5a53197d2d81b169))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** update docker.io/grafana/mcp-grafana (1.4.0 -&gt; 1.4.2) ([#4056](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4056)) ([242fb00](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/242fb004e25aa11dd72f863231d032d75ed10d5e))
+* **apps-ai:** update ghcr.io/containers/kubernetes-mcp-server (v0.0.66 -&gt; v0.0.67) ([#4120](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4120)) ([a9e84bd](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a9e84bd1d6be8ce119806994edf4eabbd2f72311))
+* **apps-ai:** update mcr.microsoft.com/playwright/mcp (v0.0.79 -&gt; v0.0.82) ([#4121](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4121)) ([9872911](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/987291192096bb9ada05b6b419f61bca6d3c944d))
+
 ## [0.8.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.8.2...apps-ai-v0.8.3) (2026-09-22)
 
 
