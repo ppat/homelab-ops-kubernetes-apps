@@ -20,7 +20,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: mcp-home-assistant
-        image: ghcr.io/homeassistant-ai/ha-mcp:8.1.1@sha256:e1d76a6ee54e26054a13a6c04089824b76d4d370246239591a02a2e4445ad2c9
+        image: ghcr.io/homeassistant-ai/ha-mcp:8.5.0@sha256:e1538bcdadb13a5467bbb8258fba3262a05518585e18115742da638adec7057c
         imagePullPolicy: IfNotPresent
         # Default CMD serves stdio; ha-mcp-web selects the streamable-HTTP server instead.
         command:
