@@ -48,7 +48,7 @@ an improvisation.
 | 7 | `internal-dependencies` | A toolchain/dev dependency moved, or a tooling config file hand-edited (`mise.toml`, `.pre-commit-config.yaml`, `package.json`, lockfiles) | no |
 | 8 | `internal-workflows` | This repo's own CI and release machinery: hand-authored workflow logic, `ci/scripts/`, `ci/validation/`, the shared test harness, `release-please-config.json`, `.release-please-manifest.json`, `commitlint.config.js`, linter configs | no |
 | 9 | `agents` | `.claude/**`, `CLAUDE.md`, any other AI-coding-agent instruction surface | no |
-| 10 | *(empty)* | Repo-level docs/policy belonging to no single surface; an atomic change spanning ≥2 modules; a fan-in `ci/test/` group change; repo-root and dot-directory residue (`.analysis/`, `.vscode/`, `.gitattributes`, …) | can ship |
+| 10 | *(empty)* | Repo-level docs/policy belonging to no single surface; an atomic change spanning ≥2 modules; a fan-in `ci/test/` group change; repo-root and dot-file residue (`.vscode/`, `.gitattributes`, …) | can ship |
 
 The module list itself lives in `commitlint.config.js` and `release-please-config.json` (path →
 component); those files are the source of truth when a module is added or removed.
