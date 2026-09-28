@@ -27,7 +27,7 @@ spec:
         env:
         - name: TZ
           value: US/Eastern
-        image: ghcr.io/home-operations/home-assistant:2026.8.3@sha256:16ca445e58fa71d4f7ff287d4e9793ea690ccae932a5e200852371425cd7abb0
+        image: ghcr.io/home-operations/home-assistant:2026.9.3@sha256:638c4c8d62caad377e70bfa7beef75f70c9343a49aed64aad824f2cd06843c1c
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -73,7 +73,7 @@ spec:
           "--disable-telemetry",
           "/config"
         ]
-        image: ghcr.io/coder/code-server:4.128.0@sha256:bd4a3a022ff016954bf9ae6ea0bce6c7eef96a69da4d2fe34552638f32d4820c
+        image: ghcr.io/coder/code-server:4.139.1@sha256:0c067c3cf09ed1830ce282387826be8feefef8a5828f462791c2df3f1007ee17
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:

@@ -5,6 +5,11 @@ metadata:
   name: validate-unifi-poller
 spec:
   try:
+  # First assertion after the module is applied with wait disabled, so this is where the
+  # module's initial convergence lands. The budget is sized for that position rather than
+  # for unpoller: convergence was measured at 25.0s, so 90s by the x3 rule. Both assertions
+  # carry it because either can be the one left waiting. If the step order in
+  # chainsaw-test.yaml changes, the budget moves with the first position.
   - description: Assert externalsecret/unpoller-credentials
     assert:
       bindings:
@@ -13,6 +18,7 @@ spec:
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/externalsecret-ready.yaml
+      timeout: 90s
   - description: Assert deployment/unpoller
     assert:
       bindings:
@@ -21,6 +27,7 @@ spec:
       - name: namespace
         value: monitoring
       file: ../chainsaw/assertions/deployment-ready.yaml
+      timeout: 90s
 
   catch:
   - describe:

@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-core-v0.0.23...infra-kubernetes-core-v0.1.0) (2026-09-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* drop Goldilocks and Vertical Pod Autoscaler ([#4133](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4133))
+
+### ✨ Features
+
+* drop Goldilocks and Vertical Pod Autoscaler ([#4133](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4133)) ([738f2aa](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/738f2aade0d6ce4ba2fd829634eb374cd0e08168))
+
 ## [0.0.23](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-core-v0.0.22...infra-kubernetes-core-v0.0.23) (2026-08-07)
 
 
