@@ -43,15 +43,15 @@ spec:
       concurrentAutomaticEngineUpgradePerNodeLimit: 1
       concurrentVolumeBackupRestorePerNodeLimit: 2
       defaultDataLocality: best-effort
-      defaultReplicaCount: 2
-      fastReplicaRebuildEnabled: true
+      defaultReplicaCount: '{"v1":"2","v2":"3"}'
+      fastReplicaRebuildEnabled: '{"v1":"true","v2":"true"}'
       nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
-      offlineRelicaRebuilding: true
+      offlineReplicaRebuilding: false
       upgradeChecker: false
       # Snapshot (see: https://longhorn.io/docs/latest/references/settings/#snapshot)
-      snapshotDataIntegrity: fast-check
-      snapshotDataIntegrityCronjob: "0 6 * * *"
-      snapshotDataIntegrityImmediateCheckAfterSnapshotCreation: false
+      snapshotDataIntegrity: '{"v1":"fast-check","v2":"fast-check"}'
+      snapshotDataIntegrityCronjob: '{"v1":"0 6 * * *","v2":"0 10 * * *"}'
+      snapshotDataIntegrityImmediateCheckAfterSnapshotCreation: '{"v1":"false","v2":"false"}'
       snapshotMaxCount: 24
       # Orphan (see: https://longhorn.io/docs/latest/references/settings/#orphan)
       orphanResourceAutoDeletion: replica-data;instance
