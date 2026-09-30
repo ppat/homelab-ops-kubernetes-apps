@@ -46,7 +46,20 @@ spec:
       defaultReplicaCount: 2
       fastReplicaRebuildEnabled: true
       nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
-      offlineRelicaRebuilding: true
+      # Rebuilds degraded replicas of a DETACHED volume by attaching it to its Longhorn owner node;
+      # when off, a detached volume stays degraded until something next attaches it.
+      #
+      # Hazard for dataLocality: strict-local (longhorn/longhorn#11322): the same controller
+      # treats a brand-new volume's unscheduled replica as degraded and attaches the volume to
+      # whichever longhorn-manager won its ownership race, so the single replica and the PV's
+      # nodeAffinity land there instead of on the PVC's selected-node. A pod with required
+      # anti-affinity against that node then never schedules. Strict-local volumes must opt out
+      # per volume at creation (Volume spec.offlineRebuilding: disabled overrides this setting);
+      # no StorageClass parameter can set that field.
+      #
+      # Declared explicitly because Longhorn leaves a setting at its last value once its key is
+      # absent from the chart's default-setting ConfigMap.
+      offlineReplicaRebuilding: true
       upgradeChecker: false
       # Snapshot (see: https://longhorn.io/docs/latest/references/settings/#snapshot)
       snapshotDataIntegrity: fast-check
