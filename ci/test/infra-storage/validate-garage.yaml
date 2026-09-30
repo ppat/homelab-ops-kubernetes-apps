@@ -136,8 +136,7 @@ spec:
         value: garage
       file: ../chainsaw/assertions/certificate-ready.yaml
   # ../chainsaw/assertions/ingress-ready.yaml doesn't apply here: it asserts
-  # status.loadBalancer.ingress, but this suite (like the pre-existing MinIO
-  # ingresses it never asserted for the same reason) deliberately installs no
+  # status.loadBalancer.ingress, but this suite deliberately installs no
   # MetalLB and no ingress controller -- that's networking-core's suite to
   # cover -- so no LoadBalancer address is ever assigned and that assert can
   # never pass here. Assert shape (annotations + rules) instead, matching

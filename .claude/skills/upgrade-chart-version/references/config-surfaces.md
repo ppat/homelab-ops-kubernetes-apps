@@ -61,7 +61,7 @@ cluster actually applies it to this module in production regardless.
 If your upgrade changes something a component patches or depends on, decide
 whether the component is cheap enough to add real test coverage for (as the
 CNPG/`db-backups` migration did — a self-contained dependency with a fakeable
-backend like MinIO was tractable in a kind cluster) versus one whose
+backend like Garage was tractable in a kind cluster) versus one whose
 prerequisites make that impractical (e.g. `sso`/`oidc-credentials` typically
 depend on an external IdP and enough other infrastructure that standing it up in
 a chainsaw suite isn't a good trade). When it's not testable, that's a reason to
