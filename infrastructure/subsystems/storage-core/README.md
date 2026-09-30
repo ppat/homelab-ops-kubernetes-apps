@@ -4,7 +4,7 @@ Provides storage capabilities for the cluster through distributed block storage,
 
 ## Quick Links
 
-<a href="https://garagehq.deuxfleurs.fr/" target="_blank"><img src="../../../.static/images/logos/garage.svg" width="32" height="32" alt="Garage"></a> <a href="https://longhorn.io/" target="_blank"><img src="../../../.static/images/logos/longhorn.svg" width="32" height="32" alt="Longhorn"></a> <a href="https://min.io/" target="_blank"><img src="../../../.static/images/logos/minio.svg" width="32" height="32" alt="MinIO"></a> <a href="https://github.com/kubernetes-csi/csi-driver-nfs" target="_blank"><img src="../../../.static/images/logos/nfs-csi-driver.png" width="32" height="32" alt="NFS CSI Driver"></a> <a href="https://www.versity.com/products/versitygw/" target="_blank"><img src="../../../.static/images/logos/versitygw.svg" width="32" height="32" alt="VersityGW"></a>
+<a href="https://garagehq.deuxfleurs.fr/" target="_blank"><img src="../../../.static/images/logos/garage.svg" width="32" height="32" alt="Garage"></a> <a href="https://longhorn.io/" target="_blank"><img src="../../../.static/images/logos/longhorn.svg" width="32" height="32" alt="Longhorn"></a> <a href="https://github.com/kubernetes-csi/csi-driver-nfs" target="_blank"><img src="../../../.static/images/logos/nfs-csi-driver.png" width="32" height="32" alt="NFS CSI Driver"></a> <a href="https://www.versity.com/products/versitygw/" target="_blank"><img src="../../../.static/images/logos/versitygw.svg" width="32" height="32" alt="VersityGW"></a>
 
 ## Overview
 
@@ -50,7 +50,6 @@ The storage-core module provides four main capabilities:
 | Component | Primary Role | Integration Points |
 | ----------- | ------------- | ------------------- |
 | Longhorn | Distributed block storage | • Provides replicated persistent volumes for stateful applications<br>• Manages volume snapshots and backups<br>• Ensures data availability through replication<br>• Enables volume expansion and data integrity checks |
-| MinIO | S3-compatible object storage | • Provides S3-compatible storage for applications<br>• Manages bucket policies and user access<br>• Enables object lifecycle management<br>• Exposes metrics for monitoring |
 | Garage | Single-node S3-compatible object storage | • Runs as a plain single-replica `Deployment` with `Recreate` strategy, referencing externally-provisioned metadata/data PVCs by claim name<br>• Started with `garage server --single-node`, which assigns and applies its one-time cluster layout in-process before any listener binds, gated by a `startupProbe` on `/health`<br>• Serves opted-in bucket contents anonymously through Garage's website hosting module<br>• Exposes S3, website, and admin APIs through three separate Ingresses (`garage-s3`, `garage-web`, `garage-admin`); the admin Ingress's hostname is `garage.${domain_name}` (its resource name stays `garage-admin` to avoid stranding an orphaned object under `prune: false`), scoped to the `/v2` path only to keep Garage's unauthenticated `/metrics`/`/health`/`/check` off that hostname<br>• The website Ingress carries both an apex and a wildcard host (`garage-web.${domain_name}` and `*.garage-web.${domain_name}`), covered by one `cert-manager` `Certificate`, so any bucket is reachable by name as a subdomain with no per-bucket Ingress or alias<br>• Exposes Prometheus metrics scraped via a `ServiceMonitor`<br>• A `PrometheusRule` alerts on node-down, RPC error rate, block resync errors/queue depth, and low disk space, and separately records recovery-event KPI series (block corruptions, currently-errored blocks)<br>• Ships a Grafana dashboard as a labelled `ConfigMap`, discovered by the Grafana sidecar deployed by observability-core<br>• Bucket/key provisioning is out of this module's scope |
 | CSI Driver NFS | External NFS share integration | • Enables using external NFS shares as persistent volumes<br>• Supports dynamic volume provisioning from NFS shares<br>• Manages mount options and access modes<br>• Integrates with Kubernetes storage classes |
 | VersityGW | S3 gateway over a POSIX filesystem | • Deployed from the upstream chart via an `OCIRepository` + `HelmRelease`, over a PVC this module references by claim name and never provisions<br>• Serves S3, the WebUI, and the admin API on three listeners behind three Ingresses (`versitygw-s3`, `versitygw`, `versitygw-admin`); setting the admin port is what keeps account-management routes off the listener the backup producers use<br>• Backend data and file-backed IAM are separate subpaths of one volume, so the IAM store is not inside the gateway root and `users.json` is not reachable as an object -- asserted both by a postRenderer tripwire and by the module's test suite<br>• An init container writes, reads back and removes an extended attribute before the gateway starts, so a tree that cannot hold per-object metadata holds the pod in `Init` instead of being served over<br>• A six-hourly `CronJob` -- the only one this component ships -- reclaims aged multipart residue, including the two forms invisible to every S3 API<br>• Holds a single `ExternalSecret` for the gateway's root credential; consumer accounts and bucket ownership are provisioned outside the module<br>• A `statsd_exporter` `Deployment` and `Service` translate the gateway's UDP counters into a scrapeable endpoint<br>• Each of the three exporter `Service`s has a `ServiceMonitor` beside it, so the selector and the labels it matches ship together; no `PrometheusRule` ships here, since what is worth alerting on is a property of the consuming cluster<br>• A second `Deployment` and `Service` walk the object tree read-only on a timer and export per-bucket object counts, bytes stored, and both residue forms the sweep reclaims -- staged `.sgwtmp` parts, and overwrite-race files beside their objects -- with the walk's completion timestamp beside them<br>• A `Job` named after the gateway image tag keeps a local-recovery kit -- image tarballs, a manifest recording each one's sha256, and the operator check script -- in a sibling subpath of the object tree, so a storage-side clone carries everything the disaster-recovery path needs and it needs no registry<br>• A third pair read the `wals/` prefixes of any barman-cloud WAL archive found in the store and export, per server and timeline, the segments held, the segments missing between the first and last held, the number of distinct gaps, zero-length segments, and missing timeline history files<br>• Reachable only at this module's component path -- it is deliberately absent from the module-root `kustomization.yaml` |
@@ -61,7 +60,6 @@ The storage-core module provides four main capabilities:
 
    | Secret Name             | Purpose                                                             | Required Keys                        |
    | ----------------------- | ------------------------------------------------------------------- | ------------------------------------ |
-   | minio-admin-credentials | MinIO administrator access                                          | rootUser, rootPassword               |
    | garage-credentials      | Garage admin API token and inter-node RPC shared secret             | admin-token, rpc-secret              |
    | versitygw-credentials   | VersityGW's root S3 credential -- the only account this module owns | rootAccessKeyId, rootSecretAccessKey |
 
@@ -69,11 +67,9 @@ The storage-core module provides four main capabilities:
 
    | Variable | Purpose | Required By |
    | ---------- | --------- | ------------- |
-   | domain_name | Base domain used to compose every Ingress hostname in this module | MinIO ingress and console ingress, Longhorn UI ingress, Garage S3 API, website, and admin ingresses, Garage's `[s3_web]` root_domain, VersityGW's S3/WebUI/admin ingresses and the WebUI's CORS origin and gateway URLs |
+   | domain_name | Base domain used to compose every Ingress hostname in this module | Longhorn UI ingress, Garage S3 API, website, and admin ingresses, Garage's `[s3_web]` root_domain, VersityGW's S3/WebUI/admin ingresses and the WebUI's CORS origin and gateway URLs |
    | cert_issuer | `ClusterIssuer` name used to request the Garage website endpoint's TLS certificate | Garage's `garage-web-tls-cert` Certificate (`certificate-web.yaml`) |
-   | secret_store | Bitwarden `ClusterSecretStore` name | minio-admin-credentials, garage-credentials and versitygw-credentials ExternalSecrets |
-   | minio_admin_username_key | Bitwarden key for the MinIO root username | minio-admin-credentials ExternalSecret |
-   | minio_admin_password_key | Bitwarden key for the MinIO root password | minio-admin-credentials ExternalSecret |
+   | secret_store | Bitwarden `ClusterSecretStore` name | garage-credentials and versitygw-credentials ExternalSecrets |
    | garage_admin_token_key | Bitwarden key for the Garage admin API token | garage-credentials ExternalSecret |
    | garage_rpc_secret_key | Bitwarden key for the inter-node RPC shared secret | garage-credentials ExternalSecret |
    | garage_metadata_claim | Name of the pre-provisioned PVC to use for Garage's metadata volume | Garage Deployment |
@@ -174,22 +170,6 @@ spec:
       storage: 10Gi
 ```
 
-### Object Storage Configuration
-
-```yaml
-# Example: Creating a bucket
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: minio-extra-config
-data:
-  minio-buckets.yaml: |
-    buckets:
-      - name: example-bucket
-        policy: none
-        purge: false
-```
-
 ### Network Storage Configuration
 
 ```yaml
@@ -257,7 +237,6 @@ mountOptions:
 - **`metadata_fsync` is set explicitly to `true`.** Garage defaults this to off, and upstream's own documentation reports LMDB corruption after an unclean shutdown with it off. At `replication_factor = 1` there is no second copy to fall back on, so this is a deliberate durability-over-throughput choice.
 - **Garage resolves a website bucket from the Host header via two independent mechanisms, both reachable through this module.** Garage's `[s3_web]` module matches a Host with an extra label beyond `root_domain` as a suffix (`<bucket>.garage-web.${domain_name}` → bucket `<bucket>`), and falls back to looking up the whole Host string as a bucket name/global alias when there is no extra label (i.e. the apex host itself). Unlike MinIO's ingresses, which rely on Traefik's cluster-wide default certificate, the `garage-web` `Ingress` carries its own `cert-manager` `Certificate` spanning both the apex and wildcard host, so every bucket is reachable by name as a subdomain with no per-bucket `Ingress`, alias, or manual step.
 - **First issuance of the apex-plus-wildcard `garage-web-tls-cert` Certificate is slow, and if a consuming Kustomization health-checks it, a red status for several minutes is expected during that first issuance — not a fault.** An apex plus a nested wildcard produces two ACME DNS-01 challenges that share one `_acme-challenge.garage-web.${domain_name}` TXT name; cert-manager won't run them concurrently, since they'd collide on that record, so the second challenge doesn't even start until the first reaches `valid`. Each challenge's own DNS self-check backs off between retries, and the first attempt typically fires before the record has propagated, so cert-manager sits `pending` waiting out its own backoff rather than being stuck (observed on this module's own rollout: ~14 minutes end-to-end for both challenges). If you're watching and want it to finish sooner, restarting the cert-manager controller short-circuits that backoff. Do **not** delete the Certificate or its Order to try to unstick it — that forces a fresh failed validation, and Let's Encrypt rate-limits failed validations at 5 per account per hostname per hour, turning a slow issuance into an hour-long block. Renewals are unaffected: the Certificate stays `Ready: True` throughout, and renewal starts 30 days before expiry.
-- **The module root composes Garage, not MinIO.** A consumer that still wants MinIO points its Kustomization directly at `minio/`, as with `versitygw/`.
 - **Garage's `PrometheusRule` only covers conditions meaningful at `replication_factor = 1` / one node.** Half of the alert set this module was evaluated against (quorum health, peer connectivity, storage-node and partition consistency across replicas) is deliberately omitted: at a single node those conditions are trivially satisfied whenever the process is up, so keeping them would just repeat the node-down alert under different names, not add signal. `PrometheusRule` defines queryable alert state only — this estate has no AlertManager routing configured, so nothing pages or notifies on these.
 - **The Garage dashboard is a console replacement, not a decoration.** Garage ships no admin UI, so Grafana is the only place bucket-store health, capacity and reclamation are visible without shelling into a pod. It is shipped from this module rather than from observability-core so that a cluster which does not deploy Garage never inherits a dashboard with nothing behind it. The coupling is one-way and soft: the `ConfigMap` is inert unless a Grafana dashboard sidecar is watching for its label, and nothing in this module fails if one is not.
 - **Two things an operator will look for are not in Garage's metric surface, and the dashboard says so rather than approximating them silently.** Garage v2.3.0 publishes no per-bucket or per-key dimension on any metric, so usage cannot be split by consumer — separating Loki's footprint from Authentik's requires the admin API (`GetBucketInfo`), not Prometheus. It also publishes no live-bytes total, which is the denominator a true consumed-vs-live amplification ratio needs; the dashboard substitutes bytes-per-object and bytes-per-referenced-block, labels both as proxies, and states what they cannot distinguish.

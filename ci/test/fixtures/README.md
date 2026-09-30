@@ -15,7 +15,6 @@ resources:
 | `external-secrets/` | the External Secrets operator alone | `security-core/external-secrets` |
 | `cnpg-operator/` | the CloudNativePG operator alone | `database-core/cloudnative-pg` |
 | `dragonfly-operator/` | the Dragonfly operator | `database-core/dragonfly` |
-| `minio/` | MinIO as an S3 endpoint | `storage-core/minio` |
 | `garage/` | Garage as an S3 endpoint | `storage-core/garage` |
 
 ## Why these exist
