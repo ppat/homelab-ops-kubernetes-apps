@@ -208,8 +208,8 @@ spec:
       # Provisioned by the cluster, not this module -- referenced by claim
       # name only, so a cluster can pre-provision or statically bind either
       # volume (e.g. a static NFS/Longhorn PV) instead of relying on dynamic
-      # provisioning. Matches how minio/ and the rest of this repo's storage
-      # bindings work: the module never owns a PVC's lifecycle.
+      # provisioning. Matches how the rest of this repo's storage bindings
+      # work: the module never owns a PVC's lifecycle.
       - name: metadata
         persistentVolumeClaim:
           claimName: ${garage_metadata_claim}

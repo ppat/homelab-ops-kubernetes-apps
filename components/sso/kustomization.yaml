@@ -38,11 +38,6 @@ patches:
     kind: HelmRelease
     name: kube-prometheus-stack-release
     namespace: monitoring
-- path: patch-minio.yaml
-  target:
-    kind: HelmRelease
-    name: minio-release
-    namespace: minio
 - path: patch-versitygw.yaml
   target:
     kind: HelmRelease
