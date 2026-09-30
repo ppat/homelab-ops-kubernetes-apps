@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.8.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.7.5...infra-storage-core-v0.8.0) (2026-09-30)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-storage-core:** storage-core/minio no longer exists; a cluster still pointing a Kustomization at it must stay on an earlier infra-storage-core tag.
+* **infra-storage-core:** a cluster consuming the module root loses MinIO; point a separate Kustomization at storage-core/minio to keep it, and hand-delete the old objects (prune is disabled).
+
+### ✨ Features
+
+* **infra-storage-core:** remove MinIO from storage-core ([#4162](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4162)) ([39b01fa](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/39b01fa8d8ce9926cc2f89193793b2e05aca25f8)), refs [#3644](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3644)
+* **infra-storage-core:** stop composing MinIO at the module root ([#4099](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4099)) ([5ebf956](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5ebf956c25d637b082372e33a74540783eae3e05)), refs [#3644](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3644)
+* **infra-storage-core:** update amazon/aws-cli (2.36.50 -&gt; 2.37.0) ([#4155](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4155)) ([ed30580](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ed30580224e88e0083f65aba7a980fad4c9c5d82))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** update amazon/aws-cli (2.37.0 -&gt; 2.37.5) ([#4157](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4157)) ([25cee63](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/25cee631c25a503dd3aa5cc0856ba7ab3837d8a3))
+* **infra-storage-core:** update docker.io/alpine/k8s (1.37.0 -&gt; 1.37.1) ([#4141](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4141)) ([04f417b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/04f417b8e1403ad5d32bb071703f3bbd36b83e6a))
+
 ## [0.7.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.7.4...infra-storage-core-v0.7.5) (2026-09-24)
 
 
