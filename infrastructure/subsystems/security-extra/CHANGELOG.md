@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.2.18...infra-security-extra-v0.3.0) (2026-09-30)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-security-extra:** consumers must set authentik_media_s3_host, authentik_media_s3_custom_domain_host, authentik_media_s3_region, authentik_media_s3_accesskey_key and authentik_media_s3_secretkey_key.
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-extra:** take authentik media storage settings from post-build variables ([#4095](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4095)) ([f5822e4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f5822e41629e412e4321638ef866f00051044145)), refs [#3644](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/3644)
+
 ## [0.2.18](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-extra-v0.2.17...infra-security-extra-v0.2.18) (2026-09-24)
 
 
