@@ -32,10 +32,9 @@ rpc_public_addr = "garage.garage.svc.cluster.local:3901"
 api_bind_addr = "[::]:3900"
 # A postBuild variable, not a literal, like every other cluster-specific
 # choice in this module -- s3_region is not an invariant of Garage itself,
-# it's a value a cluster operator picks (this estate's chosen production
-# value is "us-east-1", on the grounds that both MinIO and Garage accept it;
-# see ci/test/infra-storage/infra-storage-core.yaml for the value CI
-# exercises). Deliberately has no default here (unlike, say,
+# it's a value a cluster operator picks (this estate's chosen production value
+# is "us-east-1"; see ci/test/infra-storage/infra-storage-core.yaml for the
+# value CI exercises). Deliberately has no default here (unlike, say,
 # garage_metadata_claim/garage_data_claim having none either) -- an unsupplied
 # value fails loudly via strict-mode envsubst rather than silently landing on
 # some other default.
@@ -75,6 +74,6 @@ index = "index.html"
 [admin]
 api_bind_addr = "[::]:3903"
 # metrics_token intentionally unset: without it, Garage serves /metrics
-# without auth (matching MinIO's unauthenticated ServiceMonitor scrape in
-# this module), and admin_token (set via GARAGE_ADMIN_TOKEN, see rpc_secret's
-# comment above) still guards every other admin endpoint.
+# without auth for this module's ServiceMonitor, and admin_token (set via
+# GARAGE_ADMIN_TOKEN, see rpc_secret's comment above) still guards every other
+# admin endpoint.

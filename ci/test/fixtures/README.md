@@ -51,7 +51,7 @@ So what the eleven stop exercising is "these three install cleanly alongside the
 
 ## Conventions every fixture follows
 
-Read these once here rather than six times in the individual READMEs.
+Read these once here rather than five times in the individual READMEs.
 
 ### Naming
 
@@ -63,7 +63,7 @@ matches the name of the parent `Kustomization` (`pre-requisites`) that applies t
 
 ### Namespaces
 
-**A fixture owns every namespace it needs.** Four of the six supply one, because the module keeps its
+**A fixture owns every namespace it needs.** Three of the five supply one, because the module keeps its
 namespaces in the module root (`security-core/namespace.yaml`, `storage-core/namespace.yaml`) rather than in
 the component directory the fixture points at — so pointing at the component alone would leave the namespace
 unowned. `cnpg-operator` and `dragonfly-operator` supply none, because those two component directories ship
@@ -82,7 +82,7 @@ repo already sets `prune: false`.
 ### Post-build variables
 
 **A fixture supplies every `${...}` its built output references. A consumer supplies none.** Consistency
-matters more here than the direction, because the alternative — each suite guessing which of six fixtures
+matters more here than the direction, because the alternative — each suite guessing which of five fixtures
 needs which variable — is exactly the per-suite duplication these replace. `cert-manager`,
 `external-secrets`, `cnpg-operator` and `dragonfly-operator` reference no variables at all and therefore
 carry no `postBuild` block.
@@ -92,7 +92,7 @@ object a fixture deletes never needs a value.
 
 ### Waiting
 
-Five of the six set `wait: false` and leave the wait to the consumer, which is what all sixteen suites
+All five set `wait: false` and leave the wait to the consumer, which is what all sixteen suites
 already do: a `Reconcile pre-requisites` step running
 `../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=<release> ...` with a
 timeout sized from that suite's own measurements. Putting a `wait: true` health-check budget on the fixture
@@ -100,21 +100,18 @@ would mean inventing a number that no run has ever produced, which
 [TESTING.md](../../../TESTING.md#size-budgets-from-measurement-in-both-directions) treats as a defect in
 its own right.
 
-`minio` is the exception. Its own `wait: true` / `timeout: 4m0s` pair was sized on observed CI —
-28.1/82.1/94.1s across three green runs.
-
 ### `retryInterval`
 
 Every fixture sets `retryInterval: 1m0s`. Flux defaults `retryInterval` to `interval` when it is unset, and
 `interval` here is `15m0s` — so a single transient failure parks the object for a quarter of an hour, far
 longer than any suite runs. Confirmed against the Flux CRD schema and observed in run logs: after a
-health check expired, the `minio` `Kustomization` still read `False` 3m32s after its own `HelmRelease` had
+health check expired, a fixture `Kustomization` still read `False` 3m32s after its own `HelmRelease` had
 gone Ready, with no retry in between. See #3685.
 
 ### What a consumer still has to supply
 
 - `infrastructure/bootstrap/crds/` in its own `pre-requisites/kustomization.yaml`. All sixteen suites
-  already do; `cert-manager`, `minio` and `garage` apply objects whose CRDs come from there.
+  already do; `cert-manager` and `garage` apply objects whose CRDs come from there.
 - A `fake` `ClusterSecretStore`, **only** if the module under test has its own `ExternalSecret` objects. No
-  fixture here needs one — `minio` and `garage` deliberately take their credentials as plain Secrets. The
+  fixture here needs one — `garage` deliberately takes its credentials as plain Secrets. The
   fake store stays per-suite because its keys differ per module: it is suite data, not a shared fixture.

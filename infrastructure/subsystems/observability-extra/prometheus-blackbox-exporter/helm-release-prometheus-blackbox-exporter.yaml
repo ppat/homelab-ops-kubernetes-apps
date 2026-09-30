@@ -37,8 +37,7 @@ spec:
 
     # Self-scrape of the exporter's own /metrics (probe results themselves come from Probe
     # resources scraping /probe, discovered separately via probeSelectorNilUsesHelmValues:
-    # false on the kube-prometheus-stack Prometheus -- see storage-core/minio's Probe
-    # resources for that convention).
+    # false on the kube-prometheus-stack Prometheus).
     serviceMonitor:
       selfMonitor:
         enabled: true

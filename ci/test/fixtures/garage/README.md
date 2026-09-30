@@ -31,11 +31,11 @@ The first two are the only objects in this component that pull cert-manager in, 
 cert-manager along is not supplying one thing. `Ingress/garage-s3` and `Ingress/garage-admin` both set
 `tls: []` and are kept — neither needs a certificate of its own.
 
-The credential swap is the same trade [`../minio/`](../minio/README.md) makes, for the same reason: wherever
-this fixture is used Garage is scaffolding, so resolving its own credential through external-secrets is
-storage-core's behaviour and belongs in `infra-storage`, where Garage is the subject and the `ExternalSecret`
-is kept. It removes the last reason a suite would need external-secrets standing just to get object storage.
-Note this goes one step beyond the two removals originally specified for this fixture.
+The credential swap is deliberate: wherever this fixture is used Garage is scaffolding, so resolving its own
+credential through external-secrets is storage-core's behaviour and belongs in `infra-storage`, where Garage
+is the subject and the `ExternalSecret` is kept. It removes the last reason a suite would need
+external-secrets standing just to get object storage. Note this goes one step beyond the two removals
+originally specified for this fixture.
 
 ## What a consumer would lose
 

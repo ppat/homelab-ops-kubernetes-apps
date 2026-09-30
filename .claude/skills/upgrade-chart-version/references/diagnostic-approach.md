@@ -113,7 +113,7 @@ directing the work before spending time on it.
 
 A faster complementary check, when available: if the failure occurs in a stage
 that's shared boilerplate across every module's chainsaw suite (bootstrapping
-Flux, reconciling shared prerequisites like MinIO or external-secrets) and
+Flux, reconciling shared prerequisites like Garage or external-secrets) and
 happens *before* the stage that actually exercises your module's own changes,
 that stage boundary alone is usually sufficient evidence of unrelatedness — no
 base-branch comparison needed to conclude it.

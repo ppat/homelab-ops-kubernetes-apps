@@ -88,23 +88,6 @@
     },
     {
       "description": [
-        "minio, currently DORMANT: disable-updates.json turns minio off. Kept so the pin stays",
-        "sortable if minio is re-enabled; deleting it would make re-enablement quietly offer the",
-        "wrong tag. Tags like 'RELEASE.2025-01-03T05-34-25Z' are a timestamp with no version in",
-        "them; the regex maps year/month/day onto major/minor/patch so tags order. Keep in step",
-        "with override-calver.json, which grades those segments as dates, not risk."
-      ],
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "minio/minio",
-        "minio/mc"
-      ],
-      "versioning": "regex:^RELEASE\\.(?<major>\\d{4})-(?<minor>\\d{2})-(?<patch>\\d{2})T\\d{2}-\\d{2}-\\d{2}Z$"
-    },
-    {
-      "description": [
         "dragonfly-operator chart. PROBLEM: Flux rejects a digest in an OCIRepository's ref.tag field,",
         "so the globally-extended docker:pinDigests would produce a manifest Flux refuses to",
         "reconcile. This opts that one chart out of digest pinning; it says nothing about the chart's",

@@ -24,17 +24,6 @@
       ]
     },
     {
-      "description": "disable minio updates due to OSS unfriendly practices until a suitable replacement is found (all update types, deliberately unenumerated: enumerating types let replacement/rollback/bump fall through to override-calver with automerge on)",
-      "enabled": false,
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "minio/minio",
-        "minio/mc"
-      ]
-    },
-    {
       "description": "do not update pihole until blocky trial is done",
       "enabled": false,
       "matchPackageNames": [

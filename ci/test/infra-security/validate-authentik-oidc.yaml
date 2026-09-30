@@ -4,7 +4,7 @@ kind: StepTemplate
 metadata:
   name: validate-authentik-oidc
 spec:
-  # authentik as the OIDC provider behind coder, grafana, openwebui, harbor, minio and the
+  # authentik as the OIDC provider behind coder, grafana, openwebui, harbor and the
   # kubernetes logins. Their providers are not in this repo: the Terraform workspace that
   # manages them creates each one in a single shape (confidential client, strict redirect
   # URI, implicit-consent authorization flow, openid/email/profile scopes plus
@@ -16,7 +16,7 @@ spec:
   #   Service directly, on authentik's own TLS listener, with the Ingress host resolved to it.
   # - TLS verification. authentik's listener presents its own self-signed certificate, so
   #   the clients skip verification; in the estate they verify Traefik's.
-  # - custom scope mappings (minio's `policy` claim), explicit consent, or proxy providers.
+  # - custom scope mappings, explicit consent, or proxy providers.
   # - a signing-certificate rotation: nothing restarts authentik here when the Secret changes.
   bindings:
   - name: app_slug

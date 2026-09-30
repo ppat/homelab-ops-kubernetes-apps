@@ -3,10 +3,9 @@
 # identity. Garage's node identity comes from a key persisted in metadata_dir
 # (on the metadata PVC), not from the pod's hostname, and rpc_public_addr
 # (conf.d/garage.toml) already points at the Service, never a per-pod DNS
-# name. That makes this the same single-instance-on-RWO-volumes shape as
-# MinIO next door, which is why it also matches MinIO's `Recreate` strategy:
-# Garage's LMDB metadata store does not tolerate two processes writing to the
-# same volume, so the old Pod must fully terminate before the new one starts.
+# name. `Recreate`, because Garage's LMDB metadata store does not tolerate
+# two processes writing to the same volume, so the old Pod must fully
+# terminate before the new one starts.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -142,27 +141,25 @@ spec:
             path: /health
             port: admin
           periodSeconds: 30
-        # Measured, not conventional -- do not copy MinIO's 1Gi request. The
-        # H1 falsification run measured Garage at production scale (3,439,460
-        # objects): anonymous (unreclaimable) RSS stayed flat at 4.4-5.7 MiB
-        # across a 34x increase in object count; total RSS is dominated by
-        # file-backed page cache over the mmap'd LMDB store and is therefore
-        # non-monotonic under memory pressure -- it peaked at 1527.7 MiB at 1M
-        # objects, then fell to 365.7 MiB at 3.44M as the kernel reclaimed
-        # cache. metadata_dir itself reached 6361.8 MiB, so no limit in the
-        # 1-2Gi band caches the whole DB regardless -- the limit only decides
-        # how much of the hot index stays resident. Under cgroup v2 the page
-        # cache counts toward the memory limit, so this is a latency knob
-        # (a tighter limit forces eviction and raises LIST p99), not a safety
-        # one -- anon usage is single-digit MiB, so OOM risk from this limit
-        # is not the tradeoff being made here. 2Gi is the smallest limit that
-        # does not cap below the observed 1527.7 MiB working set; do not
-        # lower it without re-running that measurement. requests.memory is
-        # ~40x the unreclaimable need, enough for Burstable QoS and a sane
-        # scheduling floor. requests.cpu matches MinIO's own measured 52-59m
-        # under real load; no CPU limit, also matching MinIO -- this estate
-        # doesn't use CPU limits since they cause throttling rather than
-        # graceful degradation.
+        # Measured, not conventional. The H1 falsification run measured Garage
+        # at production scale (3,439,460 objects): anonymous (unreclaimable)
+        # RSS stayed flat at 4.4-5.7 MiB across a 34x increase in object
+        # count; total RSS is dominated by file-backed page cache over the
+        # mmap'd LMDB store and is therefore non-monotonic under memory
+        # pressure -- it peaked at 1527.7 MiB at 1M objects, then fell to
+        # 365.7 MiB at 3.44M as the kernel reclaimed cache. metadata_dir
+        # itself reached 6361.8 MiB, so no limit in the 1-2Gi band caches the
+        # whole DB regardless -- the limit only decides how much of the hot
+        # index stays resident. Under cgroup v2 the page cache counts toward
+        # the memory limit, so this is a latency knob (a tighter limit forces
+        # eviction and raises LIST p99), not a safety one -- anon usage is
+        # single-digit MiB, so OOM risk from this limit is not the tradeoff
+        # being made here. 2Gi is the smallest limit that does not cap below
+        # the observed 1527.7 MiB working set; do not lower it without
+        # re-running that measurement. requests.memory is ~40x the
+        # unreclaimable need, enough for Burstable QoS and a sane scheduling
+        # floor. No CPU limit -- this estate doesn't use CPU limits since they
+        # cause throttling rather than graceful degradation.
         resources:
           requests:
             cpu: 50m
@@ -188,11 +185,11 @@ spec:
       # their own private-volume UID/GID. 1000 is arbitrary and tolerated: the
       # image (dxflrs/garage) is built FROM SCRATCH -- a single static binary with
       # no /etc/passwd -- so it does no NSS user lookup and never assumed root.
-      # fsGroup (+ OnRootMismatch, matching minio's cluster-side patch and
-      # qbittorrent's module-side one) is what actually grants a non-root UID
-      # write access to metadata/data: Kubernetes always creates those PVCs'
-      # files owned by uid 0, and fsGroup is the mechanism that adds a writable
-      # group regardless of which UID ends up owning them.
+      # fsGroup (+ OnRootMismatch, as qbittorrent does) is what actually
+      # grants a non-root UID write access to metadata/data: Kubernetes always
+      # creates those PVCs' files owned by uid 0, and fsGroup is the mechanism
+      # that adds a writable group regardless of which UID ends up owning
+      # them.
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

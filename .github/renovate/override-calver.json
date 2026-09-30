@@ -6,31 +6,14 @@
       "commitBody": "",
       "commitMessagePrefix": "{{#if (or isMajor isMinor)}}feat{{else if isPatch}}fix{{else}}chore{{/if}}({{semanticCommitScope}}):",
       "description": [
-        "update calver versioned packages managed by custom.regex manager.",
+        "update calver versioned packages managed by kubernetes manager.",
         "Calver segments track the release date, not API compatibility: a year rollover is a",
         "Renovate 'major' yet signals nothing about breakage, so every field here strips",
         "semver-derived treatment: no '!', automerge kept, flat soak, no major/minor branch split;",
         "the trailing segment is a bugfix counter, hence fix for patches.",
         "No matchUpdateTypes, deliberately: an enumerated list sends the omitted type back to",
         "semver-major treatment; a prior revision did exactly that -- do not re-add.",
-        "commitBody '' defensively clears any body a future rule sets."
-      ],
-      "matchManagers": [
-        "custom.regex"
-      ],
-      "matchPackageNames": [
-        "minio/minio",
-        "minio/mc"
-      ],
-      "minimumReleaseAge": "14 days",
-      "separateMajorMinor": false
-    },
-    {
-      "automerge": true,
-      "commitBody": "",
-      "commitMessagePrefix": "{{#if (or isMajor isMinor)}}feat{{else if isPatch}}fix{{else}}chore{{/if}}({{semanticCommitScope}}):",
-      "description": [
-        "update calver versioned packages managed by kubernetes manager (rationale: rule 1):",
+        "commitBody '' defensively clears any body a future rule sets.",
         "pihole, cloudflared and home-assistant (YYYY.MM.patch dialects), and openclaw (YYYY.M.P),",
         "a first-party image that keeps automerge and whose soak override-release-age.json removes.",
         "Names are the depNames the manager emits, the reference as written in the manifest:",
