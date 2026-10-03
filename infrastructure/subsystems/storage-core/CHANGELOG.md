@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.8.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.8.1...infra-storage-core-v0.8.2) (2026-10-03)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** update amazon/aws-cli (2.37.5 -&gt; 2.37.6) ([#4173](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4173)) ([6faf754](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6faf75443d857c3732bd95056c531865350affee))
+* **infra-storage-core:** update amazon/aws-cli (2.37.6 -&gt; 2.37.7) ([#4188](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4188)) ([e863f3e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e863f3e559933cd70048b5179a702d1446250686))
+* **infra-storage-core:** update amazon/aws-cli (2.37.7 -&gt; 2.37.8) ([#4191](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4191)) ([327f4a1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/327f4a1cd3c04ce6daafa85f941ef6985b74fdc3))
+
 ## [0.8.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.8.0...infra-storage-core-v0.8.1) (2026-09-30)
 
 
