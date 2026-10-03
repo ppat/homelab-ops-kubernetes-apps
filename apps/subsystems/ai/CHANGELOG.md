@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.9.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.8.4...apps-ai-v0.9.0) (2026-10-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* **apps-ai:** update open-webui (15.2.1 -> 16.6.0) ([#4143](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4143))
+
+### ✨ Features
+
+* **apps-ai:** update docker.io/grafana/mcp-grafana (1.5.1 -&gt; 1.6.0) ([#4142](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4142)) ([37e3f8e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/37e3f8e5db8c29bd2bf3ed04dfbaa43c77aa9fbb))
+* **apps-ai:** update open-webui (15.2.1 -&gt; 16.6.0) ([#4143](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4143)) ([36157b4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/36157b4fffeb71e440d86155b4c10959b25a8f05))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** update docker.io/grafana/mcp-grafana (1.6.0 -&gt; 1.6.2) ([#4163](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4163)) ([0e46039](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0e46039d5dabe9e73a7058776b4a483c08d788e0))
+* **apps-ai:** update docker.io/grafana/mcp-grafana (1.6.2 -&gt; 1.6.3) ([#4177](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4177)) ([44405c1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/44405c135a8ab98b8007d6c26c44729052c17fab))
+
 ## [0.8.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.8.3...apps-ai-v0.8.4) (2026-09-28)
 
 
