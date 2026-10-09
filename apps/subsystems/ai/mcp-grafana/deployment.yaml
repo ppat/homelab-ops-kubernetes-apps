@@ -26,7 +26,7 @@ spec:
         fsGroup: 1000
       containers:
       - name: mcp-grafana
-        image: docker.io/grafana/mcp-grafana:1.6.3@sha256:0479c026fd40a95e6a176855b8570e06845790f8a45de2f9c1ec8ba3ba06a8bf
+        image: docker.io/grafana/mcp-grafana:2.0.1@sha256:87b48c8fa1a09d00befe361e009be9ab85343ab95b7f2ebb374c1051832985b9
         imagePullPolicy: IfNotPresent
         args:
         - -t
