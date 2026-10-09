@@ -25,7 +25,7 @@ permissions: {}
 
 jobs:
   release:
-    uses: ppat/github-workflows/.github/workflows/release-please.yaml@e14e9bf7b53f4094382443db8bbff9e7d6b1e5b1 # v8.1.0
+    uses: ppat/github-workflows/.github/workflows/release-please.yaml@306984d6896feefa14471d2701d1ddd00bca12f2 # v8.3.0
     with:
       dry_run: ${{ github.event_name == 'pull_request' }}
     secrets:
