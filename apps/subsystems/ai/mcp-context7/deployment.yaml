@@ -27,7 +27,7 @@ spec:
         # This is Docker Inc's "MCP Catalog" build of the same upstream Dockerfile
         # (https://github.com/upstash/context7/blob/f2f367d8913843bd28b2a96a6ce860f43e3fc3ca/Dockerfile),
         # pinned by digest since upstream only publishes a floating `latest` tag.
-        image: mcp/context7@sha256:1174e6a29634a83b2be93ac1fefabf63265f498c02c72201fe3464e687dd8836
+        image: docker.io/mcp/context7@sha256:1174e6a29634a83b2be93ac1fefabf63265f498c02c72201fe3464e687dd8836
         imagePullPolicy: IfNotPresent
         env:
         - name: CONTEXT7_API_KEY

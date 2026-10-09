@@ -17,18 +17,16 @@
         "pihole, cloudflared and home-assistant (YYYY.MM.patch dialects), and openclaw (YYYY.M.P),",
         "a first-party image that keeps automerge and whose soak override-release-age.json removes.",
         "Names are the depNames the manager emits, the reference as written in the manifest:",
-        "'docker.io/ppatlabs/openclaw' carries its registry prefix, the others do not; a",
-        "colloquially spelled name matches nothing."
+        "a colloquially spelled name matches nothing."
       ],
       "matchManagers": [
         "kubernetes"
       ],
       "matchPackageNames": [
         "ghcr.io/home-operations/home-assistant",
-        "pihole/pihole",
-        "visibilityspots/cloudflared",
-        "ppatlabs/openclaw",
-        "docker.io/ppatlabs/openclaw"
+        "docker.io/pihole/pihole",
+        "docker.io/visibilityspots/cloudflared",
+        "ghcr.io/ppatlabs/openclaw"
       ],
       "minimumReleaseAge": "14 days",
       "separateMajorMinor": false

@@ -5,7 +5,7 @@
       "groupName": "garage-data-plane",
       "description": "keep the Garage data-plane image in its own PR -- a bump needs the falsification harness re-run, so it must never ride along with an unrelated update",
       "matchPackageNames": [
-        "dxflrs/garage"
+        "docker.io/dxflrs/garage"
       ]
     },
     {

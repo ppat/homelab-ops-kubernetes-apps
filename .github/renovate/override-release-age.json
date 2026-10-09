@@ -48,7 +48,7 @@
     },
     {
       "description": [
-        "Images this repo builds itself (docker.io/ppatlabs/*) are adopted as soon as published:",
+        "Images that we build ourself are adopted as soon as published:",
         "the someone-else a soak waits for does not exist for a first-party build. Not a claim our",
         "images are safer.",
         "No matchUpdateTypes: an unlisted type would stay soaked by whatever set it last. null is",
@@ -61,7 +61,7 @@
         "docker"
       ],
       "matchPackageNames": [
-        "ppatlabs{/,}**",
+        "ghcr.io/ppatlabs{/,}**",
         "docker.io/ppatlabs{/,}**"
       ],
       "minimumReleaseAge": null

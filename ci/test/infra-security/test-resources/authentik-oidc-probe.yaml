@@ -26,7 +26,7 @@ spec:
         - ($live.issuer_host)
       containers:
       - name: probe
-        image: python:3.14.7-alpine3.24@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01
+        image: docker.io/python:3.14.7-alpine3.24@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01
         command:
         - python3
         - /probe/probe.py

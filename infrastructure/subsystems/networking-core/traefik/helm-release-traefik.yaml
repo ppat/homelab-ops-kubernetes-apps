@@ -53,7 +53,7 @@ spec:
           defaultMode: 0755
       initContainers:
       - name: log-rotate
-        image: busybox@sha256:fd7dc98638c8e305f4dc34e979f1c0fdfdcaeb0fbf8fcff77ae834b6da3d7e6e
+        image: docker.io/library/busybox@sha256:fd7dc98638c8e305f4dc34e979f1c0fdfdcaeb0fbf8fcff77ae834b6da3d7e6e
         env:
         - name: POD_NAME
           valueFrom:

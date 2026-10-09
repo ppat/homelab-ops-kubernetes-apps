@@ -27,7 +27,7 @@
       "description": "do not update pihole until blocky trial is done",
       "enabled": false,
       "matchPackageNames": [
-        "pihole/pihole"
+        "docker.io/pihole/pihole"
       ]
     },
     {
@@ -76,6 +76,18 @@
       ],
       "matchPackageNames": [
         "quay.io/kubevirt/cirros-container-disk-demo"
+      ]
+    },
+    {
+      "description": [
+        "disabled to due to lookup failures"
+      ],
+      "enabled": false,
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "gcr.io/go-containerregistry/crane/debug"
       ]
     }
   ]

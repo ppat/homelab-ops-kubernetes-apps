@@ -22,7 +22,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: statsd-exporter
-        image: quay.io/prometheus/statsd-exporter:v0.31.0@sha256:1d5d341c4eb7abdd3445a3f85c3d498402b676ad29b4cf0421f5d280943871ab
+        image: docker.io/prom/statsd-exporter:v0.31.0@sha256:1d5d341c4eb7abdd3445a3f85c3d498402b676ad29b4cf0421f5d280943871ab
         imagePullPolicy: IfNotPresent
         ports:
         - name: statsd
