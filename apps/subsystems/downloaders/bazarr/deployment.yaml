@@ -26,7 +26,7 @@ spec:
         env:
         - name: TZ
           value: Etc/UTC
-        image: ghcr.io/linuxserver/bazarr:1.6.0@sha256:84b6f05a7a4194fafe5a0bec062d32f6ae9ea74db33d43d678cb9a3191f31c24
+        image: ghcr.io/linuxserver/bazarr:1.6.2@sha256:c1673816321156b904af9b7e6415ea547ae9622e4acc375358f1e1eb9ed1e904
         imagePullPolicy: IfNotPresent
         livenessProbe:
           tcpSocket:
