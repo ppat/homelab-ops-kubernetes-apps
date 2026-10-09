@@ -103,7 +103,7 @@ jobs:
     # what the commit-messages job above resolves, so this check and the gate it predicts
     # run the same commitlint.
     - name: Setup repository and tools
-      uses: ppat/homelab-ops-actions/actions/setup-repository-tools@d21b387fa6a35e48f78985a1e636ec728866981e # v2.8.0
+      uses: ppat/homelab-ops-actions/actions/setup-repository-tools@0909115ff750ef6935faf8ca8b64b0dc4bbbc38f # v2.9.0
       with:
         current_fetch_depth: 1
         current_git_ref: ${{ github.head_ref || github.ref }}
