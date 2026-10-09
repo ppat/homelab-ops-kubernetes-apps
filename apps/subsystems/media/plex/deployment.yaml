@@ -25,7 +25,7 @@ spec:
       automountServiceAccountToken: false
       initContainers:
       - name: log-janitor
-        image: busybox@sha256:fd7dc98638c8e305f4dc34e979f1c0fdfdcaeb0fbf8fcff77ae834b6da3d7e6e
+        image: docker.io/library/busybox@sha256:fd7dc98638c8e305f4dc34e979f1c0fdfdcaeb0fbf8fcff77ae834b6da3d7e6e
         env:
         - name: LOG_PATH
           value: "/var/log/plex"
@@ -70,7 +70,7 @@ spec:
         - secretRef:
             name: plex-secrets
             optional: true
-        image: plexinc/pms-docker:1.43.4.10903-e5521bd8c@sha256:e0ab27395614a8e1a4fdf84c6bc60ac664915cfdde70c52d030c7728a1c48e14
+        image: docker.io/plexinc/pms-docker:1.43.4.10903-e5521bd8c@sha256:e0ab27395614a8e1a4fdf84c6bc60ac664915cfdde70c52d030c7728a1c48e14
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:

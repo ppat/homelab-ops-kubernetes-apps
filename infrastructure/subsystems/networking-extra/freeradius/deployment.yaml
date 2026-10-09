@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: freeradius
-        image: freeradius/freeradius-server:3.2.10@sha256:cc7fd136e7b03e7b332d94297530318e824a4ecfedbce54562cced723e71e812
+        image: docker.io/freeradius/freeradius-server:3.2.10@sha256:cc7fd136e7b03e7b332d94297530318e824a4ecfedbce54562cced723e71e812
         args:
         - -X
         env:

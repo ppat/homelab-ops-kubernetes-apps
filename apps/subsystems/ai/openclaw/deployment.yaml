@@ -45,7 +45,7 @@ spec:
       - name: openclaw
         # This build's entrypoint adds a per-boot chmod that re-tightens the fsGroup-loosened
         # state perms: credentials dir -> 700, auth SQLite + sessions.json -> 600 (ppat/images#533).
-        image: docker.io/ppatlabs/openclaw:2026.7.1@sha256:77545a820d181d28266ad63c7f41ac3d8152a6d55b7c02d98f708bdcd2b5c194
+        image: ghcr.io/ppat/openclaw:2026.7.1@sha256:77545a820d181d28266ad63c7f41ac3d8152a6d55b7c02d98f708bdcd2b5c194
         imagePullPolicy: IfNotPresent
         env:
         - name: OPENCLAW_CONFIG_PATH
@@ -56,7 +56,7 @@ spec:
           value: /home/node/.openclaw
         - name: OPENCLAW_CONTROL_UI_ORIGIN
           value: https://openclaw.${domain_name}
-        # This custom image (docker.io/ppatlabs/openclaw) bakes in the WhatsApp/Baileys channel
+        # This custom image bakes in the WhatsApp/Baileys channel
         # and diagnostics-prometheus plugins at build time; its own entrypoint reseeds them from
         # /home/node/.openclaw-seed into the PVC-mounted /home/node/.openclaw on every start --
         # do not override command/args/entrypoint. The official :slim/:plain/:browser tags don't

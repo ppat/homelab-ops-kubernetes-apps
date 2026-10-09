@@ -13,5 +13,5 @@
 # Alloy actually accepts -- e.g. v1.11.x's `alloy validate` rejects the `file_match`
 # block in `loki.source.file` that v1.18.1 requires and accepts, which would fail
 # this gate on config that is genuinely correct.
-# renovate: datasource=docker depName=grafana/alloy
+# renovate: datasource=github-releases depName=grafana/alloy
 version: "v1.18.1"
