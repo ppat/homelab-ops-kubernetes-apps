@@ -14,4 +14,4 @@
 # block in `loki.source.file` that v1.18.1 requires and accepts, which would fail
 # this gate on config that is genuinely correct.
 # renovate: datasource=github-releases depName=grafana/alloy
-version: "v1.18.1"
+version: "v1.20.1"
