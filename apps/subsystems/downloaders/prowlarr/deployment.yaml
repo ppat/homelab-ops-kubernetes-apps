@@ -63,7 +63,7 @@ spec:
             secretKeyRef:
               name: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
               key: password
-        image: ghcr.io/linuxserver/prowlarr:2.5.2@sha256:aaa16ba7d66e413db6d0358d3b6c68d833578ba7f176f24a51807181e7637fce
+        image: ghcr.io/linuxserver/prowlarr:2.6.5@sha256:f9151e5bc1025c6d0a630d503210cdcb6bb55a7cc098562609d96a408d838902
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
