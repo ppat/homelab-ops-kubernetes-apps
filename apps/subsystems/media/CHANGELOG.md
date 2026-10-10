@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.47](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.46...apps-media-v0.0.47) (2026-10-10)
+
+
+### ✨ Features
+
+* **apps-media:** update ghcr.io/tautulli/tautulli (v2.17.2 -&gt; v2.18.2) ([#4243](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4243)) ([0de9ec6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0de9ec625895a8514fedb1c471ee007e89df94b5))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* fix docker image updates via renovate ([#4214](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4214)) ([5612436](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5612436d04c394d39da4e91593d5d286b378d425))
+
 ## [0.0.46](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.45...apps-media-v0.0.46) (2026-09-29)
 
 
