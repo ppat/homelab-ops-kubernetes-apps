@@ -48,6 +48,21 @@
     },
     {
       "description": [
+        "limit how often aws-cli is updated and delays updates until at least 7 days have elapsed"
+      ],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "docker.io/amazon/aws-cli"
+      ],
+      "minimumReleaseAge": "7 days",
+      "schedule": [
+        "every month"
+      ]
+    },
+    {
+      "description": [
         "Images that we build ourself are adopted as soon as published:",
         "the someone-else a soak waits for does not exist for a first-party build. Not a claim our",
         "images are safer.",
