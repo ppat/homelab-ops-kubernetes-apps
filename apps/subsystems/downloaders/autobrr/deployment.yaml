@@ -52,7 +52,7 @@ spec:
             secretKeyRef:
               name: ${db_name:=downloaders-db}-${db_suffix_current:=default}-app
               key: password
-        image: ghcr.io/autobrr/autobrr:v1.84.0@sha256:f4792e86b79965eadb2b24ad290ab46d21cab7ae6c18002ce2d18275fa54a4d0
+        image: ghcr.io/autobrr/autobrr:v1.88.0@sha256:e200008d43fe6cd2d944c9bcf20900cfb8ba8a8e509625bb78ee51910b994005
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
