@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.1.6...apps-coder-v0.1.7) (2026-10-10)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* fix docker image updates via renovate ([#4214](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4214)) ([5612436](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5612436d04c394d39da4e91593d5d286b378d425))
+
 ## [0.1.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.1.5...apps-coder-v0.1.6) (2026-10-08)
 
 
