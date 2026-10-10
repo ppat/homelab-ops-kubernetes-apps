@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-bitwarden-v0.1.8...apps-bitwarden-v0.1.9) (2026-10-10)
+
+
+### ✨ Features
+
+* **apps-bitwarden:** update self-host (2.4.2 -&gt; 2.5.0) ([#4207](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4207)) ([722fc0e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/722fc0e99dc10afa9bee5320193b193c917a8d79))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-bitwarden:** update self-host (2.5.0 -&gt; 2.5.1) ([#4210](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4210)) ([168d9e0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/168d9e0532df18d6845e5ce2d65cd1df4b80b9fb))
+
 ## [0.1.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-bitwarden-v0.1.7...apps-bitwarden-v0.1.8) (2026-09-21)
 
 
