@@ -99,7 +99,7 @@ spec:
         # Not redundancy with the gateway: restoring over S3 needs a client, and
         # on a host with no registry a client is as unavailable as the gateway.
         - name: RECOVERY_AWSCLI_VERSION
-          # renovate: datasource=docker depName=amazon/aws-cli
+          # renovate: datasource=docker depName=docker.io/amazon/aws-cli
           value: "2.37.11@sha256:d55d5b391f1cc0d428a05eb07408bb1a730d7df9f656008f1117ed5e13b0c083"
         - name: CHECK_SCRIPT
           value: /scripts/recovery-check.sh
