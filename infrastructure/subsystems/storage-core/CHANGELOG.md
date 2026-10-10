@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.8.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.8.1...infra-storage-core-v0.8.2) (2026-10-10)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* fix ability for renovate to update ([#4250](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4250)) ([4300fe1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4300fe1e8f93318b1170c09436c468a27cffd07c))
+* fix docker image updates via renovate ([#4214](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4214)) ([5612436](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5612436d04c394d39da4e91593d5d286b378d425))
+* **infra-storage-core:** update amazon/aws-cli (2.37.10 -&gt; 2.37.11) ([#4221](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4221)) ([8b883fa](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8b883fa10c56748747da9e65b7c6723cb00fb188))
+* **infra-storage-core:** update amazon/aws-cli (2.37.5 -&gt; 2.37.6) ([#4173](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4173)) ([6faf754](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6faf75443d857c3732bd95056c531865350affee))
+* **infra-storage-core:** update amazon/aws-cli (2.37.6 -&gt; 2.37.7) ([#4188](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4188)) ([e863f3e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e863f3e559933cd70048b5179a702d1446250686))
+* **infra-storage-core:** update amazon/aws-cli (2.37.7 -&gt; 2.37.8) ([#4191](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4191)) ([327f4a1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/327f4a1cd3c04ce6daafa85f941ef6985b74fdc3))
+* **infra-storage-core:** update amazon/aws-cli (2.37.8 -&gt; 2.37.9) ([#4192](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4192)) ([9eb9bdd](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9eb9bddcb872c4e818dea37cb68564b9aa4f3b0f))
+* **infra-storage-core:** update amazon/aws-cli (2.37.9 -&gt; 2.37.10) ([#4206](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4206)) ([deadb05](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/deadb0532f5a9ec8e4826740decca85d03aa6aee))
+
 ## [0.8.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.8.0...infra-storage-core-v0.8.1) (2026-09-30)
 
 
