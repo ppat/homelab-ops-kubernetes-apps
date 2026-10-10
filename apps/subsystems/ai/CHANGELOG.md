@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.9.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.9.0...apps-ai-v0.9.1) (2026-10-10)
+
+
+### ✨ Features
+
+* **apps-ai:** update docker.n8n.io/n8nio/n8n (2.41.3 -&gt; 2.43.3) ([#4232](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4232)) ([b80ae1a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b80ae1a614f86230706248a9bc9403f5db3c4d2c))
+* **apps-ai:** update ghcr.io/github/github-mcp-server (v1.12.2 -&gt; v1.14.0) ([#4233](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4233)) ([fedec95](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fedec95ad6e5560f29c4b139d234a0c6a8e07722))
+* **apps-ai:** update ghcr.io/homeassistant-ai/ha-mcp (8.5.0 -&gt; 8.6.0) ([#4234](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4234)) ([a34eaac](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a34eaac82065a888d080bbf0665959a2d5dd7ae3))
+* **apps-ai:** update ghcr.io/sirkirby/unifi-network-mcp (0.35.0 -&gt; 0.37.0) ([#4235](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4235)) ([45d9f81](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/45d9f817c8b7812e9a5fd038d1aa3f7cb8331983))
+* **apps-home-automation:** update ghcr.io/coder/code-server (4.139.1 -&gt; 4.141.0) ([#4241](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4241)) ([c02b1da](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c02b1da6b02fd5680cc0c9d2306afbb8e4142097))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** update ghcr.io/sirkirby/unifi-protect-mcp (0.8.13 -&gt; 0.8.16) ([#4225](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4225)) ([fcdca35](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fcdca3565a4458c29aca4dff4d5220ee7b149975))
+* **apps-ai:** update mcr.microsoft.com/playwright/mcp (v0.0.82 -&gt; v0.0.83) ([#4226](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4226)) ([d07fe51](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d07fe5163459737bc5b8583ca71928f424e6b438))
+* fix docker image updates via renovate ([#4214](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4214)) ([5612436](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5612436d04c394d39da4e91593d5d286b378d425))
+
 ## [0.9.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.8.4...apps-ai-v0.9.0) (2026-10-09)
 
 
