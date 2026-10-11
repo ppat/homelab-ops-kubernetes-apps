@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.18](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.17...infra-networking-extra-v0.3.18) (2026-10-10)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* fix docker image updates via renovate ([#4214](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4214)) ([5612436](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5612436d04c394d39da4e91593d5d286b378d425))
+
 ## [0.3.17](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.16...infra-networking-extra-v0.3.17) (2026-10-04)
 
 
