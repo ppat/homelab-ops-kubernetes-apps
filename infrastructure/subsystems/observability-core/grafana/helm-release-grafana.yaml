@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: grafana-community-repository
         namespace: flux-system
-      version: 13.5.0
+      version: 13.5.1
   install:
     createNamespace: false
     remediation:
