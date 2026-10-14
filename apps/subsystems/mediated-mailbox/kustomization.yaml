@@ -1,0 +1,13 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- namespace.yaml
+- secrets.yaml
+- postgres.yaml
+- oci-repository-mediated-mailbox.yaml
+- helm-release-mediated-mailbox.yaml
+
+sortOptions:
+  order: fifo

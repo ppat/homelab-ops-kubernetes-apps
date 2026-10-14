@@ -1,0 +1,69 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: apps-mediated-mailbox
+spec:
+  steps:
+  - name: Bootstrap FluxCD
+    use:
+      template: ../chainsaw/steps/bootstrap-flux.yaml
+
+  - name: Bootstrap CRDs
+    use:
+      template: ../chainsaw/steps/bootstrap-crds.yaml
+
+  - name: Bootstrap pre-requisites
+    use:
+      template: ../chainsaw/steps/bootstrap-prerequisites.yaml
+      with:
+        bindings:
+        - name: prerequisites_path
+          value: ./ci/test/apps-mediated-mailbox/pre-requisites
+
+  - name: Reconcile pre-requisites
+    try:
+    - description: Reconcile helmrelease/external-secrets-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=4m
+        timeout: 4m
+    - description: Reconcile helmrelease/cloudnative-pg-release
+      script:
+        # yamllint disable-line rule:line-length
+        content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=cloudnative-pg-release --namespace=cnpg-system --timeout=4m
+        timeout: 4m
+
+  - name: Apply apps-mediated-mailbox module
+    try:
+    - description: Apply apps-mediated-mailbox
+      apply:
+        file: ./apps-mediated-mailbox.yaml
+    catch:
+    - describe:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        name: apps-mediated-mailbox
+        namespace: flux-system
+    - events:
+        namespace: flux-system
+
+  # ORDERING follows declared dependencies, which here form one chain: the role Secrets and the key
+  # pair come from external-secrets, CloudNativePG needs the role Secrets to create the managed
+  # roles, the chart's migration Job needs every role, and Helm creates no workload until the
+  # migration completes.
+  - name: Validate mediated-mailbox secrets
+    use:
+      template: ./validate-mediated-mailbox-secrets.yaml
+
+  - name: Validate mediated-mailbox database
+    use:
+      template: ./validate-mediated-mailbox-database.yaml
+
+  - name: Validate mediated-mailbox release
+    use:
+      template: ./validate-mediated-mailbox.yaml
+
+  - name: Report readiness ordering
+    use:
+      template: ../chainsaw/steps/report-readiness.yaml

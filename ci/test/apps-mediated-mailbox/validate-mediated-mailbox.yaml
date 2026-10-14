@@ -1,0 +1,191 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-mediated-mailbox
+spec:
+  try:
+  # Helm creates the workloads only after the pre-install migration Job completes, and Flux runs the
+  # chart's Helm test after the install, so the release is asserted before its workloads and it
+  # carries this step's whole wait.
+  - description: Assert mediated-mailbox-release
+    assert:
+      bindings:
+      - name: name
+        value: mediated-mailbox-release
+      - name: namespace
+        value: mediated-mailbox
+      file: ../chainsaw/assertions/helmrelease-ready.yaml
+      # Covers the migration Job's retries until the roles exist, the rollout and the Helm test.
+      # Measured once, on a local kind rig: Ready 23s after the database. The migration Job's own
+      # backoff, not this budget, is what grows on a slow runner, so this is sized for that.
+      timeout: 10m
+  - description: Assert the chart's Helm test passed
+    assert:
+      resource:
+        apiVersion: helm.toolkit.fluxcd.io/v2
+        kind: HelmRelease
+        metadata:
+          name: mediated-mailbox-release
+          namespace: mediated-mailbox
+        status:
+          (conditions[?type == 'TestSuccess']):
+          - status: 'True'
+  - description: Assert deployment/mediated-mailbox-api
+    assert:
+      bindings:
+      - name: name
+        value: mediated-mailbox-api
+      - name: namespace
+        value: mediated-mailbox
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/mediated-mailbox-ui
+    assert:
+      bindings:
+      - name: name
+        value: mediated-mailbox-ui
+      - name: namespace
+        value: mediated-mailbox
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert deployment/mediated-mailbox-worker
+    assert:
+      bindings:
+      - name: name
+        value: mediated-mailbox-worker
+      - name: namespace
+        value: mediated-mailbox
+      file: ../chainsaw/assertions/deployment-ready.yaml
+  - description: Assert service/mediated-mailbox-api endpoints
+    assert:
+      bindings:
+      - name: name
+        value: mediated-mailbox-api
+      - name: namespace
+        value: mediated-mailbox
+      file: ../chainsaw/assertions/service-endpoints-ready.yaml
+  - description: Assert service/mediated-mailbox-ui endpoints
+    assert:
+      bindings:
+      - name: name
+        value: mediated-mailbox-ui
+      - name: namespace
+        value: mediated-mailbox
+      file: ../chainsaw/assertions/service-endpoints-ready.yaml
+  # The chart generates whichever of the bearer token and the request token key it is not given a
+  # Secret for. Only the request token key here means the API server reads the module's token.
+  - description: Assert the chart generated no bearer token of its own
+    assert:
+      resource:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: mediated-mailbox-access-credentials
+          namespace: mediated-mailbox
+        (keys(data)):
+        - ui-request-token-key
+  # Shape only: kind runs no ingress controller, so the Ingress never gets an address.
+  - description: Assert ingress/mediated-mailbox-api
+    assert:
+      resource:
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: mediated-mailbox-api
+          namespace: mediated-mailbox
+          annotations:
+            external-dns.alpha.kubernetes.io/hostname: mediated-mailbox-api.cluster.example.com
+            traefik.ingress.kubernetes.io/router.entrypoints: websecure
+            traefik.ingress.kubernetes.io/router.tls: "true"
+        spec:
+          rules:
+          - host: mediated-mailbox-api.cluster.example.com
+  # No auth middleware is expected: the UI is exposed without authentication by decision, so the
+  # annotations are asserted as a closed set apart from Helm's own ownership annotations: maps match
+  # by subset, so the count is what refuses an added middleware annotation.
+  - description: Assert ingress/mediated-mailbox-ui
+    assert:
+      resource:
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: mediated-mailbox-ui
+          namespace: mediated-mailbox
+          (length(keys(annotations)[?!starts_with(@, 'meta.helm.sh/')])): 3
+          annotations:
+            external-dns.alpha.kubernetes.io/hostname: mediated-mailbox.cluster.example.com
+            traefik.ingress.kubernetes.io/router.entrypoints: websecure
+            traefik.ingress.kubernetes.io/router.tls: "true"
+        spec:
+          rules:
+          - host: mediated-mailbox.cluster.example.com
+            http:
+              paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: mediated-mailbox-ui
+  # Discovered cluster-wide by the Prometheus Operator and Grafana's sidecar. A dropped label or
+  # annotation fails silently in production, so each is asserted literally.
+  - description: Assert servicemonitor/mediated-mailbox-api
+    assert:
+      resource:
+        apiVersion: monitoring.coreos.com/v1
+        kind: ServiceMonitor
+        metadata:
+          name: mediated-mailbox-api
+          namespace: mediated-mailbox
+  - description: Assert servicemonitor/mediated-mailbox-ui
+    assert:
+      resource:
+        apiVersion: monitoring.coreos.com/v1
+        kind: ServiceMonitor
+        metadata:
+          name: mediated-mailbox-ui
+          namespace: mediated-mailbox
+  - description: Assert servicemonitor/mediated-mailbox-worker
+    assert:
+      resource:
+        apiVersion: monitoring.coreos.com/v1
+        kind: ServiceMonitor
+        metadata:
+          name: mediated-mailbox-worker
+          namespace: mediated-mailbox
+  - description: Assert prometheusrule/mediated-mailbox-alerting-rules
+    assert:
+      resource:
+        apiVersion: monitoring.coreos.com/v1
+        kind: PrometheusRule
+        metadata:
+          name: mediated-mailbox-alerting-rules
+          namespace: mediated-mailbox
+        spec:
+          (length(groups) > `0`): true
+  - description: Assert configmap/mediated-mailbox-dashboard
+    assert:
+      resource:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: mediated-mailbox-dashboard
+          namespace: mediated-mailbox
+          labels:
+            grafana_dashboard: "1"
+          annotations:
+            grafana_folder: Mediated Mailbox
+  catch:
+  - describe:
+      apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: mediated-mailbox-release
+      namespace: mediated-mailbox
+  - describe:
+      apiVersion: batch/v1
+      kind: Job
+      namespace: mediated-mailbox
+  - podLogs:
+      selector: app.kubernetes.io/instance=mediated-mailbox
+      namespace: mediated-mailbox
+      tail: 200
+  - events:
+      namespace: mediated-mailbox

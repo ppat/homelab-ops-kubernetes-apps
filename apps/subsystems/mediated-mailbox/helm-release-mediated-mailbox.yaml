@@ -1,0 +1,104 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mediated-mailbox-release
+  namespace: mediated-mailbox
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: mediated-mailbox
+    namespace: flux-system
+  install:
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 15m0s
+  releaseName: mediated-mailbox
+  targetNamespace: mediated-mailbox
+  # Bounds the chart's pre-install and pre-upgrade migration Job, which retries until every role
+  # the migrations grant to exists. On first install that is until CloudNativePG has initialised
+  # the cluster and created the managed roles, all applied in the same reconcile.
+  timeout: 15m0s
+  upgrade:
+    cleanupOnFail: true
+    # Retry a failed upgrade rather than roll it back, unlike every other release in this repo. The
+    # migration Job runs before any workload rolls and the project's migrations are forward-only, so
+    # a rollback would run the previous release's binaries against the newer schema.
+    strategy:
+      name: RetryOnFailure
+
+  values:
+    database:
+      # The cluster's own read-write Service rather than an alias: sslmode verify-full checks this
+      # name against the server certificate, and the migration role's pgpass line names it as host.
+      host: ${db_name:=mediated-mailbox-db}-${db_suffix_current:=default}-rw
+      name: ${db_bootstrap_database:=mediated_mailbox}
+
+    migration:
+      database:
+        user: ${db_bootstrap_owner:=mediated_mailbox_migrator}
+
+    secrets:
+      databasePasswords:
+        api:
+          existingSecret: mediated-mailbox-api-db
+        ui:
+          existingSecret: mediated-mailbox-ui-db
+        worker:
+          backfill:
+            existingSecret: mediated-mailbox-backfill-db
+          sync:
+            existingSecret: mediated-mailbox-sync-db
+        migration:
+          existingSecret: ${db_name:=mediated-mailbox-db}-${db_suffix_current:=default}-app
+      databaseCaCertificate:
+        existingSecret: ${db_name:=mediated-mailbox-db}-${db_suffix_current:=default}-ca
+      credentialSealingKeyPair:
+        existingSecret: mediated-mailbox-sealing-keys
+      apiBearerToken:
+        existingSecret: mediated-mailbox-api-bearer-token
+
+    # Authenticated by the bearer token alone, with no SSO in front, so agents reach it directly.
+    api:
+      ingress:
+        enabled: true
+        # This cluster's ingress controller is Traefik, selected by annotation.
+        className: ""
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: mediated-mailbox-api.${domain_name}
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+        hosts:
+        - host: mediated-mailbox-api.${domain_name}
+          paths:
+          - path: /
+            pathType: Prefix
+
+    # Exposed with no authentication in front: the UI has no login of its own and none is added.
+    # It gets a host name of its own rather than sharing the API server's by path, because Traefik
+    # ranks routes by rule length: the UI's exact `/` (its redirect to /ui/) would lose to the API
+    # server's prefix `/` on a shared host unless a router priority were set.
+    ui:
+      ingress:
+        enabled: true
+        className: ""
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: mediated-mailbox.${domain_name}
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+        hosts:
+        - host: mediated-mailbox.${domain_name}
+          paths:
+          - path: /
+            pathType: Prefix
+
+    monitoring:
+      serviceMonitor:
+        enabled: true
+      prometheusRule:
+        enabled: true
+      dashboard:
+        enabled: true
+        annotations:
+          grafana_folder: Mediated Mailbox

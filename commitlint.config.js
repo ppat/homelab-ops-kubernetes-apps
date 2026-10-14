@@ -25,7 +25,7 @@ const validateBodyMaxLengthIgnoringDeps = (parsedCommit) => {
 // (pairing rules) for internal consistency.
 // ---------------------------------------------------------------------------
 
-// The 22 released modules: their scope is a shipped claim.
+// The 23 released modules: their scope is a shipped claim.
 const moduleScopes = [
   'apps-ai',
   'apps-bitwarden',
@@ -34,6 +34,7 @@ const moduleScopes = [
   'apps-harbor',
   'apps-home-automation',
   'apps-media',
+  'apps-mediated-mailbox',
   'apps-misc',
   'apps-obsidian-vault',
   'infra-bootstrap-crds',

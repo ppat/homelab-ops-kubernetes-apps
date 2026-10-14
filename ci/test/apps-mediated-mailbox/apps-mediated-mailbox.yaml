@@ -1,0 +1,46 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps-mediated-mailbox
+  namespace: flux-system
+spec:
+  interval: 15m0s
+  path: ./apps/subsystems/mediated-mailbox
+  prune: false
+  postBuild:
+    substitute:
+      db_replicas: "1"
+      db_storage_class: standard
+      db_storage_size: 1Gi
+      db_suffix_current: test
+      secret_store: fake
+      domain_name: cluster.example.com
+      api_db_password_remote_key: mediated_mailbox_api_db_password
+      ui_db_password_remote_key: mediated_mailbox_ui_db_password
+      backfill_db_password_remote_key: mediated_mailbox_backfill_db_password
+      sync_db_password_remote_key: mediated_mailbox_sync_db_password
+      sealing_public_key_remote_key: mediated_mailbox_sealing_public_key
+      sealing_private_key_remote_key: mediated_mailbox_sealing_private_key
+      api_bearer_token_remote_key: mediated_mailbox_api_bearer_token
+  sourceRef:
+    kind: GitRepository
+    name: test-source
+    namespace: flux-system
+  timeout: 2m0s
+  wait: false
+  patches:
+  # The chart's Helm test is switched on here and not in the module. It checks through each Service
+  # that the API server and the UI are ready, the worker is healthy, the API server refuses a request
+  # without the bearer token and the UI serves its page: the end-to-end proof this suite wants, and a
+  # pod a production cluster has no use for on every upgrade.
+  # yamllint disable-line rule:indentation
+  - patch: |-
+      - op: add
+        path: /spec/test
+        value:
+          enable: true
+    target:
+      kind: HelmRelease
+      name: mediated-mailbox-release
+      namespace: mediated-mailbox
