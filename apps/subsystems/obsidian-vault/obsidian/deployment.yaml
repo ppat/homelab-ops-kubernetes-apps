@@ -67,7 +67,7 @@ spec:
         # which breaks both the kubelet's probes below (they connect to the pod IP, not
         # loopback) and the mcp-obsidian-* pods reaching this container from a different
         # node. The image forces the plugin's bindingHost to 0.0.0.0 instead.
-        image: ghcr.io/ppat/obsidian:1.12.7@sha256:d06ae2034fe1eec93a92cd4d4338d9887bb506cbe552f3bb5b27a16f0fbfaf49
+        image: ghcr.io/ppat/obsidian:1.12.7@sha256:a795f2d5e882d664e69f435b86de083e0f665c5a4bfd2ee1c3410b2daf8adf06
         imagePullPolicy: IfNotPresent
         env:
         # A subdirectory of the volume, never the volume's mount root. The PVC is Longhorn
