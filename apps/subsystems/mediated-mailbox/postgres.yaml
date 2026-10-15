@@ -1,0 +1,52 @@
+---
+# The database is owned by the migration role, whose password CloudNativePG generates into
+# <cluster>-app as a libpq password file under `pgpass`, which is the form the chart's migration
+# Job reads. The runtime roles are managed roles: the migration chain grants to all six and fails
+# until each exists. Their passwords come from secrets.yaml. organize and propose belong to job
+# kinds the chart does not run yet, so they hold no password and cannot log in with one.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: ${db_name:=mediated-mailbox-db}-${db_suffix_current:=default}
+  namespace: mediated-mailbox
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  bootstrap:
+    initdb:
+      database: ${db_bootstrap_database:=mediated_mailbox}
+      owner: ${db_bootstrap_owner:=mediated_mailbox_migrator}
+  # The PostgreSQL major the project's own tests run against.
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.6-minimal-trixie@sha256:c9be7f221a05b18fe65259d9136affbabe3b39ad91c3b68f8f2f990a45f35f38
+  instances: ${db_replicas:=1}
+  managed:
+    roles:
+    - name: mediated_mailbox_api
+      login: true
+      passwordSecret:
+        name: mediated-mailbox-api-db
+    - name: mediated_mailbox_ui
+      login: true
+      passwordSecret:
+        name: mediated-mailbox-ui-db
+    - name: mediated_mailbox_backfill
+      login: true
+      passwordSecret:
+        name: mediated-mailbox-backfill-db
+    - name: mediated_mailbox_sync
+      login: true
+      passwordSecret:
+        name: mediated-mailbox-sync-db
+    - name: mediated_mailbox_organize
+      login: true
+    - name: mediated_mailbox_propose
+      login: true
+  monitoring:
+    enablePodMonitor: true
+  primaryUpdateStrategy: unsupervised
+  resources: {}
+  startDelay: 300
+  stopDelay: 300
+  storage:
+    size: ${db_storage_size}
+    storageClass: ${db_storage_class}

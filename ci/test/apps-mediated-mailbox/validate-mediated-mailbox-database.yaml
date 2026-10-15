@@ -1,0 +1,49 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-mediated-mailbox-database
+spec:
+  try:
+  - description: Assert cluster.postgresql.cnpg.io/mediated-mailbox-db-test
+    assert:
+      bindings:
+      - name: name
+        value: mediated-mailbox-db-test
+      - name: namespace
+        value: mediated-mailbox
+      file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
+      # The first step that waits on a pod, so it absorbs the module's start. Measured once, on a
+      # local kind rig: Ready 24s after the module applied. Generous until CI runs are measured.
+      timeout: 5m
+  # The migration chain fails until every runtime role exists, so a role CloudNativePG could not
+  # create shows up here rather than as a migration Job retrying until the release times out.
+  - description: Assert every managed role is reconciled
+    assert:
+      resource:
+        apiVersion: postgresql.cnpg.io/v1
+        kind: Cluster
+        metadata:
+          name: mediated-mailbox-db-test
+          namespace: mediated-mailbox
+        status:
+          managedRolesStatus:
+            (length(byStatus.reconciled)): 6
+            (byStatus.reconciled | sort(@)):
+            - mediated_mailbox_api
+            - mediated_mailbox_backfill
+            - mediated_mailbox_organize
+            - mediated_mailbox_propose
+            - mediated_mailbox_sync
+            - mediated_mailbox_ui
+      timeout: 2m
+  catch:
+  - describe:
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      name: mediated-mailbox-db-test
+      namespace: mediated-mailbox
+  - events:
+      namespace: cnpg-system
+  - events:
+      namespace: mediated-mailbox

@@ -55,6 +55,12 @@
       "component": "apps-media",
       "extra-label": "pr-type:release,subsystem:apps-media"
     },
+    "apps/subsystems/mediated-mailbox": {
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "component": "apps-mediated-mailbox",
+      "extra-label": "pr-type:release,subsystem:apps-mediated-mailbox"
+    },
     "apps/subsystems/misc": {
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,

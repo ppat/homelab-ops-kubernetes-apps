@@ -1,0 +1,15 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: mediated-mailbox
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: oci://ghcr.io/ppat/mediated-mailbox
+  # PLACEHOLDER until the project's first release is published: the tag is the release this module is
+  # written against, and the digest is zeroed. Both are replaced with the published chart's before this
+  # module is released. The chart pins every image to its appVersion, so this pin is the whole deployment's.
+  ref:
+    tag: 0.1.0
+    digest: sha256:0000000000000000000000000000000000000000000000000000000000000000

@@ -1,0 +1,43 @@
+---
+# yamllint disable rule:line-length
+name: test-apps-mediated-mailbox
+
+on:
+  pull_request:
+    paths:
+    - '.github/workflows/test-apps-mediated-mailbox.yaml'
+    - '.github/kind-cluster-single-node.yaml'
+    - 'ci/test/apps-mediated-mailbox/**'
+    - 'ci/test/chainsaw/**'
+    - 'ci/test/fixtures/cnpg-operator/**'
+    - 'ci/test/fixtures/external-secrets/**'
+    - '!ci/test/fixtures/**.md'
+    - 'apps/subsystems/mediated-mailbox/**'
+    - '!apps/subsystems/mediated-mailbox/**.md'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test-apps-mediated-mailbox:
+    uses: ppat/github-workflows/.github/workflows/chainsaw-test.yaml@e14e9bf7b53f4094382443db8bbff9e7d6b1e5b1 # v8.1.0
+    with:
+      # github.head_ref is only set on pull_request events; on workflow_dispatch/push
+      # it's empty, so this falls back to github.ref_name rather than github.ref --
+      # github.ref is a full "refs/heads/<branch>" ref, and chainsaw-test.yaml passes
+      # this straight through as Flux's GitRepository spec.ref.branch, which needs a
+      # bare branch name. ref_name is already bare for every event type.
+      git_ref: ${{ github.head_ref || github.ref_name }}
+      test_path: ./ci/test/apps-mediated-mailbox
+      chainsaw_config: ./ci/test/chainsaw/.chainsaw.yaml
+      # No `timeout`, so the reusable workflow's own default applies. One CloudNativePG cluster
+      # and one chart: on a local kind rig the whole chainsaw phase took 100s, of which the module
+      # took 47s from apply to a Ready release. Declare a ceiling only from measured CI runs. Note
+      # that a declared ceiling is also read by ci/scripts/baseline-plan.sh and carried into the
+      # scheduled baseline.
+      kind_config: .github/kind-cluster-single-node.yaml

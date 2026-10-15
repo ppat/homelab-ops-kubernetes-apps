@@ -1,0 +1,17 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+# Two shared fixtures in place of the database-core and security-core modules. Audited against the
+# module: it ships one `Cluster` and six `ExternalSecret` objects, no `Certificate` and no
+# `${cert_issuer}`, so cert-manager is deliberately absent. The cnpg-operator fixture omits the
+# Barman Cloud plugin, which nothing here reaches.
+#
+# See ../../fixtures/README.md.
+- ../../fixtures/cnpg-operator/
+- ../../fixtures/external-secrets/
+- fake-secret-store.yaml
+
+sortOptions:
+  order: fifo
