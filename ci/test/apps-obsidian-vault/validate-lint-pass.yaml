@@ -1,0 +1,99 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-lint-pass
+spec:
+  try:
+  # Object shape, no wait -- the ceiling validate-git-committer.yaml records: a CronJob has no Ready
+  # condition, and nothing the pass needs exists here (no gateway, no OpenClaw, no vault content).
+  # A triggered Job would prove only that its first call fails. Whether the mount really refuses a
+  # write (EROFS) is owed on a real cluster, from a Job built from this template.
+  - description: Assert externalsecret/lint-pass-secrets
+    assert:
+      bindings:
+      - name: name
+        value: lint-pass-secrets
+      - name: namespace
+        value: obsidian-vault
+      file: ../chainsaw/assertions/externalsecret-ready.yaml
+  - description: Assert cronjob/lint-pass shape
+    assert:
+      resource:
+        apiVersion: batch/v1
+        kind: CronJob
+        metadata:
+          name: lint-pass
+          namespace: obsidian-vault
+        spec:
+          timeZone: Etc/UTC
+          concurrencyPolicy: Forbid
+          jobTemplate:
+            spec:
+              # A retried pass appends a second `log.md` line and pushes a second digest.
+              backoffLimit: 0
+              template:
+                metadata:
+                  labels:
+                    # The sole control's peer selector (../../../apps/subsystems/obsidian-vault/
+                    # network-policy.yaml). This pass never reaches Obsidian's REST API, so
+                    # carrying either value would widen that control for nothing.
+                    # yamllint disable-line rule:line-length
+                    (keys(@) | contains(@, 'homelab-ops.internal/vault-access')): false
+                spec:
+                  restartPolicy: Never
+                  # Nothing the pass does calls the cluster API.
+                  automountServiceAccountToken: false
+                  securityContext:
+                    runAsNonRoot: true
+                    runAsUser: 1000
+                    runAsGroup: 1000
+                    # Without it the pass cannot read group-only vault files, and reads an
+                    # apparently empty vault rather than failing.
+                    fsGroup: 1000
+                    seccompProfile:
+                      type: RuntimeDefault
+                  # yamllint disable rule:line-length
+                  (containers[?name == 'lint-pass'] | [0].securityContext):
+                    allowPrivilegeEscalation: false
+                    readOnlyRootFilesystem: true
+                    capabilities:
+                      drop:
+                      - ALL
+                  (containers[?name == 'lint-pass'] | [0].args): [lint]
+                  # The single-writer invariant's structural half, at both levels: the lint pass is
+                  # the third permitted mounter of vault-data (ppat/obsidian-tools ADR-0001), and it
+                  # is permitted only because the kernel refuses its writes.
+                  (containers[?name == 'lint-pass'] | [0].volumeMounts[?name == 'vault'] | [0].readOnly): true
+                  (containers[?name == 'lint-pass'] | [0].volumeMounts[?name == 'vault'] | [0].mountPath): /vault
+                  (volumes[?name == 'vault'] | [0].persistentVolumeClaim.claimName): vault-data
+                  (volumes[?name == 'vault'] | [0].persistentVolumeClaim.readOnly): true
+                  # The vault and /tmp, nothing else: no other claim, no projected token.
+                  (length(volumes)): 2
+                  # No trailing slash: a per-server gateway route answers one with a 307, which the
+                  # client refuses (../../../apps/subsystems/obsidian-vault/batch-processor/cronjob.yaml).
+                  (containers[?name == 'lint-pass'] | [0].env[?name == 'LINT_MCP_URL'] | [0].value): http://litellm.ai.svc.cluster.local:4000/obsidian_ingestor_mcp/mcp
+                  (containers[?name == 'lint-pass'] | [0].env[?name == 'LINT_MCP_TOOL_READ'] | [0].value): obsidian_ingestor-obsidian_get_note
+                  (containers[?name == 'lint-pass'] | [0].env[?name == 'LINT_MCP_TOOL_WRITE'] | [0].value): obsidian_ingestor-obsidian_write_note
+                  (containers[?name == 'lint-pass'] | [0].env[?name == 'LINT_MCP_TOOL_APPEND'] | [0].value): obsidian_ingestor-obsidian_append_to_note
+                  # The pass never deletes; no setting may name the delete tool.
+                  (containers[?name == 'lint-pass'] | [0].env[?value && contains(value, 'delete')] | length(@)): 0
+                  (containers[?name == 'lint-pass'] | [0].env[?name == 'LINT_MCP_API_KEY'] | [0].valueFrom.secretKeyRef.name): lint-pass-secrets
+                  (containers[?name == 'lint-pass'] | [0].env[?name == 'LINT_DIGEST_HOOK_TOKEN'] | [0].valueFrom.secretKeyRef.name): lint-pass-secrets
+                  # yamllint enable rule:line-length
+  # `catch` is a sibling of `try` on the StepTemplate spec, not a key inside a try entry -- see
+  # validate-git-committer.yaml. Nesting it one level deeper fails the whole suite at load time,
+  # before any test in this directory runs.
+  catch:
+  - describe:
+      apiVersion: batch/v1
+      kind: CronJob
+      name: lint-pass
+      namespace: obsidian-vault
+  - describe:
+      apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      name: lint-pass-secrets
+      namespace: obsidian-vault
+  - events:
+      namespace: obsidian-vault
