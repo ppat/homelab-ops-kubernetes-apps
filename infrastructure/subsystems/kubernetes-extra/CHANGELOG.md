@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.35](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.34...infra-kubernetes-extra-v0.0.35) (2026-10-17)
+
+
+### ✨ Features
+
+* **infra-kubernetes-extra:** update descheduler (0.36.0 -&gt; 0.37.0) ([#4259](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4259)) ([cfb42e4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/cfb42e4e0115fd0ce9cc5e2f0da4526990b8494e))
+
 ## [0.0.34](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-extra-v0.0.33...infra-kubernetes-extra-v0.0.34) (2026-10-10)
 
 
