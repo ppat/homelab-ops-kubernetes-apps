@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.20](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-harbor-v0.0.19...apps-harbor-v0.0.20) (2026-10-17)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-harbor:** update harbor (1.19.2 -&gt; 1.19.4) ([#4283](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4283)) ([f0b4bda](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f0b4bda9e583df454ba933b98afc42e746bf3e52))
+
 ## [0.0.19](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-harbor-v0.0.18...apps-harbor-v0.0.19) (2026-08-07)
 
 
