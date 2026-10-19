@@ -24,7 +24,7 @@ spec:
         env:
         - name: LOKI_URL
           value: ${syslogng_loki_url:=loki.logging.svc.cluster.local:9095}
-        image: docker.io/balabit/syslog-ng:4.12.0@sha256:ead5340a157ffd05d626b7a2560e0d09acfd8553c85cd17855a9388f63c368b4
+        image: docker.io/balabit/syslog-ng:4.12.0@sha256:716cfb3876d8b0618dec08b4567bb955eb30f82a0bbbf7e78bda1410f2adaadc
         imagePullPolicy: IfNotPresent
         livenessProbe:
           tcpSocket:
