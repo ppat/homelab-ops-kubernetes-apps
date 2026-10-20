@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.1.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-obsidian-vault-v0.1.4...apps-obsidian-vault-v0.1.5) (2026-10-20)
+
+
+### ✨ Features
+
+* **apps-obsidian-vault:** update docker.io/natsio/nats-box (0.19.7 -&gt; 0.20.0) ([#4167](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4167)) ([deeb2a9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/deeb2a9e293b8904e26a0d5b0250511c3cbb5028))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-obsidian-vault:** fix obsidian vault img references ([#4224](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4224)) ([fb3cae6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fb3cae6c7bf6ee852a1123ff7d2772f3c57a9879))
+* **apps-obsidian-vault:** update digest docker.io/ppatlabs/obsidian (2cd85dd -&gt; dfa031c) ([#4156](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4156)) ([fb26d98](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fb26d98b6f8c1d0fe9ba9dcad60e497fec8f5f4e))
+* **apps-obsidian-vault:** update digest ghcr.io/ppat/obsidian (d06ae20 -&gt; a795f2d) ([#4268](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4268)) ([99c5d80](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/99c5d803a4602c8e5d730cb937585d9e0a6f6c2f))
+* **apps-obsidian-vault:** update digest ghcr.io/ppat/obsidian (dfa031c -&gt; d06ae20) ([#4261](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4261)) ([edf9b27](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/edf9b27a63282e7d3dfe241dd32d82634b9776a6))
+* fix ability for renovate to update ([#4250](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4250)) ([4300fe1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4300fe1e8f93318b1170c09436c468a27cffd07c))
+* fix docker image updates via renovate ([#4214](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4214)) ([5612436](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5612436d04c394d39da4e91593d5d286b378d425))
+
 ## [0.1.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-obsidian-vault-v0.1.3...apps-obsidian-vault-v0.1.4) (2026-09-29)
 
 
