@@ -132,7 +132,7 @@ spec:
       # and per-consumer series (depth, ack, redelivery, backlog, keyed by stream_name and
       # consumer_name); without it only server-level gnatsd_varz_* series appear.
       - name: metrics
-        image: docker.io/natsio/prometheus-nats-exporter:0.20.2@sha256:c623b608e148e31e1c1c878673a197f1828e58ce90de4f01d22f1baa84c8fee9
+        image: docker.io/natsio/prometheus-nats-exporter:0.20.3@sha256:4b8ddc1c86fec360b5cd3d5e1fbc6fb52bdafd5805bba3901cc52926538af255
         args:
         - -varz
         - -jsz
