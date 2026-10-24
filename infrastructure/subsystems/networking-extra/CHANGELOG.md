@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.19](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.18...infra-networking-extra-v0.3.19) (2026-10-24)
+
+
+### ✨ Features
+
+* **infra-networking-extra:** update tailscale-operator (1.102.4 -&gt; 1.104.1) ([#4298](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4298)) ([c056535](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c0565354adda09de59d17375f392bdfbd075d8ec))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update docker.io/madnuttah/unbound (1.26.1-1 -&gt; 1.26.2-0) ([#4321](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4321)) ([7766c7c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7766c7c5117c59082502d0b7077729ef2585f761))
+* **infra-networking-extra:** update tailscale-operator (1.104.1 -&gt; 1.104.2) ([#4322](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4322)) ([d5adacd](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d5adacde1a8d4f3d8bc76d1290a6e16c425b6254))
+
 ## [0.3.18](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.17...infra-networking-extra-v0.3.18) (2026-10-10)
 
 
