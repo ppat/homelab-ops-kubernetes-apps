@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-core-v0.1.0...infra-kubernetes-core-v0.1.1) (2026-10-24)
+
+
+### ✨ Features
+
+* **infra-kubernetes-core:** update node-feature-discovery (0.19.0 -&gt; 0.20.0) ([#4330](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4330)) ([6e0b260](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6e0b260be036cfbf2a068632ef2c4abbb01edda8))
+
 ## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-kubernetes-core-v0.0.23...infra-kubernetes-core-v0.1.0) (2026-09-28)
 
 
