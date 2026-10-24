@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-virtualization-core-v0.1.1...infra-virtualization-core-v0.1.2) (2026-10-24)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-virtualization-core:** update kubevirt/kubevirt (v1.9.0 -&gt; v1.9.1) ([#4266](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4266)) ([abbc12b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/abbc12b7a61cebb51e027925477712abb873ba54))
+
 ## [0.1.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-virtualization-core-v0.1.0...infra-virtualization-core-v0.1.1) (2026-08-02)
 
 
