@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.6.1...infra-bootstrap-crds-v0.6.2) (2026-10-25)
+
+
+### ✨ Features
+
+* **infra-bootstrap-crds:** update external-secrets/external-secrets (v2.11.0 -&gt; v2.12.0) ([#4264](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4264)) ([bc4b81d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/bc4b81da323366dfb3cbfe786b00e9ea70e8bc78))
+* **infra-bootstrap-crds:** update external-secrets/external-secrets (v2.12.0 -&gt; v2.13.0) ([#4329](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4329)) ([1e5a9a0](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1e5a9a0a87668620e3452044e50ee2364691b0c4))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-virtualization-core:** update kubevirt/kubevirt (v1.9.0 -&gt; v1.9.1) ([#4266](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4266)) ([abbc12b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/abbc12b7a61cebb51e027925477712abb873ba54))
+
 ## [0.6.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.6.0...infra-bootstrap-crds-v0.6.1) (2026-10-17)
 
 
