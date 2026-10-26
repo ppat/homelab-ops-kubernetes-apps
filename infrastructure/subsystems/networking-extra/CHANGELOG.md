@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.20](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.19...infra-networking-extra-v0.3.20) (2026-10-26)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update digest docker.io/freeradius/freeradius-server (cc7fd13 -&gt; e1c2319) ([#4353](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4353)) ([188658f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/188658ff8771edfce8539811dfe2a3a79397a080))
+
 ## [0.3.19](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.18...infra-networking-extra-v0.3.19) (2026-10-25)
 
 
