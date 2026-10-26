@@ -15,6 +15,14 @@
         "ghcr.io/berriai/litellm-helm",
         "ghcr.io/berriai/litellm-database"
       ]
+    },
+    {
+      "groupName": "dragonfly",
+      "description": "the dragonfly chart and app image the chart are grouped together",
+      "matchPackageNames": [
+        "ghcr.io/dragonflydb/dragonfly-operator/helm/dragonfly-operator",
+        "ghcr.io/dragonflydb/dragonfly"
+      ]
     }
   ]
 }
