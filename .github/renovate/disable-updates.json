@@ -80,7 +80,7 @@
     },
     {
       "description": [
-        "disabled to due to lookup failures"
+        "TODO disabled to due to lookup failures"
       ],
       "enabled": false,
       "matchDatasources": [
@@ -88,6 +88,21 @@
       ],
       "matchPackageNames": [
         "gcr.io/go-containerregistry/crane/debug"
+      ]
+    },
+    {
+      "description": [
+        "TODO disabled to due to lookup failures"
+      ],
+      "enabled": false,
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchFileNames": [
+        "infrastructure/subsystems/storage-core/versitygw/job-recovery-export.yaml"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/versity/versitygw"
       ]
     }
   ]
