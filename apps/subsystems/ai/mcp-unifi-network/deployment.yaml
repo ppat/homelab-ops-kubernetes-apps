@@ -20,7 +20,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: mcp-unifi-network
-        image: ghcr.io/sirkirby/unifi-network-mcp:0.37.0@sha256:03544ffb16c7bdd2848d4a01542270338fcf232927143542ccabd1c2ad22c808
+        image: ghcr.io/sirkirby/unifi-network-mcp:0.40.0@sha256:e1830abb0ddc7a51f2dfd07ccb19ef61d361460e3225bc51baf796cfb8ac71ed
         imagePullPolicy: IfNotPresent
         env:
         - name: UNIFI_MCP_HTTP_ENABLED
