@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.16](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.2.15...infra-security-core-v0.2.16) (2026-10-26)
+
+
+### ✨ Features
+
+* **infra-security-core:** update external-secrets (2.12.0 -&gt; 2.13.0) ([#4331](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4331)) ([6832416](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/68324160f704659f641c4ec77a0b1c6d659c5892))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-security-core:** update cert-manager (v1.21.2 -&gt; v1.21.3) ([#4342](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4342)) ([10fe2d8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/10fe2d81c7b6673176f2c3246b79e41b4403a451))
+* **infra-security-core:** update kyverno (3.9.1 -&gt; 3.9.2) ([#4308](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4308)) ([1b04b67](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1b04b6771b9df3c9e24daead84c5266c37352cb9))
+* **infra-security-core:** update policy-reporter (3.11.1 -&gt; 3.11.2) ([#4350](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4350)) ([6059c8a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6059c8ac96acd96b1a8689429a8f5d21e0149ac9))
+
 ## [0.2.15](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.2.14...infra-security-core-v0.2.15) (2026-10-22)
 
 
