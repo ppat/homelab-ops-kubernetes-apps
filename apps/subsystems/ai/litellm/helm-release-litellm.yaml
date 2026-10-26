@@ -32,7 +32,7 @@ spec:
   values:
     image:
       repository: ghcr.io/berriai/litellm-database
-      tag: "v1.93.0@sha256:72360d8bd5602faa49be5098a8ac3dd069d9fb74503d6bd014242d96dc753e43"
+      tag: "v1.106.4@sha256:db36453d25e76c9eb689d7d51b8e5fa48843243d7a86ed1284cf574ce0107b3f"
 
     masterkeySecretName: litellm-secrets
     masterkeySecretKey: LITELLM_MASTER_KEY
