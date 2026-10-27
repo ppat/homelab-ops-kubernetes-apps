@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.9.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.9.1...apps-ai-v0.9.2) (2026-10-27)
+
+
+### ✨ Features
+
+* **apps-ai:** update docker.n8n.io/n8nio/n8n (2.43.3 -&gt; 2.45.4) ([#4376](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4376)) ([795ffbe](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/795ffbe93c7b82d6b1412b1567a81996fc529dd6))
+* **apps-ai:** update ghcr.io/homeassistant-ai/ha-mcp (8.6.0 -&gt; 8.7.0) ([#4377](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4377)) ([093f22a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/093f22aefccb9b73c226e1931c1afca873eaa9ed))
+* **apps-ai:** update ghcr.io/sirkirby/unifi-network-mcp (0.37.0 -&gt; 0.40.0) ([#4378](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4378)) ([ebf3de8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ebf3de84c37068cf9e91bafe1f5abb7fd7e55e41))
+* **apps-ai:** update ghcr.io/sirkirby/unifi-protect-mcp (0.8.16 -&gt; 0.9.5) ([#4379](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4379)) ([0bcb822](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/0bcb82206ac687542a99cdf530b1b64c2c610a33))
+* **apps-ai:** update litellm ([#4380](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4380)) ([569c06e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/569c06e9b7c3688a05aa81324543994a60d120c6))
+* **apps-home-automation:** update ghcr.io/coder/code-server (4.141.0 -&gt; 4.143.1) ([#4367](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4367)) ([3cd1bfa](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3cd1bfabf0110c5191d84682d83b0fa01cd8aa25))
+* update ghcr.io/dragonflydb/dragonfly (v1.39.0 -&gt; v1.40.2) ([#4391](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4391)) ([e2cb81e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e2cb81e38b81398b6acaf6419e9c906be27a232b))
+
 ## [0.9.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.9.0...apps-ai-v0.9.1) (2026-10-13)
 
 
