@@ -125,7 +125,8 @@ spec:
         persistentVolumeClaim:
           claimName: jellyfin-data
       - name: jellyfin-cache
-        emptyDir: {}
+        emptyDir:
+          sizeLimit: ${jellyfin_cache_size:=5Gi}
       - name: jellyfin-media
         persistentVolumeClaim:
           claimName: media-read-only
