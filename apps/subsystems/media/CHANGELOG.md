@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.0.48](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.47...apps-media-v0.0.48) (2026-10-27)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** fix jellyfin restarts due to low emptyDir limit for its cache added by kyverno mutate rule ([#4390](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4390)) ([02c58b5](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/02c58b587145b762dba7244ea01e304c2dd8608c))
+* **apps-media:** update docker.io/plexinc/pms-docker (1.43.4.10903-e5521bd8c -&gt; 1.43.5.11029-6bf8af3f0) ([#4300](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4300)) ([a6635eb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a6635eb139be276d5ce67e86b44f255481f09cf5))
+* **apps-media:** update docker.io/plexinc/pms-docker (1.43.5.11029-6bf8af3f0 -&gt; 1.43.5.11079-b3b13e506) ([#4361](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4361)) ([d7e1c4f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d7e1c4fb9b04d9b9ca8901b96653dc34a59e605d))
+
 ## [0.0.47](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.46...apps-media-v0.0.47) (2026-10-20)
 
 
