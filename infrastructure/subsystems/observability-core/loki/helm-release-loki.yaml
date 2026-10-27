@@ -242,8 +242,6 @@ spec:
     #  https://github.com/grafana/helm-charts/tree/main/charts/rollout-operator
     rollout_operator:
       enabled: false
-    minio:
-      enabled: false
 
     ######################################################################################################################
     # Monitoring
