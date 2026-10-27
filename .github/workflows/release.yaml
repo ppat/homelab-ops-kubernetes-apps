@@ -10,12 +10,6 @@ on:
   push:
     branches:
     - main
-    paths:
-    - 'apps/**'
-    - 'components/**'
-    - 'infrastructure/**'
-    - '.release-please-manifest.json'
-    - 'release-please-config.json'
   workflow_dispatch:
 
 concurrency:
