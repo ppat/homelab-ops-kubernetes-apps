@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: grafana-community-repository
         namespace: flux-system
-      version: 18.17.1
+      version: 20.0.1
   install:
     createNamespace: false
     remediation:
@@ -241,8 +241,6 @@ spec:
     ######################################################################################################################
     #  https://github.com/grafana/helm-charts/tree/main/charts/rollout-operator
     rollout_operator:
-      enabled: false
-    minio:
       enabled: false
 
     ######################################################################################################################
