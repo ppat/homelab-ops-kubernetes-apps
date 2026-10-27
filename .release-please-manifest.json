@@ -5,7 +5,7 @@
   "apps/subsystems/downloaders": "0.5.10",
   "apps/subsystems/harbor": "0.0.20",
   "apps/subsystems/home-automation": "0.3.23",
-  "apps/subsystems/media": "0.0.47",
+  "apps/subsystems/media": "0.0.48",
   "apps/subsystems/misc": "0.0.11",
   "apps/subsystems/obsidian-vault": "0.1.5",
   "infrastructure/bootstrap/crds": "0.6.2",
