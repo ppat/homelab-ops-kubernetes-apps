@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-obsidian-vault-v0.1.5...apps-obsidian-vault-v0.1.6) (2026-10-27)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-obsidian-vault:** update docker.io/natsio/nats-box (0.20.0 -&gt; 0.20.1) ([#4323](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4323)) ([d8dcb81](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d8dcb818c00a83ea2e0ecb286a6001d0556157ef))
+* **apps-obsidian-vault:** update docker.io/natsio/prometheus-nats-exporter (0.20.2 -&gt; 0.20.3) ([#4324](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4324)) ([6273b36](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6273b36ca608628e7871a79f73ef1d70e1bfd561))
+
 ## [0.1.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-obsidian-vault-v0.1.4...apps-obsidian-vault-v0.1.5) (2026-10-20)
 
 
