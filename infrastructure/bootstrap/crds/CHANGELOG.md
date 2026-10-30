@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.6.2...infra-bootstrap-crds-v0.6.3) (2026-10-30)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-bootstrap-crds:** update cert-manager/cert-manager (v1.21.2 -&gt; v1.21.3) ([#4341](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4341)) ([c09df80](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c09df80abab6fcc12aa125a8e6d727e77d331d6c))
+* **infra-bootstrap-crds:** update cloudnative-pg/plugin-barman-cloud (v0.15.0 -&gt; v0.15.1) ([#4180](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4180)) ([cd1bc5f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/cd1bc5f1f37adba1ef7319b7f544820de47fe52c))
+* **infra-bootstrap-crds:** update prometheus-operator/prometheus-operator (v0.94.1 -&gt; v0.94.2) ([#4338](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4338)) ([9b5f22e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9b5f22e1f2463e4a7730d1399d2f247b920aaf5f))
+
 ## [0.6.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.6.1...infra-bootstrap-crds-v0.6.2) (2026-10-25)
 
 
