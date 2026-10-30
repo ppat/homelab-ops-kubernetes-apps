@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.34.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.34.0...infra-observability-core-v0.34.1) (2026-10-30)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** update alloy (1.14.3 -&gt; 1.14.4) ([#4420](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4420)) ([729474b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/729474b8d586fb0f8a8a818ce9813b9114ea2b37))
+* **infra-observability-core:** update digest docker.io/library/busybox (fd7dc98 -&gt; a46257e) ([#4404](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4404)) ([62cf775](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/62cf7751c144d9bce3acc90c2bf457feffbfa7d3))
+* **infra-observability-core:** update kube-prometheus-stack (92.14.0 -&gt; 92.14.1) ([#4413](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4413)) ([698bc44](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/698bc4417e9c1f47f9e4ac4597d196b50128691d))
+* **infra-observability-core:** update loki (20.0.1 -&gt; 20.0.2) ([#4403](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4403)) ([8a6ff5c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8a6ff5cfc6b66fdcd8ba2999f252220d23f0e474))
+
 ## [0.34.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.33.0...infra-observability-core-v0.34.0) (2026-10-27)
 
 
