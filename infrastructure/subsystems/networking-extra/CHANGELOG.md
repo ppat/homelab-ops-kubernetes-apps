@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.21](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.20...infra-networking-extra-v0.3.21) (2026-10-30)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** update digest docker.io/library/busybox (fd7dc98 -&gt; a46257e) ([#4404](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4404)) ([62cf775](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/62cf7751c144d9bce3acc90c2bf457feffbfa7d3))
+
 ## [0.3.20](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.19...infra-networking-extra-v0.3.20) (2026-10-26)
 
 
