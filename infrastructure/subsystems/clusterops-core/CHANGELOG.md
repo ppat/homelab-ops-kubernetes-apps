@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-core-v0.4.5...infra-clusterops-core-v0.4.6) (2026-10-30)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-clusterops-core:** update reloader (2.2.18 -&gt; 2.2.19) ([#4402](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4402)) ([743f0d1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/743f0d1a6e53507c6f740c9549a421e2c29a91f4))
+
 ## [0.4.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-clusterops-core-v0.4.4...infra-clusterops-core-v0.4.5) (2026-10-10)
 
 
