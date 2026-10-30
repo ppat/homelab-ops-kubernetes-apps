@@ -28,7 +28,7 @@ spec:
         kind: HelmRepository
         name: grafana-repository
         namespace: flux-system
-      version: 1.14.3
+      version: 1.14.4
   install:
     createNamespace: false
     remediation:
