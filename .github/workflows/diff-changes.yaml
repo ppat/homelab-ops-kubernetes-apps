@@ -48,7 +48,7 @@ jobs:
   # an empty diff when handed a tree containing none of the resource type it was asked for.
   affected-modules:
     needs: [detect-changes]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 2
     outputs:
       modules: ${{ steps.extract-modules.outputs.modules }}
@@ -87,7 +87,7 @@ jobs:
         cat "${GITHUB_OUTPUT}"
 
   diff:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     needs: [affected-modules]
     if: ${{ needs.affected-modules.outputs.modules != '[]' }}
