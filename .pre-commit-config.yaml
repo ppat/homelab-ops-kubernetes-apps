@@ -25,7 +25,7 @@ repos:
   - id: trailing-whitespace
     exclude: ^\.static/images/.*$
 - repo: https://github.com/sirosen/texthooks
-  rev: 0.7.1
+  rev: 1.0.0
   hooks:
   - id: fix-smartquotes
     exclude: ^\.static/images/.*$
@@ -54,9 +54,9 @@ repos:
     language: node
     stages: [commit-msg]
     additional_dependencies:
-    - '@commitlint/cli@21.2.3'
-    - '@commitlint/config-conventional@21.2.3'
-    - '@commitlint/ensure@21.2.3'
+    - '@commitlint/cli@21.2.4'
+    - '@commitlint/config-conventional@21.2.4'
+    - '@commitlint/ensure@21.2.4'
     - 'commitlint-plugin-function-rules@5.0.1'
     args: ['--verbose']
 - repo: https://github.com/ppat/validate-kubernetes-manifests

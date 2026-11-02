@@ -71,7 +71,7 @@ jobs:
           bun               = "${{ env.BUN_VERSION }}"
           node              = "${{ env.NODE_VERSION }}"
           [settings.npm]
-          bun               = true
+          package_manager   = "bun"
 
     - name: Install node packages
       shell: bash
