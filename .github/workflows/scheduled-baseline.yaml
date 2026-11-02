@@ -61,7 +61,7 @@ permissions:
 
 jobs:
   plan:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
@@ -157,7 +157,7 @@ jobs:
     # killed at its ceiling is the slot most worth reading, and `success()` -- the default -- is
     # exactly the condition that would skip it.
     if: always()
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     # THE HARVESTER MUST NEVER GATE ANYTHING. Three independent reasons it cannot: it is
     # downstream of every suite so it can change no measured run; no job declares `needs: harvest`;
