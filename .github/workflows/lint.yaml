@@ -95,7 +95,7 @@ jobs:
       # renovate: datasource=npm depName=bun
       BUN_VERSION: "1.4.4"
       # renovate: datasource=node-version depName=node
-      NODE_VERSION: "24.22.2"
+      NODE_VERSION: "26.13.0"
     steps:
     # commitlint and its plugin come from this repo's committed package.json + bun.lock,
     # installed with a bun supplied by mise. The versions are Renovate-managed there
