@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.6.4...infra-observability-extra-v0.6.5) (2026-11-02)
+
+
+### ✨ Features
+
+* **infra-observability-extra:** update ghcr.io/unpoller/unpoller (v5.8.3 -&gt; v5.9.2) ([#4445](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4445)) ([54f90b9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/54f90b9012cc1c5f1c4abc58875c7de88849d32b))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-extra:** update digest docker.io/balabit/syslog-ng (73a81e8 -&gt; d36543f) ([#4436](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4436)) ([82a263b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/82a263b0bda7a661d23008521ba685d2166d94eb))
+
 ## [0.6.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.6.3...infra-observability-extra-v0.6.4) (2026-10-26)
 
 
