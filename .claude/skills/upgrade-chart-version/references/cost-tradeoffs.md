@@ -20,15 +20,18 @@ things, not by tool name alone:
   through `jq`/`yq`/`grep` to keep only what matters). Being wrong here costs
   nothing but re-running it.
 - **Medium: small structured remote calls, or the cost is latency more than
-  payload.** `git ls-remote --tags`, `gh release view`/`gh api
-  repos/.../releases` (structured, usually short), a single `WebFetch`/web
-  search — these leave the machine, so they're slower than the cheap tier and
+  payload.** `git ls-remote --tags`, the research-version-changes fetch scripts
+  (structured, and they write to disk rather than into context), a single
+  `WebFetch`/web search — these leave the machine, so they're slower than the cheap tier and
   return content you didn't author, but the response itself is normally short
   and targeted.
+- **In between: a local chainsaw run on kind.** Minutes rather than seconds, but it leaves
+  a live API server you can query (`describe`, `explain`, logs) and you choose how much of
+  its output reaches context, where a CI round trip hands you the whole log.
 - **Expensive: large, non-cacheable payloads landing directly in context.**
-  `gh run view --log-failed` on a real CI run is the main one — since there's no
-  local cluster, that log is also the only place a chainsaw `catch:` block's
-  `describe`/`get`/`podLogs`/`events` output shows up at all. These dumps can run
+  `gh run view --log-failed` on a real CI run is the main one, and for a CI run
+  it is where a chainsaw `catch:` block's `describe`/`get`/`podLogs`/`events`
+  output shows up. These dumps can run
   to hundreds or thousands of lines, every run's content is new (never a cache
   hit), and once it's in context it stays there until compaction discards
   detail you might still have needed. The expense here isn't really the tool
