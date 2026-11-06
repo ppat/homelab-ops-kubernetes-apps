@@ -71,21 +71,16 @@ spec:
         data:
           (base64_decode(s3_accesskeyid || '')): probe-access-key-v1
           (base64_decode(s3_endpoint_url || '')): https://s3.probe.example.com/bucket
-  # The allowlist is the only access boundary on each cluster's Bitwarden store. The
-  # refusal's cause appears only in an Event: the Ready condition reads "could not get
-  # secret data from provider", which is also what a missing key or an unreachable store
-  # produces. If a release rewords the Event this goes red, not vacuously green.
+  # The allowlist is the only access boundary on each cluster's Bitwarden store. Its Event
+  # and Ready condition read "could not get secret data from provider", which is also what a
+  # missing key or an unreachable store produces: external-secrets keeps provider errors out
+  # of Events and status (external-secrets/external-secrets#7149). The refusal's cause
+  # reaches only the controller log, as controller-runtime's "Reconciler error" for this
+  # ExternalSecret. If a release rewords that error this goes red, not vacuously green.
   - description: Assert the store refuses externalsecret/probe-credentials outside its allowlist
-    assert:
-      resource:
-        apiVersion: v1
-        kind: Event
-        metadata:
-          namespace: security-probe-denied
-        involvedObject:
-          kind: ExternalSecret
-          name: probe-credentials
-        (contains(message, 'denied by spec.condition')): true
+    script:
+      timeout: 90s
+      content: ./scripts/allowlist-refusal-logged.sh
   - description: Assert externalsecret/probe-credentials outside the allowlist is not Ready
     assert:
       resource:
@@ -97,6 +92,7 @@ spec:
         status:
           (conditions[?type == 'Ready']):
           - status: 'False'
+            reason: SecretSyncedError
   - description: Assert no secret/probe-credentials was written outside the allowlist
     error:
       resource:
