@@ -14,6 +14,9 @@ data:
     cluster_provider_strategy = "kubeconfig"
     kubeconfig = "/etc/mcp-kubernetes-sandbox/kubeconfig"
     toolsets = ["core"]
+    # Must be a quoted string and stay above [[denied_resources]], or TOML reads it as a
+    # field of that table and the server exits on the unknown key.
+    port = "8080"
 
     # Both kubeconfig and cluster_provider_strategy are required -- setting the
     # strategy alone still loses to in-cluster detection (upstream
