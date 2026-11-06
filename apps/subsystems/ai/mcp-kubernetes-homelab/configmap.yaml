@@ -9,6 +9,9 @@ data:
     read_only = true
     cluster_provider_strategy = "in-cluster"
     toolsets = ["core"]
+    # Must be a quoted string and stay above [[denied_resources]], or TOML reads it as a
+    # field of that table and the server exits on the unknown key.
+    port = "8080"
 
     # WARNING: never enable the "config" toolset -- its configuration_view tool
     # returns the raw kubeconfig, including this pod's in-cluster ServiceAccount
