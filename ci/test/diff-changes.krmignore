@@ -1,0 +1,11 @@
+# Paths the diff-changes workflow leaves out of every ci/test/<module> tree before flate renders it
+# (patterns are relative to that tree). Only the module's own Flux Kustomizations belong in the diff;
+# see the "Sequential Test Fixtures" section of TESTING.md.
+
+# Applied by chainsaw, not Flux, and re-declares objects the module renders itself (its Namespace).
+# flate reads the two declarations as two clusters and refuses with "conflicting entry coordinates".
+pre-requisites/
+
+# Several files sharing one Flux Kustomization name. flate keeps the last one read and drops the
+# rest without an error.
+test-resources/

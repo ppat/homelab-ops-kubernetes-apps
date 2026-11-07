@@ -97,12 +97,15 @@ flowchart TD
   bare -> backups enabled -> restored as three separate files sharing one Flux
   `Kustomization` name, mirroring how the same object mutates over separate commits in
   production (see clusters-repo PR #735 for a real restore).
-- A static point-in-time tree scan (e.g. `flux-local`, used by the `diff-changes`
-  workflow) cannot represent "same identity, different specs over time" as anything but
-  a duplicate-name collision, so `test-resources/` is excluded from what that workflow
-  scans. It is chainsaw-only scaffolding, not part of the module's own manifest -
-  `pre-requisites/` and the module's own Flux `Kustomization` files are still diffed
-  normally.
+- A static point-in-time tree scan (the `flate` diff run by the `diff-changes` workflow)
+  cannot represent "same identity, different specs over time". flate keeps the last
+  same-named `Kustomization` it reads and drops the others without an error, so the diff
+  would silently describe only one of the states. `test-resources/` is chainsaw-only
+  scaffolding, not part of the module's own manifest, and that workflow excludes it.
+- The same workflow also excludes `pre-requisites/`. Chainsaw applies it directly rather
+  than through Flux, and it re-declares objects the module renders itself (its
+  `Namespace`), which flate reads as a second cluster and refuses. Only the module's own
+  Flux `Kustomization` files are diffed.
 - **Re-asserting a condition after mutating an object in place is vacuous on its own.** The
   object still carries the previous spec's `Ready=True` when the step begins, so the assert
   returns instantly and its budget can never be consumed. Gate the step on something the new

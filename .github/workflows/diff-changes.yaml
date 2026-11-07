@@ -7,6 +7,7 @@ on:
     branches: ["main"]
     paths:
     - '.github/workflows/diff-changes.yaml'
+    - 'ci/test/diff-changes.krmignore'
     - 'apps/**/*.yaml'
     - 'ci/**/*.yaml'
     - 'components/**/*.yaml'
@@ -26,26 +27,27 @@ jobs:
       # yamllint disable-line rule:indentation
       files: |
         .github/workflows/diff-changes.yaml
+        ci/test/diff-changes.krmignore
         apps/**/*.yaml
         ci/**/*.yaml
         components/**/*.yaml
         infrastructure/**/*.yaml
       git_ref: ${{ github.head_ref || github.ref }}
 
-  # Each ci/test/<module> directory is its own independent flux-local scan root (see
+  # Each ci/test/<module> directory is its own independent flate scan root (see
   # the per-module `diff` job below), so figure out here which modules a given PR
   # actually touches - either directly (ci/test/<module>/**) or indirectly, through
   # the module's real manifests that its ci/test Kustomization renders
   # (apps/subsystems/<x> -> apps-<x>, infrastructure/subsystems/<x>-core|-extra ->
   # infra-<x>). Anything broader (the workflow itself, or a `components/*` consumed
   # by an arbitrary/varying set of modules via spec.components) falls back to testing
-  # every module, since it can't be attributed to a single one cheaply/reliably.
+  # every module, since it can't be attributed to a single one cheaply/reliably. The same
+  # goes for ci/test/diff-changes.krmignore, which shapes every module's scan root.
   #
   # A module suite is recognised by being named after its module (apps-*/infra-*) rather
   # than by not appearing on a list of exceptions. ci/test also holds directories with no
   # Flux objects in them at all - the shared chainsaw harness, and assertion-semantics,
-  # which asserts on bare ConfigMaps - and flux-local exits non-zero rather than rendering
-  # an empty diff when handed a tree containing none of the resource type it was asked for.
+  # which asserts on bare ConfigMaps - and they have no module diff to report.
   affected-modules:
     needs: [detect-changes]
     runs-on: ubuntu-24.04
@@ -66,7 +68,7 @@ jobs:
       shell: bash
       # yamllint disable-line rule:indentation
       run: |
-        if echo "${CHANGED_FILES}" | tr ' ' '\n' | grep -qE '^(\.github/workflows/diff-changes\.yaml|components/)'; then
+        if echo "${CHANGED_FILES}" | tr ' ' '\n' | grep -qE '^(\.github/workflows/diff-changes\.yaml|ci/test/diff-changes\.krmignore|components/)'; then
           echo "Broad change detected (workflow or shared component) - testing all modules..."
           mapfile -t modules < <(find ci/test -mindepth 1 -maxdepth 1 -type d \( -name 'apps-*' -o -name 'infra-*' \) -printf '%f\n' | sort)
         else
@@ -98,52 +100,21 @@ jobs:
       fail-fast: false
       matrix:
         module: ${{ fromJSON(needs.affected-modules.outputs.modules) }}
-        resource:
-        - helmrelease
-        - kustomization
 
     steps:
-    - name: Checkout after branch
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      with:
-        path: after
-        persist-credentials: false
-
-    - name: Checkout before branch
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      with:
-        path: before
-        persist-credentials: false
-        ref: "${{ github.event.repository.default_branch }}"
-
-    - name: Prepare module trees for diff
-      shell: bash
-      # yamllint disable-line rule:indentation
-      run: |
-        # A module added/removed entirely by this PR won't have a ci/test/<module>
-        # directory on one side; flux-local errors on a missing --path/--path-orig, but
-        # handles an empty *existing* directory fine (renders a full added/removed diff).
-        mkdir -p "after/ci/test/${{ matrix.module }}"
-        mkdir -p "before/ci/test/${{ matrix.module }}"
-
-        # test-resources/ holds chainsaw-only fixtures applied sequentially, in place,
-        # to represent one Flux object's temporal lifecycle within a single test run
-        # (e.g. infra-database's CNPG cluster: bare -> backups enabled -> restored).
-        # A static point-in-time scan can't represent that as anything but a duplicate
-        # Fluxtomization name collision, so it's excluded from what flux-local scans.
-        rm -rf "after/ci/test/${{ matrix.module }}/test-resources"
-        rm -rf "before/ci/test/${{ matrix.module }}/test-resources"
-
     - name: Flux Diff
       id: flux-diff
-      uses: ppat/homelab-ops-actions/actions/flux-diff@66ed3b99f806f50f4e623d3d346f4ba37505ec68 # v2.12.0
+      uses: ppat/homelab-ops-actions/actions/flux-diff@b243512e70e84044d607787b1f482881906b0f01 # v3.0.0
       with:
         log_level: DEBUG
-        other_params: ${{ matrix.resource == 'helmrelease' && '--api-versions monitoring.coreos.com/v1' || '' }}
-        path_after: after/ci/test/${{ matrix.module }}
-        path_before: before/ci/test/${{ matrix.module }}
-        resource_type: ${{ matrix.resource }}
-        sources: "test-source=./"
+        # One run renders the whole graph, so `all` reports Kustomization and Helm output
+        # together, and Helm flags apply to both.
+        other_params: --api-versions monitoring.coreos.com/v1
+        krmignore: ci/test/diff-changes.krmignore
+        path_after: ci/test/${{ matrix.module }}
+        path_before: ci/test/${{ matrix.module }}
+        resource_type: all
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Comment on PR w/ diff
       uses: ppat/homelab-ops-actions/actions/comment-on-pr@66ed3b99f806f50f4e623d3d346f4ba37505ec68 # v2.12.0
@@ -154,5 +125,5 @@ jobs:
           `````diff
           ${{ steps.flux-diff.outputs.diff }}
           `````
-        message_id: "${{ github.event.pull_request.number }}/${{ matrix.module }}/${{ matrix.resource }}"
+        message_id: "${{ github.event.pull_request.number }}/${{ matrix.module }}"
         token: ${{ secrets.GITHUB_TOKEN }}
