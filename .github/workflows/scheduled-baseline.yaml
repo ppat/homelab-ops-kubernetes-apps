@@ -131,7 +131,7 @@ jobs:
       # `fromJSON` because a job output is always a string.
       max-parallel: ${{ fromJSON(needs.plan.outputs.max_parallel) }}
       matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
-    uses: ppat/github-workflows/.github/workflows/chainsaw-test.yaml@e95dcb3a80a8e832d6ab2749d0e36329641c72b9 # v8.5.0
+    uses: ppat/github-workflows/.github/workflows/chainsaw-test.yaml@bd0f4ff0d64b30c217a45bf3fbdc530c06bb5586 # v9.0.0
     with:
       # head_ref first: on a pull_request event ref_name is "<n>/merge", which chainsaw-test
       # passes straight through as Flux's GitRepository spec.ref.branch and which is not one.
