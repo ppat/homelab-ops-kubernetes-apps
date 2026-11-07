@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.2.16...infra-security-core-v0.3.0) (2026-11-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* deploy infra-networking-core together with every other module released from this change, in one clusters-repo bump per cluster. Any resources annotated outside these modules must move to the external-dns.kubernetes.io/ prefix at the same time, or external-dns deletes their records.
+
+### ✨ Features
+
+* **infra-security-core:** update external-secrets (2.13.0 -&gt; 2.14.0) ([#4425](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4425)) ([3cf46ae](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3cf46ae80dd47f140af7979885f057382b92c799))
+* **infra-security-core:** update trust-manager (v0.25.0 -&gt; v0.26.0) ([#4460](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4460)) ([3a7ca11](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3a7ca110a652d562ec83d1186f9e9aec9cf9c1d3))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** update docker.io/alpine/k8s (1.37.1 -&gt; 1.37.2) ([#4431](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4431)) ([7002690](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7002690387b5e96386966fbc79e4ac4114d96eb7))
+* move external-dns annotations to the external-dns.kubernetes.io/ prefix ([#4486](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4486)) ([98a3009](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/98a30091cac6952bee0a35abdfa075fadb57d4a3))
+
 ## [0.2.16](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-security-core-v0.2.15...infra-security-core-v0.2.16) (2026-10-26)
 
 
