@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.9.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.8.3...infra-storage-core-v0.9.0) (2026-11-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* deploy infra-networking-core together with every other module released from this change, in one clusters-repo bump per cluster. Any resources annotated outside these modules must move to the external-dns.kubernetes.io/ prefix at the same time, or external-dns deletes their records.
+* **infra-storage-core:** update longhorn (1.12.1 -> 1.13.0) ([#4416](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4416))
+
+### ✨ Features
+
+* **infra-storage-core:** update docker.io/dxflrs/garage (v2.4.1 -&gt; v2.5.0) ([#4428](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4428)) ([65f125c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/65f125ca2d327fa217edf8b280b08e994f0a37d1))
+* **infra-storage-core:** update longhorn (1.12.1 -&gt; 1.13.0) ([#4416](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4416)) ([612180a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/612180a3a3b17ee6721c84137a34cab83694e778))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** update docker.io/alpine/k8s (1.37.1 -&gt; 1.37.2) ([#4431](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4431)) ([7002690](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7002690387b5e96386966fbc79e4ac4114d96eb7))
+* move external-dns annotations to the external-dns.kubernetes.io/ prefix ([#4486](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4486)) ([98a3009](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/98a30091cac6952bee0a35abdfa075fadb57d4a3))
+
 ## [0.8.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.8.2...infra-storage-core-v0.8.3) (2026-10-26)
 
 
