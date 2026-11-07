@@ -5,7 +5,7 @@ metadata:
   name: seerr
   namespace: downloaders
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: seerr.${domain_name}
+    external-dns.kubernetes.io/hostname: seerr.${domain_name}
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:

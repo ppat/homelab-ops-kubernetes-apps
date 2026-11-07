@@ -5,7 +5,7 @@ metadata:
   name: kubernetes-api
   namespace: default
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: kubernetes-api.${domain_name}
+    external-dns.kubernetes.io/hostname: kubernetes-api.${domain_name}
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:

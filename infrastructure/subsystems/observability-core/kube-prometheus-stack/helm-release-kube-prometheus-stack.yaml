@@ -91,7 +91,7 @@ spec:
       ingress:
         enabled: true
         annotations:
-          external-dns.alpha.kubernetes.io/hostname: alertmanager.${domain_name}
+          external-dns.kubernetes.io/hostname: alertmanager.${domain_name}
           traefik.ingress.kubernetes.io/router.entrypoints: websecure
           traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
@@ -177,7 +177,7 @@ spec:
       ingress:
         enabled: true
         annotations:
-          external-dns.alpha.kubernetes.io/hostname: prometheus.${domain_name}
+          external-dns.kubernetes.io/hostname: prometheus.${domain_name}
           traefik.ingress.kubernetes.io/router.entrypoints: websecure
           traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:

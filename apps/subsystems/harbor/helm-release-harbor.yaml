@@ -45,7 +45,7 @@ spec:
         hosts:
           core: harbor.${domain_name}
         annotations:
-          external-dns.alpha.kubernetes.io/hostname: harbor.${domain_name}
+          external-dns.kubernetes.io/hostname: harbor.${domain_name}
           traefik.ingress.kubernetes.io/router.entrypoints: websecure
           traefik.ingress.kubernetes.io/router.tls: "true"
     externalURL: https://harbor.${domain_name}

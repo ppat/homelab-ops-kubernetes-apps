@@ -5,7 +5,7 @@ metadata:
   name: pihole-admin-https
   namespace: dns
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: pihole.${domain_name}
+    external-dns.kubernetes.io/hostname: pihole.${domain_name}
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:

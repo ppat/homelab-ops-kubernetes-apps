@@ -5,7 +5,7 @@ metadata:
   name: bitwarden-strip-prefix
   namespace: bitwarden
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: bitwarden.${domain_name}
+    external-dns.kubernetes.io/hostname: bitwarden.${domain_name}
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.middlewares: bitwarden-stripprefix@kubernetescrd
@@ -57,7 +57,7 @@ metadata:
   name: bitwarden
   namespace: bitwarden
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: bitwarden.${domain_name}
+    external-dns.kubernetes.io/hostname: bitwarden.${domain_name}
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:

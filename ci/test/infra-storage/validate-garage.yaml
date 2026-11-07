@@ -150,7 +150,7 @@ spec:
           name: garage-s3
           namespace: garage
           annotations:
-            external-dns.alpha.kubernetes.io/hostname: garage-s3.cluster.example.com
+            external-dns.kubernetes.io/hostname: garage-s3.cluster.example.com
             traefik.ingress.kubernetes.io/router.entrypoints: websecure
             traefik.ingress.kubernetes.io/router.tls: "true"
         spec:
@@ -174,7 +174,7 @@ spec:
           name: garage-web
           namespace: garage
           annotations:
-            external-dns.alpha.kubernetes.io/hostname: garage-web.cluster.example.com
+            external-dns.kubernetes.io/hostname: garage-web.cluster.example.com
             traefik.ingress.kubernetes.io/router.entrypoints: websecure
             traefik.ingress.kubernetes.io/router.tls: "true"
         spec:

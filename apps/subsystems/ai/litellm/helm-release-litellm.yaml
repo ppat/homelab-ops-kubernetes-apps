@@ -96,7 +96,7 @@ spec:
       # Chart defaults className to "nginx"; this cluster's ingress controller is Traefik.
       className: ""
       annotations:
-        external-dns.alpha.kubernetes.io/hostname: litellm.${domain_name}
+        external-dns.kubernetes.io/hostname: litellm.${domain_name}
         traefik.ingress.kubernetes.io/router.entrypoints: websecure
         traefik.ingress.kubernetes.io/router.tls: "true"
       hosts:

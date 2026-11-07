@@ -38,7 +38,7 @@ spec:
           name: dockerio-harbor
           namespace: harbor
           annotations:
-            external-dns.alpha.kubernetes.io/hostname: dockerio-harbor.cluster.example.com
+            external-dns.kubernetes.io/hostname: dockerio-harbor.cluster.example.com
             traefik.ingress.kubernetes.io/router.middlewares: harbor-dockerio-rewrite@kubernetescrd,harbor-dockerio-host@kubernetescrd
         spec:
           rules:
