@@ -7,21 +7,6 @@ error once you can see it clearly. What this file covers is the part that *is*
 transferable: how to get clear evidence fast using the tooling actually available
 here, and the general shape of narrowing a diagnosis instead of guessing at one.
 
-## Tooling assumption
-
-`git`, `gh`, `kubectl`, `helm`, `yq`, `jq`, `kubeconform`, `kustomize`, `rg`/`grep`
-are all installed locally already — use them freely for both research and
-diagnosis, with no setup cost to account for. The one thing genuinely
-unavailable locally is a live cluster, and that rules out more than it might
-seem: `kubectl explain` queries a live API server's OpenAPI schema, not a local
-CRD file, so it needs a cluster too. `helm template`/`helm show values`/
-`kustomize build` work fine locally since they only need the CLI and files on
-disk. `kubectl describe`/`get`/`logs`/`events` against a real resource, and
-`kubectl explain`, only become available inside CI (a chainsaw test running
-against its kind cluster) or if you stand up a kind cluster yourself locally —
-see the next section for what that means for where diagnostic evidence actually
-comes from.
-
 ## Narrow before you fix
 
 Treat each failed CI run as a hypothesis-elimination step, not a "try something
@@ -42,10 +27,9 @@ rather than re-litigating a cause you already had evidence against.
 
 ## Getting evidence out of this repo's CI — and keeping it out of your own context
 
-Since you have no local cluster, `gh run view <id> --log-failed` is your only
-window onto anything a chainsaw test's `catch:` block captured — `describe`,
-`get`, `podLogs`, `events` all only exist as output baked into that CI log, not
-as commands you can run directly against something live. That log is almost
+For a CI run, `gh run view <id> --log-failed` is where everything a chainsaw
+test's `catch:` block captured (`describe`, `get`, `podLogs`, `events`) ends up,
+as output baked into that run's log. That log is almost
 always richer than the chainsaw assertion failure alone — errors from a
 sidecar/plugin container often surface in that container's own log lines, not in
 the assertion message itself. But that richness is exactly why it doesn't belong
@@ -72,6 +56,12 @@ with the rest of the log. If the diagnosis itself needs real judgment, that's
 still fine to run on the main/reasoning model — the delegation is about
 isolating the noisy fetch, not about downgrading who interprets it.
 
+## A failed chainsaw run stopped at its first failure
+
+Chainsaw stops a test at its first failing step, so the steps after it never ran. Treat
+them as untested, not as passing. A fix that clears the first failure can expose the next
+one, which is a new finding rather than a regression.
+
 ## A chainsaw `catch:` block only captures what you told it to
 
 If a failure's first appearance doesn't give you enough to diagnose it, that's a
@@ -84,22 +74,23 @@ person (or your next session) hits the same gap.
 
 A `kustomize build` on the exact directory Flux would build (including the
 `components/` your test wires in) or a `helm template` with this module's actual
-values (see `research-and-diagnosis.md`) runs in seconds and answers "does this
+values (the layered values files step 3 built) runs in seconds and answers "does this
 patch actually match/apply" or "does this render with what I expect" — without
 waiting on a CI round trip. This is especially worth doing when a
 patch/substitution silently no-ops rather than erroring (see
 `config-surfaces.md` on patch/substitute ordering) — the local build shows you
 the literal resolved YAML, which either confirms your patch landed or makes the
-no-op obvious immediately.
+no-op obvious immediately. When a render doesn't match what you expected, the chart's
+templates are where to read why. They are rarely worth reading before that.
 
 ## Recognizing a pre-existing or unrelated CI failure
 
 Not every red check is caused by your change. This is a check the subagent
-watching your run makes as part of diagnosing *its* failure (see "Delegate the
-whole watch, not just the failure" in the main skill file) — not a reason to
+watching your run makes as part of diagnosing *its* failure (see step 8 in the
+main skill file), not a reason to
 go browsing other runs' history speculatively before you have a failure of
-your own to explain (see `research-and-diagnosis.md`'s "Historical CI runs are
-not research material"). Before spending a diagnostic cycle on a failure,
+your own to explain (see `research-to-plan.md`'s "Historical CI runs are not
+research material"). Before spending a diagnostic cycle on a failure,
 check whether it was already failing before your branch (a quick `gh run list`
 against the base branch, or checking the check's failure reason against
 something structurally unrelated to what you touched — e.g. a workflow config
