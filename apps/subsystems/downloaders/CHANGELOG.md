@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.5.12...apps-downloaders-v0.6.0) (2026-11-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* deploy infra-networking-core together with every other module released from this change, in one clusters-repo bump per cluster. Any resources annotated outside these modules must move to the external-dns.kubernetes.io/ prefix at the same time, or external-dns deletes their records.
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-downloaders:** update digest ghcr.io/linuxserver/bazarr (9a62588 -&gt; 7ef0e58) ([#4463](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4463)) ([8905f7a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8905f7a4857157e4721ad2176f7afe6b10133149))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/lidarr (9fddcf5 -&gt; d5707cf) ([#4467](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4467)) ([706e52f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/706e52f0e565a64eb60086b42569f91884e7aa09))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sabnzbd (a7cfba4 -&gt; 693c208) ([#4473](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4473)) ([07f9097](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/07f909711b3dbc64c4704ebe64f2290820ac15c4))
+* **apps-downloaders:** update digest ghcr.io/linuxserver/sonarr (386c962 -&gt; 3b8c947) ([#4498](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4498)) ([02cdcc9](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/02cdcc93580f3de0955493ed04bd8ab0ce40c096))
+* move external-dns annotations to the external-dns.kubernetes.io/ prefix ([#4486](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4486)) ([98a3009](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/98a30091cac6952bee0a35abdfa075fadb57d4a3))
+
 ## [0.5.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-downloaders-v0.5.11...apps-downloaders-v0.5.12) (2026-11-03)
 
 
