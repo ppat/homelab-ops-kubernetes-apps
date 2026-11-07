@@ -14,7 +14,7 @@ spec:
         kind: HelmRepository
         name: external-dns-repository
         namespace: flux-system
-      version: 1.21.1
+      version: 1.23.0
   install:
     crds: CreateReplace
     createNamespace: false
@@ -39,6 +39,10 @@ spec:
     domainFilters:
     - ${domain_name}
     extraArgs:
+    # Since v0.22.0 only the GA prefix external-dns.kubernetes.io/ is read, with no fallback. Every
+    # hostname annotation in these modules uses the alpha prefix, and with policy sync the records of
+    # annotations it stops reading get deleted. Migrate the annotations before removing this.
+    - --annotation-prefix=external-dns.alpha.kubernetes.io/
     - --ignore-ingress-tls-spec
     logLevel: ${externaldns_loglevel:=debug}
     sources:
