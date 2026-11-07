@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.14.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.13.0...infra-networking-core-v0.14.0) (2026-11-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* deploy infra-networking-core together with every other module released from this change, in one clusters-repo bump per cluster. Any resources annotated outside these modules must move to the external-dns.kubernetes.io/ prefix at the same time, or external-dns deletes their records.
+
+### ✨ Features
+
+* **infra-networking-core:** update external-dns (1.21.1 -&gt; 1.23.0) ([#4208](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4208)) ([f17eb4f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f17eb4f44badef168d2f16180e4e0a7ac8d19860))
+* **infra-networking-core:** update traefik (42.1.3 -&gt; 42.2.0) ([#4479](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4479)) ([822832a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/822832acad1a85d883eea99846eedc3cf1a2bdd4))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** update metallb (0.16.1 -&gt; 0.16.2) ([#4475](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4475)) ([e3abc12](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/e3abc124beed7fdb6e65110c4f2f76b0c6f36b40))
+* **infra-observability-core:** update digest docker.io/library/busybox (fd7dc98 -&gt; a46257e) ([#4404](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4404)) ([62cf775](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/62cf7751c144d9bce3acc90c2bf457feffbfa7d3))
+* move external-dns annotations to the external-dns.kubernetes.io/ prefix ([#4486](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4486)) ([98a3009](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/98a30091cac6952bee0a35abdfa075fadb57d4a3))
+* test external-dns through the unifi provider against a fake UniFi API, retire the pihole provider ([#4484](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4484)) ([d51d136](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d51d1366b6704764d7c357d281a17ba362b8d2ed))
+
 ## [0.13.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.12.6...infra-networking-core-v0.13.0) (2026-10-26)
 
 
