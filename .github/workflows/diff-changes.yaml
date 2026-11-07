@@ -117,7 +117,7 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Comment on PR w/ diff
-      uses: ppat/homelab-ops-actions/actions/comment-on-pr@66ed3b99f806f50f4e623d3d346f4ba37505ec68 # v2.12.0
+      uses: ppat/homelab-ops-actions/actions/comment-on-pr@b243512e70e84044d607787b1f482881906b0f01 # v3.0.0
       if: ${{ steps.flux-diff.outputs.diff != '' }}
       continue-on-error: true
       with:
