@@ -16,7 +16,7 @@ set -euo pipefail
 #   detach     the writer's attachment is gone and longhorn reports the volume detached, so
 #              the next read cannot be served by the same attachment or page cache
 #   expand     the detached volume grows when the claim does (every estate class sets
-#              allowVolumeExpansion)
+#              allowVolumeExpansion), and the claim is left waiting on the node resize
 #   reattach   a new pod gets the same device back
 #   persist    the bytes read back through the new attachment are the bytes written
 #   resize     the filesystem the new pod sees was grown to match
@@ -28,9 +28,11 @@ RESOURCES="${HERE}/../../test-resources"
 EXPANDED="100Mi"
 EXPANDED_BYTES=104857600
 # Measured over 12 CI runs and the rig: writer done 14-19s after apply (provisioning
-# included), reader 14-17s, detach 2-13s, expansion under 1s. POD_BUDGET_S is not sized from those alone: an
-# attach that cannot succeed produces its first FailedAttachVolume event only after one to
-# three minutes, and that event is what the timeout message reports.
+# included), reader 14-17s, detach 2-13s, longhorn's size flipping under 1s. The claim reaches
+# FileSystemResizePending 15-16s after the patch on both kubernetes 1.36 and 1.37 (3 runs):
+# most of that is longhorn growing the detached volume's engine. POD_BUDGET_S is not sized
+# from those alone: an attach that cannot succeed produces its first FailedAttachVolume event
+# only after one to three minutes, and that event is what the timeout message reports.
 POD_BUDGET_S=180
 DETACH_BUDGET_S=60
 EXPAND_BUDGET_S=60
@@ -119,7 +121,20 @@ until [ "$(lh_volume "$pv" '{.spec.size}')" = "$EXPANDED_BYTES" ]; do
     || fail expand "longhorn volume ${pv} size is '$(lh_volume "$pv" '{.spec.size}')' after ${EXPAND_BUDGET_S}s, want ${EXPANDED_BYTES}"
   sleep 2
 done
-ok expand "longhorn volume ${pv} grown to ${EXPANDED} while detached"
+# longhorn's size flips before the external resizer has finished with the claim. On
+# kubernetes 1.37 a reader started in that gap mounts the grown filesystem, exits, and leaves
+# the claim FileSystemResizePending forever, waiting for a pod to restart; 1.36 tolerated it.
+# Hold the reader until the claim is waiting on the node (or, for a driver that needs no node
+# step, already reports the new capacity).
+until [ "$(kubectl get pvc -n "$NS" "$PVC" \
+  -o jsonpath='{.status.conditions[?(@.type=="FileSystemResizePending")].status}')" = "True" ] \
+  || [ "$(kubectl get pvc -n "$NS" "$PVC" -o jsonpath='{.status.capacity.storage}')" = "$EXPANDED" ]; do
+  [ "$(date +%s)" -lt "$end" ] \
+    || fail expand "pvc/${PVC} not waiting on the node after ${EXPAND_BUDGET_S}s; conditions: $(
+      kubectl get pvc -n "$NS" "$PVC" -o jsonpath='{range .status.conditions[*]}{.type}={.status} {end}')"
+  sleep 2
+done
+ok expand "longhorn volume ${pv} grown to ${EXPANDED} while detached; claim awaits the node resize"
 
 # ---- reattach + persist + resize ------------------------------------------------------------
 kubectl apply -f "${RESOURCES}/longhorn-reader.yaml" >/dev/null
