@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.20...infra-networking-extra-v0.4.0) (2026-11-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* deploy infra-networking-core together with every other module released from this change, in one clusters-repo bump per cluster. Any resources annotated outside these modules must move to the external-dns.kubernetes.io/ prefix at the same time, or external-dns deletes their records.
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update tailscale-operator (1.104.2 -&gt; 1.104.4) ([#4458](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4458)) ([2dce101](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2dce10114a067b34edde89ce1ec3cbca54556860))
+* **infra-observability-core:** update digest docker.io/library/busybox (fd7dc98 -&gt; a46257e) ([#4404](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4404)) ([62cf775](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/62cf7751c144d9bce3acc90c2bf457feffbfa7d3))
+* move external-dns annotations to the external-dns.kubernetes.io/ prefix ([#4486](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4486)) ([98a3009](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/98a30091cac6952bee0a35abdfa075fadb57d4a3))
+
 ## [0.3.20](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.19...infra-networking-extra-v0.3.20) (2026-10-26)
 
 
