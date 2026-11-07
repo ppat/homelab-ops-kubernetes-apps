@@ -43,6 +43,40 @@ spec:
         content: ../chainsaw/scripts/flux-reconcile.sh --resource-type=helmrelease --resource-name=external-secrets-release --namespace=external-secrets --timeout=2m
         timeout: 2m
 
+  # Before the modules, so the webhook's startup site lookup finds the API on its first try.
+  # After cert-manager, which issues the fake's serving certificate.
+  - name: Deploy fake UniFi API
+    try:
+    - description: Apply the fake UniFi API
+      apply:
+        file: ./test-resources/fake-unifi.yaml
+    - description: Create configmap/fake-unifi from scripts/fake-unifi.py
+      script:
+        content: >-
+          kubectl -n nodes create configmap fake-unifi --from-file=fake-unifi.py=./scripts/fake-unifi.py
+          --dry-run=client -o yaml | kubectl apply -f -
+    - description: Assert deployment/unifi
+      assert:
+        bindings:
+        - name: name
+          value: unifi
+        - name: namespace
+          value: nodes
+        file: ../chainsaw/assertions/deployment-ready.yaml
+        timeout: 3m
+    catch:
+    - describe:
+        apiVersion: cert-manager.io/v1
+        kind: Certificate
+        name: unifi-tls
+        namespace: nodes
+    - describe:
+        apiVersion: v1
+        kind: Pod
+        namespace: nodes
+    - events:
+        namespace: nodes
+
   - name: Apply infra-networking modules
     try:
     - description: Apply infra-networking-core
@@ -97,11 +131,16 @@ spec:
     use:
       template: ./validate-freeradius.yaml
 
-  # End to end, so last: a client resolves the app's names through pihole and connects
-  # through MetalLB and Traefik. Every step above validates one of the hops it crosses.
+  # End to end: a client looks the app's names up in the records external-dns wrote and
+  # connects through MetalLB and Traefik. Every step above validates one of the hops it crosses.
   - name: Validate end-to-end reachability
     use:
       template: ./validate-e2e.yaml
+
+  # After end-to-end, because it deletes service/e2e-app-lb, which that step connects to.
+  - name: Validate external-dns record lifecycle
+    use:
+      template: ./validate-external-dns-records.yaml
 
   # Asserts nothing; prints the readiness ordering this suite's step order is derived from,
   # so the next person to tune it has current data rather than an archaeology exercise. The

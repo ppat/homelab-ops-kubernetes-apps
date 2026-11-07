@@ -18,11 +18,11 @@ spec:
   # third of the old 2m and a maximum that uses four fifths of it are the same operation --
   # so the median is not what this budget has to survive. 5m is the sizing rule against the
   # 95.2s maximum, and it is free on the runs that behave.
-  - description: Assert deployment/external-dns-pihole
+  - description: Assert deployment/external-dns-unifi
     assert:
       bindings:
       - name: name
-        value: external-dns-pihole
+        value: external-dns-unifi
       - name: namespace
         value: external-dns
       file: ../chainsaw/assertions/deployment-ready.yaml
@@ -45,15 +45,20 @@ spec:
   - describe:
       apiVersion: apps/v1
       kind: Deployment
-      name: external-dns-pihole
+      name: external-dns-unifi
       namespace: external-dns
   - describe:
       apiVersion: v1
       kind: Pod
-      name: external-dns-pihole
+      selector: app.kubernetes.io/name=external-dns
       namespace: external-dns
+  # Both containers: external-dns and the unifi webhook sidecar.
   - podLogs:
-      name: external-dns-pihole
+      selector: app.kubernetes.io/name=external-dns
       namespace: external-dns
+  # One line per API call the webhook made.
+  - podLogs:
+      selector: app.kubernetes.io/name=fake-unifi
+      namespace: nodes
   - events:
       namespace: external-dns

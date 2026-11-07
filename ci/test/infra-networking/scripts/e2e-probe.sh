@@ -1,12 +1,12 @@
 #!/bin/sh
-# Runs INSIDE the e2e-probe Job pod (curlimages/curl: busybox nslookup + curl), not on the
+# Runs INSIDE the e2e-probe Job pod (curlimages/curl: busybox awk + curl), not on the
 # chainsaw runner. validate-e2e.yaml mounts it as a ConfigMap and binds every expected value
 # into the environment from live cluster state.
 #
 # One line per leg: `E2E OK   [<leg>] ...` or `E2E FAIL [<leg>] ...`, then exit 1 on the
 # first failure. A leg is a single hop a client depends on:
-#   dns           pihole, queried on its MetalLB address, answers with the address the
-#                 ingress controller or the LoadBalancer Service actually holds
+#   dns           the DNS provider (the fake UniFi API) holds an A record for the name, with
+#                 the address the ingress controller or the LoadBalancer Service actually holds
 #   https         Traefik routes the Ingress host to the app, presenting a certificate
 #                 that verifies against the default-tls-cert CA
 #   loadbalancer  the app's own LoadBalancer address reaches the app
@@ -15,18 +15,19 @@ T0=$(date +%s)
 elapsed() { echo $(( $(date +%s) - T0 )); }
 fail() { echo "E2E FAIL [$1] $2 (t+$(elapsed)s)"; exit 1; }
 
-# The server is pihole's MetalLB address, never the pod's resolv.conf: cluster DNS
-# would answer from somewhere other than the records external-dns wrote.
+# Read from the records external-dns wrote, never the pod's resolv.conf: cluster DNS would
+# answer from somewhere other than the provider. -k because the fake's certificate is not
+# what is under test; the https leg below is where verification matters.
 resolve() {
   end=$(( $(date +%s) + DNS_BUDGET_S )); got=
   while :; do
-    got=$(nslookup -type=a "$1" "$DNS_SERVER" 2>/dev/null \
-      | awk '/^Name:/ {f=1; next} f && /^Address/ {print $NF; exit}')
+    got=$(curl -sk --max-time 5 "$RECORDS_URL" 2>/dev/null \
+      | awk -v name="$1" '$1 == "A_RECORD" && $2 == name {print $3; exit}')
     [ "$got" = "$2" ] && break
-    [ "$(date +%s)" -ge "$end" ] && fail dns "$1 via $DNS_SERVER answered '${got:-nothing}', want $2"
+    [ "$(date +%s)" -ge "$end" ] && fail dns "$1 in $RECORDS_URL is '${got:-absent}', want $2"
     sleep 5
   done
-  echo "E2E OK   [dns] $1 -> $got via $DNS_SERVER (t+$(elapsed)s)"
+  echo "E2E OK   [dns] $1 -> $got in $RECORDS_URL (t+$(elapsed)s)"
 }
 
 # --fail makes a Traefik 404/503 an error; anything curl rejects (routing, TLS

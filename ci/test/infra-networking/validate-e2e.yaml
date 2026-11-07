@@ -4,11 +4,15 @@ kind: StepTemplate
 metadata:
   name: validate-e2e
 spec:
+  # The external-dns path here is production's: the unifi provider component unedited, its
+  # webhook sidecar, the txt registry and `policy: sync`. Only the controller is fake, a
+  # record store (scripts/fake-unifi.py) that answers the API calls the webhook makes.
+  # validate-external-dns-records.yaml, after this step, proves ownership records and deletion.
+  #
   # What a green step here does NOT prove, because kind cannot show it:
-  # - the production external-dns path. Every consuming cluster uses the unifi webhook
-  #   provider with the txt registry and `policy: sync`; this suite runs the pihole provider
-  #   (noop registry, upsert-only). Sources, domain filtering and target derivation are
-  #   shared; the webhook, ownership records and deletion are not exercised.
+  # - that a real UniFi controller accepts and serves those records. The fake checks the API
+  #   key and stores what it is sent; it does not validate the records the way a controller
+  #   would, and nothing resolves through it.
   # - ARP, or any client off the node. See the ServiceL2Status note below.
   # - `externalTrafficPolicy: Local` source-address preservation. The probe is an in-cluster
   #   client, which kube-proxy handles as internal traffic, so the source address the backend

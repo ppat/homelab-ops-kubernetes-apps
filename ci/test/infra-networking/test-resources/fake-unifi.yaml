@@ -1,0 +1,93 @@
+---
+# The UniFi controller the unifi external-dns provider writes to, faked as a record store
+# (../scripts/fake-unifi.py). It is reached by the component's own unedited value,
+# UNIFI_HOST=https://unifi.nodes.${dns_zone}: infra-networking-core.yaml substitutes
+# dns_zone=svc.cluster.local, which makes that name Service `unifi` in Namespace `nodes`.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nodes
+---
+# The webhook keeps UNIFI_SKIP_TLS_VERIFY at its default (true), so any certificate passes.
+# The scheme is https because the component's UNIFI_HOST is.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: unifi-tls
+  namespace: nodes
+spec:
+  secretName: unifi-tls
+  dnsNames:
+  - unifi.nodes.svc.cluster.local
+  issuerRef:
+    kind: ClusterIssuer
+    name: selfsigned-issuer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unifi
+  namespace: nodes
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fake-unifi
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fake-unifi
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: fake-unifi
+        image: docker.io/python:3.14.7-alpine3.24@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01
+        command:
+        - python3
+        - -I
+        - /app/fake-unifi.py
+        env:
+        # The value fake-secret-store.yaml serves as unifi_externaldns_apikey.
+        - name: FAKE_UNIFI_API_KEY
+          value: example-unifi-apikey
+        ports:
+        - name: https
+          containerPort: 8443
+        readinessProbe:
+          tcpSocket:
+            port: https
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65532
+        volumeMounts:
+        - name: app
+          mountPath: /app
+          readOnly: true
+        - name: tls
+          mountPath: /tls
+          readOnly: true
+      volumes:
+      - name: app
+        configMap:
+          name: fake-unifi
+      - name: tls
+        secret:
+          secretName: unifi-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi
+  namespace: nodes
+spec:
+  selector:
+    app.kubernetes.io/name: fake-unifi
+  ports:
+  - name: https
+    port: 443
+    targetPort: https
