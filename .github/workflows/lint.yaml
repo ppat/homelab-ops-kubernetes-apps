@@ -89,7 +89,7 @@ jobs:
   #
   # Maintenance: ci/scripts/commit-taxonomy/README.md.
   commit-taxonomy:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     env:
       # renovate: datasource=npm depName=bun
@@ -135,7 +135,7 @@ jobs:
   alloy:
     needs: [detect-changes]
     if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).alloy_any_changed == 'true' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
     - name: Checkout
@@ -177,7 +177,7 @@ jobs:
   bootstrap-crds:
     needs: [detect-changes]
     if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).bootstrap_crds_any_changed == 'true' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
     - name: Checkout
@@ -202,7 +202,7 @@ jobs:
 
   kubernetes-manifests:
     needs: [detect-changes]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
     - name: Checkout

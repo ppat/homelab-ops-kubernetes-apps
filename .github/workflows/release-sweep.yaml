@@ -61,7 +61,7 @@ permissions: {}
 
 jobs:
   sweep:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     # A sweep run that hangs must not hold the concurrency group for the 6h default.
     timeout-minutes: 15
     permissions:
