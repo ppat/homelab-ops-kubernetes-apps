@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: smtp
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: smtp.${domain_name}
+    external-dns.kubernetes.io/hostname: smtp.${domain_name}
 spec:
   type: LoadBalancer
   selector:

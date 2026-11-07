@@ -5,7 +5,7 @@ metadata:
   name: openclaw
   namespace: openclaw
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: openclaw.${domain_name}
+    external-dns.kubernetes.io/hostname: openclaw.${domain_name}
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
@@ -29,7 +29,7 @@ metadata:
   name: openclaw-edit
   namespace: openclaw
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: openclaw-edit.${domain_name}
+    external-dns.kubernetes.io/hostname: openclaw-edit.${domain_name}
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:

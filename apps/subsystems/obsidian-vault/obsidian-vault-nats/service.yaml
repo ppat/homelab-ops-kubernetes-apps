@@ -10,7 +10,7 @@ metadata:
   labels:
     app.kubernetes.io/name: obsidian-vault-nats
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: obsidian-vault-nats.${domain_name}
+    external-dns.kubernetes.io/hostname: obsidian-vault-nats.${domain_name}
 spec:
   type: LoadBalancer
   selector:

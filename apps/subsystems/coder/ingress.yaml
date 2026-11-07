@@ -5,7 +5,7 @@ metadata:
   name: coder
   namespace: coder
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: coder.${domain_name}
+    external-dns.kubernetes.io/hostname: coder.${domain_name}
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:

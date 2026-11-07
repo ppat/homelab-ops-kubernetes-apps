@@ -5,7 +5,7 @@ metadata:
   name: nanomq
   namespace: home-automation
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: nanomq.${domain_name}
+    external-dns.kubernetes.io/hostname: nanomq.${domain_name}
 spec:
   selector:
     app.kubernetes.io/name: nanomq

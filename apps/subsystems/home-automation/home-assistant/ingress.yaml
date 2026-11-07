@@ -5,7 +5,7 @@ metadata:
   name: home-assistant
   namespace: home-automation
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: home-assistant.${domain_name}
+    external-dns.kubernetes.io/hostname: home-assistant.${domain_name}
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
@@ -29,7 +29,7 @@ metadata:
   name: home-assistant-edit
   namespace: home-automation
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: home-assistant-edit.${domain_name}
+    external-dns.kubernetes.io/hostname: home-assistant-edit.${domain_name}
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:

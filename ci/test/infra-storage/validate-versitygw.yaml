@@ -224,7 +224,7 @@ spec:
           name: versitygw
           namespace: versitygw
           annotations:
-            external-dns.alpha.kubernetes.io/hostname: versitygw-s3.cluster.example.com
+            external-dns.kubernetes.io/hostname: versitygw-s3.cluster.example.com
         spec:
           rules:
           - host: versitygw-s3.cluster.example.com

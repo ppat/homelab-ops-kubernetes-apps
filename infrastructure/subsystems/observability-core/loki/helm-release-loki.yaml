@@ -214,7 +214,7 @@ spec:
     ingress:
       enabled: true
       annotations:
-        external-dns.alpha.kubernetes.io/hostname: loki.${domain_name}
+        external-dns.kubernetes.io/hostname: loki.${domain_name}
         traefik.ingress.kubernetes.io/router.entrypoints: websecure
         traefik.ingress.kubernetes.io/router.tls: "true"
       hosts:

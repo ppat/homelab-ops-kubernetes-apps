@@ -71,7 +71,7 @@ spec:
         enabled: true
         className: traefik
         annotations:
-          external-dns.alpha.kubernetes.io/hostname: versitygw-admin.${domain_name}
+          external-dns.kubernetes.io/hostname: versitygw-admin.${domain_name}
           traefik.ingress.kubernetes.io/router.entrypoints: websecure
           traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
@@ -92,7 +92,7 @@ spec:
         enabled: true
         className: traefik
         annotations:
-          external-dns.alpha.kubernetes.io/hostname: versitygw.${domain_name}
+          external-dns.kubernetes.io/hostname: versitygw.${domain_name}
           traefik.ingress.kubernetes.io/router.entrypoints: websecure
           traefik.ingress.kubernetes.io/router.tls: "true"
         hosts:
@@ -109,7 +109,7 @@ spec:
       enabled: true
       className: traefik
       annotations:
-        external-dns.alpha.kubernetes.io/hostname: versitygw-s3.${domain_name}
+        external-dns.kubernetes.io/hostname: versitygw-s3.${domain_name}
         traefik.ingress.kubernetes.io/router.entrypoints: websecure
         traefik.ingress.kubernetes.io/router.tls: "true"
       hosts:

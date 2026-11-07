@@ -5,7 +5,7 @@ metadata:
   name: n8n
   namespace: n8n
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: n8n.${domain_name}
+    external-dns.kubernetes.io/hostname: n8n.${domain_name}
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:

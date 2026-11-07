@@ -81,7 +81,7 @@ metadata:
   labels:
     app.kubernetes.io/name: e2e-app
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: e2e-app-lb.cluster.example.com
+    external-dns.kubernetes.io/hostname: e2e-app-lb.cluster.example.com
     metallb.io/address-pool: e2e-app-pool
 spec:
   type: LoadBalancer
@@ -100,7 +100,7 @@ metadata:
   name: e2e-app
   namespace: e2e-app
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: e2e-app.cluster.example.com
+    external-dns.kubernetes.io/hostname: e2e-app.cluster.example.com
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:

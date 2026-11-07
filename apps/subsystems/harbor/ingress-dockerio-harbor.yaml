@@ -19,7 +19,7 @@ metadata:
   name: dockerio-harbor
   namespace: harbor
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: dockerio-harbor.${domain_name}
+    external-dns.kubernetes.io/hostname: dockerio-harbor.${domain_name}
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.middlewares: harbor-dockerio-rewrite@kubernetescrd,harbor-dockerio-host@kubernetescrd
