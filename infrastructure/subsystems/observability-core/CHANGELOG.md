@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.35.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.34.2...infra-observability-core-v0.35.0) (2026-11-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* deploy infra-networking-core together with every other module released from this change, in one clusters-repo bump per cluster. Any resources annotated outside these modules must move to the external-dns.kubernetes.io/ prefix at the same time, or external-dns deletes their records.
+
+### ✨ Features
+
+* **infra-observability-core:** update alloy (1.14.4 -&gt; 1.15.0) ([#4478](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4478)) ([39f31f2](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/39f31f24821474ff56958878987a7db2a01f0203))
+* **infra-observability-core:** update grafana (14.3.1 -&gt; 14.4.0) ([#4503](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4503)) ([994cc30](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/994cc30a8d9af19f30624d6e3268a7b7cadaef9c))
+* **infra-observability-core:** update kube-prometheus-stack (92.17.1 -&gt; 92.22.0) ([#4504](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4504)) ([7dd7a6d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7dd7a6dbffc27993707d28711886924115a4e15b))
+* **infra-observability-core:** update loki (20.2.2 -&gt; 20.4.1) ([#4505](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4505)) ([037d7ec](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/037d7ec56730db2871c3a80d6cb613f0b53276ec))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-core:** update grafana (14.3.0 -&gt; 14.3.1) ([#4462](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4462)) ([8e7ce1b](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8e7ce1b52fe1e1960bdec765317bc4a7a18ca1c8))
+* **infra-observability-core:** update kube-prometheus-stack (92.17.0 -&gt; 92.17.1) ([#4466](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4466)) ([deed0a8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/deed0a8367fb10a5233744c528eaa914e34d3321))
+* **infra-observability-core:** update loki (20.2.1 -&gt; 20.2.2) ([#4421](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4421)) ([580e7a1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/580e7a1e49c1288a4f175b42181f551ae112eaf2))
+* move external-dns annotations to the external-dns.kubernetes.io/ prefix ([#4486](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4486)) ([98a3009](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/98a30091cac6952bee0a35abdfa075fadb57d4a3))
+
 ## [0.34.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.34.1...infra-observability-core-v0.34.2) (2026-11-02)
 
 
