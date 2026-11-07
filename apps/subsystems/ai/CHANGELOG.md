@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.11.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.10.0...apps-ai-v0.11.0) (2026-11-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* **apps-ai:** update open-webui (16.6.0 -> 18.0.0) ([#4508](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4508))
+* **apps-ai:** update ghcr.io/homeassistant-ai/ha-mcp (8.7.0 -> 9.1.1) ([#4507](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4507))
+* deploy infra-networking-core together with every other module released from this change, in one clusters-repo bump per cluster. Any resources annotated outside these modules must move to the external-dns.kubernetes.io/ prefix at the same time, or external-dns deletes their records.
+
+### ✨ Features
+
+* **apps-ai:** update docker.io/grafana/mcp-grafana (2.1.1 -&gt; 2.2.0) ([#4500](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4500)) ([8b9428e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/8b9428e68b30bd1c465d34f4a234436218727b4f))
+* **apps-ai:** update ghcr.io/containers/kubernetes-mcp-server (v0.0.67 -&gt; v0.1.1) ([#4373](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4373)) ([a5f4945](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a5f4945138ffa16032ef6ca7f558fbdde58ff04f))
+* **apps-ai:** update ghcr.io/homeassistant-ai/ha-mcp (8.7.0 -&gt; 9.1.1) ([#4507](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4507)) ([6a1f537](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6a1f5379c2f20186f15721a1f4c716b9e8b4cb7d))
+* **apps-ai:** update ghcr.io/sirkirby/unifi-network-mcp (0.43.1 -&gt; 0.45.0) ([#4501](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4501)) ([deb191f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/deb191f3a9108508219714efb0ba6dc0925827bf))
+* **apps-ai:** update ghcr.io/sirkirby/unifi-protect-mcp (0.11.0 -&gt; 0.12.0) ([#4502](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4502)) ([148d326](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/148d326b76834795709a5d75d12f224ae20d0051))
+* **apps-ai:** update open-webui (16.6.0 -&gt; 18.0.0) ([#4508](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4508)) ([63cbf3a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/63cbf3a6ec6d4d9bbcf69a0a08c8a8c2c1ebf914))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** update ghcr.io/containers/kubernetes-mcp-server (v0.1.1 -&gt; v0.1.2) ([#4499](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4499)) ([485db9d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/485db9ddaf5d7ec68ad46e8c44ac8cdf3b1f1dd9))
+* move external-dns annotations to the external-dns.kubernetes.io/ prefix ([#4486](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4486)) ([98a3009](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/98a30091cac6952bee0a35abdfa075fadb57d4a3))
+
 ## [0.10.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.9.2...apps-ai-v0.10.0) (2026-11-02)
 
 
