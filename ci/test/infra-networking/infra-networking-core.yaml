@@ -8,12 +8,15 @@ spec:
   interval: 15m0s
   path: ./infrastructure/subsystems/networking-core
   components:
-  - ../../../components/external-dns-provider/pihole
+  - ../../../components/external-dns-provider/unifi
   postBuild:
     substitute:
       secret_store: fake
       cert_issuer: selfsigned-issuer
-      dns_zone: example.com
+      # dns_zone feeds only the unifi provider's UNIFI_HOST in this module. This value turns
+      # https://unifi.nodes.${dns_zone} into the fake UniFi API's Service; see
+      # test-resources/fake-unifi.yaml.
+      dns_zone: svc.cluster.local
       domain_name: cluster.example.com
       metallb_standard_ip_pool: 10.112.0.0/24
   prune: false

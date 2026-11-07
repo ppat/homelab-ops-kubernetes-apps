@@ -1,0 +1,47 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-external-dns-records
+spec:
+  # The record lifecycle under the unifi provider's txt registry and `policy: sync`, read
+  # from the fake UniFi API's store. Runs after validate-e2e.yaml, which created
+  # service/e2e-app-lb and already waited for its A record.
+  #
+  # Budgets: external-dns polls once a minute (no --events), so each change lands up to one
+  # interval after its cause. 150s is 2.5 intervals, as in e2e-probe.yaml.
+  try:
+  - description: Read the LoadBalancer address of service/e2e-app-lb
+    script:
+      content: kubectl -n e2e-app get service e2e-app-lb -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+      outputs:
+      - name: lb_ip
+        value: ($stdout)
+  - description: Assert the A record and its TXT ownership record exist
+    script:
+      env:
+      - name: LB_IP
+        value: ($lb_ip)
+      content: ./scripts/await-records.sh present 150 "$LB_IP"
+      timeout: 3m
+  - description: Delete service/e2e-app-lb
+    delete:
+      ref:
+        apiVersion: v1
+        kind: Service
+        name: e2e-app-lb
+        namespace: e2e-app
+  - description: Assert both records are deleted
+    script:
+      content: ./scripts/await-records.sh absent 150
+      timeout: 3m
+
+  catch:
+  - podLogs:
+      selector: app.kubernetes.io/name=external-dns
+      namespace: external-dns
+      tail: 60
+  - podLogs:
+      selector: app.kubernetes.io/name=fake-unifi
+      namespace: nodes
+      tail: 60

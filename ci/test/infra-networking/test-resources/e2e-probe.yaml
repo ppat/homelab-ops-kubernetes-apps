@@ -1,6 +1,6 @@
 ---
-# A client inside the cluster doing what a client on the LAN does: ask pihole for a name,
-# connect to the answer. Every expected value is bound at apply time from live state by
+# A client inside the cluster doing what a client on the LAN does: look a name up in the
+# records the DNS provider holds, connect to the answer. Every expected value is bound at apply time from live state by
 # validate-e2e.yaml; the probe itself is ../scripts/e2e-probe.sh.
 apiVersion: batch/v1
 kind: Job
@@ -24,8 +24,8 @@ spec:
       - name: probe
         image: docker.io/curlimages/curl:8.23.0@sha256:3fb7e13e5d179a845c97d78204f3f1064d1907037f26a3ebf91710571151fd93
         env:
-        - name: DNS_SERVER
-          value: ($live.dns_server)
+        - name: RECORDS_URL
+          value: https://unifi.nodes.svc.cluster.local/records
         - name: TRAEFIK_IP
           value: ($live.traefik_ip)
         - name: LB_IP

@@ -18,7 +18,7 @@ The networking-core module provides three main capabilities:
 
 2. DNS Management
    - Automated DNS record synchronization
-   - Support for PiHole and UniFi DNS providers
+   - UniFi DNS provider, through a webhook
    - Service and ingress record creation
    - DNS record ownership management
 
@@ -31,9 +31,9 @@ The networking-core module provides three main capabilities:
 ### Component Details
 
 | Component | Primary Role | Integration Points |
-|-----------|-------------|-------------------|
+| ----------- | ------------- | ------------------- |
 | MetalLB | Layer 2 load balancing | • Allocates IP addresses from configured pools to LoadBalancer services<br>• Announces service IPs using Layer 2 mode for local network visibility<br>• Enables external access for cluster services that require it<br> |
-| ExternalDNS | DNS record automation | • Watches services and ingresses for DNS record annotations<br>• Synchronizes DNS records with configured provider (PiHole or UniFi)<br>• Manages record lifecycle based on service/ingress presence<br>• Supports TXT ownership records for conflict prevention (UniFi only) |
+| ExternalDNS | DNS record automation | • Watches services and ingresses for DNS record annotations<br>• Synchronizes DNS records with the UniFi controller through the unifi webhook provider<br>• Manages record lifecycle based on service/ingress presence<br>• Supports TXT ownership records for conflict prevention |
 | Traefik | Ingress controller | • Routes external traffic to appropriate services based on rules<br>• Manages TLS certificates from security-core for HTTPS<br>• Provides middlewares for HTTPS redirection and header management<br>• Exposes services through configured entrypoints |
 
 ## Prerequisites
@@ -41,26 +41,21 @@ The networking-core module provides three main capabilities:
 1. Required Variables
 
    | Variable | Purpose | Required By |
-   |----------|---------|-------------|
+   | ---------- | --------- | ------------- |
    | domain_name | Domain for ingress endpoints | Traefik, ExternalDNS |
    | metallb_standard_ip_pool | IP range for service allocation | MetalLB |
-   | externaldns_provider | DNS provider selection (pihole/unifi) | ExternalDNS |
-   | dns_zone | DNS zone for UniFi controller | ExternalDNS (UniFi only) |
+   | dns_zone | DNS zone for UniFi controller | ExternalDNS |
 
 2. Required Secrets
 
-   | Secret Name | Purpose | Required Keys |
-   |-------------|---------|---------------|
-   | external-dns-secrets | DNS provider authentication | For PiHole: pihole_password<br>For UniFi: unifi_username, unifi_password |
+   | Secret Name          | Purpose                     | Required Keys |
+   |----------------------|-----------------------------|---------------|
+   | external-dns-secrets | DNS provider authentication | unifi_apikey  |
 
 3. DNS Provider Requirements
-   - PiHole:
-     - PiHole web interface accessible at pihole-web.dns.svc.cluster.local
-     - Admin password for PiHole API access
-   - UniFi:
-     - UniFi controller accessible at unifi.homelab.${dns_zone}
-     - User credentials with DNS management permissions
-     - External controller access enabled
+   - The [external-dns-provider/unifi](../../../components/external-dns-provider/unifi) component, layered on through `spec.components`. It supplies the provider values through ConfigMap `external-dns-provider-config`, which the external-dns HelmRelease requires
+   - UniFi controller accessible at unifi.nodes.${dns_zone}
+   - UniFi API key with DNS management permissions
 
 ## Dependencies
 
