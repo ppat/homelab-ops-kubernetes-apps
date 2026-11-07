@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.7.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.6.2...infra-bootstrap-crds-v0.7.0) (2026-11-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-bootstrap-crds:** update longhorn/longhorn (v1.12.1 -> v1.13.0) ([#4415](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4415))
+
+### ✨ Features
+
+* **infra-bootstrap-crds:** update external-secrets/external-secrets (v2.13.0 -&gt; v2.14.0) ([#4424](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4424)) ([58c339d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/58c339dd5f4d44c1c3f718abcee9ab8430e123b9))
+* **infra-bootstrap-crds:** update longhorn/longhorn (v1.12.1 -&gt; v1.13.0) ([#4415](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4415)) ([153445d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/153445d6c3e240737c584ec4a5cf8db034ebc932))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-bootstrap-crds:** update cert-manager/cert-manager (v1.21.2 -&gt; v1.21.3) ([#4341](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4341)) ([c09df80](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c09df80abab6fcc12aa125a8e6d727e77d331d6c))
+* **infra-bootstrap-crds:** update cloudnative-pg/plugin-barman-cloud (v0.15.0 -&gt; v0.15.1) ([#4180](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4180)) ([cd1bc5f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/cd1bc5f1f37adba1ef7319b7f544820de47fe52c))
+* **infra-bootstrap-crds:** update metallb/metallb (v0.16.1 -&gt; v0.16.2) ([#4474](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4474)) ([ab9cc08](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/ab9cc0866e82e5ebc3c3cc7a7fd684f5ced95f89))
+* **infra-bootstrap-crds:** update prometheus-operator/prometheus-operator (v0.94.1 -&gt; v0.94.2) ([#4338](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4338)) ([9b5f22e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/9b5f22e1f2463e4a7730d1399d2f247b920aaf5f))
+
 ## [0.6.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.6.1...infra-bootstrap-crds-v0.6.2) (2026-10-25)
 
 
