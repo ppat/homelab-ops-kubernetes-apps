@@ -1,0 +1,21 @@
+---
+# The gateway rejects any request carrying Forwarded, X-Real-Ip or X-Forwarded-* headers
+# ("proxy_attribution_required") unless its source address is listed in gateway.trustedProxies.
+# Traefik adds those headers to every request and runs on pod IPs that change on restart, so
+# rather than trusting a pod CIDR the headers are removed here and the gateway sees an ordinary
+# direct request. The gateway then records the Traefik pod as the client address.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-forwarded-headers
+  namespace: openclaw
+spec:
+  headers:
+    customRequestHeaders:
+      Forwarded: ""
+      X-Forwarded-For: ""
+      X-Forwarded-Host: ""
+      X-Forwarded-Port: ""
+      X-Forwarded-Proto: ""
+      X-Forwarded-Server: ""
+      X-Real-Ip: ""

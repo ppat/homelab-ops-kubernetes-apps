@@ -21,6 +21,14 @@ spec:
       - name: namespace
         value: openclaw
       file: ../chainsaw/assertions/externalsecret-ready.yaml
+  - description: Assert middleware/strip-forwarded-headers
+    assert:
+      resource:
+        apiVersion: traefik.io/v1alpha1
+        kind: Middleware
+        metadata:
+          name: strip-forwarded-headers
+          namespace: openclaw
   - description: Assert serviceaccount/openclaw
     assert:
       resource:
