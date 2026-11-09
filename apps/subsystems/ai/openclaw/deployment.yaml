@@ -45,7 +45,7 @@ spec:
       - name: openclaw
         # This build's entrypoint adds a per-boot chmod that re-tightens the fsGroup-loosened
         # state perms: credentials dir -> 700, auth SQLite + sessions.json -> 600 (ppat/images#533).
-        image: ghcr.io/ppat/openclaw:2026.10.9@sha256:5c92388575ce0b93c8f60fbbff1b92f848aad591e2373851814f02a271fae4cc
+        image: ghcr.io/ppat/openclaw:2026.10.9@sha256:795319896c9a700a60ae6ad150e91fbbd7af28545481e08658bf18520ddbbecd
         imagePullPolicy: IfNotPresent
         env:
         - name: OPENCLAW_CONFIG_PATH
