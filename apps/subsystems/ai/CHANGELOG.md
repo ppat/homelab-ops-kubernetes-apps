@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.12.1...apps-ai-v0.12.2) (2026-11-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** pin the openclaw image build that refreshes stale baked-in plugins ([#4519](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4519)) ([6e3087e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6e3087edd2c7c88c0da3bb9686b8dc769f0a6dcd))
+
 ## [0.12.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.12.0...apps-ai-v0.12.1) (2026-11-09)
 
 
