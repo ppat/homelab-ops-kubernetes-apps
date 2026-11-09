@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.12.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.11.0...apps-ai-v0.12.0) (2026-11-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* **apps-ai:** the consumer-supplied openclaw-config ConfigMap must drop logging.redactSensitive and plugins.bundledDiscovery, replace skills.workshop.autonomous.enabled with skills.workshop.autonomous.mode ("off"), and allowlist "litellm" in plugins.allow, in the same change that moves to this release.
+
+### ✨ Features
+
+* **apps-ai:** update ghcr.io/ppat/openclaw (2026.7.1 -&gt; 2026.10.9) ([#4495](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4495)) ([5bccc8f](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/5bccc8f87f073a82852e3a8198c90a339540735d))
+
 ## [0.11.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.10.0...apps-ai-v0.11.0) (2026-11-09)
 
 
