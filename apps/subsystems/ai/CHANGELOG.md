@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.12.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.12.0...apps-ai-v0.12.1) (2026-11-09)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** size openclaw's memory and emptyDirs for a long-lived state ([#4516](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4516)) ([3fdc921](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3fdc9214a67a20e9fd16632d96db80e7907ff42a))
+* **apps-ai:** strip forwarded headers on the openclaw ingress so the Control UI loads ([#4515](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4515)) ([7c68273](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7c682730b9ef453d286213bcc3cc3b62ca81c066))
+
 ## [0.12.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.11.0...apps-ai-v0.12.0) (2026-11-09)
 
 
