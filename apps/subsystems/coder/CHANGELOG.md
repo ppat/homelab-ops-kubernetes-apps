@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.2.0...apps-coder-v0.2.1) (2026-11-09)
+
+
+### ✨ Features
+
+* **apps-coder:** update ghcr.io/opentofu/opentofu (1.12.6 -&gt; 1.13.9) ([#4514](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4514)) ([584aa96](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/584aa961631d0bdfd4ba813ddac614068a8d8b41))
+
 ## [0.2.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-coder-v0.1.11...apps-coder-v0.2.0) (2026-11-09)
 
 
