@@ -110,14 +110,15 @@ spec:
             path: /healthz
             port: gateway
           periodSeconds: 10
-        # The gateway settles around 0.9Gi of anonymous memory but spikes past 1.5Gi during
-        # startup; 1.5Gi is OOMKilled right after "ready", 2Gi is not.
+        # Memory grows with the agent's session history. On a fresh state the gateway settles
+        # around 0.9Gi with startup spikes past 1.5Gi; a long-lived production state runs at
+        # 1.4-1.7Gi steady with RSS peaks near 1.9Gi, so the limit leaves room above that.
         resources:
           requests:
             cpu: 100m
-            memory: 1Gi
-          limits:
             memory: 2Gi
+          limits:
+            memory: 4Gi
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -207,7 +208,13 @@ spec:
       - name: openclaw-data
         persistentVolumeClaim:
           claimName: openclaw-data
+      # Explicit sizeLimits: an emptyDir without one gets a cluster-policy default (256Mi here),
+      # which the gateway outgrows and is evicted for. /tmp holds its daily rolling log (up to
+      # 100MiB per file, about two days kept) and its private temp dir (/tmp/openclaw-<uid>);
+      # the cache holds SQLite snapshots staged from the state databases.
       - name: tmp
-        emptyDir: {}
+        emptyDir:
+          sizeLimit: 2Gi
       - name: cache
-        emptyDir: {}
+        emptyDir:
+          sizeLimit: 2Gi
