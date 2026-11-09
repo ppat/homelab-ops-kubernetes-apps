@@ -18,7 +18,7 @@
   "infrastructure/subsystems/observability-core": "0.35.0",
   "infrastructure/subsystems/observability-extra": "0.6.5",
   "infrastructure/subsystems/security-core": "0.3.0",
-  "infrastructure/subsystems/security-extra": "0.3.1",
+  "infrastructure/subsystems/security-extra": "0.4.0",
   "infrastructure/subsystems/storage-core": "0.9.0",
   "infrastructure/subsystems/virtualization-core": "0.1.2"
 }
