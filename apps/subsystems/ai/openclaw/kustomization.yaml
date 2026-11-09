@@ -8,6 +8,7 @@ resources:
 - secret.yaml
 - deployment.yaml
 - service.yaml
+- middleware-strip-forwarded-headers.yaml
 - ingress.yaml
 - servicemonitor.yaml
 

@@ -6,6 +6,7 @@ metadata:
   namespace: openclaw
   annotations:
     external-dns.kubernetes.io/hostname: openclaw.${domain_name}
+    traefik.ingress.kubernetes.io/router.middlewares: openclaw-strip-forwarded-headers@kubernetescrd
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
