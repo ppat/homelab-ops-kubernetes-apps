@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.49...apps-media-v0.1.0) (2026-11-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* deploy infra-networking-core together with every other module released from this change, in one clusters-repo bump per cluster. Any resources annotated outside these modules must move to the external-dns.kubernetes.io/ prefix at the same time, or external-dns deletes their records.
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-media:** update docker.io/plexinc/pms-docker (1.43.5.11079-b3b13e506 -&gt; 1.43.6.11085-d1e52e169) ([#4459](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4459)) ([99856e6](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/99856e62be9d00272416645261f7d704c584eddf))
+* move external-dns annotations to the external-dns.kubernetes.io/ prefix ([#4486](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4486)) ([98a3009](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/98a30091cac6952bee0a35abdfa075fadb57d4a3))
+
 ## [0.0.49](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.48...apps-media-v0.0.49) (2026-11-03)
 
 
