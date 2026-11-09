@@ -45,7 +45,7 @@ spec:
       - name: openclaw
         # This build's entrypoint adds a per-boot chmod that re-tightens the fsGroup-loosened
         # state perms: credentials dir -> 700, auth SQLite + sessions.json -> 600 (ppat/images#533).
-        image: ghcr.io/ppat/openclaw:2026.7.1@sha256:77545a820d181d28266ad63c7f41ac3d8152a6d55b7c02d98f708bdcd2b5c194
+        image: ghcr.io/ppat/openclaw:2026.10.9@sha256:5c92388575ce0b93c8f60fbbff1b92f848aad591e2373851814f02a271fae4cc
         imagePullPolicy: IfNotPresent
         env:
         - name: OPENCLAW_CONFIG_PATH
@@ -110,12 +110,14 @@ spec:
             path: /healthz
             port: gateway
           periodSeconds: 10
+        # The gateway settles around 0.9Gi of anonymous memory but spikes past 1.5Gi during
+        # startup; 1.5Gi is OOMKilled right after "ready", 2Gi is not.
         resources:
           requests:
             cpu: 100m
-            memory: 512Mi
-          limits:
             memory: 1Gi
+          limits:
+            memory: 2Gi
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -139,6 +141,12 @@ spec:
           mountPath: /home/node/.openclaw
         - name: tmp
           mountPath: /tmp
+        # The gateway stages SQLite state snapshots under $XDG_CACHE_HOME/openclaw (default
+        # $HOME/.cache/openclaw) and refuses to boot unless it can create that dir 0700 -- on the
+        # read-only rootfs that is EROFS, and the CLI aborts before serving /healthz with only
+        # "The CLI command failed" unless run with --verbose.
+        - name: cache
+          mountPath: /home/node/.cache
       - name: code-server
         args: [
           "--auth", "none",
@@ -200,4 +208,6 @@ spec:
         persistentVolumeClaim:
           claimName: openclaw-data
       - name: tmp
+        emptyDir: {}
+      - name: cache
         emptyDir: {}
