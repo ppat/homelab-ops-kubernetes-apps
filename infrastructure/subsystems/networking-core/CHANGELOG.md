@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.15.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.14.1...infra-networking-core-v0.15.0) (2026-11-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-networking-core:** remove `../../../components/external-dns-provider/unifi` from the infra-networking-core Kustomization's spec.components in the same change that moves its ref.tag to this version. The path no longer exists, and the module now creates the ExternalSecret the component used to. After deploying, the orphaned ConfigMap external-dns/external-dns-provider-config can be deleted by hand.
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-core:** fold the unifi external-dns provider into the module ([#4569](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4569)) ([6c44896](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6c44896baa1aac6e01520ab443b11081dbd6e529))
+
 ## [0.14.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-core-v0.14.0...infra-networking-core-v0.14.1) (2026-11-11)
 
 
