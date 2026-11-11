@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.9.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.9.1...infra-storage-core-v0.9.2) (2026-11-11)
+
+
+### 🛠 Improvements
+
+* **infra-storage-core:** point the garage admin ingress note at networking-core's external-dns ([#4570](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4570)) ([97782b7](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/97782b726c5e7a5049087ebc144cda02bde39fea))
+
+
+### ✨ Features
+
+* **infra-storage-core:** alert when Longhorn metrics go missing and label Longhorn rules by capability ([#4573](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4573)) ([fdfe102](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fdfe102a4ef81f74b9ae01b7dc262bc474b8e26e))
+
 ## [0.9.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.9.0...infra-storage-core-v0.9.1) (2026-11-11)
 
 
