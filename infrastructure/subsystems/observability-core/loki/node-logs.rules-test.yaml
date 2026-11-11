@@ -1,0 +1,387 @@
+---
+# yamllint disable rule:line-length
+# promtool unit tests for prometheusrule-node-logs.yaml.
+rule_files:
+- prometheusrule-node-logs.yaml
+evaluation_interval: 1m
+tests:
+# One burst of every pattern on gmktec-g3plus-2 from minute 60. Each recorded series is present for as long
+# as its window still covers the line (30 or 10 samples). Fires at once, still fires 12h40m later, clears
+# once the last sample is more than 13 hours old. Its journal keeps arriving, so NodeJournalMissing stays
+# silent although the log side carries k8s_cluster="homelab" and kube_node_info carries none.
+- interval: 1m
+  input_series:
+  - series: 'kube_node_info{node="gmktec-g3plus-2"}'
+    values: '1x900'
+  - series: 'kube_node_info{k8s_cluster="nas", node="vm-nas-k3s-standalone"}'
+    values: '1x900'
+  - series: 'node_log:journal_lines:count5m{k8s_cluster="homelab", host="gmktec-g3plus-2"}'
+    values: '10x900'
+  - series: 'node_log:journal_lines:count5m{k8s_cluster="nas", host="vm-nas-k3s-standalone"}'
+    values: '10x900'
+  - series: 'node_log:disk_io_error:count30m{k8s_cluster="homelab", host="gmktec-g3plus-2"}'
+    values: '_x59 3x29 _x810'
+  - series: 'node_log:fs_error:count30m{k8s_cluster="homelab", host="gmktec-g3plus-2"}'
+    values: '_x59 3x29 _x810'
+  - series: 'node_log:disk_reset:count30m{k8s_cluster="homelab", host="gmktec-g3plus-2"}'
+    values: '_x59 3x29 _x810'
+  - series: 'node_log:link_down:count30m{k8s_cluster="homelab", host="gmktec-g3plus-2"}'
+    values: '_x59 3x29 _x810'
+  - series: 'node_log:hardware_error:count30m{k8s_cluster="homelab", host="gmktec-g3plus-2"}'
+    values: '_x59 3x29 _x810'
+  - series: 'node_log:hung_task:count30m{k8s_cluster="homelab", host="gmktec-g3plus-2"}'
+    values: '_x59 3x29 _x810'
+  - series: 'node_log:global_oom:count30m{k8s_cluster="homelab", host="gmktec-g3plus-2"}'
+    values: '_x59 3x29 _x810'
+  - series: 'node_log:pleg_unhealthy:count10m{k8s_cluster="homelab", host="gmktec-g3plus-2"}'
+    values: '_x59 3x9 _x830'
+  - series: 'node_log:etcd_unavailable:count10m{k8s_cluster="homelab", host="gmktec-g3plus-2"}'
+    values: '_x59 3x9 _x830'
+  alert_rule_test:
+  - eval_time: 61m
+    alertname: NodeLogDiskIOError
+    exp_alerts:
+    - exp_labels: {k8s_cluster: homelab, host: gmktec-g3plus-2, capability: node.disk, tier: H2, severity: warning}
+      exp_annotations:
+        summary: 'The kernel on gmktec-g3plus-2 reported disk I/O errors.'
+        description: '3 kernel I/O error lines on gmktec-g3plus-2 in the busiest 30 minutes of the last 13 hours. Longhorn volumes (sd* devices) are excluded, so this points at a local disk.'
+  - eval_time: 840m
+    alertname: NodeLogDiskIOError
+    exp_alerts:
+    - exp_labels: {k8s_cluster: homelab, host: gmktec-g3plus-2, capability: node.disk, tier: H2, severity: warning}
+      exp_annotations:
+        summary: 'The kernel on gmktec-g3plus-2 reported disk I/O errors.'
+        description: '3 kernel I/O error lines on gmktec-g3plus-2 in the busiest 30 minutes of the last 13 hours. Longhorn volumes (sd* devices) are excluded, so this points at a local disk.'
+  - eval_time: 880m
+    alertname: NodeLogDiskIOError
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogFilesystemError
+    exp_alerts:
+    - exp_labels: {k8s_cluster: homelab, host: gmktec-g3plus-2, capability: node.disk, tier: H2, severity: warning}
+      exp_annotations:
+        summary: 'A local filesystem on gmktec-g3plus-2 reported errors or went read-only.'
+        description: '3 ext4 or XFS error lines on gmktec-g3plus-2 in the busiest 30 minutes of the last 13 hours. Longhorn volumes (sd* devices) are excluded.'
+  - eval_time: 840m
+    alertname: NodeLogFilesystemError
+    exp_alerts:
+    - exp_labels: {k8s_cluster: homelab, host: gmktec-g3plus-2, capability: node.disk, tier: H2, severity: warning}
+      exp_annotations:
+        summary: 'A local filesystem on gmktec-g3plus-2 reported errors or went read-only.'
+        description: '3 ext4 or XFS error lines on gmktec-g3plus-2 in the busiest 30 minutes of the last 13 hours. Longhorn volumes (sd* devices) are excluded.'
+  - eval_time: 880m
+    alertname: NodeLogFilesystemError
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogDiskControllerReset
+    exp_alerts:
+    - exp_labels: {k8s_cluster: homelab, host: gmktec-g3plus-2, capability: node.disk, tier: H2, severity: warning}
+      exp_annotations:
+        summary: 'An NVMe or ATA controller on gmktec-g3plus-2 timed out or was reset.'
+        description: '3 NVMe or ATA timeout or reset lines on gmktec-g3plus-2 in the busiest 30 minutes of the last 13 hours.'
+  - eval_time: 840m
+    alertname: NodeLogDiskControllerReset
+    exp_alerts:
+    - exp_labels: {k8s_cluster: homelab, host: gmktec-g3plus-2, capability: node.disk, tier: H2, severity: warning}
+      exp_annotations:
+        summary: 'An NVMe or ATA controller on gmktec-g3plus-2 timed out or was reset.'
+        description: '3 NVMe or ATA timeout or reset lines on gmktec-g3plus-2 in the busiest 30 minutes of the last 13 hours.'
+  - eval_time: 880m
+    alertname: NodeLogDiskControllerReset
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogNetworkLinkDown
+    exp_alerts:
+    - exp_labels: {k8s_cluster: homelab, host: gmktec-g3plus-2, capability: node.net, tier: H2, severity: warning}
+      exp_annotations:
+        summary: 'A network link on gmktec-g3plus-2 went down.'
+        description: '3 "Link is Down" kernel lines on gmktec-g3plus-2 in the busiest 30 minutes of the last 13 hours. The same event on every node at once points at the switch.'
+  - eval_time: 840m
+    alertname: NodeLogNetworkLinkDown
+    exp_alerts:
+    - exp_labels: {k8s_cluster: homelab, host: gmktec-g3plus-2, capability: node.net, tier: H2, severity: warning}
+      exp_annotations:
+        summary: 'A network link on gmktec-g3plus-2 went down.'
+        description: '3 "Link is Down" kernel lines on gmktec-g3plus-2 in the busiest 30 minutes of the last 13 hours. The same event on every node at once points at the switch.'
+  - eval_time: 880m
+    alertname: NodeLogNetworkLinkDown
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogHardwareError
+    exp_alerts:
+    - exp_labels: {k8s_cluster: homelab, host: gmktec-g3plus-2, capability: node.thermal-memory, tier: H2, severity: warning}
+      exp_annotations:
+        summary: 'The kernel on gmktec-g3plus-2 reported a machine check or memory error.'
+        description: '3 machine check, hardware error or EDAC lines on gmktec-g3plus-2 in the busiest 30 minutes of the last 13 hours.'
+  - eval_time: 840m
+    alertname: NodeLogHardwareError
+    exp_alerts:
+    - exp_labels: {k8s_cluster: homelab, host: gmktec-g3plus-2, capability: node.thermal-memory, tier: H2, severity: warning}
+      exp_annotations:
+        summary: 'The kernel on gmktec-g3plus-2 reported a machine check or memory error.'
+        description: '3 machine check, hardware error or EDAC lines on gmktec-g3plus-2 in the busiest 30 minutes of the last 13 hours.'
+  - eval_time: 880m
+    alertname: NodeLogHardwareError
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogHungTask
+    exp_alerts:
+    - exp_labels: {k8s_cluster: homelab, host: gmktec-g3plus-2, capability: node.thermal-memory, tier: H2, severity: warning}
+      exp_annotations:
+        summary: 'Tasks on gmktec-g3plus-2 were blocked for minutes.'
+        description: '3 hung-task lines on gmktec-g3plus-2 in the busiest 30 minutes of the last 13 hours. Processes stuck this long are usually waiting on storage.'
+  - eval_time: 840m
+    alertname: NodeLogHungTask
+    exp_alerts:
+    - exp_labels: {k8s_cluster: homelab, host: gmktec-g3plus-2, capability: node.thermal-memory, tier: H2, severity: warning}
+      exp_annotations:
+        summary: 'Tasks on gmktec-g3plus-2 were blocked for minutes.'
+        description: '3 hung-task lines on gmktec-g3plus-2 in the busiest 30 minutes of the last 13 hours. Processes stuck this long are usually waiting on storage.'
+  - eval_time: 880m
+    alertname: NodeLogHungTask
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogGlobalOOM
+    exp_alerts:
+    - exp_labels: {k8s_cluster: homelab, host: gmktec-g3plus-2, capability: node.resources, tier: H3, severity: warning}
+      exp_annotations:
+        summary: 'Node gmktec-g3plus-2 ran out of memory and the kernel killed a process.'
+        description: '3 global OOM kills on gmktec-g3plus-2 in the busiest 30 minutes of the last 13 hours.'
+  - eval_time: 840m
+    alertname: NodeLogGlobalOOM
+    exp_alerts:
+    - exp_labels: {k8s_cluster: homelab, host: gmktec-g3plus-2, capability: node.resources, tier: H3, severity: warning}
+      exp_annotations:
+        summary: 'Node gmktec-g3plus-2 ran out of memory and the kernel killed a process.'
+        description: '3 global OOM kills on gmktec-g3plus-2 in the busiest 30 minutes of the last 13 hours.'
+  - eval_time: 880m
+    alertname: NodeLogGlobalOOM
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogPLEGUnhealthy
+    exp_alerts:
+    - exp_labels: {k8s_cluster: homelab, host: gmktec-g3plus-2, capability: node.kubelet-runtime, tier: H3, severity: warning}
+      exp_annotations:
+        summary: 'The kubelet on gmktec-g3plus-2 reported PLEG not healthy.'
+        description: '3 "PLEG is not healthy" lines from k3s on gmktec-g3plus-2 in the busiest 10 minutes of the last 13 hours. The container runtime stopped answering the kubelet.'
+  - eval_time: 840m
+    alertname: NodeLogPLEGUnhealthy
+    exp_alerts:
+    - exp_labels: {k8s_cluster: homelab, host: gmktec-g3plus-2, capability: node.kubelet-runtime, tier: H3, severity: warning}
+      exp_annotations:
+        summary: 'The kubelet on gmktec-g3plus-2 reported PLEG not healthy.'
+        description: '3 "PLEG is not healthy" lines from k3s on gmktec-g3plus-2 in the busiest 10 minutes of the last 13 hours. The container runtime stopped answering the kubelet.'
+  - eval_time: 880m
+    alertname: NodeLogPLEGUnhealthy
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogEtcdUnavailable
+    exp_alerts:
+    - exp_labels: {k8s_cluster: homelab, host: gmktec-g3plus-2, capability: cp.datastore, tier: H3, severity: warning}
+      exp_annotations:
+        summary: 'k3s on gmktec-g3plus-2 saw etcd requests time out or the etcd leader change.'
+        description: '3 etcd timeout or leader-change lines from k3s on gmktec-g3plus-2 in the busiest 10 minutes of the last 13 hours. API writes failed while it lasted.'
+  - eval_time: 840m
+    alertname: NodeLogEtcdUnavailable
+    exp_alerts:
+    - exp_labels: {k8s_cluster: homelab, host: gmktec-g3plus-2, capability: cp.datastore, tier: H3, severity: warning}
+      exp_annotations:
+        summary: 'k3s on gmktec-g3plus-2 saw etcd requests time out or the etcd leader change.'
+        description: '3 etcd timeout or leader-change lines from k3s on gmktec-g3plus-2 in the busiest 10 minutes of the last 13 hours. API writes failed while it lasted.'
+  - eval_time: 880m
+    alertname: NodeLogEtcdUnavailable
+    exp_alerts: []
+  - eval_time: 880m
+    alertname: NodeJournalMissing
+    exp_alerts: []
+
+# No matching lines anywhere: every pattern alert is silent. Heartbeats always fire.
+- interval: 1m
+  input_series:
+  - series: 'kube_node_info{node="gmktec-g3plus-2"}'
+    values: '1x900'
+  - series: 'kube_node_info{k8s_cluster="nas", node="vm-nas-k3s-standalone"}'
+    values: '1x900'
+  - series: 'node_log:journal_lines:count5m{k8s_cluster="homelab", host="gmktec-g3plus-2"}'
+    values: '10x900'
+  - series: 'node_log:journal_lines:count5m{k8s_cluster="nas", host="vm-nas-k3s-standalone"}'
+    values: '10x900'
+  alert_rule_test:
+  - eval_time: 61m
+    alertname: NodeLogDiskIOError
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogFilesystemError
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogDiskControllerReset
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogNetworkLinkDown
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogHardwareError
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogHungTask
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogGlobalOOM
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogPLEGUnhealthy
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogEtcdUnavailable
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeJournalMissing
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: CapabilityHeartbeat
+    exp_alerts:
+    - exp_labels: {capability: node.disk, tier: H2, severity: none}
+      exp_annotations:
+        summary: 'The node.disk alert rules are being evaluated.'
+    - exp_labels: {capability: node.net, tier: H2, severity: none}
+      exp_annotations:
+        summary: 'The node.net alert rules are being evaluated.'
+    - exp_labels: {capability: node.thermal-memory, tier: H2, severity: none}
+      exp_annotations:
+        summary: 'The node.thermal-memory alert rules are being evaluated.'
+    - exp_labels: {capability: node.resources, tier: H3, severity: none}
+      exp_annotations:
+        summary: 'The node.resources alert rules are being evaluated.'
+    - exp_labels: {capability: node.kubelet-runtime, tier: H3, severity: none}
+      exp_annotations:
+        summary: 'The node.kubelet-runtime alert rules are being evaluated.'
+    - exp_labels: {capability: cp.datastore, tier: H3, severity: none}
+      exp_annotations:
+        summary: 'The cp.datastore alert rules are being evaluated.'
+    - exp_labels: {capability: obs.logs, tier: M2, severity: none}
+      exp_annotations:
+        summary: 'The obs.logs alert rules are being evaluated.'
+
+# Lines from a host that is not a Kubernetes node (the Synology NAS ships its journal too): silent.
+- interval: 1m
+  input_series:
+  - series: 'kube_node_info{node="gmktec-g3plus-2"}'
+    values: '1x900'
+  - series: 'kube_node_info{k8s_cluster="nas", node="vm-nas-k3s-standalone"}'
+    values: '1x900'
+  - series: 'node_log:journal_lines:count5m{k8s_cluster="homelab", host="gmktec-g3plus-2"}'
+    values: '10x900'
+  - series: 'node_log:journal_lines:count5m{k8s_cluster="nas", host="vm-nas-k3s-standalone"}'
+    values: '10x900'
+  - series: 'node_log:disk_io_error:count30m{host="syn-rs1221"}'
+    values: '_x59 3x29 _x60'
+  - series: 'node_log:fs_error:count30m{host="syn-rs1221"}'
+    values: '_x59 3x29 _x60'
+  - series: 'node_log:disk_reset:count30m{host="syn-rs1221"}'
+    values: '_x59 3x29 _x60'
+  - series: 'node_log:link_down:count30m{host="syn-rs1221"}'
+    values: '_x59 3x29 _x60'
+  - series: 'node_log:hardware_error:count30m{host="syn-rs1221"}'
+    values: '_x59 3x29 _x60'
+  - series: 'node_log:hung_task:count30m{host="syn-rs1221"}'
+    values: '_x59 3x29 _x60'
+  - series: 'node_log:global_oom:count30m{host="syn-rs1221"}'
+    values: '_x59 3x29 _x60'
+  - series: 'node_log:pleg_unhealthy:count10m{host="syn-rs1221"}'
+    values: '_x59 3x29 _x60'
+  - series: 'node_log:etcd_unavailable:count10m{host="syn-rs1221"}'
+    values: '_x59 3x29 _x60'
+  alert_rule_test:
+  - eval_time: 61m
+    alertname: NodeLogDiskIOError
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogFilesystemError
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogDiskControllerReset
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogNetworkLinkDown
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogHardwareError
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogHungTask
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogGlobalOOM
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogPLEGUnhealthy
+    exp_alerts: []
+  - eval_time: 61m
+    alertname: NodeLogEtcdUnavailable
+    exp_alerts: []
+
+# gmktec-g3plus-2's journal stops at minute 60. The recorded series goes stale 5 minutes later, so the
+# alert is pending from minute 65 and fires from minute 95. The nas node keeps shipping and stays silent.
+- interval: 1m
+  input_series:
+  - series: 'kube_node_info{node="gmktec-g3plus-2"}'
+    values: '1x900'
+  - series: 'kube_node_info{k8s_cluster="nas", node="vm-nas-k3s-standalone"}'
+    values: '1x900'
+  - series: 'node_log:journal_lines:count5m{k8s_cluster="homelab", host="gmktec-g3plus-2"}'
+    values: '10x59 _x120'
+  - series: 'node_log:journal_lines:count5m{k8s_cluster="nas", host="vm-nas-k3s-standalone"}'
+    values: '10x180'
+  alert_rule_test:
+  - eval_time: 90m
+    alertname: NodeJournalMissing
+    exp_alerts: []
+  - eval_time: 100m
+    alertname: NodeJournalMissing
+    exp_alerts:
+    - exp_labels: {host: gmktec-g3plus-2, capability: obs.logs, tier: M2, severity: warning}
+      exp_annotations:
+        summary: 'No journal lines from gmktec-g3plus-2 are reaching Loki.'
+        description: 'Kubernetes node gmktec-g3plus-2 has shipped no systemd journal lines to Loki for at least 30 minutes. The node log alerts cannot fire for it.'
+
+# A 20-minute gap, shorter than `for`, then the journal is back: silent throughout.
+- interval: 1m
+  input_series:
+  - series: 'kube_node_info{node="gmktec-g3plus-2"}'
+    values: '1x900'
+  - series: 'kube_node_info{k8s_cluster="nas", node="vm-nas-k3s-standalone"}'
+    values: '1x900'
+  - series: 'node_log:journal_lines:count5m{k8s_cluster="homelab", host="gmktec-g3plus-2"}'
+    values: '10x59 _x19 10x100'
+  - series: 'node_log:journal_lines:count5m{k8s_cluster="nas", host="vm-nas-k3s-standalone"}'
+    values: '10x180'
+  alert_rule_test:
+  - eval_time: 75m
+    alertname: NodeJournalMissing
+    exp_alerts: []
+  - eval_time: 90m
+    alertname: NodeJournalMissing
+    exp_alerts: []
+  - eval_time: 120m
+    alertname: NodeJournalMissing
+    exp_alerts: []
+
+# No journal series at all (the Loki ruler or its remote write is down): every node fires.
+- interval: 1m
+  input_series:
+  - series: 'kube_node_info{node="gmktec-g3plus-2"}'
+    values: '1x900'
+  - series: 'kube_node_info{k8s_cluster="nas", node="vm-nas-k3s-standalone"}'
+    values: '1x900'
+  alert_rule_test:
+  - eval_time: 40m
+    alertname: NodeJournalMissing
+    exp_alerts:
+    - exp_labels: {host: gmktec-g3plus-2, capability: obs.logs, tier: M2, severity: warning}
+      exp_annotations:
+        summary: 'No journal lines from gmktec-g3plus-2 are reaching Loki.'
+        description: 'Kubernetes node gmktec-g3plus-2 has shipped no systemd journal lines to Loki for at least 30 minutes. The node log alerts cannot fire for it.'
+    - exp_labels: {host: vm-nas-k3s-standalone, k8s_cluster: nas, capability: obs.logs, tier: M2, severity: warning}
+      exp_annotations:
+        summary: 'No journal lines from vm-nas-k3s-standalone are reaching Loki.'
+        description: 'Kubernetes node vm-nas-k3s-standalone has shipped no systemd journal lines to Loki for at least 30 minutes. The node log alerts cannot fire for it.'

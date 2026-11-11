@@ -3,5 +3,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
+- configmap-loki-rule-node-logs.yaml
 - helm-release-loki.yaml
+- prometheusrule-node-logs.yaml
 - secrets.yaml
