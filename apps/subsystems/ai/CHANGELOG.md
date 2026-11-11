@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.12.2...apps-ai-v0.12.3) (2026-11-10)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** update digest ghcr.io/ppat/openclaw (7953198 -&gt; 3376880) ([#4522](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4522)) ([b34e5f8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b34e5f8b8811e057cd6b61037a322ff6573ea5d2))
+
 ## [0.12.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.12.1...apps-ai-v0.12.2) (2026-11-09)
 
 
