@@ -45,15 +45,15 @@ The networking-core module provides three main capabilities:
    | domain_name | Domain for ingress endpoints | Traefik, ExternalDNS |
    | metallb_standard_ip_pool | IP range for service allocation | MetalLB |
    | dns_zone | DNS zone for UniFi controller | ExternalDNS |
+   | secret_store | `ClusterSecretStore` name | external-dns-secrets ExternalSecret |
 
 2. Required Secrets
 
-   | Secret Name          | Purpose                     | Required Keys |
-   |----------------------|-----------------------------|---------------|
-   | external-dns-secrets | DNS provider authentication | unifi_apikey  |
+   | Secret Name | Purpose | Required Keys |
+   | ----------- | ------- | ------------- |
+   | external-dns-secrets | DNS provider authentication. Created by this module's ExternalSecret from secret store key `unifi_externaldns_apikey` | unifi_apikey |
 
 3. DNS Provider Requirements
-   - The [external-dns-provider/unifi](../../../components/external-dns-provider/unifi) component, layered on through `spec.components`. It supplies the provider values through ConfigMap `external-dns-provider-config`, which the external-dns HelmRelease requires
    - UniFi controller accessible at unifi.nodes.${dns_zone}
    - UniFi API key with DNS management permissions
 

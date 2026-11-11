@@ -5,10 +5,8 @@ kind: Kustomization
 resources:
 - helm-repository-external-dns.yaml
 - helm-release-external-dns.yaml
+- externalsecret-external-dns.yaml
 
 commonAnnotations:
   # as this is a critical infrastructure component, prevent pruning unintentionally
   kustomize.toolkit.fluxcd.io/prune: disabled
-
-configurations:
-- name-reference.yaml
