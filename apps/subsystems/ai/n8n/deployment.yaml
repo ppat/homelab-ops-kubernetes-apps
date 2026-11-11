@@ -98,14 +98,6 @@ spec:
             secretKeyRef:
               name: n8n-secrets
               key: N8N_INSTANCE_OWNER_PASSWORD_HASH
-        # Pre-seeded credentials (LiteLLM + Maddy SMTP) matched by name against example
-        # workflows supplied at the cluster level and imported at rollout (not shipped
-        # in this module).
-        - name: N8N_CREDENTIALS_OVERWRITE_DATA
-          valueFrom:
-            secretKeyRef:
-              name: n8n-secrets
-              key: N8N_CREDENTIALS_OVERWRITE_DATA
         - name: LITELLM_API_KEY
           valueFrom:
             secretKeyRef:
@@ -156,6 +148,7 @@ spec:
         - name: N8N_SSRF_ALLOWED_HOSTNAMES
           value: >-
             litellm.ai.svc.cluster.local,
+            openclaw.openclaw.svc.cluster.local,
             smtp.${domain_name}
         # Metrics
         - name: N8N_METRICS

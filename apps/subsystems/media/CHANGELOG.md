@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.1.0...apps-media-v0.1.1) (2026-11-11)
+
+
+### ✨ Features
+
+* **apps-media:** update ghcr.io/tautulli/tautulli (v2.18.2 -&gt; v2.19.1) ([#4551](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4551)) ([2cf74bc](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/2cf74bccafe99a9b965c8bc8cfec6eaaffa6e1fd))
+
 ## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-media-v0.0.49...apps-media-v0.1.0) (2026-11-09)
 
 
