@@ -1,0 +1,105 @@
+---
+# ------------------------------------------------------------------------------------
+# Flux reconciliation health, from the gotk_resource_info series that the
+# kube-state-metrics customResourceState config in helm-release-kube-prometheus-stack.yaml
+# produces. The rules live here, not in clusterops-core beside Flux, because that config is
+# what creates their input: the two change together, and a metrics store that replaces
+# kube-prometheus-stack must carry both.
+#
+# gotk_resource_info carries the Flux object's namespace as `exported_namespace` and its
+# kind as `customresource_kind` (Flux's documented label set, which Flux's own dashboards
+# read). The rules rename them to `namespace` and `kind` so the alerts group with every
+# other alert about that namespace.
+# ------------------------------------------------------------------------------------
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    release: kube-prometheus-stack
+  name: flux-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: flux
+    rules:
+    # `ready!="True"` covers both False (a failed fetch, build or upgrade) and Unknown (a
+    # reconcile or health check that never finishes). A HelmRelease mid-upgrade, a
+    # Kustomization waiting on its health checks, or a failure Flux's own retries clear is
+    # not Ready for minutes to an hour or so, which the 2h `for` absorbs.
+    - alert: FluxResourceNotReady
+      annotations:
+        description: >-
+          Flux {{ $labels.kind }} {{ $labels.namespace }}/{{ $labels.name }} has not been
+          Ready for 2 hours. Changes to what it manages are not being applied.
+        summary: A Flux resource is not Ready.
+      expr: |
+        sum by (k8s_cluster, namespace, kind, name) (
+        label_replace(
+        label_replace(
+        gotk_resource_info{ready!="True", suspended!="true"},
+        "namespace", "$1", "exported_namespace", "(.*)"),
+        "kind", "$1", "customresource_kind", "(.*)")
+        )
+      for: 2h
+      labels:
+        capability: gitops
+        tier: H3
+        severity: warning
+    # A source stays Ready on its last good artifact when its controller stops reconciling
+    # it, so FluxResourceNotReady cannot see that. Flux's status has no field that moves on
+    # every successful fetch (`status.artifact.lastUpdateTime` moves only when the revision
+    # changes), so this compares the sources kube-state-metrics sees against the reconciles
+    # the controllers themselves count. The 6h window is six times the longest source
+    # interval in use (1h), so a few missed or slow reconciles do not fire it. A source with
+    # a longer interval would need a longer window.
+    - alert: FluxSourceStale
+      annotations:
+        description: >-
+          Flux {{ $labels.kind }} {{ $labels.namespace }}/{{ $labels.name }} has not been
+          reconciled for 6 hours although it is not suspended. Its artifact is no longer
+          being refreshed.
+        summary: A Flux source has stopped being reconciled.
+      expr: |
+        sum by (k8s_cluster, namespace, kind, name) (
+        label_replace(
+        label_replace(
+        gotk_resource_info{customresource_kind=~"GitRepository|OCIRepository", suspended!="true"},
+        "namespace", "$1", "exported_namespace", "(.*)"),
+        "kind", "$1", "customresource_kind", "(.*)")
+        )
+        unless on (k8s_cluster, namespace, kind, name)
+        sum by (k8s_cluster, namespace, kind, name) (
+        label_replace(
+        increase(gotk_reconcile_duration_seconds_count{kind=~"GitRepository|OCIRepository"}[6h]),
+        "namespace", "$1", "exported_namespace", "(.*)")
+        ) > 0
+      for: 1h
+      labels:
+        capability: gitops
+        tier: H3
+        severity: warning
+    # Both rules above go silent, rather than firing, when the series they read disappear,
+    # for example when the kube-state-metrics config is lost in a metrics-store migration.
+    - alert: FluxResourceMetricsAbsent
+      annotations:
+        description: >-
+          No gotk_resource_info series exist for 1 hour. The Flux readiness rules cannot
+          fire. Check the kube-state-metrics customResourceState config and its RBAC.
+        summary: Flux resource metrics are missing.
+      expr: absent(gotk_resource_info)
+      for: 1h
+      labels:
+        capability: gitops
+        tier: H3
+        severity: warning
+    # Always firing. A consumer of Alertmanager's active alerts reads its absence as "these
+    # rules are not being evaluated", which an empty list of Flux alerts cannot tell apart
+    # from "Flux is healthy".
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The gitops alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: gitops
+        tier: H3
+        severity: none
