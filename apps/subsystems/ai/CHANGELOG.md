@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.12.4...apps-ai-v0.12.5) (2026-11-11)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** pin the openclaw image build whose plugin record sync works on a read-only root filesystem ([#4532](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4532)) ([1dee465](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1dee4653fee51ab898f2f4cfdb7da6a3648956c3))
+
 ## [0.12.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.12.3...apps-ai-v0.12.4) (2026-11-11)
 
 
