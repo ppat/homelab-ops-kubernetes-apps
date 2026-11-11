@@ -2,7 +2,7 @@
   "apps/subsystems/ai": "0.12.5",
   "apps/subsystems/bitwarden": "0.2.0",
   "apps/subsystems/coder": "0.2.2",
-  "apps/subsystems/downloaders": "0.6.0",
+  "apps/subsystems/downloaders": "0.6.1",
   "apps/subsystems/harbor": "0.1.0",
   "apps/subsystems/home-automation": "0.4.1",
   "apps/subsystems/media": "0.1.1",
