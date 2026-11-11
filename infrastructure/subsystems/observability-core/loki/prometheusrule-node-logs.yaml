@@ -1,0 +1,214 @@
+---
+# yamllint disable rule:line-length
+# Alerts on the node_log:* series that configmap-loki-rule-node-logs.yaml records in Loki and remote-writes here.
+#
+# A kernel or k3s event lasts a moment, while the reader of these alerts looks at Alertmanager twice a day.
+# max_over_time(...[13h]) keeps each alert firing for about 13 hours after the last matching line, so the next
+# look always finds it.
+#
+# Every rule joins kube_node_info on `host` (the node collector sets `host` to the Kubernetes node name). That
+# limits the pattern alerts to Kubernetes nodes, and is the expected-host list for NodeJournalMissing. The join
+# is on `host` only because the two sides disagree on `k8s_cluster`: the node collector may set it on log lines
+# while a cluster's own kube-state-metrics series do not carry it.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    release: kube-prometheus-stack
+  name: node-log-rules
+  namespace: logging
+spec:
+  groups:
+  - name: node-logs
+    rules:
+    - alert: NodeLogDiskIOError
+      annotations:
+        summary: The kernel on {{ $labels.host }} reported disk I/O errors.
+        description: >-
+          {{ $value }} kernel I/O error lines on {{ $labels.host }} in the busiest 30 minutes of the last
+          13 hours. Longhorn volumes (sd* devices) are excluded, so this points at a local disk.
+      expr: |
+        max by (k8s_cluster, host) (max_over_time(node_log:disk_io_error:count30m[13h])) > 0
+        and on (host) label_replace(kube_node_info, "host", "$1", "node", "(.+)")
+      labels:
+        capability: node.disk
+        tier: H2
+        severity: warning
+    - alert: NodeLogFilesystemError
+      annotations:
+        summary: A local filesystem on {{ $labels.host }} reported errors or went read-only.
+        description: >-
+          {{ $value }} ext4 or XFS error lines on {{ $labels.host }} in the busiest 30 minutes of the last
+          13 hours. Longhorn volumes (sd* devices) are excluded.
+      expr: |
+        max by (k8s_cluster, host) (max_over_time(node_log:fs_error:count30m[13h])) > 0
+        and on (host) label_replace(kube_node_info, "host", "$1", "node", "(.+)")
+      labels:
+        capability: node.disk
+        tier: H2
+        severity: warning
+    - alert: NodeLogDiskControllerReset
+      annotations:
+        summary: An NVMe or ATA controller on {{ $labels.host }} timed out or was reset.
+        description: >-
+          {{ $value }} NVMe or ATA timeout or reset lines on {{ $labels.host }} in the busiest 30 minutes of
+          the last 13 hours.
+      expr: |
+        max by (k8s_cluster, host) (max_over_time(node_log:disk_reset:count30m[13h])) > 0
+        and on (host) label_replace(kube_node_info, "host", "$1", "node", "(.+)")
+      labels:
+        capability: node.disk
+        tier: H2
+        severity: warning
+    - alert: NodeLogNetworkLinkDown
+      annotations:
+        summary: A network link on {{ $labels.host }} went down.
+        description: >-
+          {{ $value }} "Link is Down" kernel lines on {{ $labels.host }} in the busiest 30 minutes of the
+          last 13 hours. The same event on every node at once points at the switch.
+      expr: |
+        max by (k8s_cluster, host) (max_over_time(node_log:link_down:count30m[13h])) > 0
+        and on (host) label_replace(kube_node_info, "host", "$1", "node", "(.+)")
+      labels:
+        capability: node.net
+        tier: H2
+        severity: warning
+    - alert: NodeLogHardwareError
+      annotations:
+        summary: The kernel on {{ $labels.host }} reported a machine check or memory error.
+        description: >-
+          {{ $value }} machine check, hardware error or EDAC lines on {{ $labels.host }} in the busiest 30
+          minutes of the last 13 hours.
+      expr: |
+        max by (k8s_cluster, host) (max_over_time(node_log:hardware_error:count30m[13h])) > 0
+        and on (host) label_replace(kube_node_info, "host", "$1", "node", "(.+)")
+      labels:
+        capability: node.thermal-memory
+        tier: H2
+        severity: warning
+    - alert: NodeLogHungTask
+      annotations:
+        summary: Tasks on {{ $labels.host }} were blocked for minutes.
+        description: >-
+          {{ $value }} hung-task lines on {{ $labels.host }} in the busiest 30 minutes of the last 13 hours.
+          Processes stuck this long are usually waiting on storage.
+      expr: |
+        max by (k8s_cluster, host) (max_over_time(node_log:hung_task:count30m[13h])) > 0
+        and on (host) label_replace(kube_node_info, "host", "$1", "node", "(.+)")
+      labels:
+        capability: node.thermal-memory
+        tier: H2
+        severity: warning
+    # Container OOMs (a container hitting its own memory limit) are an app-tier signal and do not match
+    # `global_oom`. Only the node itself running out of memory does.
+    - alert: NodeLogGlobalOOM
+      annotations:
+        summary: Node {{ $labels.host }} ran out of memory and the kernel killed a process.
+        description: >-
+          {{ $value }} global OOM kills on {{ $labels.host }} in the busiest 30 minutes of the last 13 hours.
+      expr: |
+        max by (k8s_cluster, host) (max_over_time(node_log:global_oom:count30m[13h])) > 0
+        and on (host) label_replace(kube_node_info, "host", "$1", "node", "(.+)")
+      labels:
+        capability: node.resources
+        tier: H3
+        severity: warning
+    - alert: NodeLogPLEGUnhealthy
+      annotations:
+        summary: The kubelet on {{ $labels.host }} reported PLEG not healthy.
+        description: >-
+          {{ $value }} "PLEG is not healthy" lines from k3s on {{ $labels.host }} in the busiest 10 minutes
+          of the last 13 hours. The container runtime stopped answering the kubelet.
+      expr: |
+        max by (k8s_cluster, host) (max_over_time(node_log:pleg_unhealthy:count10m[13h])) > 0
+        and on (host) label_replace(kube_node_info, "host", "$1", "node", "(.+)")
+      labels:
+        capability: node.kubelet-runtime
+        tier: H3
+        severity: warning
+    - alert: NodeLogEtcdUnavailable
+      annotations:
+        summary: k3s on {{ $labels.host }} saw etcd requests time out or the etcd leader change.
+        description: >-
+          {{ $value }} etcd timeout or leader-change lines from k3s on {{ $labels.host }} in the busiest 10
+          minutes of the last 13 hours. API writes failed while it lasted.
+      expr: |
+        max by (k8s_cluster, host) (max_over_time(node_log:etcd_unavailable:count10m[13h])) > 0
+        and on (host) label_replace(kube_node_info, "host", "$1", "node", "(.+)")
+      labels:
+        capability: cp.datastore
+        tier: H3
+        severity: warning
+    # Without journal lines from a node, every rule above is silent for that node.
+    - alert: NodeJournalMissing
+      annotations:
+        summary: No journal lines from {{ $labels.host }} are reaching Loki.
+        description: >-
+          Kubernetes node {{ $labels.host }} has shipped no systemd journal lines to Loki for at least 30
+          minutes. The node log alerts cannot fire for it.
+      expr: |
+        count by (k8s_cluster, host) (label_replace(kube_node_info, "host", "$1", "node", "(.+)"))
+        unless on (host) node_log:journal_lines:count5m
+      for: 30m
+      labels:
+        capability: obs.logs
+        tier: M2
+        severity: warning
+    # Always firing, one per capability above. A consumer of Alertmanager's active alerts reads a missing
+    # heartbeat as "these rules are not being evaluated", which an empty alert list cannot express.
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The node.disk alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: node.disk
+        tier: H2
+        severity: none
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The node.net alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: node.net
+        tier: H2
+        severity: none
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The node.thermal-memory alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: node.thermal-memory
+        tier: H2
+        severity: none
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The node.resources alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: node.resources
+        tier: H3
+        severity: none
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The node.kubelet-runtime alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: node.kubelet-runtime
+        tier: H3
+        severity: none
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The cp.datastore alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: cp.datastore
+        tier: H3
+        severity: none
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The obs.logs alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: obs.logs
+        tier: M2
+        severity: none

@@ -1,0 +1,62 @@
+---
+# yamllint disable rule:line-length
+# Loki recording rules over the systemd journal that the node collector ships (alloy/conf.d/journal.alloy).
+# Alerting on these series happens in prometheusrule-node-logs.yaml, not in the Loki ruler. A kernel event is a
+# point in time, and the PrometheusRule keeps it visible for 13 hours with max_over_time.
+#
+# Each window is wider than the 1m evaluation interval on purpose. The ruler counts lines by their journal
+# timestamp, so a line that reaches Loki after its window has passed is never counted. Lines written while a
+# node is in trouble (link down, storage stalled, about to reboot) are exactly the ones that ship late. The
+# overlap means one line is counted in several consecutive samples, which is why the alerts read the peak with
+# max_over_time instead of summing.
+#
+# The disk and filesystem patterns skip `sd*` devices. On Longhorn nodes those are Longhorn volumes attached over
+# iSCSI, and a Longhorn volume failure writes the same I/O and ext4 errors as a dying disk. RE2 has no negative
+# lookahead, so `([^s]|s[^d])` is how "a device name not starting with sd" is spelled.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-rule-node-logs
+  namespace: logging
+  labels:
+    loki_rule: "1"
+data:
+  # yamllint disable rule:indentation
+  node-logs.yaml: |
+    groups:
+    - name: node-logs
+      interval: 1m
+      rules:
+      - record: node_log:disk_io_error:count30m
+        expr: |
+          sum by (k8s_cluster, host) (count_over_time({job="systemd-journal", syslog_identifier="kernel"} |~ `(I/O error|critical medium error), dev ([^s]|s[^d])|Buffer I/O error on dev(ice)? ([^s]|s[^d])` [30m]))
+      - record: node_log:fs_error:count30m
+        expr: |
+          sum by (k8s_cluster, host) (count_over_time({job="systemd-journal", syslog_identifier="kernel"} |~ `EXT4-fs error \(device ([^s]|s[^d])|EXT4-fs \(([^s]|s[^d])[^)]*\): Remounting filesystem read-only|XFS \(([^s]|s[^d])[^)]*\): .*(error|Corruption|shut down)` [30m]))
+      - record: node_log:disk_reset:count30m
+        expr: |
+          sum by (k8s_cluster, host) (count_over_time({job="systemd-journal", syslog_identifier="kernel"} |~ `nvme nvme[0-9]+: .*(timeout|reset)|ata[0-9.]+: .*(failed|error|hard resetting)` [30m]))
+      - record: node_log:link_down:count30m
+        expr: |
+          sum by (k8s_cluster, host) (count_over_time({job="systemd-journal", syslog_identifier="kernel"} |~ `Link is Down` [30m]))
+      - record: node_log:hardware_error:count30m
+        expr: |
+          sum by (k8s_cluster, host) (count_over_time({job="systemd-journal", syslog_identifier="kernel"} |~ `Machine check|Hardware Error|EDAC .* (CE|UE)` [30m]))
+      - record: node_log:hung_task:count30m
+        expr: |
+          sum by (k8s_cluster, host) (count_over_time({job="systemd-journal", syslog_identifier="kernel"} |~ `blocked for more than [0-9]+ seconds` [30m]))
+      - record: node_log:global_oom:count30m
+        expr: |
+          sum by (k8s_cluster, host) (count_over_time({job="systemd-journal", syslog_identifier="kernel"} |= `global_oom` [30m]))
+      # Every kubelet start logs "PLEG is not healthy: pleg has yet to be successful", so only the
+      # relist-stalled form counts.
+      - record: node_log:pleg_unhealthy:count10m
+        expr: |
+          sum by (k8s_cluster, host) (count_over_time({job="systemd-journal", systemd_unit="k3s.service"} |~ `PLEG is not healthy: pleg was last seen active` [10m]))
+      - record: node_log:etcd_unavailable:count10m
+        expr: |
+          sum by (k8s_cluster, host) (count_over_time({job="systemd-journal", systemd_unit="k3s.service"} |~ `etcdserver: (request timed out|leader changed)` [10m]))
+      - record: node_log:journal_lines:count5m
+        expr: |
+          sum by (k8s_cluster, host) (count_over_time({job="systemd-journal"}[5m]))
+  # yamllint enable rule:indentation
