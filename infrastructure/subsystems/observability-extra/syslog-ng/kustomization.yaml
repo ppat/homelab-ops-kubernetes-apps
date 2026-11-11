@@ -6,6 +6,7 @@ resources:
 - syslog-ipaddresspool.yaml
 - syslog-deployment.yaml
 - syslog-service.yaml
+- configmap-loki-rule-unifi.yaml
 
 configMapGenerator:
 - name: syslog-config

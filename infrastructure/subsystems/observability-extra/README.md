@@ -28,6 +28,13 @@ The observability-extra module provides five main capabilities:
      - Device status
      - Network utilization
      - Secure credential handling
+   - UniFi alert rules labelled `capability: net.wan` or `net.lan`:
+     - Primary WAN down for 15 minutes, a WAN outage of 10 minutes or more, or WAN flapping
+     - Failover to the backup WAN, labelled `notify: immediate` for direct delivery
+     - Backup WAN unusable for an hour
+     - A device offline, or rebooted without a firmware upgrade
+     - Controller data gone stale, and UniFi syslog events no longer reaching Loki
+     - Heartbeats showing the rules are evaluated
 
 3. Log Aggregation
    - Syslog collection:
@@ -161,17 +168,19 @@ flowchart TB
 | Problem Detector | Node monitoring | • System log analysis<br>• Kernel monitoring<br>• PrometheusRules<br>• ServiceMonitor enabled |
 | smartctl Exporter | Disk health | • Privileged DaemonSet on every node<br>• ServiceMonitor with `node` label<br>• PrometheusRules |
 | SNMP Exporter | Network metrics | • Custom scrape configs<br>• Instance relabeling<br>• Anti-affinity rules<br>• Timeout handling |
-| Syslog-ng | Log aggregation | • Dual protocol support<br>• Batch processing<br>• Worker scaling<br>• Flow control |
-| UniFi Poller | Network stats | • Site monitoring<br>• Device metrics<br>• Secure credentials<br>• Prometheus integration |
+| Syslog-ng | Log aggregation | • Dual protocol support<br>• Batch processing<br>• Worker scaling<br>• Flow control<br>• Loki recording rules over the UniFi gateway's CEF events |
+| UniFi Poller | Network stats | • Site monitoring<br>• Device metrics<br>• Secure credentials<br>• Prometheus integration<br>• PrometheusRules for WAN and device health |
 
 ## Prerequisites
 
 1. Required Components
 
-   | Component  | Purpose         | Configuration           |
-   |------------|-----------------|-------------------------|
-   | Loki       | Log storage     | From observability-core |
-   | Prometheus | Metrics storage | From observability-core |
+   | Component                 | Purpose                                                    | Configuration                                                    |
+   |---------------------------|------------------------------------------------------------|------------------------------------------------------------------|
+   | Loki                      | Log storage                                                | From observability-core                                          |
+   | Loki ruler                | Evaluates `loki_rule` ConfigMaps and remote-writes results | From observability-core                                          |
+   | Prometheus                | Metrics storage                                            | From observability-core                                          |
+   | UniFi gateway SIEM syslog | CEF events behind the WAN outage and flapping alerts       | UniFi activity logging (SIEM) sent to the syslog LoadBalancer IP |
 
 2. Required Variables
 

@@ -1,0 +1,38 @@
+---
+# yamllint disable rule:line-length
+# Loki recording rules over the CEF activity stream that a UniFi gateway sends to syslog-ng when its SIEM
+# syslog output is on (syslog-ng.conf labels those lines app="CEF"). Alerting on these series happens in
+# unpoller/prometheusrule-unifi.yaml, not in the Loki ruler.
+#
+# The CEF event ids used here are UniFi's own WAN events. They are 100 Internet Down, 101 Multiple Internet
+# Disconnections, 104 Temporary Internet Disconnection and 107 Internet Restored. 104 and 107 carry the
+# outage length in UNIFIreportedDuration, formatted like "13s" or "1m 17s".
+#
+# The 1m window is read 2 minutes late (`offset 2m`) so that each line is counted in exactly one sample even
+# though syslog-ng batches lines for up to 10 seconds. The alerts can then sum samples over a day without
+# counting one event several times.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-rule-unifi
+  namespace: logging
+  labels:
+    loki_rule: "1"
+data:
+  # yamllint disable rule:indentation
+  unifi.yaml: |
+    groups:
+    - name: unifi
+      interval: 1m
+      rules:
+      - record: unifi_log:wan_event:count1m
+        expr: |
+          sum by (wan, event) (count_over_time({job="syslog-ng", app="CEF"} |~ `\|10[0147]\|` | regexp `\|UniFi Network\|[^|]*\|(?P<event>10[0147])\|` | regexp `UNIFIwanId=(?P<wan>[^ ]+)` [1m] offset 2m))
+      # "10 minutes or more" spelled as a duration with a day or hour part, or a minute part of two digits.
+      - record: unifi_log:wan_outage_10m:count1m
+        expr: |
+          sum by (wan) (count_over_time({job="syslog-ng", app="CEF"} |~ `\|10[47]\|` |~ `UNIFIreportedDuration=([0-9]+d|[0-9]+h|[1-9][0-9]+m)` | regexp `UNIFIwanId=(?P<wan>[^ ]+)` [1m] offset 2m))
+      - record: unifi_log:cef_lines:count5m
+        expr: |
+          sum(count_over_time({job="syslog-ng", app="CEF"}[5m]))
+  # yamllint enable rule:indentation

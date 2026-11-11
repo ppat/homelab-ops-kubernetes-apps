@@ -1,0 +1,201 @@
+---
+# yamllint disable rule:line-length
+# UniFi network health. The rules read two sources.
+#   - unpoller_* series, which unpoller (deployment.yaml beside this file) polls from the UniFi controller.
+#   - unifi_log:* series, which syslog-ng/configmap-loki-rule-unifi.yaml records in Loki from the CEF
+#     activity stream the UniFi gateway sends to syslog-ng.
+#
+# Every rule tolerates a planned firmware upgrade or reboot and any outage of a few minutes. Those are
+# routine on this gear and are not worth a message. On a real upgrade session a gateway firmware reboot
+# froze the controller's data for 6 minutes and silenced the CEF stream for 60 minutes, and a core switch
+# reboot dropped the backup WAN for about 2 minutes.
+#
+# The expressions depend on three unpoller behaviours.
+#   - Every series carries the unpoller pod's `pod` and `instance`, which change on each rollout. Aggregate
+#     by device `name` before any range function.
+#   - While the controller is unreachable, unpoller keeps serving its last values. unpoller_controller_up
+#     stays 1 and device uptimes freeze, so staleness is detected by uptime not advancing.
+#   - A device the controller has marked offline reports uptime 0. unpoller_device_info stays 1 for it.
+#
+# UniFi names WAN slots WAN, WAN2 and WAN3. The rules assume WAN is the primary uplink and WAN3 the
+# mobile-broadband backup. A site that puts its backup elsewhere needs the WAN3 matchers changed.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: unifi-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: unifi
+    rules:
+    # UniFi pings several targets per WAN, and single targets routinely read 0% for hours. Only every
+    # target failing at once is an outage, hence max across targets.
+    - alert: UnifiPrimaryWanDown
+      annotations:
+        summary: The primary internet connection is down.
+        description: >-
+          Every connectivity monitor on the primary WAN has failed for 15 minutes. Traffic is on the
+          backup WAN if one is up.
+      expr: |
+        max by (wan_networkgroup) (unpoller_device_wan_monitor_availability_percent{wan_networkgroup="WAN"}) == 0
+      for: 15m
+      labels:
+        capability: net.wan
+        tier: M1
+        severity: warning
+    # An outage that ended before anyone looked. The gateway reports each outage's length when the link
+    # comes back, and this keeps every outage of 10 minutes or more visible for 13 hours.
+    - alert: UnifiWanOutage
+      annotations:
+        summary: Internet connection {{ $labels.wan }} was down for 10 minutes or more.
+        description: >-
+          The UniFi gateway reported an outage of 10 minutes or more on {{ $labels.wan }} within the last
+          13 hours. The CEF events in Loki ({job="syslog-ng", app="CEF"}) give the exact times.
+      expr: |
+        max by (wan) (max_over_time(unifi_log:wan_outage_10m:count1m[13h])) > 0
+      labels:
+        capability: net.wan
+        tier: M1
+        severity: warning
+    # A planned upgrade session produced 3 disconnections in 24 hours, so 6 is well clear of maintenance.
+    - alert: UnifiWanFlapping
+      annotations:
+        summary: Internet connection {{ $labels.wan }} keeps dropping.
+        description: >-
+          {{ $value }} disconnections of {{ $labels.wan }} in the last 24 hours.
+      expr: |
+        sum by (wan) (sum_over_time(unifi_log:wan_event:count1m{event=~"100|104"}[24h])) >= 6
+      labels:
+        capability: net.wan
+        tier: M1
+        severity: warning
+    # The backup sits idle until the primary fails, so a dead SIM or modem goes unnoticed until it is
+    # needed. Either the modem reporting no internet or every WAN3 monitor failing counts.
+    - alert: UnifiBackupWanUnavailable
+      annotations:
+        summary: The backup internet connection is not usable.
+        description: >-
+          The mobile-broadband backup has had no working internet for 1 hour. A primary WAN failure now
+          would take the site offline.
+      expr: |
+        max(unpoller_device_mbb_internet) < 1
+        or
+        max by (wan_networkgroup) (unpoller_device_wan_monitor_availability_percent{wan_networkgroup="WAN3"}) == 0
+      for: 1h
+      labels:
+        capability: net.wan
+        tier: M1
+        severity: warning
+    # Sent straight to the user rather than to the twice-daily triage (Alertmanager routes on
+    # `notify="immediate"`), on firing and again on resolving. unpoller_wan_interface_state is 1 only for
+    # the WAN the controller reports as ACTIVE. `for` drops a failover that recovers within 5 minutes, and
+    # keep_firing_for holds the "back on primary" message until the primary has stayed active for 5
+    # minutes, so a flap back to the backup sends nothing. keep_firing_for also bridges an unpoller
+    # restart. A data gap longer than 5 minutes resolves the alert while the site may still be on the
+    # backup, and UnifiControllerDataStale covers that gap. Do not smooth gaps with last_over_time. The
+    # `state` label changes on failover, so the old series would linger and hide the switch.
+    - alert: UnifiWanOnBackup
+      annotations:
+        summary: Internet failed over to the backup WAN, {{ $labels.wan_interface }}.
+        resolved_summary: Internet is back on the primary WAN.
+        description: >-
+          The UniFi gateway has been using {{ $labels.wan_interface }} ({{ $labels.wan_networkgroup }})
+          instead of the primary WAN for at least 5 minutes. The primary connection is down or failing its
+          health checks.
+      expr: |
+        max by (wan_networkgroup, wan_interface) (unpoller_wan_interface_state{wan_networkgroup!="WAN"}) == 1
+        unless on ()
+        max(unpoller_wan_interface_state{wan_networkgroup="WAN"}) == 1
+      for: 5m
+      keep_firing_for: 5m
+      labels:
+        capability: net.wan
+        tier: M1
+        severity: warning
+        notify: immediate
+    # While the controller starts after a gateway reboot, and while a device installs firmware, the
+    # controller reports uptime 0 for a poll or two. The `for` absorbs that.
+    - alert: UnifiDeviceOffline
+      annotations:
+        summary: UniFi device {{ $labels.name }} is offline.
+        description: >-
+          The UniFi controller has reported {{ $labels.type }} {{ $labels.name }} as disconnected for 30
+          minutes. Forget a retired device in the controller to clear this.
+      expr: |
+        max by (name, type) (unpoller_device_uptime_seconds) == 0
+      for: 30m
+      labels:
+        capability: net.lan
+        tier: M1
+        severity: warning
+    # A reboot that came with a firmware change is a planned upgrade. Any other reboot is a crash, a
+    # power loss, or a manual reboot. Uptime below 13 hours keeps it visible for 13 hours. The `for`
+    # covers the poll where the new uptime is visible but the new firmware version is not yet. The
+    # offset term skips a device adopted in the last 13 hours.
+    - alert: UnifiDeviceUnexpectedReboot
+      annotations:
+        summary: UniFi device {{ $labels.name }} rebooted without a firmware upgrade.
+        description: >-
+          {{ $labels.type }} {{ $labels.name }} has been up for {{ $value | humanizeDuration }} and its
+          firmware version did not change. Check for a power loss or a crash.
+      expr: |
+        max by (name, type) (unpoller_device_uptime_seconds) < 13 * 3600 > 0
+        unless on (name)
+        count by (name) (count by (name, version) (count_over_time(unpoller_device_info[14h]))) > 1
+        and on (name)
+        max by (name) (unpoller_device_info offset 13h)
+      for: 15m
+      labels:
+        capability: net.lan
+        tier: M1
+        severity: warning
+    # The controller runs on the gateway, so this covers a dead or hung gateway as well as unpoller
+    # failing. Every rule above goes silent rather than firing when this happens.
+    - alert: UnifiControllerDataStale
+      annotations:
+        summary: No fresh data from the UniFi controller.
+        description: >-
+          No UniFi device uptime has advanced for 30 minutes, or unpoller exports nothing. The gateway
+          running the controller may be down, or unpoller cannot reach it.
+      expr: |
+        changes((max(unpoller_device_uptime_seconds))[30m:1m]) == 0
+        or
+        absent(unpoller_device_uptime_seconds)
+      for: 15m
+      labels:
+        capability: net.lan
+        tier: M1
+        severity: warning
+    # The CEF-based WAN rules above cannot fire without CEF lines. A gateway firmware upgrade silenced the
+    # stream for 60 minutes, so silence counts only after 2 hours.
+    - alert: UnifiSyslogSilent
+      annotations:
+        summary: No UniFi CEF events are reaching Loki.
+        description: >-
+          No CEF lines from the UniFi gateway have reached Loki for 2 hours. UnifiWanOutage and
+          UnifiWanFlapping cannot fire. Check the gateway's SIEM syslog setting, syslog-ng and the Loki
+          ruler.
+      expr: |
+        absent_over_time(unifi_log:cef_lines:count5m[2h])
+      labels:
+        capability: obs.logs
+        tier: M2
+        severity: warning
+    # Always firing, one per capability above. A consumer of Alertmanager's active alerts reads a missing
+    # heartbeat as "these rules are not being evaluated", which an empty alert list cannot express.
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The net.wan alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: net.wan
+        tier: M1
+        severity: none
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The net.lan alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: net.lan
+        tier: M1
+        severity: none
