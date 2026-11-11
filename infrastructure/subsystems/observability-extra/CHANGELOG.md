@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.6.7...infra-observability-extra-v0.6.8) (2026-11-11)
+
+
+### ✨ Features
+
+* **infra-observability-extra:** alert when the cluster DNS probe fails or stops reporting ([#4579](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4579)) ([f51258d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f51258d75248f115a16789206306804ecc49061f))
+* **infra-observability-extra:** export disk SMART health with smartctl-exporter and alert on failing disks ([#4576](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4576)) ([70a1c90](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/70a1c90adb64415e0ca61d960f136c83ed12f4e0))
+
 ## [0.6.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.6.6...infra-observability-extra-v0.6.7) (2026-11-11)
 
 
