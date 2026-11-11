@@ -7,6 +7,7 @@ resources:
 - helm-release-longhorn.yaml
 - ui-ingress.yaml
 - prometheusrule-longhorn.yaml
+- network-policy-metrics.yaml
 
 commonAnnotations:
   # as this is a critical infrastructure component, prevent pruning unintentionally

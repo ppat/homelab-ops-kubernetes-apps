@@ -1,0 +1,27 @@
+---
+# The Longhorn chart renders a longhorn-manager NetworkPolicy whenever
+# networkPolicies.restrictInternalTraffic is true, which is the chart default. That policy admits
+# only Longhorn's own pods, so it also blocks the metrics scraper from the endpoint the chart's
+# ServiceMonitor targets (manager port 9500), and every Longhorn alert rule goes silent with no
+# error anywhere. NetworkPolicies are additive, so this admits the monitoring namespace to that one
+# port and leaves the chart's internal restrictions intact. It selects the namespace rather than a
+# scraper's pod labels so any scraper deployed there (Prometheus, vmagent) works without an edit.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: longhorn-manager-metrics
+  namespace: longhorn-system
+spec:
+  podSelector:
+    matchLabels:
+      app: longhorn-manager
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9500
