@@ -21,6 +21,8 @@ spec:
       expr: (longhorn_volume_actual_size_bytes / longhorn_volume_capacity_bytes) * 100 > 90
       for: 5m
       labels:
+        capability: storage.block
+        tier: L
         issue: The actual used space of Longhorn volume {{$labels.volume}} on {{$labels.node}} is high.
         severity: warning
     - alert: LonghornVolumeStatusCritical
@@ -32,6 +34,8 @@ spec:
       expr: longhorn_volume_robustness == 3
       for: 5m
       labels:
+        capability: storage.block
+        tier: H1
         issue: Longhorn volume {{$labels.volume}} is Fault.
         severity: critical
     - alert: LonghornVolumeStatusWarning
@@ -43,6 +47,8 @@ spec:
       expr: longhorn_volume_robustness == 2
       for: 5m
       labels:
+        capability: storage.block
+        tier: H1
         issue: Longhorn volume {{$labels.volume}} is Degraded.
         severity: warning
     - alert: LonghornNodeStorageWarning
@@ -54,6 +60,8 @@ spec:
       expr: (longhorn_node_storage_usage_bytes / longhorn_node_storage_capacity_bytes) * 100 > 70
       for: 5m
       labels:
+        capability: storage.block
+        tier: M3
         issue: The used storage of node {{$labels.node}} is high.
         severity: warning
     - alert: LonghornDiskStorageWarning
@@ -65,6 +73,8 @@ spec:
       expr: (longhorn_disk_usage_bytes / longhorn_disk_capacity_bytes) * 100 > 70
       for: 5m
       labels:
+        capability: storage.block
+        tier: M3
         issue: The used storage of disk {{$labels.disk}} on node {{$labels.node}} is high.
         severity: warning
     - alert: LonghornNodeDown
@@ -74,6 +84,8 @@ spec:
       expr: (avg(longhorn_node_count_total) or on() vector(0)) - (count(longhorn_node_status{condition="ready"} == 1) or on() vector(0)) > 0
       for: 5m
       labels:
+        capability: storage.block
+        tier: H1
         issue: There are {{$value}} Longhorn nodes are offline
         severity: critical
     - alert: LonghornInstanceManagerCPUUsageWarning
@@ -85,6 +97,8 @@ spec:
       expr: (longhorn_instance_manager_cpu_usage_millicpu/longhorn_instance_manager_cpu_requests_millicpu) * 100 > 300
       for: 5m
       labels:
+        capability: storage.block
+        tier: M3
         issue: Longhorn instance manager {{$labels.instance_manager}} on {{$labels.node}} consumes 3 times the CPU request.
         severity: warning
     - alert: LonghornNodeCPUUsageWarning
@@ -96,5 +110,41 @@ spec:
       expr: (longhorn_node_cpu_usage_millicpu / longhorn_node_cpu_capacity_millicpu) * 100 > 90
       for: 5m
       labels:
+        capability: storage.block
+        tier: M3
         issue: Longhorn node {{$labels.node}} experiences high CPU pressure.
         severity: warning
+    # The chart's ServiceMonitor scrapes longhorn-manager on every node it runs on. When those
+    # scrapes fail, every rule above goes quiet rather than firing, so this compares the healthy
+    # scrape targets against the DaemonSet's own desired pod count from kube-state-metrics, which
+    # does not depend on reaching Longhorn. The `or ... * 0` arm keeps the comparison alive when the
+    # target set disappears entirely, where a bare count would return nothing.
+    - alert: LonghornMetricsMissing
+      annotations:
+        description: >-
+          Only {{ $value }} of the longhorn-manager pods are being scraped successfully for 30
+          minutes. Longhorn's own alert rules cannot fire for the nodes that are missing.
+        summary: Longhorn metrics are missing for some nodes.
+      expr: |
+        (
+        sum by (k8s_cluster, namespace) (up{job="longhorn-backend"})
+        or
+        0 * sum by (k8s_cluster, namespace) (kube_daemonset_status_desired_number_scheduled{daemonset="longhorn-manager"})
+        )
+        < sum by (k8s_cluster, namespace) (kube_daemonset_status_desired_number_scheduled{daemonset="longhorn-manager"})
+      for: 30m
+      labels:
+        capability: storage.block
+        tier: H1
+        severity: warning
+    # Always firing. A consumer of Alertmanager's active alerts reads its absence as "these rules
+    # are not being evaluated", which an empty list of Longhorn alerts cannot tell apart from
+    # "Longhorn is healthy".
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The storage.block alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: storage.block
+        tier: H1
+        severity: none

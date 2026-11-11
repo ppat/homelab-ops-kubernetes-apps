@@ -1,0 +1,90 @@
+---
+# promtool unit tests for prometheusrule-longhorn.yaml.
+rule_files:
+- prometheusrule-longhorn.yaml
+evaluation_interval: 1m
+tests:
+# Two of four managers unreachable for longer than `for`.
+- interval: 1m
+  input_series:
+  - series: 'kube_daemonset_status_desired_number_scheduled{daemonset="longhorn-manager", namespace="longhorn-system"}'
+    values: '4x60'
+  - series: 'up{job="longhorn-backend", namespace="longhorn-system", instance="a"}'
+    values: '1x60'
+  - series: 'up{job="longhorn-backend", namespace="longhorn-system", instance="b"}'
+    values: '1x60'
+  - series: 'up{job="longhorn-backend", namespace="longhorn-system", instance="c"}'
+    values: '0x60'
+  - series: 'up{job="longhorn-backend", namespace="longhorn-system", instance="d"}'
+    values: '0x60'
+  alert_rule_test:
+  - eval_time: 45m
+    alertname: LonghornMetricsMissing
+    exp_alerts:
+    - exp_labels: {namespace: longhorn-system, capability: storage.block, tier: H1, severity: warning}
+      exp_annotations:
+        summary: Longhorn metrics are missing for some nodes.
+        description: >-
+          Only 2 of the longhorn-manager pods are being scraped successfully for 30
+          minutes. Longhorn's own alert rules cannot fire for the nodes that are missing.
+  - eval_time: 45m
+    alertname: CapabilityHeartbeat
+    exp_alerts:
+    - exp_labels: {capability: storage.block, tier: H1, severity: none}
+      exp_annotations:
+        summary: The storage.block alert rules are being evaluated.
+
+# The scrape targets vanish entirely, so `up` has no series at all.
+- interval: 1m
+  input_series:
+  - series: 'kube_daemonset_status_desired_number_scheduled{daemonset="longhorn-manager", namespace="longhorn-system"}'
+    values: '4x60'
+  alert_rule_test:
+  - eval_time: 45m
+    alertname: LonghornMetricsMissing
+    exp_alerts:
+    - exp_labels: {namespace: longhorn-system, capability: storage.block, tier: H1, severity: warning}
+      exp_annotations:
+        summary: Longhorn metrics are missing for some nodes.
+        description: >-
+          Only 0 of the longhorn-manager pods are being scraped successfully for 30
+          minutes. Longhorn's own alert rules cannot fire for the nodes that are missing.
+
+# Every manager scraped: silent.
+- interval: 1m
+  input_series:
+  - series: 'kube_daemonset_status_desired_number_scheduled{daemonset="longhorn-manager", namespace="longhorn-system"}'
+    values: '4x60'
+  - series: 'up{job="longhorn-backend", namespace="longhorn-system", instance="a"}'
+    values: '1x60'
+  - series: 'up{job="longhorn-backend", namespace="longhorn-system", instance="b"}'
+    values: '1x60'
+  - series: 'up{job="longhorn-backend", namespace="longhorn-system", instance="c"}'
+    values: '1x60'
+  - series: 'up{job="longhorn-backend", namespace="longhorn-system", instance="d"}'
+    values: '1x60'
+  alert_rule_test:
+  - eval_time: 45m
+    alertname: LonghornMetricsMissing
+    exp_alerts: []
+
+# One manager down for 10 minutes during a rolling restart, then back: silent.
+- interval: 1m
+  input_series:
+  - series: 'kube_daemonset_status_desired_number_scheduled{daemonset="longhorn-manager", namespace="longhorn-system"}'
+    values: '4x60'
+  - series: 'up{job="longhorn-backend", namespace="longhorn-system", instance="a"}'
+    values: '1x60'
+  - series: 'up{job="longhorn-backend", namespace="longhorn-system", instance="b"}'
+    values: '1x60'
+  - series: 'up{job="longhorn-backend", namespace="longhorn-system", instance="c"}'
+    values: '1x60'
+  - series: 'up{job="longhorn-backend", namespace="longhorn-system", instance="d"}'
+    values: '1x5 0x10 1x45'
+  alert_rule_test:
+  - eval_time: 14m
+    alertname: LonghornMetricsMissing
+    exp_alerts: []
+  - eval_time: 45m
+    alertname: LonghornMetricsMissing
+    exp_alerts: []
