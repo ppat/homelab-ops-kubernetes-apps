@@ -8,6 +8,7 @@ resources:
 - syslog-ng/
 - unpoller/
 - node-problem-detector/
+- smartctl-exporter/
 
 sortOptions:
   order: fifo

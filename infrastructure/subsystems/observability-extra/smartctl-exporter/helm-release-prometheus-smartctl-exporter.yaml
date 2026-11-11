@@ -1,0 +1,50 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: prometheus-smartctl-exporter-release
+  namespace: monitoring
+spec:
+  chart:
+    spec:
+      chart: prometheus-smartctl-exporter
+      interval: 24h0m0s
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community-repository
+        namespace: flux-system
+      version: 0.19.2
+  install:
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 15m0s
+  releaseName: prometheus-smartctl-exporter
+  targetNamespace: monitoring
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+
+  # The chart hardcodes `privileged: true` on the exporter container, and that is the floor:
+  # root with SYS_ADMIN and SYS_RAWIO plus a /dev hostPath still gets "Operation not
+  # permitted" opening a block device, because the container's device cgroup only admits
+  # host block devices for privileged containers. A node whose disks smartctl cannot query
+  # (virtio disks in a VM) still runs a healthy exporter that reports `smartctl_devices 0`
+  # and no device series.
+  values:
+    # The chart binds its ServiceAccount to an `unrestricted-psp` ClusterRole, a leftover of
+    # PodSecurityPolicy that no cluster defines. The exporter calls no Kubernetes API.
+    rbac:
+      create: false
+    serviceMonitor:
+      enabled: true
+      # The exporter labels device series only with the kernel device name (`nvme0`, `sda`),
+      # which repeats on every node. `node` makes a disk identifiable without `pod` or
+      # `instance`, which change on every exporter restart.
+      relabelings:
+      - sourceLabels: [__meta_kubernetes_pod_node_name]
+        targetLabel: node

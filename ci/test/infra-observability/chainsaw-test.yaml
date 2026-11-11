@@ -164,6 +164,12 @@ spec:
     use:
       template: ./validate-node-problem-detector.yaml
 
+  # Placed by analogy rather than by a measured readiness time: beside node-problem-detector,
+  # the other small privileged DaemonSet in the module.
+  - name: Validate smartctl-exporter
+    use:
+      template: ./validate-smartctl-exporter.yaml
+
   - name: Validate Blackbox Exporter
     use:
       template: ./validate-blackbox-exporter.yaml
@@ -227,6 +233,20 @@ spec:
           value: 'node_vmstat_pgscan_direct'
         - name: prometheus_diagnostic_match
           value: '{__name__=~"node_vmstat_pg(scan|steal).*"}'
+
+  # The node.disk alert rules key on `job="prometheus-smartctl-exporter"` and a `node`
+  # label added by the ServiceMonitor's relabeling. kind's disks are not SMART-capable, so
+  # the exporter reports zero devices, but `smartctl_devices` is still exported per pod and
+  # carries both labels once the scrape works.
+  - name: Validate smartctl-exporter is scraped with a node label
+    use:
+      template: ./steps/assert-prometheus-query.yaml
+      with:
+        bindings:
+        - name: prometheus_query
+          value: 'smartctl_devices{job="prometheus-smartctl-exporter", node!=""}'
+        - name: prometheus_diagnostic_match
+          value: '{__name__=~"smartctl_.*"}'
 
   # The first assertion in this repo that looks at a pipeline's OUTPUT rather than at
   # resource status. Everything above proves Alloy and Loki are running; only this

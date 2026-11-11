@@ -1,0 +1,271 @@
+---
+# promtool unit tests for prometheusrule-smartctl-exporter.yaml. Series carry the labels the
+# exporter and the ServiceMonitor produce (`device` from the exporter, `node`, `pod` and
+# `instance` from scraping), so the aggregations are exercised against what is really there.
+rule_files:
+- prometheusrule-smartctl-exporter.yaml
+evaluation_interval: 1m
+tests:
+# ---------------------------------------------------------------- SmartDeviceFailing
+# An NVMe drive failing on a non-temperature critical warning (16, volatile memory backup
+# failed, as recorded from a real failed drive), and a SATA drive failing its assessment,
+# which has no critical-warning series at all.
+- interval: 1m
+  input_series:
+  - series: 'smartctl_device_smart_status{device="nvme1", node="n1", pod="p1", instance="10.0.0.1:9633"}'
+    values: '0x30'
+  - series: 'smartctl_device_critical_warning{device="nvme1", node="n1", pod="p1", instance="10.0.0.1:9633"}'
+    values: '16x30'
+  - series: 'smartctl_device_smart_status{device="sdb", node="n2", pod="p2", instance="10.0.0.2:9633"}'
+    values: '0x30'
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: SmartDeviceFailing
+    exp_alerts:
+    - exp_labels: {device: nvme1, node: n1, capability: node.disk, tier: H2, severity: critical}
+      exp_annotations:
+        summary: A disk reports failed SMART health.
+        description: >-
+          Disk nvme1 on node n1 reports a failed SMART overall health assessment. Plan to
+          replace it and check which Longhorn replicas live on it.
+    - exp_labels: {device: sdb, node: n2, capability: node.disk, tier: H2, severity: critical}
+      exp_annotations:
+        summary: A disk reports failed SMART health.
+        description: >-
+          Disk sdb on node n2 reports a failed SMART overall health assessment. Plan to
+          replace it and check which Longhorn replicas live on it.
+  - eval_time: 20m
+    alertname: CapabilityHeartbeat
+    exp_alerts:
+    - exp_labels: {capability: node.disk, tier: H2, severity: none}
+      exp_annotations:
+        summary: The node.disk alert rules are being evaluated.
+
+# Temperature alone (critical warning 2) makes smartctl report FAILED for NVMe: silent.
+# Temperature plus available spare below threshold (3) still fires.
+- interval: 1m
+  input_series:
+  - series: 'smartctl_device_smart_status{device="nvme0", node="n1", pod="p1", instance="10.0.0.1:9633"}'
+    values: '0x30'
+  - series: 'smartctl_device_critical_warning{device="nvme0", node="n1", pod="p1", instance="10.0.0.1:9633"}'
+    values: '2x30'
+  - series: 'smartctl_device_smart_status{device="nvme0", node="n2", pod="p2", instance="10.0.0.2:9633"}'
+    values: '0x30'
+  - series: 'smartctl_device_critical_warning{device="nvme0", node="n2", pod="p2", instance="10.0.0.2:9633"}'
+    values: '3x30'
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: SmartDeviceFailing
+    exp_alerts:
+    - exp_labels: {device: nvme0, node: n2, capability: node.disk, tier: H2, severity: critical}
+      exp_annotations:
+        summary: A disk reports failed SMART health.
+        description: >-
+          Disk nvme0 on node n2 reports a failed SMART overall health assessment. Plan to
+          replace it and check which Longhorn replicas live on it.
+
+# Healthy drives, and one failed reading lasting 5 minutes: silent.
+- interval: 1m
+  input_series:
+  - series: 'smartctl_device_smart_status{device="nvme0", node="n1", pod="p1", instance="10.0.0.1:9633"}'
+    values: '1x30'
+  - series: 'smartctl_device_critical_warning{device="nvme0", node="n1", pod="p1", instance="10.0.0.1:9633"}'
+    values: '0x30'
+  - series: 'smartctl_device_smart_status{device="sda", node="n1", pod="p1", instance="10.0.0.1:9633"}'
+    values: '1x5 0x5 1x20'
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: SmartDeviceFailing
+    exp_alerts: []
+  - eval_time: 30m
+    alertname: SmartDeviceFailing
+    exp_alerts: []
+
+# ------------------------------------------------------ SmartDeviceMediaErrorsIncreasing
+# NVMe media errors go from 0 to 3 at minute 60. The exporter pod is replaced at minute 30,
+# so the old and new pod each hold part of the history.
+- interval: 1m
+  input_series:
+  - series: 'smartctl_device_media_errors{device="nvme0", node="n1", pod="old", instance="10.0.0.1:9633"}'
+    values: '0x30'
+  - series: 'smartctl_device_media_errors{device="nvme0", node="n1", pod="new", instance="10.0.0.9:9633"}'
+    values: '_x31 0x29 3x1500'
+  alert_rule_test:
+  - eval_time: 65m
+    alertname: SmartDeviceMediaErrorsIncreasing
+    exp_alerts: []
+  - eval_time: 75m
+    alertname: SmartDeviceMediaErrorsIncreasing
+    exp_alerts:
+    - exp_labels: {device: nvme0, node: n1, capability: node.disk, tier: H2, severity: warning}
+      exp_annotations:
+        summary: A disk is accumulating media errors.
+        description: >-
+          Disk nvme0 on node n1 recorded new media or sector errors in the last 24 hours. Its
+          error count is now 3.
+  # Still active 23 hours later, so a twice-daily reader sees it.
+  - eval_time: 1440m
+    alertname: SmartDeviceMediaErrorsIncreasing
+    exp_alerts:
+    - exp_labels: {device: nvme0, node: n1, capability: node.disk, tier: H2, severity: warning}
+      exp_annotations:
+        summary: A disk is accumulating media errors.
+        description: >-
+          Disk nvme0 on node n1 recorded new media or sector errors in the last 24 hours. Its
+          error count is now 3.
+  # Resolved once 24 hours pass with no new errors.
+  - eval_time: 1530m
+    alertname: SmartDeviceMediaErrorsIncreasing
+    exp_alerts: []
+
+# Media errors rise from 0 to 3 at minute 20 and the exporter pod is replaced at minute 30,
+# so the new pod's series never saw the lower value. The baseline has to come from every pod
+# that reported the disk in the window, not from the current one.
+- interval: 1m
+  input_series:
+  - series: 'smartctl_device_media_errors{device="nvme0", node="n1", pod="old", instance="10.0.0.1:9633"}'
+    values: '0x20 3x10'
+  - series: 'smartctl_device_media_errors{device="nvme0", node="n1", pod="new", instance="10.0.0.9:9633"}'
+    values: '_x31 3x60'
+  alert_rule_test:
+  - eval_time: 45m
+    alertname: SmartDeviceMediaErrorsIncreasing
+    exp_alerts:
+    - exp_labels: {device: nvme0, node: n1, capability: node.disk, tier: H2, severity: warning}
+      exp_annotations:
+        summary: A disk is accumulating media errors.
+        description: >-
+          Disk nvme0 on node n1 recorded new media or sector errors in the last 24 hours. Its
+          error count is now 3.
+
+# A SATA drive's reallocated sector count grows from 304 to 310. Its long-standing pending
+# sector count of 8 does not.
+- interval: 1m
+  input_series:
+  - series: 'smartctl_device_attribute{attribute_name="Reallocated_Sector_Ct",attribute_value_type="raw",device="sdb",node="n2",pod="p2"}'
+    values: '304x30 310x30'
+  - series: 'smartctl_device_attribute{attribute_name="Reallocated_Sector_Ct",attribute_value_type="value",device="sdb",node="n2",pod="p2"}'
+    values: '93x30 92x30'
+  - series: 'smartctl_device_attribute{attribute_name="Current_Pending_Sector",attribute_value_type="raw",device="sdb",node="n2",pod="p2"}'
+    values: '8x60'
+  alert_rule_test:
+  - eval_time: 50m
+    alertname: SmartDeviceMediaErrorsIncreasing
+    exp_alerts:
+    - exp_labels:
+        device: sdb
+        node: n2
+        attribute_name: Reallocated_Sector_Ct
+        capability: node.disk
+        tier: H2
+        severity: warning
+      exp_annotations:
+        summary: A disk is accumulating media errors.
+        description: >-
+          Disk sdb on node n2 recorded new media or sector errors in the last 24 hours. Its
+          error count is now 310.
+
+# Errors that predate the window, an exporter restart with no new errors, and a single bad
+# reading lasting 3 minutes: silent.
+- interval: 1m
+  input_series:
+  - series: 'smartctl_device_media_errors{device="nvme0", node="n1", pod="old", instance="10.0.0.1:9633"}'
+    values: '7x30'
+  - series: 'smartctl_device_media_errors{device="nvme0", node="n1", pod="new", instance="10.0.0.9:9633"}'
+    values: '_x31 7x60'
+  - series: 'smartctl_device_media_errors{device="nvme1", node="n1", pod="old", instance="10.0.0.1:9633"}'
+    values: '0x20 5x3 0x67'
+  alert_rule_test:
+  - eval_time: 22m
+    alertname: SmartDeviceMediaErrorsIncreasing
+    exp_alerts: []
+  - eval_time: 30m
+    alertname: SmartDeviceMediaErrorsIncreasing
+    exp_alerts: []
+  - eval_time: 80m
+    alertname: SmartDeviceMediaErrorsIncreasing
+    exp_alerts: []
+
+# ----------------------------------------------------------------- SmartDeviceWearHigh
+- interval: 1m
+  input_series:
+  - series: 'smartctl_device_percentage_used{device="nvme0", node="n1", pod="p1", instance="10.0.0.1:9633"}'
+    values: '91x120'
+  - series: 'smartctl_device_percentage_used{device="nvme0", node="n2", pod="p2", instance="10.0.0.2:9633"}'
+    values: '90x120'
+  - series: 'smartctl_device_percentage_used{device="nvme1", node="n2", pod="p2", instance="10.0.0.2:9633"}'
+    values: '16x10 95x30 16x80'
+  alert_rule_test:
+  - eval_time: 40m
+    alertname: SmartDeviceWearHigh
+    exp_alerts: []
+  - eval_time: 90m
+    alertname: SmartDeviceWearHigh
+    exp_alerts:
+    - exp_labels: {device: nvme0, node: n1, capability: node.disk, tier: H2, severity: warning}
+      exp_annotations:
+        summary: An NVMe disk is near the end of its rated endurance.
+        description: >-
+          Disk nvme0 on node n1 has used 91 percent of its rated write endurance.
+
+# ------------------------------------------------------- SmartctlExporterMetricsMissing
+# One of four exporter pods unscraped for longer than `for`.
+- interval: 1m
+  input_series:
+  - series: 'kube_daemonset_status_desired_number_scheduled{daemonset="prometheus-smartctl-exporter-0",namespace="monitoring"}'
+    values: '4x60'
+  - series: 'up{job="prometheus-smartctl-exporter", namespace="monitoring", instance="a"}'
+    values: '1x60'
+  - series: 'up{job="prometheus-smartctl-exporter", namespace="monitoring", instance="b"}'
+    values: '1x60'
+  - series: 'up{job="prometheus-smartctl-exporter", namespace="monitoring", instance="c"}'
+    values: '1x60'
+  - series: 'up{job="prometheus-smartctl-exporter", namespace="monitoring", instance="d"}'
+    values: '0x60'
+  alert_rule_test:
+  - eval_time: 45m
+    alertname: SmartctlExporterMetricsMissing
+    exp_alerts:
+    - exp_labels: {namespace: monitoring, capability: node.disk, tier: H2, severity: warning}
+      exp_annotations:
+        summary: SMART metrics are missing for some nodes.
+        description: >-
+          Only 3 of the smartctl-exporter pods are being scraped successfully for 30
+          minutes. SMART alerts cannot fire for the nodes that are missing.
+
+# The scrape targets vanish entirely, so `up` has no series at all.
+- interval: 1m
+  input_series:
+  - series: 'kube_daemonset_status_desired_number_scheduled{daemonset="prometheus-smartctl-exporter-0",namespace="monitoring"}'
+    values: '4x60'
+  alert_rule_test:
+  - eval_time: 45m
+    alertname: SmartctlExporterMetricsMissing
+    exp_alerts:
+    - exp_labels: {namespace: monitoring, capability: node.disk, tier: H2, severity: warning}
+      exp_annotations:
+        summary: SMART metrics are missing for some nodes.
+        description: >-
+          Only 0 of the smartctl-exporter pods are being scraped successfully for 30
+          minutes. SMART alerts cannot fire for the nodes that are missing.
+
+# Every pod scraped, then one pod down for 10 minutes during a rolling update: silent.
+- interval: 1m
+  input_series:
+  - series: 'kube_daemonset_status_desired_number_scheduled{daemonset="prometheus-smartctl-exporter-0",namespace="monitoring"}'
+    values: '4x60'
+  - series: 'up{job="prometheus-smartctl-exporter", namespace="monitoring", instance="a"}'
+    values: '1x60'
+  - series: 'up{job="prometheus-smartctl-exporter", namespace="monitoring", instance="b"}'
+    values: '1x60'
+  - series: 'up{job="prometheus-smartctl-exporter", namespace="monitoring", instance="c"}'
+    values: '1x60'
+  - series: 'up{job="prometheus-smartctl-exporter", namespace="monitoring", instance="d"}'
+    values: '1x5 0x10 1x45'
+  alert_rule_test:
+  - eval_time: 14m
+    alertname: SmartctlExporterMetricsMissing
+    exp_alerts: []
+  - eval_time: 45m
+    alertname: SmartctlExporterMetricsMissing
+    exp_alerts: []

@@ -1,0 +1,116 @@
+---
+# Device rules aggregate by (k8s_cluster, node, device): `node` is added by the ServiceMonitor
+# relabeling in helm-release-prometheus-smartctl-exporter.yaml, and dropping `pod` and
+# `instance` keeps one series per disk across exporter restarts.
+#
+# Metric names are those of smartctl_exporter v0.15.0. The exporter renames metrics between
+# releases, so a chart bump that changes the app version needs these expressions re-checked
+# against its /metrics output.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    release: kube-prometheus-stack
+  name: smartctl-exporter-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: smartctl-exporter
+    rules:
+    # For NVMe, smartctl reports the overall assessment as failed whenever any critical-warning
+    # bit is set, including bit 1 (temperature outside its threshold). A drive whose only
+    # warning is temperature is hot, not failing, so it is excluded here.
+    - alert: SmartDeviceFailing
+      annotations:
+        description: >-
+          Disk {{ $labels.device }} on node {{ $labels.node }} reports a failed SMART overall
+          health assessment. Plan to replace it and check which Longhorn replicas live on it.
+        summary: A disk reports failed SMART health.
+      expr: |
+        min by (k8s_cluster, node, device) (smartctl_device_smart_status) == 0
+        unless on (k8s_cluster, node, device)
+        max by (k8s_cluster, node, device) (smartctl_device_critical_warning) == 2
+      for: 15m
+      labels:
+        capability: node.disk
+        tier: H2
+        severity: critical
+    # NVMe media errors (first arm) and the ATA sector and uncorrectable counts (second arm)
+    # are compared with the lowest value seen in 24 hours rather than through increase().
+    # That keeps the alert active for a full day after each new error, so a twice-daily
+    # reader of active alerts cannot miss it, and it holds across exporter restarts, where
+    # increase() on the per-pod series would see a new series and treat its start
+    # differently in Prometheus and VictoriaMetrics.
+    - alert: SmartDeviceMediaErrorsIncreasing
+      annotations:
+        description: >-
+          Disk {{ $labels.device }} on node {{ $labels.node }} recorded new media or sector
+          errors in the last 24 hours. Its error count is now {{ $value }}.
+        summary: A disk is accumulating media errors.
+      expr: |
+        max by (k8s_cluster, node, device) (smartctl_device_media_errors)
+        > min by (k8s_cluster, node, device) (min_over_time(smartctl_device_media_errors[24h]))
+        or
+        max by (k8s_cluster, node, device, attribute_name) (
+        smartctl_device_attribute{attribute_value_type="raw",
+        attribute_name=~"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect"}
+        )
+        > min by (k8s_cluster, node, device, attribute_name) (
+        min_over_time(smartctl_device_attribute{attribute_value_type="raw",
+        attribute_name=~"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable|Reported_Uncorrect"}[24h])
+        )
+      for: 10m
+      labels:
+        capability: node.disk
+        tier: H2
+        severity: warning
+    - alert: SmartDeviceWearHigh
+      annotations:
+        description: >-
+          Disk {{ $labels.device }} on node {{ $labels.node }} has used {{ $value }} percent of
+          its rated write endurance.
+        summary: An NVMe disk is near the end of its rated endurance.
+      expr: |
+        max by (k8s_cluster, node, device) (smartctl_device_percentage_used) > 90
+      for: 1h
+      labels:
+        capability: node.disk
+        tier: H2
+        severity: warning
+    # Every rule above goes quiet rather than firing when the exporter is not scraped, so
+    # this compares healthy scrape targets with the DaemonSet's desired pod count from
+    # kube-state-metrics. The `or 0 * ...` arm keeps the comparison alive when the target
+    # set disappears entirely, where a bare sum would return nothing.
+    - alert: SmartctlExporterMetricsMissing
+      annotations:
+        description: >-
+          Only {{ $value }} of the smartctl-exporter pods are being scraped successfully for 30
+          minutes. SMART alerts cannot fire for the nodes that are missing.
+        summary: SMART metrics are missing for some nodes.
+      expr: |
+        (
+        sum by (k8s_cluster, namespace) (up{job="prometheus-smartctl-exporter"})
+        or
+        0 * sum by (k8s_cluster, namespace) (
+        kube_daemonset_status_desired_number_scheduled{daemonset="prometheus-smartctl-exporter-0"}
+        )
+        )
+        < sum by (k8s_cluster, namespace) (
+        kube_daemonset_status_desired_number_scheduled{daemonset="prometheus-smartctl-exporter-0"}
+        )
+      for: 30m
+      labels:
+        capability: node.disk
+        tier: H2
+        severity: warning
+    # Always firing. A consumer of Alertmanager's active alerts reads its absence as "these
+    # rules are not being evaluated", which an empty list of disk alerts cannot tell apart
+    # from "every disk is healthy".
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The node.disk alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: node.disk
+        tier: H2
+        severity: none
