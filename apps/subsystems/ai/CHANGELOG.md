@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.13.0...apps-ai-v0.13.1) (2026-11-11)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** keep openclaw's live config in a directory the gateway owns ([#4564](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4564)) ([42cb980](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/42cb9808ef744b09373a4b99cf1099ab95680e8d))
+
 ## [0.13.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.12.5...apps-ai-v0.13.0) (2026-11-11)
 
 
