@@ -36,6 +36,13 @@ spec:
   # (virtio disks in a VM) still runs a healthy exporter that reports `smartctl_devices 0`
   # and no device series.
   values:
+    # Scan only NVMe drives. Every Longhorn volume attached to a node appears there as an iSCSI
+    # block device (sda, sdb, ...), dozens per node, appearing and disappearing as volumes move.
+    # Their SMART data describes a virtual disk, not hardware, and scanning them churns series.
+    # The nodes' only physical disks are NVMe. A node with a physical SATA disk would need this
+    # widened, and SmartNoPhysicalDisks in the rules here fires if a node reports no NVMe at all.
+    config:
+      device_include: nvme[0-9]+
     # The chart binds its ServiceAccount to an `unrestricted-psp` ClusterRole, a leftover of
     # PodSecurityPolicy that no cluster defines. The exporter calls no Kubernetes API.
     rbac:

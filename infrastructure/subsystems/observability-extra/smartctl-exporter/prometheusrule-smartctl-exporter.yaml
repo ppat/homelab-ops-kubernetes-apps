@@ -103,6 +103,24 @@ spec:
         capability: node.disk
         tier: H2
         severity: warning
+    # The exporter scans only the devices its device filter admits (see the HelmRelease). A node
+    # whose exporter is scraped but reports no device at all has no disk health coverage, for
+    # example a disk the filter does not match, or smartctl failing to open any device.
+    - alert: SmartNoPhysicalDisks
+      annotations:
+        description: >-
+          The smartctl-exporter on node {{ $labels.node }} is scraped but reports no disks for
+          1 hour. That node's disk health is not being watched.
+        summary: A node reports no disks to SMART monitoring.
+      expr: |
+        max by (k8s_cluster, node) (up{job="prometheus-smartctl-exporter"}) == 1
+        unless on (k8s_cluster, node)
+        count by (k8s_cluster, node) (smartctl_device_smart_status)
+      for: 1h
+      labels:
+        capability: node.disk
+        tier: H2
+        severity: warning
     # Always firing. A consumer of Alertmanager's active alerts reads its absence as "these
     # rules are not being evaluated", which an empty list of disk alerts cannot tell apart
     # from "every disk is healthy".
