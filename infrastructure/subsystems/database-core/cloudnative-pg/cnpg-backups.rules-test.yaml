@@ -1,0 +1,115 @@
+---
+# promtool unit tests for prometheusrule-cnpg-backups.yaml.
+rule_files:
+- prometheusrule-cnpg-backups.yaml
+evaluation_interval: 1m
+tests:
+# CNPGBackupFailing. Namespace a: a failure newer than the last success, held for 2 hours.
+# Namespace b: never failed after its last success. Namespace c: failed for 10 minutes, then a
+# newer backup succeeded.
+- interval: 1m
+  input_series:
+  - series: 'barman_cloud_cloudnative_pg_io_last_available_backup_timestamp{namespace="a", pod="a-1"}'
+    values: '1000x180'
+  - series: 'barman_cloud_cloudnative_pg_io_last_failed_backup_timestamp{namespace="a", pod="a-1"}'
+    values: '500x9 2000x170'
+  - series: 'barman_cloud_cloudnative_pg_io_last_available_backup_timestamp{namespace="b", pod="b-1"}'
+    values: '1000x180'
+  - series: 'barman_cloud_cloudnative_pg_io_last_failed_backup_timestamp{namespace="b", pod="b-1"}'
+    values: '500x180'
+  - series: 'barman_cloud_cloudnative_pg_io_last_available_backup_timestamp{namespace="c", pod="c-1"}'
+    values: '1000x9 3000x170'
+  - series: 'barman_cloud_cloudnative_pg_io_last_failed_backup_timestamp{namespace="c", pod="c-1"}'
+    values: '2000x180'
+  alert_rule_test:
+  - eval_time: 1h
+    alertname: CNPGBackupFailing
+    exp_alerts: []
+  - eval_time: 2h
+    alertname: CNPGBackupFailing
+    exp_alerts:
+    - exp_labels: {namespace: a, capability: backup.db, tier: H1, severity: critical}
+      exp_annotations:
+        summary: The latest CloudNativePG base backup failed.
+        description: >-
+          The newest failed base backup in namespace a is more recent than the newest successful
+          one.
+  - eval_time: 2h
+    alertname: CapabilityHeartbeat
+    exp_alerts:
+    - exp_labels: {capability: backup.db, tier: H1, severity: none}
+      exp_annotations:
+        summary: The backup.db alert rules are being evaluated.
+
+# CNPGBackupStale. Namespace old: last success at t=0, so 30 hours old at the check.
+# Namespace fresh: its last-success timestamp keeps pace with the clock.
+- interval: 1m
+  input_series:
+  - series: 'barman_cloud_cloudnative_pg_io_last_available_backup_timestamp{namespace="old", pod="old-1"}'
+    values: '0x1900'
+  - series: 'barman_cloud_cloudnative_pg_io_last_available_backup_timestamp{namespace="fresh", pod="fresh-1"}'
+    values: '0+60x1900'
+  alert_rule_test:
+  - eval_time: 25h
+    alertname: CNPGBackupStale
+    exp_alerts: []
+  - eval_time: 30h
+    alertname: CNPGBackupStale
+    exp_alerts:
+    - exp_labels: {namespace: old, capability: backup.db, tier: H1, severity: critical}
+      exp_annotations:
+        summary: No recent CloudNativePG base backup.
+        description: >-
+          The newest successful base backup in namespace old is 1d 6h 0m 0s old.
+
+# CNPGBackupMissing. A nas cluster runs without any barman series. A homelab cluster has both.
+- interval: 1m
+  input_series:
+  - series: 'cnpg_collector_up{k8s_cluster="nas", namespace="nobackup", pod="nobackup-1"}'
+    values: '1x900'
+  - series: 'cnpg_collector_up{namespace="backedup", pod="backedup-1"}'
+    values: '1x900'
+  - series: 'barman_cloud_cloudnative_pg_io_last_available_backup_timestamp{namespace="backedup", pod="backedup-1"}'
+    values: '1000x900'
+  alert_rule_test:
+  - eval_time: 11h
+    alertname: CNPGBackupMissing
+    exp_alerts: []
+  - eval_time: 13h
+    alertname: CNPGBackupMissing
+    exp_alerts:
+    - exp_labels: {k8s_cluster: nas, namespace: nobackup, capability: backup.db, tier: H1, severity: warning}
+      exp_annotations:
+        summary: A CloudNativePG cluster has no barman-cloud backup.
+        description: >-
+          A CloudNativePG cluster runs in namespace nobackup but reports no barman-cloud backup.
+
+# CNPGWALArchivingFailing. broken: failing every minute and nothing archived since t=0.
+# retrying: failures, but archives still succeed. idle: nothing archived for hours, no failures.
+- interval: 1m
+  input_series:
+  - series: 'cnpg_pg_stat_archiver_failed_count{namespace="broken", pod="broken-1"}'
+    values: '0+1x150'
+  - series: 'cnpg_pg_stat_archiver_seconds_since_last_archival{namespace="broken", pod="broken-1"}'
+    values: '0+60x150'
+  - series: 'cnpg_pg_stat_archiver_failed_count{namespace="retrying", pod="retrying-1"}'
+    values: '0+1x150'
+  - series: 'cnpg_pg_stat_archiver_seconds_since_last_archival{namespace="retrying", pod="retrying-1"}'
+    values: '30x150'
+  - series: 'cnpg_pg_stat_archiver_failed_count{namespace="idle", pod="idle-1"}'
+    values: '3x150'
+  - series: 'cnpg_pg_stat_archiver_seconds_since_last_archival{namespace="idle", pod="idle-1"}'
+    values: '50000+60x150'
+  alert_rule_test:
+  - eval_time: 70m
+    alertname: CNPGWALArchivingFailing
+    exp_alerts: []
+  - eval_time: 90m
+    alertname: CNPGWALArchivingFailing
+    exp_alerts:
+    - exp_labels: {namespace: broken, capability: backup.db, tier: H1, severity: critical}
+      exp_annotations:
+        summary: CloudNativePG WAL archiving is failing.
+        description: >-
+          WAL archiving in namespace broken has failed repeatedly and nothing has been archived
+          for over an hour.
