@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.13.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.12.5...apps-ai-v0.13.0) (2026-11-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* **apps-ai:** update ghcr.io/github/github-mcp-server (v1.14.0 -> v2.1.0) ([#4555](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4555))
+
+### ✨ Features
+
+* **apps-ai:** let the consuming cluster supply n8n workflow credentials ([#4563](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4563)) ([6abe79d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6abe79d1532c8bdaa6bbde1ccb5c0a8def4a166d))
+* **apps-ai:** update docker.io/grafana/mcp-grafana (2.2.0 -&gt; 2.3.0) ([#4543](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4543)) ([75f230a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/75f230a2cb842bff0f4a8c09122e75ca83107dcb))
+* **apps-ai:** update ghcr.io/github/github-mcp-server (v1.14.0 -&gt; v2.1.0) ([#4555](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4555)) ([b821c16](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b821c16523a70f7e4a1bf92ba64b8fdab8fe0bbf))
+* **apps-ai:** update ghcr.io/homeassistant-ai/ha-mcp (9.1.1 -&gt; 9.2.0) ([#4544](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4544)) ([422161d](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/422161d4fa2fdc0fe2eb38104b1b8c2b774aefc7))
+* **apps-ai:** update litellm ([#4545](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4545)) ([4158329](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/4158329cc24111f90d50d8a596ea59e1fd81bcdb))
+* **apps-home-automation:** update ghcr.io/coder/code-server (4.143.1 -&gt; 4.145.2) ([#4549](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4549)) ([48f9ffb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/48f9ffb455bbe808e13076d0579bd0e112942f60))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** drop n8n's workflow credential overwrites from the module and allow n8n to reach openclaw ([#4535](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4535)) ([cd5f1c1](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/cd5f1c14284ebab4c8620b2097c050cbbc1eafc5))
+* **apps-ai:** update mcr.microsoft.com/playwright/mcp (v0.0.83 -&gt; v0.0.85) ([#4538](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4538)) ([6cea52e](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6cea52e9886b328c1f6f7dbb063227be9634ade0))
+
 ## [0.12.5](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.12.4...apps-ai-v0.12.5) (2026-11-11)
 
 
