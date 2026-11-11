@@ -1,0 +1,62 @@
+---
+# promtool unit tests for prometheusrule-coredns.yaml.
+rule_files:
+- prometheusrule-coredns.yaml
+evaluation_interval: 30s
+tests:
+# DNS fails completely from minute 10 onward.
+- interval: 30s
+  input_series:
+  - series: 'probe_success{job="blackbox", target="coredns", instance="kube-dns.kube-system.svc.cluster.local:53"}'
+    values: '1x20 0x80'
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: ClusterDNSProbeFailing
+    exp_alerts: []
+  - eval_time: 30m
+    alertname: ClusterDNSProbeFailing
+    exp_alerts:
+    - exp_labels: {target: coredns, capability: dns.cluster, tier: H3, severity: critical}
+      exp_annotations:
+        summary: In-cluster DNS resolution is failing.
+        description: >-
+          Only 0% of DNS probes against coredns succeeded over the last 5 minutes.
+  - eval_time: 30m
+    alertname: ClusterDNSProbeAbsent
+    exp_alerts: []
+  - eval_time: 30m
+    alertname: CapabilityHeartbeat
+    exp_alerts:
+    - exp_labels: {capability: dns.cluster, tier: H3, severity: none}
+      exp_annotations:
+        summary: The dns.cluster alert rules are being evaluated.
+
+# Every third probe fails for an hour: degraded but mostly answering. Silent.
+- interval: 30s
+  input_series:
+  - series: 'probe_success{job="blackbox", target="coredns", instance="kube-dns.kube-system.svc.cluster.local:53"}'
+    values: >-
+      1 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 1 0
+      1 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 1 0
+      1 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 1 0 1 1 0
+  alert_rule_test:
+  - eval_time: 40m
+    alertname: ClusterDNSProbeFailing
+    exp_alerts: []
+
+# The probe stops reporting after 10 minutes.
+- interval: 30s
+  input_series:
+  - series: 'probe_success{job="blackbox", target="coredns", instance="kube-dns.kube-system.svc.cluster.local:53"}'
+    values: '1x20'
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: ClusterDNSProbeAbsent
+    exp_alerts: []
+  - eval_time: 30m
+    alertname: ClusterDNSProbeAbsent
+    exp_alerts:
+    - exp_labels: {job: blackbox, target: coredns, capability: dns.cluster, tier: H3, severity: warning}
+      exp_annotations:
+        summary: No results from the cluster DNS probe.
+        description: No coredns probe result for 15 minutes. ClusterDNSProbeFailing cannot fire.

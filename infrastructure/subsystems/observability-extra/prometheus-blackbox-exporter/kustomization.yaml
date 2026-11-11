@@ -6,3 +6,4 @@ resources:
 - helm-release-prometheus-blackbox-exporter.yaml
 - probe-grafana-http.yaml
 - probe-coredns-resolution.yaml
+- prometheusrule-coredns.yaml
