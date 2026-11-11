@@ -137,7 +137,7 @@ flowchart TB
 
 | Component | Primary Role | Integration Points |
 | ----------- | ------------- | ------------------- |
-| Blackbox Exporter | Endpoint probing | • HTTP/TCP/DNS `Probe` modules<br>• Cluster-wide `Probe` discovery<br>• TLS certificate expiry<br>• Self-monitoring ServiceMonitor |
+| Blackbox Exporter | Endpoint probing | • HTTP/TCP/DNS `Probe` modules<br>• Cluster-wide `Probe` discovery<br>• TLS certificate expiry<br>• Self-monitoring ServiceMonitor<br>• `PrometheusRule` alerting when the cluster DNS probe mostly fails or stops reporting |
 | Problem Detector | Node monitoring | • System log analysis<br>• Kernel monitoring<br>• PrometheusRules<br>• ServiceMonitor enabled |
 | SNMP Exporter | Network metrics | • Custom scrape configs<br>• Instance relabeling<br>• Anti-affinity rules<br>• Timeout handling |
 | Syslog-ng | Log aggregation | • Dual protocol support<br>• Batch processing<br>• Worker scaling<br>• Flow control |

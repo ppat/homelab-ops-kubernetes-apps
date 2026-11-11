@@ -1,0 +1,50 @@
+---
+# Alerts on the coredns-resolution Probe beside this file, which resolves the cluster DNS
+# Service through the blackbox exporter every 30 seconds.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cluster-dns
+  namespace: monitoring
+spec:
+  groups:
+  - name: cluster-dns
+    rules:
+    # Single failed probes happen. Half of the probes failing over 5 minutes, held for 10 more,
+    # is an outage that every workload in the cluster feels.
+    - alert: ClusterDNSProbeFailing
+      annotations:
+        summary: In-cluster DNS resolution is failing.
+        description: >-
+          Only {{ $value | humanizePercentage }} of DNS probes against {{ $labels.target }}
+          succeeded over the last 5 minutes.
+      expr: |
+        max by (k8s_cluster, target) (avg_over_time(probe_success{job="blackbox", target="coredns"}[5m])) < 0.5
+      for: 10m
+      labels:
+        capability: dns.cluster
+        tier: H3
+        severity: critical
+    # The rule above cannot fire without probe results, which stop if the Probe, the blackbox
+    # exporter or its scrape goes away.
+    - alert: ClusterDNSProbeAbsent
+      annotations:
+        summary: No results from the cluster DNS probe.
+        description: >-
+          No coredns probe result for 15 minutes. ClusterDNSProbeFailing cannot fire.
+      expr: |
+        absent_over_time(probe_success{job="blackbox", target="coredns"}[15m])
+      labels:
+        capability: dns.cluster
+        tier: H3
+        severity: warning
+    # Always firing. A consumer of Alertmanager's active alerts reads its absence as "these rules
+    # are not being evaluated", which an empty list of DNS alerts cannot tell apart from "healthy".
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The dns.cluster alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: dns.cluster
+        tier: H3
+        severity: none
