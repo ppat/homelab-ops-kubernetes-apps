@@ -219,15 +219,42 @@ spec:
         kube_job_status_active{job="kube-state-metrics"} > 0) > 43200
       labels:
         severity: warning
-    - alert: KubeJobFailed
+    # Replaces upstream KubeJobFailed, which fires per failed Job until someone deletes it. A
+    # CronJob keeps its failed Jobs after later runs succeed, so most of those alerts described
+    # problems that had already fixed themselves. This drops a failed CronJob Job once its CronJob
+    # has succeeded since that Job started, and aggregates per owner so the alert's identity does
+    # not change with every new Job name. Jobs not owned by a CronJob are kept as they are.
+    - alert: KubeJobFailedNotSuperseded
       annotations:
-        description: Job {{ $labels.namespace }}/{{ $labels.job_name }} failed to complete. Removing failed job after investigation should clear this alert.
+        description: >-
+          {{ $value }} failed Job(s) of {{ $labels.owner_kind }} {{ $labels.namespace }}/{{ $labels.owner_name }}
+          with no successful run since they started.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubejobfailed
-        summary: Job failed to complete.
+        summary: Job failed and has not been superseded by a successful run.
       expr: |
-        kube_job_failed{job="kube-state-metrics"}  > 0
+        count by (k8s_cluster, namespace, owner_kind, owner_name) (
+        (
+        (kube_job_failed{condition="true"} > 0)
+        * on (k8s_cluster, namespace, job_name) group_left (owner_kind, owner_name)
+        max by (k8s_cluster, namespace, job_name, owner_kind, owner_name) (kube_job_owner)
+        )
+        unless on (k8s_cluster, namespace, job_name)
+        (
+        max by (k8s_cluster, namespace, job_name, owner_name) (
+        kube_job_status_start_time
+        * on (k8s_cluster, namespace, job_name) group_left (owner_name)
+        max by (k8s_cluster, namespace, job_name, owner_name) (kube_job_owner{owner_kind="CronJob"})
+        )
+        < on (k8s_cluster, namespace, owner_name) group_left ()
+        max by (k8s_cluster, namespace, owner_name) (
+        label_replace(kube_cronjob_status_last_successful_time, "owner_name", "$1", "cronjob", "(.+)")
+        )
+        )
+        )
       for: 15m
       labels:
+        capability: workload.batch
+        tier: L
         severity: warning
     - alert: KubeHpaReplicasMismatch
       annotations:
@@ -474,6 +501,8 @@ spec:
         count by (cluster) (count by (git_version, cluster) (label_replace(kubernetes_build_info{job!~"kube-dns|coredns"},"git_version","$1","git_version","(v[0-9]*.[0-9]*).*"))) > 1
       for: 15m
       labels:
+        capability: cp.api
+        tier: M3
         severity: warning
     - alert: KubeClientErrors
       annotations:
@@ -487,6 +516,8 @@ spec:
         > 0.01
       for: 15m
       labels:
+        capability: cp.api
+        tier: M3
         severity: warning
   - name: kube-apiserver-slos
     rules:
@@ -501,6 +532,8 @@ spec:
         sum(apiserver_request:burnrate5m) > (14.40 * 0.01000)
       for: 2m
       labels:
+        capability: cp.api
+        tier: H3
         long: 1h
         severity: critical
         short: 5m
@@ -515,6 +548,8 @@ spec:
         sum(apiserver_request:burnrate30m) > (6.00 * 0.01000)
       for: 15m
       labels:
+        capability: cp.api
+        tier: H3
         long: 6h
         severity: critical
         short: 30m
@@ -529,6 +564,8 @@ spec:
         sum(apiserver_request:burnrate2h) > (3.00 * 0.01000)
       for: 1h
       labels:
+        capability: cp.api
+        tier: H3
         long: 1d
         severity: warning
         short: 2h
@@ -543,6 +580,8 @@ spec:
         sum(apiserver_request:burnrate6h) > (1.00 * 0.01000)
       for: 3h
       labels:
+        capability: cp.api
+        tier: H3
         long: 3d
         severity: warning
         short: 6h
@@ -557,6 +596,8 @@ spec:
         apiserver_client_certificate_expiration_seconds_count{job="kubelet"} > 0 and on(job) histogram_quantile(0.01, sum by (job, le) (rate(apiserver_client_certificate_expiration_seconds_bucket{job="kubelet"}[5m]))) < 604800
       for: 5m
       labels:
+        capability: node.time-certs
+        tier: H3
         severity: warning
     - alert: KubeClientCertificateExpiration
       annotations:
@@ -567,6 +608,8 @@ spec:
         apiserver_client_certificate_expiration_seconds_count{job="kubelet"} > 0 and on(job) histogram_quantile(0.01, sum by (job, le) (rate(apiserver_client_certificate_expiration_seconds_bucket{job="kubelet"}[5m]))) < 86400
       for: 5m
       labels:
+        capability: node.time-certs
+        tier: H3
         severity: critical
     - alert: KubeAggregatedAPIErrors
       annotations:
@@ -576,6 +619,8 @@ spec:
       expr: |
         sum by(name, namespace, cluster)(increase(aggregator_unavailable_apiservice_total{job="kubelet"}[10m])) > 4
       labels:
+        capability: cp.api
+        tier: H3
         severity: warning
     - alert: KubeAggregatedAPIDown
       annotations:
@@ -586,6 +631,8 @@ spec:
         (1 - max by(name, namespace, cluster)(avg_over_time(aggregator_unavailable_apiservice{job="kubelet"}[10m]))) * 100 < 85
       for: 5m
       labels:
+        capability: cp.api
+        tier: H3
         severity: warning
     - alert: KubeAPIDown
       annotations:
@@ -596,6 +643,8 @@ spec:
         absent(up{job="kubelet"} == 1)
       for: 15m
       labels:
+        capability: cp.api
+        tier: H3
         severity: critical
     - alert: KubeAPITerminatedRequests
       annotations:
@@ -606,6 +655,8 @@ spec:
         sum(rate(apiserver_request_terminations_total{job="kubelet"}[10m]))  / (  sum(rate(apiserver_request_total{job="kubelet"}[10m])) + sum(rate(apiserver_request_terminations_total{job="kubelet"}[10m])) ) > 0.20
       for: 5m
       labels:
+        capability: cp.api
+        tier: H3
         severity: warning
   - name: kubernetes-system-kubelet
     rules:
@@ -618,6 +669,8 @@ spec:
         kube_node_status_condition{job="kube-state-metrics",condition="Ready",status="true"} == 0
       for: 15m
       labels:
+        capability: node.kubelet-runtime
+        tier: H3
         severity: warning
     - alert: KubeNodeUnreachable
       annotations:
@@ -628,6 +681,24 @@ spec:
         (kube_node_spec_taint{job="kube-state-metrics",key="node.kubernetes.io/unreachable",effect="NoSchedule"} unless ignoring(key,value) kube_node_spec_taint{job="kube-state-metrics",key=~"ToBeDeletedByClusterAutoscaler|cloud.google.com/impending-node-termination|aws-node-termination-handler/spot-itn"}) == 1
       for: 15m
       labels:
+        capability: node.kubelet-runtime
+        tier: H3
+        severity: warning
+    # From the upstream kubernetes-mixin, which added it after this file was vendored. Cordoned
+    # nodes are excluded because pressure on a node being drained is expected.
+    - alert: KubeNodePressure
+      annotations:
+        description: '{{ $labels.node }} has active condition {{ $labels.condition }}. This is caused by resource usage exceeding eviction thresholds.'
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubenodepressure
+        summary: Node has an active pressure condition.
+      expr: |
+        kube_node_status_condition{condition=~"(MemoryPressure|DiskPressure|PIDPressure)",status="true"} == 1
+        and on (k8s_cluster, node)
+        kube_node_spec_unschedulable == 0
+      for: 10m
+      labels:
+        capability: node.resources
+        tier: H3
         severity: warning
     - alert: KubeletTooManyPods
       annotations:
@@ -644,6 +715,8 @@ spec:
         ) > 0.95
       for: 15m
       labels:
+        capability: node.resources
+        tier: M3
         severity: info
     - alert: KubeNodeReadinessFlapping
       annotations:
@@ -654,6 +727,8 @@ spec:
         sum(changes(kube_node_status_condition{job="kube-state-metrics",status="true",condition="Ready"}[15m])) by (cluster, node) > 2
       for: 15m
       labels:
+        capability: node.kubelet-runtime
+        tier: H3
         severity: warning
     - alert: KubeletPlegDurationHigh
       annotations:
@@ -664,6 +739,8 @@ spec:
         node_quantile:kubelet_pleg_relist_duration_seconds:histogram_quantile{quantile="0.99"} >= 10
       for: 5m
       labels:
+        capability: node.kubelet-runtime
+        tier: H3
         severity: warning
     - alert: KubeletPodStartUpLatencyHigh
       annotations:
@@ -674,6 +751,8 @@ spec:
         histogram_quantile(0.99, sum(rate(kubelet_pod_worker_duration_seconds_bucket{job="kubelet", metrics_path="/metrics"}[5m])) by (cluster, instance, le)) * on(cluster, instance) group_left(node) kubelet_node_name{job="kubelet", metrics_path="/metrics"} > 60
       for: 15m
       labels:
+        capability: node.kubelet-runtime
+        tier: H3
         severity: warning
     - alert: KubeletClientCertificateExpiration
       annotations:
@@ -683,6 +762,8 @@ spec:
       expr: |
         kubelet_certificate_manager_client_ttl_seconds < 604800
       labels:
+        capability: node.time-certs
+        tier: H3
         severity: warning
     - alert: KubeletClientCertificateExpiration
       annotations:
@@ -692,6 +773,8 @@ spec:
       expr: |
         kubelet_certificate_manager_client_ttl_seconds < 86400
       labels:
+        capability: node.time-certs
+        tier: H3
         severity: critical
     - alert: KubeletServerCertificateExpiration
       annotations:
@@ -701,6 +784,8 @@ spec:
       expr: |
         kubelet_certificate_manager_server_ttl_seconds < 604800
       labels:
+        capability: node.time-certs
+        tier: H3
         severity: warning
     - alert: KubeletServerCertificateExpiration
       annotations:
@@ -710,6 +795,8 @@ spec:
       expr: |
         kubelet_certificate_manager_server_ttl_seconds < 86400
       labels:
+        capability: node.time-certs
+        tier: H3
         severity: critical
     - alert: KubeletClientCertificateRenewalErrors
       annotations:
@@ -720,6 +807,8 @@ spec:
         increase(kubelet_certificate_manager_client_expiration_renew_errors[5m]) > 0
       for: 15m
       labels:
+        capability: node.time-certs
+        tier: H3
         severity: warning
     - alert: KubeletServerCertificateRenewalErrors
       annotations:
@@ -730,6 +819,8 @@ spec:
         increase(kubelet_server_expiration_renew_errors[5m]) > 0
       for: 15m
       labels:
+        capability: node.time-certs
+        tier: H3
         severity: warning
     - alert: KubeletDown
       annotations:
@@ -740,6 +831,8 @@ spec:
         absent(up{job="kubelet", metrics_path="/metrics"} == 1)
       for: 15m
       labels:
+        capability: node.kubelet-runtime
+        tier: H3
         severity: critical
   - name: kubernetes-system-scheduler
     rules:
@@ -752,6 +845,8 @@ spec:
         absent(up{job="kubelet"} == 1)
       for: 15m
       labels:
+        capability: cp.scheduling
+        tier: H3
         severity: critical
   - name: kubernetes-system-controller-manager
     rules:
@@ -764,7 +859,62 @@ spec:
         absent(up{job="kubelet"} == 1)
       for: 15m
       labels:
+        capability: cp.scheduling
+        tier: H3
         severity: critical
+  # Always firing, one per capability labelled above. A consumer of Alertmanager's active alerts
+  # reads a missing heartbeat as "these rules are not being evaluated", which an empty alert list
+  # cannot tell apart from "healthy".
+  - name: capability-heartbeats
+    rules:
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The cp.api alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: cp.api
+        tier: H3
+        severity: none
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The cp.scheduling alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: cp.scheduling
+        tier: H3
+        severity: none
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The node.kubelet-runtime alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: node.kubelet-runtime
+        tier: H3
+        severity: none
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The node.resources alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: node.resources
+        tier: H3
+        severity: none
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The node.time-certs alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: node.time-certs
+        tier: H3
+        severity: none
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The workload.batch alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: workload.batch
+        tier: L
+        severity: none
   - interval: 3m
     name: kube-apiserver-availability.rules
     rules:
