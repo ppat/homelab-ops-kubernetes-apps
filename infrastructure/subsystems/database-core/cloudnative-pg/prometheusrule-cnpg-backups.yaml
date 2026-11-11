@@ -1,0 +1,92 @@
+---
+# Backup health for every CloudNativePG cluster that backs up through the barman-cloud plugin,
+# wherever its Cluster lives. The barman series carry no `cluster` label, so these rules aggregate
+# per namespace, which assumes one CNPG cluster per namespace.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cnpg-backups
+  namespace: cnpg-system
+spec:
+  groups:
+  - name: cnpg-backups
+    rules:
+    # The plugin keeps both timestamps forever, so "has ever failed" is true for most clusters.
+    # Only a failure newer than the newest good backup means the latest attempt failed.
+    - alert: CNPGBackupFailing
+      annotations:
+        summary: The latest CloudNativePG base backup failed.
+        description: >-
+          The newest failed base backup in namespace {{ $labels.namespace }} is more recent than
+          the newest successful one.
+      expr: |
+        max by (k8s_cluster, namespace) (barman_cloud_cloudnative_pg_io_last_failed_backup_timestamp)
+        > max by (k8s_cluster, namespace) (barman_cloud_cloudnative_pg_io_last_available_backup_timestamp)
+      for: 1h
+      labels:
+        capability: backup.db
+        tier: H1
+        severity: critical
+    # 26 hours is three missed runs of the db-backups component's 8-hourly schedule.
+    - alert: CNPGBackupStale
+      annotations:
+        summary: No recent CloudNativePG base backup.
+        description: >-
+          The newest successful base backup in namespace {{ $labels.namespace }} is
+          {{ $value | humanizeDuration }} old.
+      expr: |
+        time() - max by (k8s_cluster, namespace) (barman_cloud_cloudnative_pg_io_last_available_backup_timestamp)
+        > 26 * 3600
+      for: 30m
+      labels:
+        capability: backup.db
+        tier: H1
+        severity: critical
+    # A running cluster that exports no barman series has no backup configured, or its plugin
+    # sidecar is not reporting.
+    - alert: CNPGBackupMissing
+      annotations:
+        summary: A CloudNativePG cluster has no barman-cloud backup.
+        description: >-
+          A CloudNativePG cluster runs in namespace {{ $labels.namespace }} but reports no
+          barman-cloud backup.
+      expr: |
+        max by (k8s_cluster, namespace) (cnpg_collector_up)
+        unless on (k8s_cluster, namespace)
+        max by (k8s_cluster, namespace) (barman_cloud_cloudnative_pg_io_last_available_backup_timestamp)
+      for: 12h
+      labels:
+        capability: backup.db
+        tier: H1
+        severity: warning
+    # Archive failures that a retry clears within minutes are routine. An idle database can also
+    # go hours without archiving. Only both together, failures still happening and nothing archived
+    # for an hour, mean point-in-time recovery has stopped advancing.
+    - alert: CNPGWALArchivingFailing
+      annotations:
+        summary: CloudNativePG WAL archiving is failing.
+        description: >-
+          WAL archiving in namespace {{ $labels.namespace }} has failed repeatedly and nothing has
+          been archived for over an hour.
+      expr: |
+        max by (k8s_cluster, namespace) (
+        (increase(cnpg_pg_stat_archiver_failed_count[1h]) > 0)
+        and
+        (cnpg_pg_stat_archiver_seconds_since_last_archival > 3600)
+        )
+      for: 15m
+      labels:
+        capability: backup.db
+        tier: H1
+        severity: critical
+    # Always firing. A consumer of Alertmanager's active alerts reads its absence as "these rules
+    # are not being evaluated", which an empty list of backup alerts cannot tell apart from
+    # "backups are healthy".
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The backup.db alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: backup.db
+        tier: H1
+        severity: none

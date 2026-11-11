@@ -99,7 +99,7 @@ flowchart TB
 | Component | Primary Role | Integration Points |
 | ----------- | ------------- | ------------------- |
 | CloudNativePG Operator | Database management | • Provides CRDs for PostgreSQL management<br>• Enables high availability and failover<br>• Configures backup and recovery<br>• Integrates with monitoring stack<br>• Collects operator/cluster metrics via PodMonitor<br>• Provides default Grafana dashboards |
-| Barman Cloud Plugin | Backup and recovery | • Provides the `ObjectStore` CRD (`barmancloud.cnpg.io`)<br>• Implements object-store backups/WAL archiving as a CNPG-I plugin (replaces the deprecated in-tree `barmanObjectStore`)<br>• Consumed by the `db-backups` / `db-restore` components<br>• Uses cert-manager for its gRPC TLS certificates |
+| Barman Cloud Plugin | Backup and recovery | • Provides the `ObjectStore` CRD (`barmancloud.cnpg.io`)<br>• Implements object-store backups/WAL archiving as a CNPG-I plugin (replaces the deprecated in-tree `barmanObjectStore`)<br>• Consumed by the `db-backups` / `db-restore` components<br>• Uses cert-manager for its gRPC TLS certificates<br>• A `PrometheusRule` alerts per namespace when the latest base backup failed, no backup succeeded for 26 hours, a running cluster has no barman-cloud backup, or WAL archiving keeps failing with nothing archived for an hour |
 
 ## Prerequisites
 
