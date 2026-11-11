@@ -40,12 +40,12 @@ WORKFLOW="${WORKFLOW:-scheduled-baseline.yaml}"
 #
 # Deliberately a prefix allowlist and not a field parser: the TSV keeps each line whole, so a
 # suite adding a field to CONTENTION does not break retention -- only the summary, which degrades
-# to a dash. MODE is listed ahead of its emitter existing for the same reason: carrying a token
-# costs nothing, and dropping data silently costs a slot nobody knows is missing.
+# to a dash.
 #
-# report-cnpg.sh is deliberately NOT here. It emits `--- CNPG: ... ---` headers around raw
-# operator logs, not grammar lines; the #3678 discriminator is a human judgment the instrument
-# informs rather than encodes.
+# MODE and ESO* are no longer emitted and stay listed on purpose. `collect` reads back up to 90
+# days of job logs, and logs from before their removal still carry them; dropping them here
+# would silently drop those lines from every TSV built over that window. They can go once the
+# oldest log still retained post-dates the removal.
 #
 # The allowlist matches on the prefix only, never on what follows it, and that is load-bearing:
 # UNCENSORED alone has four marks in the emitter (`+`, `~`, `never`, `gone`) where TESTING.md
@@ -386,17 +386,6 @@ cmd_harvest() {
 # part -- it reads fields out of lines -- and it is deliberately tolerant: an unreadable field
 # becomes a dash while the TSV still holds the line verbatim, so a grammar change costs a column
 # rather than a slot.
-#
-# MODE gets one cell carrying both its verdict and the gap that verdict is banded from, because
-# the two have different shelf lives. The verdict is the gap classified against fixed published
-# edges, so shrinking the underlying delay collapses every run to `fast` and the verdict stops
-# discriminating; the gap goes on reporting the distribution afterwards. A cell holding only the
-# band would show a bimodality disappear without being able to say whether it went away or moved.
-#
-# `none` prints as itself rather than as a dash. A suite with no external-secrets fixture emits
-# `MODE none` legitimately, and everywhere else in this table a dash means the run said something
-# this reader could not read -- collapsing "not applicable" into "unreadable" would leave the one
-# cell able to report an instrument failure unable to report it.
 cmd_summarize() {
   local tsv="${1:-}" own="${GITHUB_RUN_ID:-}"
   if [[ -z "${tsv}" || ! -s "${tsv}" ]]; then
@@ -466,37 +455,25 @@ cmd_summarize() {
       if (cpu[key] == "") cpu[key] = field($14, "cpu_model")
       next
     }
-    $13 == "MODE" {
-      split($14, a, " ")
-      mode_v[key] = a[2]
-      mode_gap[key] = field($14, "ctrl_webhook_gap_s")
-      next
-    }
     $13 == "UNCENSORED-SUMMARY" {
       unc[key] = "notready=" field($14, "notready") " max=" field($14, "max_extra_s") "s"
       next
-    }
-
-    function mode_cell(key) {
-      if (mode_v[key] == "") return "-"
-      if (mode_v[key] == "none") return "none"
-      return mode_v[key] " / " d(mode_gap[key])
     }
 
     function line_for(key,   ready, pulls, st) {
       ready = (ready_n[key] > 0) ? ready_last[key] "s" : ""
       pulls = (pull_n[key] > 0) ? sprintf("%d / %.0fs", pull_n[key], pull_max[key]) : ""
       st = (status[key] == "ok") ? "ok" : "**" status[key] "**"
-      return sprintf("| %s [%s] | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |",
+      return sprintf("| %s [%s] | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |",
         suite[key], topo[key], concl[key], d(dur[key]), d(elapsed[key]), d(ready),
-        mode_cell(key), d(restarts[key] ? restarts[key] : ""), d(pulls),
+        d(restarts[key] ? restarts[key] : ""), d(pulls),
         pair(net[key, "s"], net[key, "e"]), pair(fsy[key, "s"], fsy[key, "e"]),
         d(lav[key, "e"]), d(unc[key]), st)
     }
 
     END {
-      hdr = "| suite [topology] | outcome | job s | chainsaw s | last ready | mode / gap s | restarts | pulls / slowest | net mbps | fsync us | load end | uncensored | status |"
-      sep = "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"
+      hdr = "| suite [topology] | outcome | job s | chainsaw s | last ready | restarts | pulls / slowest | net mbps | fsync us | load end | uncensored | status |"
+      sep = "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"
 
       print "### Harvest"
       print ""
@@ -505,7 +482,7 @@ cmd_summarize() {
       print hdr
       print sep
       for (i = 1; i <= nk; i++) { k = order[i]; if (rid[k] == own) { print line_for(k); nslot++ } }
-      if (nslot == 0) print "| _none_ | | | | | | | | | | | | |"
+      if (nslot == 0) print "| _none_ | | | | | | | | | | | |"
 
       # Whether the rows above are on comparable hardware, which nothing else here can say. The
       # runner fleet is heterogeneous: one slot has been observed running five jobs on THREE

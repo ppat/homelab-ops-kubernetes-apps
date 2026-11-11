@@ -45,8 +45,8 @@ SNAP_FILE="${TMPDIR:-/tmp}/chainsaw-uncensored-snapshot"
 T0_FILE="${TMPDIR:-/tmp}/chainsaw-suite-t0"
 
 WATCH_TYPES=(kustomizations.kustomize.toolkit.fluxcd.io helmreleases.helm.toolkit.fluxcd.io)
-# #3678 is the largest single failure source in the repo and its signature is a CNPG Cluster
-# that never leaves an empty Status, so "never" is exactly the reading wanted here.
+# A CNPG Cluster carries a Ready condition like a Flux object. One whose operator never acts on
+# it keeps an empty Status (#3678), so it reads here as "never".
 if kubectl get crd clusters.postgresql.cnpg.io "${KOPTS[@]}" >/dev/null 2>&1; then
   WATCH_TYPES+=(clusters.postgresql.cnpg.io)
 fi

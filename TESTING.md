@@ -320,10 +320,8 @@ the shared `catch` is set well inside the cliff rather than near it.
 | prefix | what it answers |
 | --- | --- |
 | `READY T0+<s> <ts> <status> <kind>/<ns>/<name>` | when each pod, `Kustomization` and `HelmRelease` became Ready, one ascending timeline. This is the input to validate-step ordering. Reads the *current* Ready condition's `lastTransitionTime`, so a pod that flapped shows its latest transition, not its first — cross-check `RESTART`. |
-| `MODE <fast\|slow\|intermediate\|none> ctrl_webhook_gap_s= ctrl= webhook= certctrl= resync=` | which mode the prerequisite phase ran in, classified from the external-secrets controller → **its own** webhook pod gap (not cert-manager's controller). Bands are the published ones: fast ≤ 35s, slow ≥ 60s. `intermediate` is a finding in itself — no run has produced one yet. `none` is normal for a suite with no external-secrets fixture (`apps-coder`); the three positions distinguish `absent` from `notready`. **`resync=` classifies the same gap a second time**, against what one kubelet pod re-sync of the webhook's TLS secret can account for rather than against the historical distribution: `no-wait` ≤ 9s, `ambiguous` 10–27s, `one-short` 28–45s, `unexplained` 46–59s, `one-long` ≥ 60s, `none` when there is no gap. `ambiguous` spans both fast bands — 1–16s where the fixture drops the webhook probe delay, 20–27s on `infra-security`, which deploys the real module — *and* the low half of a re-sync at `syncFrequency: 10s`; where the two overlap this number cannot separate them and the token says so instead of guessing. `unexplained` is its falsifier: no re-sync interval reaches 46–59s. The two classifications are deliberately redundant at today's 60s quantum and stop being so if that quantum changes — the first answers *"is the mode gone by the definition we have always measured against?"*, the second *"is there still structure, at whatever scale?"*, and a partial fix or one that only moves the wait reads as success on either alone. |
 | `RESTART <n> <pod> [<container>] reason= exit_code=` | which containers crashed and recovered *inside* an assertion's budget — invisible everywhere else — and kubelet's own classification of how the previous instance died, read from the same response as the count. `reason` is the `lastState.terminated` reason (`Error`, `Completed`, `OOMKilled`, `Unknown` are the values this estate produces); `exit_code` is what makes the modal `Error` mean anything, and the pair is what neither settles alone — `OOMKilled` comes with exit 0 as readily as 137, and a 137 under `Error` is a kill that was *not* an OOM. `reason=none exit_code=none` means kubelet recorded no previous termination at all, which is deliberately not the same glyph as `reason=-`, a record carrying no reason. |
 | `PULL <pull_s> <incl_wait_s> <pod> <image>` | kubelet's own pull duration. The second number includes time queued behind **kubelet's** pull queue — *not* containerd's concurrent-download limit, which `use_local_image_pull: false` makes irrelevant to a CRI pull. Both kind configs now set `serializeImagePulls: false` with `maxParallelImagePulls: 4`, so the gap should be ~0 on most suites; **a gap that reappears means a node had more than four pods wanting images at once**, which is the signal this field now carries. |
-| `ESOCERT secret\|pod …` and `ESOLOG <pod> <line>` | the four timestamps that separate the surviving explanations of the slow `MODE`: when the webhook TLS secret was created and last written (`managedFields`), when the webhook container started, and what the webhook and cert-controller each logged about the certificate. Emitted on every run, fast ones included — a slow run usually *passes*, so a catch-only capture would miss the event it exists for. |
 | `CONTENTION <start\|end> nproc= loadavg= calib_ms= net_mbps= fsync_us= uptime_s= elapsed_s= cpu_model= cpu_mhz=` | how loaded the runner was, at the two boundaries only. Lets a historical run be conditioned on contention after the fact instead of re-running both arms serially. Four axes because CPU is the one measurably *not* implicated; `net_mbps` is, and `fsync_us` is the untested candidate for the prerequisite phase's bimodality. `uptime_s` is the runner's own uptime at that boundary; `elapsed_s` on the `end` line is the whole chainsaw phase.  **`cpu_model` is not a contention axis** — it is the only field here that says whether two runs are on comparable hardware at all, and a before/after spanning a runner-fleet hardware change is invalid. It matters most months later, when nobody remembers what the fleet looked like. Normalised space-free (`Intel_Xeon_Platinum_8370C_2.80GHz`) because both readers extract with `key=[^ ]*` and a raw model name would truncate at its first space. `cpu_mhz` is a **spot** reading that moves with frequency scaling on a shared host — a weak condition signal, not an identity; use `cpu_model` for comparability. |
 | `UNCENSORED +<s>\|~<s>\|never\|gone <Ready\|NotReady\|Deleted> <kind>/<ns>/<name>` | **failing runs only.** How much longer each not-Ready object actually needed after the suite went red. `never` on a CNPG `Cluster` is #3678. `~` in place of `+` marks a figure taken from when the watch noticed, for an object carrying no Ready `lastTransitionTime`. |
 | `UNCENSORED-SUMMARY watched= ready= notready= gone= max_extra_s= bound_s=` | one line to grep a fleet of failures for. A trailing `skipped=no-wall-clock-left` means the watch never ran because the job had no headroom left. |
@@ -336,15 +334,13 @@ and `PULL-CACHED <n> image(s) already present on machine`. A kubelet message the
 cannot read is emitted as `PULL ? ? <pod> :: <message>` and sorted to the top rather than
 dropped.
 
-Two blocks carry raw container output rather than grammar, and are diagnostics to read rather
+One block carries raw container output rather than grammar, and is a diagnostic to read rather
 than lines to parse. `report-readiness.sh` follows the `RESTART` block with
 `--- RESTART-LOG: ... ---`, the tail of the **previous** instance of each restarted container,
 whenever any restart exists — which includes passing runs, since several suites restart a
-container on every run. `report-cnpg.sh` adds `--- CNPG: ... ---` blocks, either around the
-operator's logs when a `Cluster` is not Ready, or as `COULD NOT ASK` when the API server did
-not answer and nothing below it could be established. Both prefix every raw line with a
-`--timestamps` clock, which is what keeps a container's own log text from being read as the
-grammar above by the two prefix allowlists below.
+container on every run. It prefixes every raw line with a `--timestamps` clock, which is what
+keeps a container's own log text from being read as the grammar above by the two prefix
+allowlists below.
 
 Two readings that are not what they look like: `T0` is the earliest transition in that run's own
 list, not the suite start, so offsets compare between runs of a suite and not against job
@@ -372,11 +368,18 @@ kept.
 difference is worth knowing before reaching for a new prefix.** Both readers match the
 line-leading prefix and then keep the line whole, and the `ci-diagnostics` ingester lifts every
 `key=value` on it into Loki structured metadata — so a field on a published line arrives at both,
-and at the dashboard, with no code change in either repo, and it adds no Loki stream label. That
-is why `MODE` carries `resync=` rather than a prefix of its own. What it costs is announcement:
+and at the dashboard, with no code change in either repo, and it adds no Loki stream label.
+`CONTENTION`'s `cpu_model=` and `cpu_mhz=` arrived that way. What it costs is announcement:
 a new field is only visible to a query that names it, and nothing flags its arrival. What is
 *not* free is moving or renaming an existing field — that is a breaking change to whichever
-parser reads that position, and `MODE`'s verdict token is read positionally.
+parser reads that position.
+
+**Retiring a prefix is the reverse, and only the emitter changes.** Once the problem a prefix was
+built to diagnose has stopped recurring, delete its emitter and its row above. Both readers keep
+the prefix in their allowlists, because they read back up to 90 days of job logs and the logs
+from before the removal still carry it. The archived lines stay in Loki for its full retention,
+and the emitter stays in git history. A reader drops the prefix only once no retained job log
+can contain it.
 
 ### Say which duration you mean
 

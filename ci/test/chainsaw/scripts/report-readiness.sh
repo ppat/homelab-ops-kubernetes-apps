@@ -14,13 +14,9 @@
 # Line grammar, all prefixes greppable and whitespace-separated:
 #
 #   READY   T0+<secs> <rfc3339> <True|False> <kind>/<ns>/<name>
-#   MODE    <fast|slow|intermediate|none> ctrl_webhook_gap_s=<n|-> ctrl= webhook= certctrl=
-#           resync=<no-wait|ambiguous|one-short|unexplained|one-long|none>
 #   RESTART <count>   <kind>/<ns>/<name> [<container>] reason=<name|-|none> exit_code=<n|none>
 #   PULL    <pull_s>  <incl_wait_s> <ns>/<pod> <image>
 #   PULL    ?         ?             <ns>/<pod> :: <unparsed message>
-#   ESOCERT secret <created|absent> ... | ESOCERT pod <name> [<container>] containerStarted=
-#   ESOLOG  <pod> <log line, truncated>
 #
 # T0 is the EARLIEST timestamp in the READY stream, not the suite start -- nothing in a
 # chainsaw script knows when the suite started. In practice T0 is a flux-system pod, which is
@@ -37,43 +33,11 @@
 # it mildly overstates readiness for anything that crashes and recovers (infra-storage's
 # longhorn-manager, #3643) -- cross-check those against the RESTART block.
 #
-# MODE / ESOCERT / ESOLOG exist for one question: the prerequisite phase is BIMODAL. The
-# external-secrets controller -> webhook readiness gap was either ~20-27s or ~71-97s with
-# nothing in between across 143 classified runs, and the mode does not track load (06 §5).
-# The fast band has since moved -- see the band edges below -- but the slow one has not.
-# A contended resource produces a continuum, not two bands with an empty 40s gulf; that shape
-# needs a fixed timer converting a lost race into a discrete penalty. MODE names the mode so
-# nobody re-derives the band by hand again, and ESOCERT/ESOLOG carry the four timestamps that
-# separate the live candidates -- webhook container start, when the webhook TLS secret was
-# actually written, and what each side logged about it. They are emitted on EVERY run, fast
-# ones included: an instrument that only speaks during the rare event cannot be trusted when
-# the rare event arrives.
-#
-# MODE carries TWO classifications of the same gap and they answer different questions, which
-# is why neither may be re-cut to make the other redundant. `<fast|slow|intermediate>` is
-# frozen on the edges the whole classified series was measured against, so "is the mode gone,
-# by the definition we have been measuring against all along?" stays answerable across any
-# change to the mechanism. `resync=` classifies the same number against what one kubelet pod
-# re-sync can account for, so "is there still structure, at whatever scale the quantum now
-# has?" stays answerable too. A fix here can be partial, or can move the wait somewhere the
-# frozen edges no longer look -- and either of those reads as success on one instrument alone.
-# Redefining the frozen edges to suit a new scale would silently convert an open question into
-# an apparent answer.
-#
 # Never fails the step it runs in: this is a diagnostic, and on the failing side it runs after
 # the suite is already red.
 set -u
 
 KOPTS=(--request-timeout=30s)
-
-# Namespace and object names of the external-secrets fixture, in one place: the MODE
-# classifier, the secret read and the log dump all key off them. Fixed by the module, not by
-# the cluster -- security-core/external-secrets pins `releaseName: external-secrets` and
-# `targetNamespace: external-secrets`, and the fixture deploys that component unmodified in
-# this respect. If either moves, MODE reports `absent` for every position rather than
-# silently reporting `none`, which is the difference this instrument is built to show.
-ESO_NS=external-secrets
-ESO_WEBHOOK_SECRET=external-secrets-webhook
 
 echo '--- READY: pod and Flux object Ready transitions, ascending (T0 = earliest below) ---'
 
@@ -86,16 +50,7 @@ echo '--- READY: pod and Flux object Ready transitions, ascending (T0 = earliest
     short="${t%%.*}"; short="${short%s}"
     kubectl get "${t}" -A "${KOPTS[@]}" -o go-template="{{range .items}}{{if .status}}{{\$p := printf \"${short}/%s/%s\" .metadata.namespace .metadata.name}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{printf \"%s %s %s\n\" .lastTransitionTime .status \$p}}{{end}}{{end}}{{end}}{{end}}" 2>/dev/null
   done
-} | sort | awk -v eso_ns="${ESO_NS}" '
-  # Renders one MODE position: a pod that does not exist, one that exists but never reached
-  # Ready=True, or the T0-relative second it did. Those three are deliberately distinct --
-  # "no external-secrets in this suite" and "the webhook never came up" are opposite findings
-  # and collapsing them to one token is how an instrument stops being able to surprise you.
-  function pos(role) {
-    if (!(role in seen)) return "absent"
-    if (!(role in rt))   return "notready"
-    return sprintf("T0+%d", rt[role] - base)
-  }
+} | sort | awk '
   {
     t = ""
     cmd = "date -d " $1 " +%s 2>/dev/null"
@@ -104,86 +59,6 @@ echo '--- READY: pod and Flux object Ready transitions, ascending (T0 = earliest
     if (t == "") next
     if (base == "") base = t
     printf "READY   T0+%-6d %-21s %-6s %s\n", t - base, $1, $2, $3
-
-    # Longest prefix first: the controller pod is `external-secrets-<rs>-<pod>`, so a plain
-    # prefix test would swallow both siblings.
-    role = ""
-    if      (index($3, "pod/" eso_ns "/external-secrets-webhook-")         == 1) role = "webhook"
-    else if (index($3, "pod/" eso_ns "/external-secrets-cert-controller-") == 1) role = "certctrl"
-    else if (index($3, "pod/" eso_ns "/external-secrets-")                 == 1) role = "ctrl"
-    if (role != "") {
-      seen[role] = 1
-      # Earliest Ready=True wins, so a later rollout of the same Deployment cannot inflate
-      # the gap. Input is already time-sorted, so the first hit is the earliest.
-      if ($2 == "True" && !(role in rt)) rt[role] = t
-    }
-  }
-  END {
-    gap = "-"; mode = "none"; band = "none"
-    if (("ctrl" in rt) && ("webhook" in rt)) {
-      gap = rt["webhook"] - rt["ctrl"]
-      # Band edges from the published distribution (06 §5, outside-review-2 §3.3): 78 runs on
-      # the old instrument and 65 on the new one split 20-27s vs 71-97s with NOTHING between.
-      # Both edges still hold after the fixture dropped the webhook probe delay: that delay
-      # only ever gated OBSERVING a webhook that was already serving, so it moved the fast band
-      # down (well clear of 35) and left the slow band -- gated on the certificate itself, not
-      # on the probe grid -- where it was.
-      # `intermediate` therefore prints for 36-59s not as a hedge but as the falsifier: the
-      # zero-intermediates claim is the sharpest fact in the dataset, and an instrument that
-      # cannot contradict its own headline is not measuring anything.
-      mode = (gap <= 35) ? "fast" : ((gap >= 60) ? "slow" : "intermediate")
-
-      # The second classifier, cut against the MECHANISM rather than against the historical
-      # distribution. The slow mode is one kubelet pod re-sync remounting the TLS secret
-      # of the webhook -- `wait.Jitter(syncFrequency, 0.5)`, so U[f, 1.5f) for a syncFrequency
-      # of f -- plus the 10s certificate poll the webhook itself runs, on top of however long
-      # after the controller the webhook pod happens to become Ready. The bands are "how many
-      # re-syncs does this gap need", at the two syncFrequency values a kind cluster here can
-      # run: the kubelet default of 60s -> U[60,90), and 10s -> U[10,15).
-      #
-      #   no-wait      <=  9  under the floor of one 10s re-sync, so no remount under either
-      #   ambiguous    10-27  BOTH fast bands sit here -- 1-16s on the ten suites whose
-      #                       fixture drops the webhook probe delay, 20-27s on infra-security,
-      #                       which deploys the real module and keeps the 20s of the chart --
-      #                       AND
-      #                       so does the lower half of one 10s re-sync. This number cannot
-      #                       separate them, and the band exists to say so rather than pick
-      #   one-short    28-45  longer than any fast gap yet observed, far short of one 60s
-      #                       re-sync: one remount at syncFrequency 10s. 15 + 15 + 10 + probe
-      #                       is the ceiling, hence 45
-      #   unexplained  46-59  THE FALSIFIER, and it is why the set is not a pair. Neither
-      #                       quantum reaches it: too long for one 10s re-sync, too short for
-      #                       one 60s. A run here means the re-sync model is wrong, not that
-      #                       the wait grew
-      #   one-long     >= 60  one remount at the 60s default. Deliberately the same edge as
-      #                       `slow`, so the two classifiers cannot disagree where both can see
-      #
-      # `ambiguous` covering most of the fleet today is not a defect: at a 60s quantum the gap
-      # separates the modes by itself and `<fast|slow>` above already says which. It stops
-      # separating them if the quantum shrinks to ~10s, because a remount then costs less than
-      # the spread this fleet has in webhook probe delay -- which is the whole reason this line
-      # exists, and the reason its edges must not be back-fitted onto the frozen ones.
-      # What still separates the two at that scale is the log of the webhook: a fast run finds
-      # the cert file at first read and logs no `invalid certs. retrying...` at all, a slow one
-      # logs one per 10s waited. ESOLOG below already captures those lines; nothing counts them
-      # yet, and that count -- not a finer gap band -- is what to build if ~10s becomes the
-      # quantum this fleet actually runs at.
-      if      (gap <=  9) band = "no-wait"
-      else if (gap <= 27) band = "ambiguous"
-      else if (gap <= 45) band = "one-short"
-      else if (gap <= 59) band = "unexplained"
-      else                band = "one-long"
-    }
-    # `resync=` is appended as a FIELD on the existing line rather than given a prefix of its
-    # own, and that is a consumer decision, not a layout one. Both readers of this grammar --
-    # ci/scripts/baseline-harvest.sh here, and the ci-diagnostics ingester in the clusters repo
-    # -- match a line-leading prefix allowlist and then keep the line whole, and the ingester
-    # lifts every `key=value` on a MODE line into Loki structured metadata. So a field arrives
-    # at both with no change in either, where a NEW prefix must be added to both or the line is
-    # silently retained nowhere. Nothing before `resync=` moved: every existing token keeps its
-    # position, width and meaning.
-    printf "MODE    %-12s ctrl_webhook_gap_s=%-5s ctrl=%-10s webhook=%-10s certctrl=%-10s resync=%s\n", \
-      mode, gap, pos("ctrl"), pos("webhook"), pos("certctrl"), band
   }
 '
 
@@ -206,14 +81,14 @@ echo '--- RESTART: container restarts (empty = none) ---'
 # the very container #3643 taught this block to ride out. Whether CI's restarts are the same
 # thing is not assumable in either direction; this is what makes it answerable.
 #
-# Fields on the existing line, NOT a prefix of their own, and that is a consumer decision --
-# the same one `resync=` on MODE turns on. Both readers of this grammar match a line-leading
-# prefix and then keep the line whole, so a field arrives at both with no edit in either,
+# Fields on the existing line, NOT a prefix of their own, and that is a consumer decision.
+# Both readers of this grammar match a line-leading prefix and then keep the line whole, so a
+# field arrives at both with no edit in either,
 # whereas a new prefix must be added to ci/scripts/baseline-harvest.sh here AND to the
 # ci-diagnostics ingester in the clusters repo or the line is silently retained nowhere. What
 # a field costs instead is announcement: nothing flags its arrival, and it is only as queryable
 # as the reader that names it. Both fields now arrive as structured metadata: the ingester's
-# RESTART parser was converted to lift its key=value tail the way MODE's and CONTENTION's do, so
+# RESTART parser lifts its key=value tail the way the CONTENTION parser does, so
 # `{job="ci-diagnostics", instrument="restart"} | reason != ""` returns them and a further field
 # added here needs no clusters-repo change. Confirmed against a live entry carrying
 # reason=Error exit_code=137, not inferred from the parser. Every pre-existing token keeps its
@@ -251,7 +126,7 @@ echo "${restarts}"
 # runs open this gate and six suites open it routinely (apps-downloaders sits at 8 restarted
 # containers on every pass). The bounds below are sized for that, not for the rare failure.
 #
-# Bounded four ways, matching the ESOLOG block below because the hazards are identical: 40 lines
+# Bounded four ways: 40 lines
 # per container, each line cut to 200 chars (external-dns logs a 4309-char config dump on the
 # line this would otherwise print untruncated), at most MAX_RESTART_LOGS containers, and a
 # tighter request timeout than the rest of the script.
@@ -288,9 +163,8 @@ if [[ -n "${restarts}" ]]; then
     # --timestamps is load-bearing and not cosmetic. It is what stops a container's own log text
     # being read as this script's grammar: baseline-harvest.sh and the ci-diagnostics ingester
     # both match a line-leading prefix allowlist after stripping the Actions timestamp, so a log
-    # line beginning `READY ` or `MODE ` would be retained as an instrument reading. A leading
-    # RFC3339 puts a digit in that position. Every other raw-log emitter here already does this
-    # (report-cnpg.sh, the ESOLOG block); this was the one that did not.
+    # line beginning `READY ` or `PULL ` would be retained as an instrument reading. A leading
+    # RFC3339 puts a digit in that position.
     prev=$(kubectl logs -n "${ns}" "${pod}" -c "${container}" --previous --tail=40 --timestamps \
       --request-timeout=10s 2>&1 | cut -c1-200)
     [[ -n "${prev}" ]] && echo "${prev}"
@@ -351,63 +225,5 @@ kubectl get events -A "${KOPTS[@]}" --field-selector reason=Pulled \
     }
     END { if (cached > 0) printf "%010.3f\tPULL-CACHED %d image(s) already present on machine\n", 0, cached }
   ' | sort -rn | cut -f2-
-
-echo '--- ESOCERT: webhook TLS secret vs webhook pod start (the MODE mechanism) ---'
-# The four timestamps that separate the surviving explanations for the slow mode. All five
-# slow runs in the instrumented sample carried their entire 50-70s delta at ONE transition,
-# eso-controller Ready -> eso-webhook Ready, and were at or ahead of their fast siblings on
-# every earlier one. Both readiness gates sit below Flux (`flux reconcile helmrelease` was
-# observed as one continuous wait that returned the second the HR flipped), so the quantum is
-# inside the chart's own webhook-certificate bootstrap.
-#
-# The webhook mounts secret/external-secrets-webhook as a plain secret volume at /tmp/certs.
-# The chart's readinessProbe carries initialDelaySeconds: 20, which WAS the fast mode's uniform
-# floor; the shared external-secrets fixture now overrides it to 1. That floor was also a clamp,
-# and removing it makes the fast band WIDER rather than merely lower: measured across one fleet,
-# fast gaps ran 1-15s. What is left is the spread in when the webhook pod starts relative to the
-# controller, which the clamp had been hiding -- so a fast gap in the low teens is normal now and
-# is not evidence of a slow-mode near miss. infra-security deploys the whole security-core module
-# instead of the fixture and still pays the chart default -- it is the one suite whose fast band
-# stays ~20s, and that difference is expected, not a fault.
-#
-# Three outcomes this can return, and it must be able to return all three:
-#   secret written well before containerStarted, webhook Ready next probe  -> fast, no puzzle
-#   secret written EARLY, webhook Ready ~60s after that                    -> ESO-internal
-#                                                                             timer, not kubelet
-#   secret written AFTER containerStarted, webhook Ready at the next tick  -> the mount-refresh
-#                                                                             candidate
-# and a webhook container that itself started ~60s late sends it back to pod-lifecycle causes.
-#
-# Only metadata is read. The Secret's DATA is never printed -- this log is public.
-kubectl get secret "${ESO_WEBHOOK_SECRET}" -n "${ESO_NS}" "${KOPTS[@]}" \
-  -o go-template='{{printf "ESOCERT secret  %s created=%s" .metadata.name .metadata.creationTimestamp}}{{range .metadata.managedFields}}{{printf " update[%s:%s]=%s" .manager .operation .time}}{{end}}{{"\n"}}' 2>/dev/null \
-  || echo "ESOCERT secret  ${ESO_WEBHOOK_SECRET} absent (no secret/${ESO_WEBHOOK_SECRET} in ns/${ESO_NS})"
-
-# Captured once and reused: the pod lines below and the log dump after them both need it, and
-# a second `kubectl get` could see a different generation of pods than the one just reported.
-# shellcheck disable=SC2016  # go-template, not shell -- $p/$c are template variables
-eso_pods=$(kubectl get pods -n "${ESO_NS}" "${KOPTS[@]}" -o go-template='{{range .items}}{{$p := .metadata.name}}{{$c := .metadata.creationTimestamp}}{{if .status}}{{range .status.containerStatuses}}{{if .state.running}}{{printf "ESOCERT pod     %s [%s] podCreated=%s containerStarted=%s restarts=%d\n" $p .name $c .state.running.startedAt .restartCount}}{{else}}{{printf "ESOCERT pod     %s [%s] podCreated=%s containerStarted=- restarts=%d\n" $p .name $c .restartCount}}{{end}}{{end}}{{end}}{{end}}' 2>/dev/null)
-
-if [[ -n "${eso_pods}" ]]; then
-  echo "${eso_pods}"
-else
-  # Not a failure: apps-coder deploys no external-secrets fixture and can never exhibit the
-  # mode. It is also what a renamed release would look like, which is why MODE prints the
-  # positions separately rather than only the verdict.
-  echo "ESOCERT pod     absent (no pods in ns/${ESO_NS})"
-fi
-
-# Earliest lines, not the last: the certificate bootstrap happens at startup, so `head` is the
-# correct end of the log. Bounded three ways because this runs on every suite -- byte cap on
-# the fetch, 80 lines printed, and each line cut to 200 chars. That last one is not cosmetic:
-# cert-controller logs `injecting ca certificate and service names` with the whole base64 CA
-# on the line (~1.5 KB, repeated per webhook config per check interval), and untruncated it
-# would bury the timestamps this section exists for. 200 chars keeps ts/logger/msg, which is
-# all of it that carries information.
-while read -r p; do
-  [[ -n "${p}" ]] || continue
-  kubectl logs "${p}" -n "${ESO_NS}" --all-containers=true --timestamps --limit-bytes=200000 \
-    "${KOPTS[@]}" 2>&1 | awk -v p="${p}" 'NR<=80 { printf "ESOLOG  %s %.200s\n", p, $0 }'
-done < <(printf '%s\n' "${eso_pods}" | awk '$3 ~ /-(webhook|cert-controller)-/ { print $3 }' | sort -u)
 
 exit 0
