@@ -161,6 +161,7 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | ----------- | ------- | -------------- |
    | litellm-openwebui-key | OpenWebUI's virtual key for authenticating to the LiteLLM gateway — sourced from the `apikey_litellm_openwebui` secret-store key, which is populated by a separate Terraform-managed workspace, not manually | apikey |
    | n8n-secrets | n8n's encryption key, pre-provisioned owner login (email + password hash), its LiteLLM virtual key, and SMTP relay credentials + sender. Credentials for specific workflows are supplied by the cluster that ships those workflows, not by this module | N8N_ENCRYPTION_KEY, N8N_INSTANCE_OWNER_EMAIL, N8N_INSTANCE_OWNER_PASSWORD_HASH, LITELLM_API_KEY, N8N_SMTP_USER, N8N_SMTP_PASS, N8N_SMTP_SENDER |
+   | n8n-workflow-secrets | Optional. Credentials for workflows the consuming cluster ships, pulled into n8n whole via `envFrom` (for example `CREDENTIALS_OVERWRITE_DATA`, n8n's credential-overwrite JSON). Provided by the cluster alongside its workflows; not shipped by this module | any |
    | openclaw-secrets | OpenClaw's universal secrets — gateway auth token and LiteLLM virtual key | OPENCLAW_GATEWAY_TOKEN, LITELLM_KEY |
    | openclaw-config-secrets | Feature-coupled OpenClaw secrets — inbound hooks bearer token and owner WhatsApp number (used by `channels.whatsapp.allowFrom`). Provided by the cluster, co-located with the cluster-owned `openclaw.json`; not shipped by this module | OPENCLAW_HOOKS_TOKEN, OWNER_WHATSAPP_NUMBER |
 
