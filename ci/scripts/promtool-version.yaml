@@ -1,0 +1,11 @@
+---
+# Pinned prom/prometheus image used by ci/scripts/promtool-test-rules.sh, called from
+# the `prometheus-rules` job in .github/workflows/lint.yaml. Kept in its own file
+# because Renovate's `# renovate:` comment convention only scans `.ya?ml$` files on a
+# plain `key: "value"` line, which a workflow's `run:` block cannot satisfy.
+#
+# Track the Prometheus version that kube-prometheus-stack deploys
+# (infrastructure/subsystems/observability-core). A promtool newer than the evaluator
+# can accept PromQL the evaluator rejects.
+# renovate: datasource=docker depName=prom/prometheus
+version: "v3.16.0"

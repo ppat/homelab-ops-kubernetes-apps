@@ -40,6 +40,12 @@ jobs:
         - 'ci/**/*.yaml'
         - 'components/**/*.yaml'
         - 'infrastructure/**/*.yaml'
+        prometheus_rules:
+        - '**/*.rules-test.yaml'
+        - '**/prometheusrule-*.yaml'
+        - ci/scripts/promtool-test-rules.sh
+        - ci/scripts/promtool-version.yaml
+        - .github/workflows/lint.yaml
         markdown:
         - '**.md'
         - '!**/CHANGELOG.md'
@@ -277,6 +283,32 @@ jobs:
     uses: ppat/github-workflows/.github/workflows/lint-pre-commit.yaml@bd0f4ff0d64b30c217a45bf3fbdc530c06bb5586 # v9.0.0
     with:
       git_ref: ${{ github.head_ref || github.ref }}
+
+  prometheus-rules:
+    needs: [detect-changes]
+    if: ${{ github.event_name != 'pull_request' || fromJSON(needs.detect-changes.outputs.results).prometheus_rules_any_changed == 'true' }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: 1
+        persist-credentials: false
+
+    # promtool-test-rules.sh relies on the yq (mikefarah) that ships on the runner image.
+    - name: yq version
+      shell: bash
+      run: yq --version
+
+    # Runs every *.rules-test.yaml in the repo, not only the changed ones, because a
+    # rule change can break a test file the diff did not touch.
+    - name: promtool test rules
+      shell: bash
+      # yamllint disable-line rule:indentation
+      run: |
+        mapfile -t files < <(git ls-files -- '*.rules-test.yaml')
+        ./ci/scripts/promtool-test-rules.sh "${files[@]}"
 
   renovate-config-check:
     needs: [detect-changes]
