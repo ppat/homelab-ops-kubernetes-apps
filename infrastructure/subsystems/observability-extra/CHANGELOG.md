@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.6.8...infra-observability-extra-v0.6.9) (2026-11-11)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-observability-extra:** scan only physical NVMe disks with smartctl-exporter and alert when a node reports none ([#4584](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4584)) ([28ac066](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/28ac06694fe0aacb1a7c039148d107901ed97f65))
+
 ## [0.6.8](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.6.7...infra-observability-extra-v0.6.8) (2026-11-11)
 
 
