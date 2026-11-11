@@ -4,11 +4,11 @@ This module extends the core observability stack with specialized collectors and
 
 ## Quick Links
 
-<a href="https://github.com/prometheus/blackbox_exporter" target="_blank"><img src="../../../.static/images/logos/prometheus.svg" width="32" height="32" alt="Blackbox Exporter"></a> <a href="https://github.com/kubernetes/node-problem-detector" target="_blank"><img src="../../../.static/images/logos/kubernetes.svg" width="32" height="32" alt="Node Problem Detector"></a> <a href="https://github.com/prometheus/snmp_exporter" target="_blank"><img src="../../../.static/images/logos/prometheus.svg" width="32" height="32" alt="SNMP Exporter"></a> <a href="https://www.syslog-ng.com/technical-documents/doc/syslog-ng-open-source-edition/3.37/administration-guide/" target="_blank"><img src="../../../.static/images/logos/syslog-ng.png" width="32" height="32" alt="Syslog-ng"></a> <a href="https://unpoller.com/" target="_blank"><img src="../../../.static/images/logos/unifi-poller.png" width="32" height="32" alt="UniFi Poller"></a>
+<a href="https://github.com/prometheus/blackbox_exporter" target="_blank"><img src="../../../.static/images/logos/prometheus.svg" width="32" height="32" alt="Blackbox Exporter"></a> <a href="https://github.com/kubernetes/node-problem-detector" target="_blank"><img src="../../../.static/images/logos/kubernetes.svg" width="32" height="32" alt="Node Problem Detector"></a> <a href="https://github.com/prometheus/snmp_exporter" target="_blank"><img src="../../../.static/images/logos/prometheus.svg" width="32" height="32" alt="SNMP Exporter"></a> <a href="https://github.com/prometheus-community/smartctl_exporter" target="_blank"><img src="../../../.static/images/logos/prometheus.svg" width="32" height="32" alt="smartctl Exporter"></a> <a href="https://www.syslog-ng.com/technical-documents/doc/syslog-ng-open-source-edition/3.37/administration-guide/" target="_blank"><img src="../../../.static/images/logos/syslog-ng.png" width="32" height="32" alt="Syslog-ng"></a> <a href="https://unpoller.com/" target="_blank"><img src="../../../.static/images/logos/unifi-poller.png" width="32" height="32" alt="UniFi Poller"></a>
 
 ## Overview
 
-The observability-extra module provides four main capabilities:
+The observability-extra module provides five main capabilities:
 
 1. Event Collection
    - Node problem detection:
@@ -50,6 +50,15 @@ The observability-extra module provides four main capabilities:
    - Cluster-wide `Probe` discovery:
      - No label or namespace selector required
      - Self-monitoring of the exporter's own metrics
+
+5. Disk Health
+   - SMART metrics from every node's disks (NVMe and SATA)
+   - Alert rules labelled `capability: node.disk`:
+     - Failed SMART health assessment (NVMe temperature-only warnings excluded)
+     - Media or sector errors increasing within 24 hours
+     - NVMe wear above 90 percent of rated endurance
+     - Exporter pods missing from scraping
+     - A heartbeat showing the rules are evaluated
 
 ### Component Architecture
 
@@ -95,6 +104,13 @@ flowchart TB
         blackbox-exporter["Blackbox Exporter"]:::probe
     end
 
+    %% Disk Health
+    subgraph disks["Disk Health"]
+        direction TB
+        node-disks["Node Disks<br/>(NVMe/SATA)"]:::event
+        smartctl-exporter["smartctl Exporter"]:::event
+    end
+
     %% Storage
     subgraph storage["Storage Layer"]
         direction TB
@@ -105,6 +121,10 @@ flowchart TB
     %% Event Flow
     node-problems --> problem-detector
     problem-detector --> prometheus
+
+    %% Disk Flow
+    node-disks --> smartctl-exporter
+    smartctl-exporter --> prometheus
 
     %% Network Flow
     snmp-devices --> snmp-exporter
@@ -139,6 +159,7 @@ flowchart TB
 | ----------- | ------------- | ------------------- |
 | Blackbox Exporter | Endpoint probing | • HTTP/TCP/DNS `Probe` modules<br>• Cluster-wide `Probe` discovery<br>• TLS certificate expiry<br>• Self-monitoring ServiceMonitor<br>• `PrometheusRule` alerting when the cluster DNS probe mostly fails or stops reporting |
 | Problem Detector | Node monitoring | • System log analysis<br>• Kernel monitoring<br>• PrometheusRules<br>• ServiceMonitor enabled |
+| smartctl Exporter | Disk health | • Privileged DaemonSet on every node<br>• ServiceMonitor with `node` label<br>• PrometheusRules |
 | SNMP Exporter | Network metrics | • Custom scrape configs<br>• Instance relabeling<br>• Anti-affinity rules<br>• Timeout handling |
 | Syslog-ng | Log aggregation | • Dual protocol support<br>• Batch processing<br>• Worker scaling<br>• Flow control |
 | UniFi Poller | Network stats | • Site monitoring<br>• Device metrics<br>• Secure credentials<br>• Prometheus integration |
