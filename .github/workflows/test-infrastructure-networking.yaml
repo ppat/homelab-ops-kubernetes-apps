@@ -16,6 +16,8 @@ on:
     - 'infrastructure/subsystems/networking-extra/**'
     - '!infrastructure/subsystems/networking-core/**.md'
     - '!infrastructure/subsystems/networking-extra/**.md'
+    - 'components/external-dns-provider/unifi/**'
+    - '!components/external-dns-provider/unifi/**.md'
   workflow_dispatch:
 
 concurrency:
