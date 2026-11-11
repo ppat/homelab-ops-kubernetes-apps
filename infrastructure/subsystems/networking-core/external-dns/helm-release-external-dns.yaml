@@ -30,11 +30,6 @@ spec:
       ignoreTestFailures: false
       retries: 3
       strategy: rollback
-  valuesFrom:
-  - kind: ConfigMap
-    name: external-dns-provider-config
-    valuesKey: provider.yaml
-    optional: false
   values:
     domainFilters:
     - ${domain_name}
@@ -49,3 +44,38 @@ spec:
     tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists
+    fullnameOverride: external-dns-unifi
+    env: []
+    policy: sync
+    registry: txt
+    txtOwnerId: ${externaldns_txtowner_id:=k8s}
+    txtPrefix: ${externaldns_txtowner_prefix:=k8s}
+    provider:
+      name: webhook
+      webhook:
+        image:
+          repository: ghcr.io/home-operations/external-dns-unifi-webhook
+          # renovate: datasource=github-releases depName=home-operations/external-dns-unifi-webhook
+          tag: "0.11.0"
+        env:
+        - name: UNIFI_HOST
+          value: https://unifi.nodes.${dns_zone}
+        - name: UNIFI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: external-dns-secrets
+              key: unifi_apikey
+        - name: LOG_LEVEL
+          value: ${externaldns_loglevel:=debug}
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http-webhook
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: http-webhook
+          initialDelaySeconds: 10
+          timeoutSeconds: 5

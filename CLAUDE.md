@@ -27,7 +27,7 @@ The mechanics below matter, but they only pay off if you approach a change with 
 
 - `infrastructure/subsystems/` — platform capabilities, split `*-core` / `*-extra` (extra depends on other cores to break cycles). See [infrastructure/README.md](./infrastructure/README.md).
 - `apps/subsystems/` — end-user applications, depend on infrastructure. See [apps/README.md](./apps/README.md).
-- `components/` — cross-cutting Kustomize components (`sso`, `db-backups`, `db-restore`, `cert-issuer`, `oidc-credentials`, `external-dns-provider`) applied on top of other modules via `spec.components` in a Flux Kustomization.
+- `components/` — cross-cutting Kustomize components (`sso`, `db-backups`, `db-restore`, `cert-issuer`, `oidc-credentials`) applied on top of other modules via `spec.components` in a Flux Kustomization.
 - `infrastructure/bootstrap/crds/` — CRDs needed only for first-time cluster bootstrap / disaster recovery (so dependent modules can reference custom resources before the module that normally installs those CRDs is deployed).
 - `ci/test/<module>/` — chainsaw test suites per module (pre-requisites, the module manifest under test, validation assertions).
 - `ci/test/chainsaw/` — shared chainsaw config, reusable steps (`bootstrap-flux.yaml`, `bootstrap-prerequisites.yaml`), reusable assertions (`*-ready.yaml`), and `scripts/flux-reconcile.sh`.
