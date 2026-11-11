@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: n8n
   annotations:
-    secret.reloader.stakater.com/reload: n8n-secrets,${n8n_db_name:=n8n-db}-${n8n_db_suffix_current:=default}-app
+    secret.reloader.stakater.com/reload: n8n-secrets,n8n-workflow-secrets,${n8n_db_name:=n8n-db}-${n8n_db_suffix_current:=default}-app
 spec:
   # main mode: single pod, no separate worker/webhook processes.
   replicas: 1
@@ -45,6 +45,13 @@ spec:
         - name: http
           containerPort: 5678
           protocol: TCP
+        # Credentials for workflows shipped by the consuming cluster, not by this module, e.g.
+        # CREDENTIALS_OVERWRITE_DATA (n8n reads that name without the N8N_ prefix). The cluster
+        # provides the Secret alongside its workflows.
+        envFrom:
+        - secretRef:
+            name: n8n-workflow-secrets
+            optional: true
         env:
         # Database
         - name: DB_TYPE
