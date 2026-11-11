@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.36.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.36.0...infra-observability-core-v0.36.1) (2026-11-11)
+
+
+### ✨ Features
+
+* **infra-observability-core:** alert on kernel and k3s journal events that point at failing node hardware ([#4577](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4577)) ([bc2e340](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/bc2e34061da8dea06dfa0ae2a2552a90844d79c9))
+* **infra-observability-core:** alert when Flux resources stay not Ready or sources stop reconciling ([#4580](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4580)) ([fa2ea05](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/fa2ea05c6fcc03041b7e1127b8c2a48eb8bf25ed))
+* **infra-observability-core:** replace KubeJobFailed with a superseded-aware rule and label k3s rules by capability ([#4578](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4578)) ([3b26f11](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3b26f1182255fb835b1cc13633580b6f76db34c9))
+
 ## [0.36.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.35.0...infra-observability-core-v0.36.0) (2026-11-11)
 
 
