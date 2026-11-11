@@ -15,7 +15,7 @@
   "infrastructure/subsystems/kubernetes-extra": "0.0.35",
   "infrastructure/subsystems/networking-core": "0.14.0",
   "infrastructure/subsystems/networking-extra": "0.4.0",
-  "infrastructure/subsystems/observability-core": "0.35.0",
+  "infrastructure/subsystems/observability-core": "0.36.0",
   "infrastructure/subsystems/observability-extra": "0.6.6",
   "infrastructure/subsystems/security-core": "0.3.0",
   "infrastructure/subsystems/security-extra": "0.4.0",
