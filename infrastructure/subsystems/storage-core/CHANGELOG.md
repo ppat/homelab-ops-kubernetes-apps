@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.9.0...infra-storage-core-v0.9.1) (2026-11-11)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** admit the monitoring namespace to the Longhorn manager metrics port ([#4534](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4534)) ([a26a746](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/a26a7465a961b40dc87439785ec43fcbd55f3232))
+
 ## [0.9.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.8.3...infra-storage-core-v0.9.0) (2026-11-09)
 
 
