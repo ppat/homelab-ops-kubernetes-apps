@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.1.6...infra-database-core-v0.1.7) (2026-11-11)
+
+
+### ✨ Features
+
+* **infra-database-core:** alert on failing, stale, missing and unarchived CloudNativePG backups ([#4574](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4574)) ([98bb510](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/98bb510cc737f267362ed7a6625f15a6b425b256))
+
 ## [0.1.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-database-core-v0.1.5...infra-database-core-v0.1.6) (2026-10-27)
 
 

@@ -1,0 +1,115 @@
+---
+# promtool unit tests for prometheusrule-flux.yaml. Input label sets match what
+# kube-state-metrics emits for the customResourceState config in
+# helm-release-kube-prometheus-stack.yaml, scraped with honorLabels.
+rule_files:
+- prometheusrule-flux.yaml
+evaluation_interval: 1m
+tests:
+# A Kustomization not Ready for longer than `for` fires. Ready, suspended, and briefly
+# not-Ready resources stay silent.
+- interval: 1m
+  input_series:
+  # yamllint disable rule:line-length
+  - series: 'gotk_resource_info{namespace="monitoring", exported_namespace="apps", customresource_group="kustomize.toolkit.fluxcd.io", customresource_kind="Kustomization", customresource_version="v1", name="broken", ready="False", source_name="root"}'
+    values: '1x180'
+  - series: 'gotk_resource_info{namespace="monitoring", exported_namespace="apps", customresource_group="kustomize.toolkit.fluxcd.io", customresource_kind="Kustomization", customresource_version="v1", name="healthy", ready="True", revision="main@sha1:abc", source_name="root"}'
+    values: '1x180'
+  - series: 'gotk_resource_info{namespace="monitoring", exported_namespace="apps", customresource_group="kustomize.toolkit.fluxcd.io", customresource_kind="Kustomization", customresource_version="v1", name="paused", ready="False", suspended="true", source_name="root"}'
+    values: '1x180'
+  # kube-state-metrics omits a label whose path does not resolve, so a Kustomization the
+  # controller never picked up has no `ready` label at all.
+  - series: 'gotk_resource_info{namespace="monitoring", exported_namespace="apps", customresource_group="kustomize.toolkit.fluxcd.io", customresource_kind="Kustomization", customresource_version="v1", name="unprocessed", source_name="root"}'
+    values: '1x180'
+  # A HelmRelease whose upgrade fails and is retried: not Ready for 90 minutes, then Ready
+  # again. The series for each `ready` value exists only while that is the condition's status.
+  - series: 'gotk_resource_info{namespace="monitoring", exported_namespace="apps", customresource_group="helm.toolkit.fluxcd.io", customresource_kind="HelmRelease", customresource_version="v2", name="upgrading", ready="True", revision="1.0.0", chart_name="app"}'
+    values: '1x10 _x90 1x80'
+  - series: 'gotk_resource_info{namespace="monitoring", exported_namespace="apps", customresource_group="helm.toolkit.fluxcd.io", customresource_kind="HelmRelease", customresource_version="v2", name="upgrading", ready="Unknown", revision="1.0.0", chart_name="app"}'
+    values: '_x10 1x90 _x80'
+  # yamllint enable rule:line-length
+  alert_rule_test:
+  - eval_time: 115m
+    alertname: FluxResourceNotReady
+    exp_alerts: []
+  - eval_time: 150m
+    alertname: FluxResourceNotReady
+    exp_alerts:
+    - exp_labels: {namespace: apps, kind: Kustomization, name: broken, capability: gitops, tier: H3, severity: warning}
+      exp_annotations:
+        summary: A Flux resource is not Ready.
+        description: >-
+          Flux Kustomization apps/broken has not been
+          Ready for 2 hours. Changes to what it manages are not being applied.
+    - exp_labels:
+        {namespace: apps, kind: Kustomization, name: unprocessed, capability: gitops, tier: H3, severity: warning}
+      exp_annotations:
+        summary: A Flux resource is not Ready.
+        description: >-
+          Flux Kustomization apps/unprocessed has not been
+          Ready for 2 hours. Changes to what it manages are not being applied.
+  - eval_time: 150m
+    alertname: FluxResourceMetricsAbsent
+    exp_alerts: []
+  - eval_time: 150m
+    alertname: CapabilityHeartbeat
+    exp_alerts:
+    - exp_labels: {capability: gitops, tier: H3, severity: none}
+      exp_annotations:
+        summary: The gitops alert rules are being evaluated.
+
+# A source whose controller stopped counting reconciles fires once 6h pass without one and
+# `for` elapses.
+# A source still being reconciled, and a suspended one, stay silent.
+- interval: 5m
+  input_series:
+  # yamllint disable rule:line-length
+  - series: 'gotk_resource_info{namespace="monitoring", exported_namespace="flux-system", customresource_group="source.toolkit.fluxcd.io", customresource_kind="GitRepository", customresource_version="v1", name="stuck", ready="True"}'
+    values: '1x144'
+  - series: 'gotk_resource_info{namespace="monitoring", exported_namespace="flux-system", customresource_group="source.toolkit.fluxcd.io", customresource_kind="OCIRepository", customresource_version="v1", name="hourly", ready="True"}'
+    values: '1x144'
+  - series: 'gotk_resource_info{namespace="monitoring", exported_namespace="flux-system", customresource_group="source.toolkit.fluxcd.io", customresource_kind="GitRepository", customresource_version="v1", name="paused", ready="True", suspended="true"}'
+    values: '1x144'
+  # Reconciled once a minute for the first hour, then never again.
+  - series: 'gotk_reconcile_duration_seconds_count{namespace="flux-system", exported_namespace="flux-system", kind="GitRepository", name="stuck"}'
+    values: '0+5x12 60x132'
+  # Reconciled once an hour throughout.
+  - series: 'gotk_reconcile_duration_seconds_count{namespace="flux-system", exported_namespace="flux-system", kind="OCIRepository", name="hourly"}'
+    values: '0x11 1x11 2x11 3x11 4x11 5x11 6x11 7x11 8x11 9x11 10x11 11x11 12'
+  - series: 'gotk_reconcile_duration_seconds_count{namespace="flux-system", exported_namespace="flux-system", kind="GitRepository", name="paused"}'
+    values: '0x144'
+  # yamllint enable rule:line-length
+  alert_rule_test:
+  - eval_time: 7h30m
+    alertname: FluxSourceStale
+    exp_alerts: []
+  - eval_time: 9h
+    alertname: FluxSourceStale
+    exp_alerts:
+    - exp_labels:
+        {namespace: flux-system, kind: GitRepository, name: stuck, capability: gitops, tier: H3, severity: warning}
+      exp_annotations:
+        summary: A Flux source has stopped being reconciled.
+        description: >-
+          Flux GitRepository flux-system/stuck has not been
+          reconciled for 6 hours although it is not suspended. Its artifact is no longer
+          being refreshed.
+
+# The kube-state-metrics config is gone, so no gotk_resource_info exists at all.
+- interval: 1m
+  input_series:
+  - series: 'up{job="kube-state-metrics"}'
+    values: '1x120'
+  alert_rule_test:
+  - eval_time: 45m
+    alertname: FluxResourceMetricsAbsent
+    exp_alerts: []
+  - eval_time: 75m
+    alertname: FluxResourceMetricsAbsent
+    exp_alerts:
+    - exp_labels: {capability: gitops, tier: H3, severity: warning}
+      exp_annotations:
+        summary: Flux resource metrics are missing.
+        description: >-
+          No gotk_resource_info series exist for 1 hour. The Flux readiness rules cannot
+          fire. Check the kube-state-metrics customResourceState config and its RBAC.
