@@ -16,7 +16,7 @@ things, not by tool name alone:
 - **Cheap: local, deterministic, small-or-filterable output.** `kustomize build`,
   `helm template`, `jq`/`yq` queries, `git clone`/local `diff`, `rg`/`grep`, plain
   file reads, and any `kubectl`/`helm` subcommand that only needs the CLI itself
-  (no live cluster) — these run in seconds, and you control the output size (pipe
+  (no cluster needed). These run in seconds, and you control the output size (pipe
   through `jq`/`yq`/`grep` to keep only what matters). Being wrong here costs
   nothing but re-running it.
 - **Medium: small structured remote calls, or the cost is latency more than
@@ -26,9 +26,9 @@ things, not by tool name alone:
   return content you didn't author, but the response itself is normally short
   and targeted.
 - **Expensive: large, non-cacheable payloads landing directly in context.**
-  `gh run view --log-failed` on a real CI run is the main one — since there's no
-  local cluster, that log is also the only place a chainsaw `catch:` block's
-  `describe`/`get`/`podLogs`/`events` output shows up at all. These dumps can run
+  `gh run view --log-failed` on a real CI run is the main one, and for a CI run
+  that log is where a chainsaw `catch:` block's `describe`/`get`/`podLogs`/`events`
+  output shows up. These dumps can run
   to hundreds or thousands of lines, every run's content is new (never a cache
   hit), and once it's in context it stays there until compaction discards
   detail you might still have needed. The expense here isn't really the tool
@@ -79,8 +79,8 @@ signal to spend more now — reading further into the release notes, or building
 one more piece of local repro, or writing the instrumentation — until a wrong
 answer only costs one more iteration, not an open-ended number of them.
 
-The same logic is why research fan-out to a cheap subagent (see the main skill
-file) is a cost win specifically for *coverage* tasks and not for *diagnosis*
+The same logic is why coverage fan-out to a cheap subagent (step 1 in the main
+skill file) is a cost win specifically for *coverage* tasks and not for *diagnosis*
 tasks: a coverage gap found late just means another cheap subagent call, but a
 wrong diagnosis found late means another expensive-tier cycle. Spend the cheaper
 resource (a fast model, parallelized, or a subagent isolating a noisy fetch) on
