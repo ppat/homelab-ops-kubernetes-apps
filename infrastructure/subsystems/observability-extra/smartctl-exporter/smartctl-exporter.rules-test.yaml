@@ -269,3 +269,30 @@ tests:
   - eval_time: 45m
     alertname: SmartctlExporterMetricsMissing
     exp_alerts: []
+
+# ------------------------------------------------------------------ SmartNoPhysicalDisks
+# Node n1's exporter is scraped and reports a disk, node n2's is scraped and reports none, and
+# node n3's exporter is down (SmartctlExporterMetricsMissing covers that case, not this rule).
+- interval: 1m
+  input_series:
+  - series: 'up{job="prometheus-smartctl-exporter", node="n1", pod="p1", instance="10.0.0.1:9633"}'
+    values: '1x90'
+  - series: 'smartctl_device_smart_status{device="nvme0", node="n1", pod="p1", instance="10.0.0.1:9633"}'
+    values: '1x90'
+  - series: 'up{job="prometheus-smartctl-exporter", node="n2", pod="p2", instance="10.0.0.2:9633"}'
+    values: '1x90'
+  - series: 'up{job="prometheus-smartctl-exporter", node="n3", pod="p3", instance="10.0.0.3:9633"}'
+    values: '0x90'
+  alert_rule_test:
+  - eval_time: 50m
+    alertname: SmartNoPhysicalDisks
+    exp_alerts: []
+  - eval_time: 75m
+    alertname: SmartNoPhysicalDisks
+    exp_alerts:
+    - exp_labels: {node: n2, capability: node.disk, tier: H2, severity: warning}
+      exp_annotations:
+        summary: A node reports no disks to SMART monitoring.
+        description: >-
+          The smartctl-exporter on node n2 is scraped but reports no disks for
+          1 hour. That node's disk health is not being watched.
