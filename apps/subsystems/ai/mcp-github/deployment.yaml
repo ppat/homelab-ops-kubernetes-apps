@@ -24,7 +24,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: mcp-github
-        image: ghcr.io/github/github-mcp-server:v1.14.0@sha256:7aaeeec9ae4fe9a736d100c1ff0798f3c219b5009e05f5d3945fcacb13cc196b
+        image: ghcr.io/github/github-mcp-server:v2.1.0@sha256:f6056fc10bfffcc8c81a6417a2e9ca12808647e8dd6049642a4feaadee0e0f8a
         imagePullPolicy: IfNotPresent
         # Overrides the image's default CMD (["stdio"]) to run as a persistent HTTP
         # service instead.
