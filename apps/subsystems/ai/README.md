@@ -160,7 +160,7 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | Secret Name | Purpose | Required Keys |
    | ----------- | ------- | -------------- |
    | litellm-openwebui-key | OpenWebUI's virtual key for authenticating to the LiteLLM gateway — sourced from the `apikey_litellm_openwebui` secret-store key, which is populated by a separate Terraform-managed workspace, not manually | apikey |
-   | n8n-secrets | n8n's encryption key, pre-provisioned owner login (email + password hash), pre-seeded LiteLLM/SMTP credential-overwrite blob, its LiteLLM virtual key, and SMTP relay credentials + sender | N8N_ENCRYPTION_KEY, N8N_INSTANCE_OWNER_EMAIL, N8N_INSTANCE_OWNER_PASSWORD_HASH, N8N_CREDENTIALS_OVERWRITE_DATA, LITELLM_API_KEY, N8N_SMTP_USER, N8N_SMTP_PASS, N8N_SMTP_SENDER |
+   | n8n-secrets | n8n's encryption key, pre-provisioned owner login (email + password hash), its LiteLLM virtual key, and SMTP relay credentials + sender. Credentials for specific workflows are supplied by the cluster that ships those workflows, not by this module | N8N_ENCRYPTION_KEY, N8N_INSTANCE_OWNER_EMAIL, N8N_INSTANCE_OWNER_PASSWORD_HASH, LITELLM_API_KEY, N8N_SMTP_USER, N8N_SMTP_PASS, N8N_SMTP_SENDER |
    | openclaw-secrets | OpenClaw's universal secrets — gateway auth token and LiteLLM virtual key | OPENCLAW_GATEWAY_TOKEN, LITELLM_KEY |
    | openclaw-config-secrets | Feature-coupled OpenClaw secrets — inbound hooks bearer token and owner WhatsApp number (used by `channels.whatsapp.allowFrom`). Provided by the cluster, co-located with the cluster-owned `openclaw.json`; not shipped by this module | OPENCLAW_HOOKS_TOKEN, OWNER_WHATSAPP_NUMBER |
 
@@ -184,7 +184,6 @@ OpenClaw's runtime config (`openclaw.json`, delivered as the `openclaw-config` C
    | sandbox_talos_vm_agent_admin_kubeconfig | Kubeconfig for the sandbox Talos cluster, mounted into the self-hosted mcp-kubernetes-sandbox server so it can reach (and write to) that cluster's API. Written by the credential relay, ppat/homelab-ops-kubernetes-experiments#230, which owns this key's name and shape |
    | n8n_encryption_key | n8n's data-at-rest encryption key (credentials, etc.) — must not change after first boot |
    | n8n_owner_password_hash | bcrypt hash of the n8n owner account password, used to pre-provision the owner login and skip the setup wizard |
-   | n8n_credentials_overwrite | JSON blob n8n loads via `N8N_CREDENTIALS_OVERWRITE_DATA` to pre-seed the LiteLLM (OpenAI-compatible) and Maddy SMTP credentials matched by name against example workflows supplied at the cluster level and imported at rollout (not shipped in this module) |
    | apikey_litellm_n8n | n8n's virtual key for authenticating to the LiteLLM gateway |
    | n8n_smtp_user | Username n8n authenticates with against the Maddy SMTP relay |
    | n8n_smtp_password | Password n8n authenticates with against the Maddy SMTP relay |
