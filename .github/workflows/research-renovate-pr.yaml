@@ -1,0 +1,196 @@
+---
+# yamllint disable rule:line-length
+name: research-renovate-pr
+
+# Runs the research-version-changes skill on a Renovate pull request that makes a major or minor
+# bump under infrastructure/, and posts its report as one comment. Once per pull request: a later
+# push finds the comment and stops. Design notes are in ci/scripts/research-renovate-pr/README.md.
+#
+# Two modes:
+#   renovate  the pull request is the Renovate bump. Never blocks automerge: Renovate waits for every
+#             check, not just required ones, so every step that can fail is continue-on-error.
+#   test      the pull request changes this workflow, its prompt and settings, or the skill. It
+#             researches the fixture bump below on every push, posts the result on that pull
+#             request, and fails when the research fails.
+
+on:
+  pull_request:
+    branches: ["main"]
+    types: [opened, synchronize, reopened]
+    paths:
+    - 'infrastructure/**'
+    - '.github/workflows/research-renovate-pr.yaml'
+    - 'ci/scripts/research-renovate-pr/**'
+    - '.claude/skills/research-version-changes/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  research:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    # Read the repository, comment on the pull request, nothing else.
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      # renovate: datasource=npm depName=@anthropic-ai/claude-code
+      CLAUDE_CODE_VERSION: "2.1.318"
+      # renovate: datasource=github-releases depName=fluxcd/flux2
+      FLUX_VERSION: "v2.10.0"
+      # renovate: datasource=github-releases depName=helm/helm
+      HELM_VERSION: "v4.3.1"
+      # renovate: datasource=github-releases depName=mikefarah/yq
+      YQ_VERSION: "v4.54.1"
+      MESSAGE_ID: research-version-changes
+      # The test mode's fixture: a merged Renovate pull request with a chart major and HelmRelease
+      # values to judge.
+      FIXTURE_PR: "4556"
+    steps:
+    # First, because it is the cheapest way out. Renovate titles a major or minor update `feat`
+    # and a patch, digest or pin update `fix` or `chore` (the shared renovate-presets defaults,
+    # kept by this repo's calver override). In renovate mode an existing report ends the job.
+    - name: Decide mode
+      id: mode
+      continue-on-error: true
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        HEAD_REF: ${{ github.head_ref }}
+        PR_TITLE: ${{ github.event.pull_request.title }}
+        IS_RENOVATE: ${{ contains(github.event.pull_request.labels.*.name, 'pr-type:renovate') }}
+      # yamllint disable-line rule:indentation
+      run: |
+        set -euo pipefail
+        mode="none"
+        if [[ ${IS_RENOVATE} == true && ${HEAD_REF} == renovate/* ]]; then
+          if [[ ${PR_TITLE} == feat* ]]; then
+            found=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+              --jq "[.[] | select(.body | contains(\"<!-- pr-comment-id: ${MESSAGE_ID} -->\"))] | length" | jq -s add)
+            [[ ${found} == 0 ]] && mode="renovate"
+          fi
+        elif gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files" --jq '.[].filename' \
+            | grep -qE '^(\.github/workflows/research-renovate-pr\.yaml|ci/scripts/research-renovate-pr/|\.claude/skills/research-version-changes/)'; then
+          mode="test"
+        fi
+        echo "mode=${mode}" | tee -a "${GITHUB_OUTPUT}"
+
+    - name: Checkout
+      if: ${{ steps.mode.outputs.mode == 'renovate' || steps.mode.outputs.mode == 'test' }}
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 1
+        persist-credentials: false
+
+    - name: Setup tools
+      id: tools
+      if: ${{ steps.mode.outputs.mode == 'renovate' || steps.mode.outputs.mode == 'test' }}
+      continue-on-error: ${{ steps.mode.outputs.mode == 'renovate' }}
+      uses: jdx/mise-action@6612f0ef07ed2a736cd1e00a94a065522dd41195 # v5.2.5
+      env:
+        MISE_GITHUB_TOKEN: ${{ github.token }}
+      with:
+        install: true
+        cache: true
+        working_directory: ${{ github.workspace }}
+        # yamllint disable-line rule:indentation
+        mise_toml: |
+          [tools]
+          flux2 = "${{ env.FLUX_VERSION }}"
+          helm = "${{ env.HELM_VERSION }}"
+          yq = "${{ env.YQ_VERSION }}"
+          claude = "${{ env.CLAUDE_CODE_VERSION }}"
+
+    # The model, its provider and their settings live only in this secret, as NAME=VALUE lines.
+    # Every value is masked before anything can print it.
+    - name: Load agent configuration
+      id: config
+      if: ${{ steps.tools.outcome == 'success' }}
+      continue-on-error: ${{ steps.mode.outputs.mode == 'renovate' }}
+      shell: bash
+      env:
+        AGENT_ENV: ${{ secrets.RESEARCH_AGENT_ENV }}
+      # yamllint disable-line rule:indentation
+      run: |
+        set -euo pipefail
+        [[ -n ${AGENT_ENV} ]] || { echo "::error::RESEARCH_AGENT_ENV is not set"; exit 1; }
+        while IFS= read -r line || [[ -n ${line} ]]; do
+          [[ -z ${line// } || ${line} == \#* ]] && continue
+          name=${line%%=*}
+          value=${line#*=}
+          [[ ${name} =~ ^[A-Z_][A-Z0-9_]*$ && ${line} == *=* ]] || { echo "::error::RESEARCH_AGENT_ENV has a malformed line"; exit 1; }
+          [[ -n ${value} ]] && echo "::add-mask::${value}"
+          printf '%s=%s\n' "${name}" "${value}" >> "${GITHUB_ENV}"
+        done <<< "${AGENT_ENV}"
+
+    - name: Research
+      id: research
+      if: ${{ steps.config.outcome == 'success' }}
+      continue-on-error: ${{ steps.mode.outputs.mode == 'renovate' }}
+      shell: bash
+      env:
+        MODE: ${{ steps.mode.outputs.mode }}
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        PR_BODY: ${{ github.event.pull_request.body }}
+        GH_TOKEN: ${{ github.token }}
+        GITHUB_TOKEN: ${{ github.token }}
+      # yamllint disable-line rule:indentation
+      run: |
+        set -euo pipefail
+        mkdir -p .research
+        if [[ ${MODE} == test ]]; then
+          # The fixture's bump, with infrastructure/ as it was at its TO, and this pull request's
+          # workflow, prompt, settings and skill.
+          to=$(gh pr view "${FIXTURE_PR}" --json mergeCommit --jq .mergeCommit.oid)
+          git fetch --quiet --depth=2 origin "${to}"
+          git checkout --quiet "${to}" -- infrastructure/
+          git diff "${to}^" "${to}" -- infrastructure/ > .research/pr.diff
+          gh pr view "${FIXTURE_PR}" --json body --jq .body > .research/pr-body.md
+        else
+          git fetch --quiet --depth=1 origin "${BASE_SHA}"
+          git diff "${BASE_SHA}" HEAD -- infrastructure/ > .research/pr.diff
+          printf '%s\n' "${PR_BODY}" > .research/pr-body.md
+        fi
+        # --settings, because print mode ignores the allow rules of an untrusted workspace's own
+        # .claude/settings.json, and a CI checkout is never trusted.
+        claude -p "$(cat ci/scripts/research-renovate-pr/prompt.md)" \
+          --settings ci/scripts/research-renovate-pr/claude-settings.json \
+          --max-turns 80 --output-format json > "${RUNNER_TEMP}/result.json"
+        # Enough to diagnose a run that wrote nothing: the counts, each denied tool call, and the
+        # model's last message.
+        jq -r '"turns: \(.num_turns)  denied: \(.permission_denials | length)  stop: \(.subtype)",
+          (.permission_denials[] | "denied \(.tool_name): \(.tool_input.command // .tool_input.file_path // .tool_input.skill // "" | tostring | .[0:300])"),
+          "last message:", (.result // "" | .[0:3000])' "${RUNNER_TEMP}/result.json"
+        if [[ ! -s .research/comment.md ]]; then
+          if [[ ${MODE} == test ]]; then
+            echo "::error::the test run wrote no report"
+            exit 1
+          fi
+        else
+          cat .research/comment.md >> "${GITHUB_STEP_SUMMARY}"
+          if [[ ${MODE} == test ]]; then
+            # Two newlines: the report may not end with one, and text directly above the footer
+            # would otherwise run into it.
+            printf '\n\n<sub>Test run on the fixture #%s, because this pull request changes the research workflow or skill.</sub>\n' "${FIXTURE_PR}" >> .research/comment.md
+          fi
+          delimiter="EOF_$(openssl rand -hex 16)"
+          { echo "comment<<${delimiter}"; cat .research/comment.md; echo "${delimiter}"; } >> "${GITHUB_OUTPUT}"
+        fi
+
+    # In test mode the marker differs, so a test report is updated in place on every push and never
+    # counts as a real one.
+    - name: Comment on PR
+      if: ${{ steps.research.outputs.comment != '' }}
+      continue-on-error: ${{ steps.mode.outputs.mode == 'renovate' }}
+      uses: ppat/homelab-ops-actions/actions/comment-on-pr@b243512e70e84044d607787b1f482881906b0f01 # v3.0.0
+      with:
+        message: ${{ steps.research.outputs.comment }}
+        message_id: ${{ steps.mode.outputs.mode == 'test' && format('{0}-test', env.MESSAGE_ID) || env.MESSAGE_ID }}
+        token: ${{ github.token }}

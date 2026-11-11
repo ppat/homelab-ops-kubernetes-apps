@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "defaultMode": "dontAsk",
+    "allow": [
+      "Skill(research-version-changes)",
+      "Read(./**)",
+      "Glob",
+      "Grep",
+      "Write(./.research/**)",
+      "Edit(./.research/**)",
+      "Task",
+      "WebFetch",
+      "Bash(python3 -I .claude/skills/research-version-changes/scripts/fetch_release_notes.py *)",
+      "Bash(.claude/skills/research-version-changes/scripts/chart_diff.sh *)",
+      "Bash(git ls-remote *)"
+    ],
+    "deny": [
+      "Read(//proc/**)",
+      "Read(//etc/**)",
+      "WebSearch"
+    ]
+  },
+  "env": {
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_AUTOUPDATER": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1"
+  }
+}
