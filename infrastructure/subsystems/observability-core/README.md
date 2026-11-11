@@ -268,7 +268,7 @@ flowchart TB
 - [security-core](../security-core) (for TLS certificates)
 - [storage-core](../storage-core) (for persistent storage)
 - [networking-core](../networking-core) (for ingress)
-- [clusterops-core](../clusterops-core) (Reloader, soft: applies rotated credentials)
+- [clusterops-core](../clusterops-core) (Reloader, soft: applies rotated credentials. Flux, soft: `prometheusrule-flux.yaml` reads its custom resources through kube-state-metrics and its controllers' reconcile metrics)
 
 ## Notes
 
