@@ -1,0 +1,133 @@
+---
+# yamllint disable rule:line-length
+# promtool unit tests for the rules this repo adds to or changes in prometheusrule-k3s.yaml.
+# The rest of that file is vendored from kube-prometheus.
+rule_files:
+- prometheusrule-k3s.yaml
+evaluation_interval: 1m
+tests:
+# KubeJobFailedNotSuperseded.
+#   a/superseded: its failed Job started at t=100, and the CronJob succeeded at t=500. Silent.
+#   a/broken (on nas): its failed Job started at t=100, the last success was at t=50. Fires.
+#   a/never: the CronJob has never succeeded. Fires.
+#   a/oneoff: a failed Job with no CronJob owner. Fires.
+- interval: 1m
+  input_series:
+  - series: 'kube_job_failed{condition="true", namespace="a", job_name="superseded-1"}'
+    values: '1x30'
+  - series: 'kube_job_owner{namespace="a", job_name="superseded-1", owner_kind="CronJob", owner_name="superseded"}'
+    values: '1x30'
+  - series: 'kube_job_status_start_time{namespace="a", job_name="superseded-1"}'
+    values: '100x30'
+  - series: 'kube_cronjob_status_last_successful_time{namespace="a", cronjob="superseded"}'
+    values: '500x30'
+  - series: 'kube_job_failed{k8s_cluster="nas", condition="true", namespace="a", job_name="broken-1"}'
+    values: '1x30'
+  - series: 'kube_job_failed{k8s_cluster="nas", condition="true", namespace="a", job_name="broken-2"}'
+    values: '1x30'
+  - series: 'kube_job_owner{k8s_cluster="nas", namespace="a", job_name="broken-1", owner_kind="CronJob", owner_name="broken"}'
+    values: '1x30'
+  - series: 'kube_job_owner{k8s_cluster="nas", namespace="a", job_name="broken-2", owner_kind="CronJob", owner_name="broken"}'
+    values: '1x30'
+  - series: 'kube_job_status_start_time{k8s_cluster="nas", namespace="a", job_name="broken-1"}'
+    values: '100x30'
+  - series: 'kube_job_status_start_time{k8s_cluster="nas", namespace="a", job_name="broken-2"}'
+    values: '200x30'
+  - series: 'kube_cronjob_status_last_successful_time{k8s_cluster="nas", namespace="a", cronjob="broken"}'
+    values: '50x30'
+  - series: 'kube_job_failed{condition="true", namespace="a", job_name="never-1"}'
+    values: '1x30'
+  - series: 'kube_job_owner{namespace="a", job_name="never-1", owner_kind="CronJob", owner_name="never"}'
+    values: '1x30'
+  - series: 'kube_job_status_start_time{namespace="a", job_name="never-1"}'
+    values: '100x30'
+  - series: 'kube_job_failed{condition="true", namespace="a", job_name="oneoff"}'
+    values: '1x30'
+  - series: 'kube_job_owner{namespace="a", job_name="oneoff", owner_kind="<none>", owner_name="<none>"}'
+    values: '1x30'
+  - series: 'kube_job_status_start_time{namespace="a", job_name="oneoff"}'
+    values: '100x30'
+  alert_rule_test:
+  - eval_time: 10m
+    alertname: KubeJobFailedNotSuperseded
+    exp_alerts: []
+  - eval_time: 20m
+    alertname: KubeJobFailedNotSuperseded
+    exp_alerts:
+    - exp_labels: {k8s_cluster: nas, namespace: a, owner_kind: CronJob, owner_name: broken, capability: workload.batch, tier: L, severity: warning}
+      exp_annotations:
+        summary: Job failed and has not been superseded by a successful run.
+        description: 2 failed Job(s) of CronJob a/broken with no successful run since they started.
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubejobfailed
+    - exp_labels: {namespace: a, owner_kind: CronJob, owner_name: never, capability: workload.batch, tier: L, severity: warning}
+      exp_annotations:
+        summary: Job failed and has not been superseded by a successful run.
+        description: 1 failed Job(s) of CronJob a/never with no successful run since they started.
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubejobfailed
+    - exp_labels: {namespace: a, owner_kind: <none>, owner_name: <none>, capability: workload.batch, tier: L, severity: warning}
+      exp_annotations:
+        summary: Job failed and has not been superseded by a successful run.
+        description: 1 failed Job(s) of <none> a/<none> with no successful run since they started.
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubejobfailed
+
+# KubeNodePressure. n1 has memory pressure. n2 has disk pressure but is cordoned for a drain.
+- interval: 1m
+  input_series:
+  - series: 'kube_node_status_condition{node="n1", condition="MemoryPressure", status="true"}'
+    values: '1x30'
+  - series: 'kube_node_spec_unschedulable{node="n1"}'
+    values: '0x30'
+  - series: 'kube_node_status_condition{node="n2", condition="DiskPressure", status="true"}'
+    values: '1x30'
+  - series: 'kube_node_spec_unschedulable{node="n2"}'
+    values: '1x30'
+  - series: 'kube_node_status_condition{node="n3", condition="PIDPressure", status="true"}'
+    values: '0x30'
+  - series: 'kube_node_spec_unschedulable{node="n3"}'
+    values: '0x30'
+  alert_rule_test:
+  - eval_time: 5m
+    alertname: KubeNodePressure
+    exp_alerts: []
+  - eval_time: 15m
+    alertname: KubeNodePressure
+    exp_alerts:
+    - exp_labels: {node: n1, condition: MemoryPressure, status: "true", capability: node.resources, tier: H3, severity: warning}
+      exp_annotations:
+        summary: Node has an active pressure condition.
+        description: n1 has active condition MemoryPressure. This is caused by resource usage exceeding eviction thresholds.
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubenodepressure
+
+# A node that stops being Ready carries the node.kubelet-runtime labels.
+- interval: 1m
+  input_series:
+  - series: 'kube_node_status_condition{job="kube-state-metrics", node="n1", condition="Ready", status="true"}'
+    values: '0x30'
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: KubeNodeNotReady
+    exp_alerts:
+    - exp_labels: {job: kube-state-metrics, node: n1, condition: Ready, status: "true", capability: node.kubelet-runtime, tier: H3, severity: warning}
+      exp_annotations:
+        summary: Node is not ready.
+        description: n1 has been unready for more than 15 minutes.
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubenodenotready
+
+# One heartbeat per capability, always.
+- interval: 1m
+  alert_rule_test:
+  - eval_time: 1m
+    alertname: CapabilityHeartbeat
+    exp_alerts:
+    - exp_labels: {capability: cp.api, tier: H3, severity: none}
+      exp_annotations: {summary: The cp.api alert rules are being evaluated.}
+    - exp_labels: {capability: cp.scheduling, tier: H3, severity: none}
+      exp_annotations: {summary: The cp.scheduling alert rules are being evaluated.}
+    - exp_labels: {capability: node.kubelet-runtime, tier: H3, severity: none}
+      exp_annotations: {summary: The node.kubelet-runtime alert rules are being evaluated.}
+    - exp_labels: {capability: node.resources, tier: H3, severity: none}
+      exp_annotations: {summary: The node.resources alert rules are being evaluated.}
+    - exp_labels: {capability: node.time-certs, tier: H3, severity: none}
+      exp_annotations: {summary: The node.time-certs alert rules are being evaluated.}
+    - exp_labels: {capability: workload.batch, tier: L, severity: none}
+      exp_annotations: {summary: The workload.batch alert rules are being evaluated.}
