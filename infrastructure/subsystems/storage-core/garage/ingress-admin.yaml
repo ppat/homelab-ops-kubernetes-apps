@@ -47,7 +47,7 @@ spec:
       #
       # Reachability (checked live against this estate's UniFi controller,
       # the only place Garage runs): external-dns here uses the unifi webhook
-      # provider (components/external-dns-provider/unifi), which writes a
+      # provider (networking-core's external-dns), which writes a
       # plain A record resolving this hostname to the cluster's private LAN
       # address -- there is no public DNS involved, and the router has zero
       # port-forward rules, so nothing routes WAN traffic to it either. This
