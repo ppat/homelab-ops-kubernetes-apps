@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.12.3...apps-ai-v0.12.4) (2026-11-11)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-ai:** pin the openclaw image build that syncs baked-in plugin install records ([#4521](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4521)) ([cfff779](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/cfff779791c35c872c70440518b09df30213e785))
+
 ## [0.12.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-ai-v0.12.2...apps-ai-v0.12.3) (2026-11-10)
 
 
