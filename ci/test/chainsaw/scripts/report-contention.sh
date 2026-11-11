@@ -38,12 +38,8 @@
 #             with scaling and neighbours, so treat it as a weak condition signal and use
 #             cpu_model for comparability. Recorded because it is free and cannot be recovered
 #             later.
-#   fsync_us  never tested by anything, and the leading untested candidate for the unexplained
-#             BIMODALITY of the prerequisite phase (fast 20-26s vs slow 75-97s, zero
-#             intermediates across 78 runs). etcd commits are fsync-bound and runner disks have
-#             noisy neighbours, so a disk that stalls quantises cluster progress into exactly
-#             that kind of clean two-mode split. If a week of runs shows fsync_us bimodal on
-#             the same boundary, that question closes.
+#   fsync_us  disk sync latency. etcd commits are fsync-bound and runner disks have noisy
+#             neighbours, so a slow disk slows every reconcile in the cluster at once.
 #
 # STRICTLY AT THE BOUNDARIES. This runs as the first operation of the first step and again
 # after the last, never in between. A bandwidth probe fired mid-run would *be* the contention

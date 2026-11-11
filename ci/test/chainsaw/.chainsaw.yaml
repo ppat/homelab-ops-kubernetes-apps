@@ -95,10 +95,6 @@ spec:
     - script:
         timeout: 5m
         content: ../chainsaw/scripts/report-readiness.sh
-    # Silent unless a CNPG Cluster exists and is not Ready. See the script header and #3678.
-    - script:
-        timeout: 3m
-        content: ../chainsaw/scripts/report-cnpg.sh
     # Paired with the `start` reading taken in steps/bootstrap-flux.yaml. A failing run never
     # reaches the last step, so without this entry every failure -- the sample that matters
     # most -- would carry a start reading and no end reading.
