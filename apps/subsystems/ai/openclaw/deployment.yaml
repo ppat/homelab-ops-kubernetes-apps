@@ -48,8 +48,13 @@ spec:
         image: ghcr.io/ppat/openclaw:2026.10.9@sha256:5d6c1dc87e376bbf45a085229bd7f7c5a5f494fe53bdab5c123fc8cccd65b1f6
         imagePullPolicy: IfNotPresent
         env:
+        # One level below the emptyDir mount: the mount root is owned by root (fsGroup only sets
+        # its group), and every OpenClaw config write tightens the config's directory to 0700,
+        # which only the owner may do. Any CLI command that edits config (plugins uninstall,
+        # config set) then fails with "EPERM ... fchmod". The entrypoint creates this
+        # subdirectory itself, so it is owned by the gateway's user.
         - name: OPENCLAW_CONFIG_PATH
-          value: /etc/openclaw/openclaw.json
+          value: /etc/openclaw/config/openclaw.json
         - name: OPENCLAW_CONFIG_SEED
           value: /etc/openclaw-seed/openclaw.json
         - name: OPENCLAW_STATE_DIR
@@ -126,8 +131,8 @@ spec:
             drop:
             - ALL
         volumeMounts:
-        # /etc/openclaw is the gateway's config dir AND where the image writes at boot: it
-        # mkdirs /etc/openclaw/extensions and drops openclaw.json.bak backups there. A read-only
+        # /etc/openclaw holds the gateway's config dir AND is where the image writes at boot: it
+        # mkdirs an extensions dir beside the config and drops openclaw.json.bak backups there. A read-only
         # ConfigMap mount makes that mkdir fail ("ENOENT ... mkdir '/etc/openclaw/extensions'")
         # and the CLI aborts before serving /healthz. So the dir is a writable emptyDir; the
         # entrypoint wrapper seeds OPENCLAW_CONFIG_PATH into it from the read-only
