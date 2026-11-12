@@ -70,8 +70,11 @@ The observability-extra module provides six main capabilities:
      - Every 6 hours, a fresh PVC from a generic ephemeral volume, deleted with the run's pod
      - 64 MiB written with O_DIRECT and fsync, read back with O_DIRECT, checksum compared with the written stream
      - A variant against an existing PVC, for storage only consumed through pre-provisioned volumes
+   - Object storage (`s3-canary-<name>`), one instance per S3 endpoint:
+     - Hourly PUT, GET with checksum, LIST and DELETE in a canary bucket, with a key scoped to it
+     - A missing credentials Secret fails the run with a message naming it
    - Alert rules read canary outcomes from kube-state-metrics CronJob status, labelled `capability: net.pod`,
-     `storage.block` or `storage.nfs`:
+     `storage.block`, `storage.nfs` or `storage.object`:
      - Latest scheduled run not successful
      - No success within three schedule intervals, or the canary suspended
      - A node without an echo pod
@@ -137,6 +140,7 @@ flowchart TB
         echo["netcheck-echo<br/>(every node)"]:::probe
         storagecanary["storage canary<br/>CronJob per StorageClass"]:::probe
         scratch["per-run PVC"]:::storage
+        s3canary["S3 canary<br/>CronJob per endpoint"]:::probe
     end
 
     %% Storage
@@ -174,6 +178,8 @@ flowchart TB
     netcheck -. "CronJob status via<br/>kube-state-metrics" .-> prometheus
     storagecanary --> scratch
     storagecanary -. "CronJob status via<br/>kube-state-metrics" .-> prometheus
+    s3canary --> s3endpoint["S3 endpoint<br/>canary bucket"]:::storage
+    s3canary -. "CronJob status via<br/>kube-state-metrics" .-> prometheus
 
     %% Legend
     subgraph Legend[" "]
@@ -195,6 +201,7 @@ flowchart TB
 | Problem Detector | Node monitoring | • System log analysis<br>• Kernel monitoring<br>• PrometheusRules<br>• ServiceMonitor enabled |
 | Health canaries: netcheck | Pod networking and cluster DNS canary | • Echo DaemonSet tolerating every taint<br>• Headless Service publishing not-ready addresses<br>• CronJob every 10 minutes, one attempt, no API access<br>• `PrometheusRule` alerting on failed, stale or suspended runs and nodes without an echo pod |
 | Health canaries: storage | Block and NFS storage canary, one instance per StorageClass | • Separate template directory, instantiated by the consuming cluster per class<br>• Generic ephemeral volume per run: no API access, cleanup by garbage collection<br>• Claim variant for an existing PVC<br>• `PrometheusRule` alerting on failed, stale or suspended runs and on volumes left behind |
+| Health canaries: S3 | Object storage canary, one instance per endpoint | • Separate template directory, instantiated by the consuming cluster per endpoint<br>• Credentials from an optional Secret supplied by the cluster<br>• Runs on the `ppatlabs/health-canary` image (s5cmd)<br>• `PrometheusRule` alerting on failed, stale or suspended runs |
 | smartctl Exporter | Disk health | • Privileged DaemonSet on every node<br>• ServiceMonitor with `node` label<br>• PrometheusRules |
 | SNMP Exporter | Network metrics | • Custom scrape configs<br>• Instance relabeling<br>• Anti-affinity rules<br>• Timeout handling |
 | Syslog-ng | Log aggregation | • Dual protocol support<br>• Batch processing<br>• Worker scaling<br>• Flow control |
@@ -236,7 +243,24 @@ flowchart TB
    | storage_canary_size        | PVC size, default `1Gi`                                                 | `storage`       |
    | storage_canary_claim       | Existing PVC in the `health-canary` namespace                           | `storage-claim` |
 
-5. Storage requirements
+5. S3 canary instance variables
+
+   Set on each Flux Kustomization that points at `health-canaries/s3`, which is not part of the module root build.
+
+   | Variable           | Purpose                                                        | Used by |
+   |--------------------|----------------------------------------------------------------|---------|
+   | s3_canary_name     | Instance name, the suffix of the CronJob and Secret names      | `s3`    |
+   | s3_canary_endpoint | S3 endpoint URL, as the endpoint's real clients address it     | `s3`    |
+   | s3_canary_bucket   | Bucket the canary writes to, under the `health-canary/` prefix | `s3`    |
+   | s3_canary_region   | Signing region, default `us-east-1`                            | `s3`    |
+
+6. S3 canary secrets
+
+   | Secret Name                   | Purpose                                                               | Required Keys                            |
+   |-------------------------------|-----------------------------------------------------------------------|------------------------------------------|
+   | s3-canary-`${s3_canary_name}` | Key scoped to the canary bucket, from the cluster; optional to render | AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY |
+
+7. Storage requirements
 
    | PVC name                    | Purpose                                     | Access mode                    |
    |-----------------------------|---------------------------------------------|--------------------------------|
@@ -267,5 +291,8 @@ flowchart TB
 - **Volumes inherit the class's recurring jobs.** On Longhorn, a class's `recurringJobSelector`, or the `default`
   group when it has none, applies to canary volumes for the minutes they exist. A canary class should select a
   group that has no jobs, so a run never lands a snapshot or backup in a real target.
+- **Point S3 canaries at the URL the endpoint's clients use.** A canary on the in-cluster Service address does not
+  exercise the ingress, TLS and DNS path a backup client in another cluster takes. Give each instance its own bucket
+  and a key scoped to it; a run only leaves an object behind when its own DELETE fails, and that run fails.
 - **The schedule is not a variable.** A cron expression starting with `*` would be read as a YAML alias after
   substitution. Change it with a patch; the alert rules derive each canary's interval from the CronJob.

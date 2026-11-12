@@ -1,0 +1,91 @@
+---
+# One S3 canary instance. The consuming cluster creates one Flux Kustomization per endpoint it
+# wants checked, pointing at this directory with its own post-build variables (see the module
+# README), and supplies the Secret s3-canary-<name> with a key scoped to the canary bucket. The
+# Secret is optional so the instance renders and runs without it; the script then fails with a
+# message naming the missing Secret, instead of the pod sitting in CreateContainerConfigError.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: s3-canary-${s3_canary_name}
+  namespace: health-canary
+  labels:
+    app.kubernetes.io/name: s3-canary
+    app.kubernetes.io/instance: ${s3_canary_name}
+spec:
+  # Not a post-build variable, for the same reason as the storage canary's schedule.
+  schedule: "41 * * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    metadata:
+      labels:
+        app.kubernetes.io/name: s3-canary
+        app.kubernetes.io/instance: ${s3_canary_name}
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 300
+      ttlSecondsAfterFinished: 300
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: s3-canary
+            app.kubernetes.io/instance: ${s3_canary_name}
+        spec:
+          automountServiceAccountToken: false
+          enableServiceLinks: false
+          restartPolicy: Never
+          containers:
+          - name: s3-canary
+            image: docker.io/ppatlabs/health-canary:0.1.0@sha256:46ed0801c955d5f012ee0c19d4bf29169f610851732ce5c18111637246b2b62f
+            imagePullPolicy: IfNotPresent
+            command: [/bin/bash, /scripts/s3-canary.sh]
+            envFrom:
+            - secretRef:
+                name: s3-canary-${s3_canary_name}
+                optional: true
+            env:
+            - name: S3_CANARY_ENDPOINT
+              value: ${s3_canary_endpoint}
+            - name: S3_CANARY_BUCKET
+              value: ${s3_canary_bucket}
+            - name: S3_CANARY_SECRET
+              value: s3-canary-${s3_canary_name}
+            - name: AWS_REGION
+              value: ${s3_canary_region:=us-east-1}
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: [ALL]
+              readOnlyRootFilesystem: true
+              runAsNonRoot: true
+              runAsUser: 65532
+              runAsGroup: 65532
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                memory: 128Mi
+            volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
+          volumes:
+          - name: scripts
+            configMap:
+              name: health-canary-scripts
+          - name: tmp
+            emptyDir:
+              sizeLimit: 8Mi

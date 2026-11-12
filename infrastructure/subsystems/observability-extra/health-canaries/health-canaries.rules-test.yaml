@@ -62,6 +62,9 @@ tests:
     - exp_labels: {capability: storage.nfs, tier: H1, severity: none}
       exp_annotations:
         summary: The storage.nfs alert rules are being evaluated.
+    - exp_labels: {capability: storage.object, tier: H1, severity: none}
+      exp_annotations:
+        summary: The storage.object alert rules are being evaluated.
 
 # ------------------------------------------------------------------- failing netcheck
 # The last success is the first run; every later run fails. Failing holds from minute 10 and
@@ -378,4 +381,39 @@ tests:
           not being checked.
   - eval_time: 20h
     alertname: CanaryVolumeLeftBehind
+    exp_alerts: []
+
+# ------------------------------------------------------------------- s3: failing, then recovered
+# Hourly canary (3600 s). The 01:00 run fails; Failing fires 15 minutes later as
+# storage.object. The 02:00 run succeeds and the alert clears. Block and NFS groups stay quiet.
+- interval: 1m
+  input_series:
+  - series: 'kube_cronjob_created{namespace="health-canary", cronjob="s3-canary-versitygw-nas"}'
+    values: '0x179'
+  - series: 'kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob="s3-canary-versitygw-nas"}'
+    values: '0x59 3600x59 7200x59'
+  - series: 'kube_cronjob_status_last_successful_time{namespace="health-canary", cronjob="s3-canary-versitygw-nas"}'
+    values: '20x119 7220x59'
+  - series: 'kube_cronjob_next_schedule_time{namespace="health-canary", cronjob="s3-canary-versitygw-nas"}'
+    values: '3600x59 7200x59 10800x59'
+  alert_rule_test:
+  - eval_time: 1h10m
+    alertname: CanaryFailing
+    exp_alerts: []
+  - eval_time: 1h20m
+    alertname: CanaryFailing
+    exp_alerts:
+    - exp_labels: {namespace: health-canary, cronjob: s3-canary-versitygw-nas, capability: storage.object, tier: H1, severity: critical}
+      exp_annotations:
+        summary: An S3 canary is failing.
+        description: >-
+          The s3-canary-versitygw-nas canary in health-canary has not succeeded since its run
+          scheduled at 1970-01-01 01:00:00 +0000 UTC. A PUT, GET with checksum, LIST or DELETE
+          against its endpoint and canary bucket failed. The canary's log names the operation
+          and the error the endpoint returned.
+  - eval_time: 2h10m
+    alertname: CanaryFailing
+    exp_alerts: []
+  - eval_time: 2h10m
+    alertname: CanaryStale
     exp_alerts: []
