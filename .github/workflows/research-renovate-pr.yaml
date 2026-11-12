@@ -46,7 +46,7 @@ jobs:
       # renovate: datasource=github-releases depName=helm/helm
       HELM_VERSION: "v4.3.1"
       # renovate: datasource=github-releases depName=mikefarah/yq
-      YQ_VERSION: "v4.54.1"
+      YQ_VERSION: "v4.54.3"
       MESSAGE_ID: research-version-changes
       # The test mode's fixture: a merged Renovate pull request with a chart major and HelmRelease
       # values to judge.
