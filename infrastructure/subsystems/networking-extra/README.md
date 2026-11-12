@@ -159,7 +159,7 @@ flowchart TB
 ### Component Details
 
 | Component | Primary Role | Integration Points |
-|-----------|-------------|-------------------|
+| --- | --- | --- |
 | Pi-hole | DNS filtering | • Blocks ads and malware<br>• Integrates with cloudflared for DoH<br>• Provides query statistics<br>• Uses persistent storage for config |
 | Cloudflared | DNS-over-HTTPS | • Connects to Cloudflare DNS<br>• Uses malware-blocking resolvers<br>• Exposes metrics endpoint<br>• Supports connection pooling |
 | Unbound | DNS resolution | • Performs DNSSEC validation<br>• Implements privacy features<br>• Optimizes caching<br>• Supports prefetching |
@@ -171,7 +171,7 @@ flowchart TB
 1. Required Components
 
    | Component | Purpose | Configuration |
-   |-----------|---------|---------------|
+   | --- | --- | --- |
    | MongoDB | UniFi database | From database-core |
    | Storage | Persistent data | From storage-core |
    | Certificates | TLS termination | From security-core |
@@ -179,7 +179,7 @@ flowchart TB
 2. Required Variables
 
    | Variable | Purpose | Example |
-   |----------|---------|---------|
+   | --- | --- | --- |
    | domain_name | DNS zone | example.com |
    | dns_zone | Internal zone | homelab.example.com |
    | dns_fallback | Backup DNS | 1.1.1.1 |
@@ -189,7 +189,7 @@ flowchart TB
 3. Required Secrets
 
    | Secret Name | Purpose | Required Keys |
-   |-------------|---------|---------------|
+   | --- | --- | --- |
    | pihole-secrets | Pi-hole admin | pihole_password |
    | tailscale-auth | VPN access | authkey |
    | freeradius-client-credentials | RADIUS clients | unifi_secret |
