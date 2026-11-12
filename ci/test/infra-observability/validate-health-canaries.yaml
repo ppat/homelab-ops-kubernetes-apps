@@ -1,0 +1,73 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-health-canaries
+# Runs the netcheck canary once instead of waiting for its schedule. kind here is multi-node,
+# so the run makes real cross-node pod-to-pod calls through real cluster DNS. A Job created
+# from the CronJob is owned by it, so a success must also show up as the CronJob's
+# lastSuccessfulTime, which is the field the alert rules read.
+spec:
+  try:
+  - description: Assert daemonset/netcheck-echo
+    assert:
+      bindings:
+      - name: name
+        value: netcheck-echo
+      - name: namespace
+        value: health-canary
+      file: ../chainsaw/assertions/daemonset-ready.yaml
+      timeout: 3m
+  - description: Assert daemonset/netcheck-echo covers every node
+    script:
+      # yamllint disable-line rule:indentation
+      content: |
+        ../chainsaw/scripts/daemonset-node-coverage.sh \
+          --namespace=health-canary \
+          --daemonset=netcheck-echo
+      timeout: 90s
+  - description: Run the netcheck canary and require every node's echo pod to answer
+    script:
+      # yamllint disable-line rule:indentation
+      content: |
+        set -euo pipefail
+        kubectl -n health-canary create job --from=cronjob/netcheck chainsaw-netcheck
+        if ! kubectl -n health-canary wait --for=condition=complete job/chainsaw-netcheck --timeout=150s; then
+          kubectl -n health-canary logs job/chainsaw-netcheck || true
+          exit 1
+        fi
+        log="$(kubectl -n health-canary logs job/chainsaw-netcheck)"
+        echo "$log"
+        nodes="$(kubectl get nodes --no-headers | wc -l)"
+        # The script's own pass condition is "no address failed"; this also requires that
+        # DNS returned one address per node, so a run that tested fewer pods cannot pass here.
+        echo "$log" | grep -q "^checked ${nodes} echo pods from node .*, 0 failed$"
+      timeout: 3m
+  - description: Assert the run is recorded as the CronJob's last success
+    assert:
+      resource:
+        apiVersion: batch/v1
+        kind: CronJob
+        metadata:
+          name: netcheck
+          namespace: health-canary
+        status:
+          (lastSuccessfulTime != null): true
+      timeout: 1m
+
+  catch:
+  - describe:
+      apiVersion: batch/v1
+      kind: Job
+      name: chainsaw-netcheck
+      namespace: health-canary
+  - describe:
+      apiVersion: apps/v1
+      kind: DaemonSet
+      name: netcheck-echo
+      namespace: health-canary
+  - podLogs:
+      selector: app.kubernetes.io/name=netcheck
+      namespace: health-canary
+  - events:
+      namespace: health-canary

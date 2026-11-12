@@ -170,6 +170,12 @@ spec:
     use:
       template: ./validate-smartctl-exporter.yaml
 
+  # Placed by analogy rather than by a measured readiness time: its echo DaemonSet is the
+  # smallest image in the module.
+  - name: Validate health canaries
+    use:
+      template: ./validate-health-canaries.yaml
+
   - name: Validate Blackbox Exporter
     use:
       template: ./validate-blackbox-exporter.yaml
@@ -247,6 +253,28 @@ spec:
           value: 'smartctl_devices{job="prometheus-smartctl-exporter", node!=""}'
         - name: prometheus_diagnostic_match
           value: '{__name__=~"smartctl_.*"}'
+
+  # The canary alert rules read only kube-state-metrics CronJob status. The netcheck run in
+  # "Validate health canaries" must therefore appear here as a success timestamp, and the
+  # rule file must be loaded and evaluated, which its always-firing heartbeat shows.
+  - name: Validate the netcheck success reaches kube-state-metrics
+    use:
+      template: ./steps/assert-prometheus-query.yaml
+      with:
+        bindings:
+        - name: prometheus_query
+          value: 'kube_cronjob_status_last_successful_time{namespace="health-canary", cronjob="netcheck"}'
+        - name: prometheus_diagnostic_match
+          value: '{__name__=~"kube_cronjob_.*", namespace="health-canary"}'
+  - name: Validate the health canary rules are evaluated
+    use:
+      template: ./steps/assert-prometheus-query.yaml
+      with:
+        bindings:
+        - name: prometheus_query
+          value: 'ALERTS{alertname="CapabilityHeartbeat", capability="net.pod", alertstate="firing"}'
+        - name: prometheus_diagnostic_match
+          value: '{__name__="ALERTS", alertname="CapabilityHeartbeat"}'
 
   # The first assertion in this repo that looks at a pipeline's OUTPUT rather than at
   # resource status. Everything above proves Alloy and Loki are running; only this

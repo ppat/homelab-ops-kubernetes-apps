@@ -1,0 +1,161 @@
+---
+# Every canary in the health-canary namespace is a CronJob, and its outcome is read from the
+# CronJob status that kube-state-metrics exports, so these rules need no push gateway and no
+# canary-side metrics. Two rules per canary group:
+#
+#   CanaryFailing  the latest scheduled run has not succeeded. It compares the CronJob's last
+#                  schedule time with its last successful time instead of reading Job objects,
+#                  because canary Jobs are deleted minutes after they finish
+#                  (ttlSecondsAfterFinished) and a failed-Job rule would go quiet with them.
+#                  An old failure followed by a success compares false, so a recovered canary
+#                  does not alert. `for` is longer than the canary's activeDeadlineSeconds, so a
+#                  run still in progress never fires it.
+#   CanaryStale    no successful run within three schedule intervals, or the CronJob is
+#                  suspended. The interval is next_schedule_time minus last_schedule_time from
+#                  kube-state-metrics, so changing a canary's schedule needs no rule change.
+#                  kube-state-metrics does not export next_schedule_time for a suspended
+#                  CronJob, which is why suspension is its own arm rather than falling out of
+#                  the interval comparison (it would otherwise make the rule silent). A canary
+#                  that has never succeeded is measured from its creation time.
+#
+# Aggregations are by (k8s_cluster, namespace, cronjob) and no rule filters on a cluster, so
+# one cluster's evaluator also covers canaries on clusters that only remote-write their
+# kube-state-metrics series.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    release: kube-prometheus-stack
+  name: health-canaries-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: health-canaries
+    rules:
+    # Every canary rule below goes quiet, rather than firing, if kube-state-metrics stops
+    # exporting this namespace's CronJobs. The netcheck CronJob always exists here, so no
+    # series at all means the canary signals are gone, not that there are no canaries.
+    - alert: CanaryMetricsAbsent
+      annotations:
+        description: >-
+          kube-state-metrics reports no CronJobs in the health-canary namespace for 30 minutes.
+          Every canary alert is blind until it does.
+        summary: Health canary metrics are missing.
+      expr: |
+        absent(kube_cronjob_info{namespace="health-canary"})
+      for: 30m
+      labels:
+        capability: obs.metrics
+        tier: H1
+        severity: warning
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The obs.metrics alert rules for health canaries are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: obs.metrics
+        tier: M2
+        severity: none
+
+  - name: health-canaries-net-pod
+    rules:
+    - alert: CanaryFailing
+      annotations:
+        description: >-
+          The {{ $labels.cronjob }} canary in {{ $labels.namespace }} has not succeeded since
+          its run scheduled at {{ $value | humanizeTimestamp }}. Some node's echo pod is
+          unreachable from another node, or cluster DNS is not answering. The canary's log
+          names each address that failed.
+        summary: The pod networking canary is failing.
+      expr: |
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob="netcheck"}
+        )
+        > (
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_status_last_successful_time{namespace="health-canary", cronjob="netcheck"}
+        )
+        or
+        0 * max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob="netcheck"}
+        )
+        )
+      for: 15m
+      labels:
+        capability: net.pod
+        tier: H3
+        severity: warning
+    - alert: CanaryStale
+      annotations:
+        description: >-
+          The {{ $labels.cronjob }} canary in {{ $labels.namespace }} has had no successful run
+          for {{ $value | humanizeDuration }}, more than three schedule intervals, or it is
+          suspended. Pod networking is not being checked.
+        summary: The pod networking canary is not running.
+      expr: |
+        time() - (
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_status_last_successful_time{namespace="health-canary", cronjob="netcheck"}
+        )
+        or
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_created{namespace="health-canary", cronjob="netcheck"}
+        )
+        )
+        > on (k8s_cluster, namespace, cronjob) (
+        3 * (
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_next_schedule_time{namespace="health-canary", cronjob="netcheck"}
+        )
+        - (
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob="netcheck"}
+        )
+        or
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_created{namespace="health-canary", cronjob="netcheck"}
+        )
+        )
+        )
+        or on (k8s_cluster, namespace, cronjob)
+        0 * (
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_spec_suspend{namespace="health-canary", cronjob="netcheck"}
+        ) == 1
+        )
+        )
+      for: 15m
+      labels:
+        capability: net.pod
+        tier: H3
+        severity: warning
+    # netcheck tests every echo pod that DNS returns, so a node with no echo pod is simply not
+    # tested. The DaemonSet tolerates every taint, so desired equals the node count and any
+    # shortfall is a node the canary cannot see.
+    - alert: NetcheckEchoNotOnEveryNode
+      annotations:
+        description: >-
+          Only {{ $value }} netcheck-echo pods are available for 30 minutes, fewer than the
+          DaemonSet's desired count. The nodes without one are not covered by the pod
+          networking canary.
+        summary: Some nodes have no pod networking canary target.
+      expr: |
+        max by (k8s_cluster, namespace, daemonset) (
+        kube_daemonset_status_number_available{namespace="health-canary", daemonset="netcheck-echo"}
+        )
+        < max by (k8s_cluster, namespace, daemonset) (
+        kube_daemonset_status_desired_number_scheduled{namespace="health-canary", daemonset="netcheck-echo"}
+        )
+      for: 30m
+      labels:
+        capability: net.pod
+        tier: H3
+        severity: warning
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The net.pod alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: net.pod
+        tier: H3
+        severity: none
