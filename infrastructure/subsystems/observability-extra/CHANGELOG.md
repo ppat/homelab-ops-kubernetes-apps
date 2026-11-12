@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.10](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.6.9...infra-observability-extra-v0.6.10) (2026-11-12)
+
+
+### ✨ Features
+
+* **infra-observability-extra:** add a per-endpoint S3 canary with object storage alert rules ([#4595](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4595)) ([f78825a](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/f78825adb947536ea06d2a3fce5a64c182d964cb))
+* **infra-observability-extra:** add a per-StorageClass storage canary with block and NFS alert rules ([#4594](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4594)) ([24a40e4](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/24a40e42aa158798e8003f68e7edaf338c358577))
+* **infra-observability-extra:** add a pod networking and DNS canary with CronJob-status alert rules ([#4593](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4593)) ([6219f0c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/6219f0c68f31bf3f1036690ed8c1cb78f4f370a0))
+
 ## [0.6.9](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.6.8...infra-observability-extra-v0.6.9) (2026-11-11)
 
 
