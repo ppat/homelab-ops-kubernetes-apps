@@ -8,8 +8,14 @@ configMapGenerator:
 - name: health-canary-scripts
   files:
   - netcheck.sh
+  - storage-canary.sh
 
 generatorOptions:
+  # Unhashed because the per-StorageClass canaries are separate Flux Kustomizations (see the
+  # module README) whose CronJobs reference this ConfigMap by name, and kustomize's hash
+  # rewriting does not cross a build boundary. Every canary run is a new pod, so an edited
+  # script reaches the next run without a name change.
+  disableNameSuffixHash: true
   annotations:
     # Flux's postBuild substitution expands bare $NAME as well as ${NAME}, so without this
     # every shell variable in these scripts becomes an empty string.

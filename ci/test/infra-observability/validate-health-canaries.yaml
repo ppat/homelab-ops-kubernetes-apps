@@ -3,10 +3,10 @@ apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: StepTemplate
 metadata:
   name: validate-health-canaries
-# Runs the netcheck canary once instead of waiting for its schedule. kind here is multi-node,
-# so the run makes real cross-node pod-to-pod calls through real cluster DNS. A Job created
-# from the CronJob is owned by it, so a success must also show up as the CronJob's
-# lastSuccessfulTime, which is the field the alert rules read.
+# Runs the netcheck canary and one storage canary instance once instead of waiting for their
+# schedules. kind here is multi-node, so netcheck makes real cross-node pod-to-pod calls through
+# real cluster DNS. A Job created from a CronJob is owned by it, so a success must also show up
+# as the CronJob's lastSuccessfulTime, which is the field the alert rules read.
 spec:
   try:
   - description: Assert daemonset/netcheck-echo
@@ -54,6 +54,58 @@ spec:
         status:
           (lastSuccessfulTime != null): true
       timeout: 1m
+  - description: Run the storage canary instance on kind's default StorageClass
+    script:
+      # yamllint disable-line rule:indentation
+      content: |
+        set -euo pipefail
+        for _ in $(seq 60); do
+          kubectl -n health-canary get cronjob block-canary-standard >/dev/null 2>&1 && break
+          sleep 2
+        done
+        kubectl -n health-canary create job --from=cronjob/block-canary-standard chainsaw-storage
+        if ! kubectl -n health-canary wait --for=condition=complete job/chainsaw-storage --timeout=240s; then
+          kubectl -n health-canary logs job/chainsaw-storage || true
+          exit 1
+        fi
+        kubectl -n health-canary logs job/chainsaw-storage | grep "^ok: 64 MiB written, fsynced and read back intact"
+      timeout: 6m
+  - description: Assert the storage run is recorded as the CronJob's last success
+    assert:
+      resource:
+        apiVersion: batch/v1
+        kind: CronJob
+        metadata:
+          name: block-canary-standard
+          namespace: health-canary
+        status:
+          (lastSuccessfulTime != null): true
+      timeout: 1m
+  # A run's claim belongs to its pod, so deleting the Job must take the PVC and, on a Delete
+  # class, the PV with it. That is the cleanup the canary relies on instead of API access.
+  - description: Delete the storage run and require its PVC and PV to go with it
+    script:
+      # yamllint disable-line rule:indentation
+      content: |
+        set -euo pipefail
+        pv="$(kubectl -n health-canary get pvc -l app.kubernetes.io/instance=standard \
+          -o jsonpath='{.items[0].spec.volumeName}')"
+        echo "run volume: ${pv}"
+        kubectl -n health-canary delete job chainsaw-storage --cascade=foreground --wait=true
+        # Loops rather than `kubectl wait --for=delete -l`, which errors when nothing matches
+        # any more, i.e. when garbage collection was simply faster than this step.
+        for _ in $(seq 45); do
+          if [ -z "$(kubectl -n health-canary get pvc -l app.kubernetes.io/instance=standard -o name)" ] \
+            && ! kubectl get pv "${pv}" >/dev/null 2>&1; then
+            echo "run PVC and PV ${pv} are gone"
+            exit 0
+          fi
+          sleep 2
+        done
+        kubectl -n health-canary get pvc
+        kubectl get pv "${pv}" || true
+        exit 1
+      timeout: 4m
 
   catch:
   - describe:
@@ -68,6 +120,13 @@ spec:
       namespace: health-canary
   - podLogs:
       selector: app.kubernetes.io/name=netcheck
+      namespace: health-canary
+  - podLogs:
+      selector: app.kubernetes.io/name=storage-canary
+      namespace: health-canary
+  - get:
+      apiVersion: v1
+      kind: PersistentVolumeClaim
       namespace: health-canary
   - events:
       namespace: health-canary

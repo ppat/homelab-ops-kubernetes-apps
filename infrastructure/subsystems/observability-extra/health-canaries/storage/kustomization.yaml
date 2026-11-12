@@ -1,0 +1,8 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Deliberately absent from ../kustomization.yaml: this is a per-StorageClass template with
+# required post-build variables, instantiated once per class by the consuming cluster.
+resources:
+- cronjob-storage-canary.yaml

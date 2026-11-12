@@ -66,10 +66,16 @@ The observability-extra module provides six main capabilities:
      - An echo pod on every node, behind a headless Service that keeps not-ready pods in DNS
      - A CronJob every 10 minutes that resolves the Service and calls every echo pod
      - Each echo pod answers with its node name, so a reply proves which pod answered
-   - Alert rules read canary outcomes from kube-state-metrics CronJob status, labelled `capability: net.pod`:
+   - Storage (`block-canary-<name>`, `nfs-canary-<name>`), one instance per StorageClass or volume:
+     - Every 6 hours, a fresh PVC from a generic ephemeral volume, deleted with the run's pod
+     - 64 MiB written with O_DIRECT and fsync, read back with O_DIRECT, checksum compared with the written stream
+     - A variant against an existing PVC, for storage only consumed through pre-provisioned volumes
+   - Alert rules read canary outcomes from kube-state-metrics CronJob status, labelled `capability: net.pod`,
+     `storage.block` or `storage.nfs`:
      - Latest scheduled run not successful
      - No success within three schedule intervals, or the canary suspended
      - A node without an echo pod
+     - A canary volume still present two hours after its run
      - Canary metrics missing altogether
      - A heartbeat per capability
 
@@ -129,6 +135,8 @@ flowchart TB
         direction TB
         netcheck["netcheck<br/>CronJob"]:::probe
         echo["netcheck-echo<br/>(every node)"]:::probe
+        storagecanary["storage canary<br/>CronJob per StorageClass"]:::probe
+        scratch["per-run PVC"]:::storage
     end
 
     %% Storage
@@ -164,6 +172,8 @@ flowchart TB
     %% Canary Flow
     netcheck --> echo
     netcheck -. "CronJob status via<br/>kube-state-metrics" .-> prometheus
+    storagecanary --> scratch
+    storagecanary -. "CronJob status via<br/>kube-state-metrics" .-> prometheus
 
     %% Legend
     subgraph Legend[" "]
@@ -184,6 +194,7 @@ flowchart TB
 | Blackbox Exporter | Endpoint probing | • HTTP/TCP/DNS `Probe` modules<br>• Cluster-wide `Probe` discovery<br>• TLS certificate expiry<br>• Self-monitoring ServiceMonitor<br>• `PrometheusRule` alerting when the cluster DNS probe mostly fails or stops reporting |
 | Problem Detector | Node monitoring | • System log analysis<br>• Kernel monitoring<br>• PrometheusRules<br>• ServiceMonitor enabled |
 | Health canaries: netcheck | Pod networking and cluster DNS canary | • Echo DaemonSet tolerating every taint<br>• Headless Service publishing not-ready addresses<br>• CronJob every 10 minutes, one attempt, no API access<br>• `PrometheusRule` alerting on failed, stale or suspended runs and nodes without an echo pod |
+| Health canaries: storage | Block and NFS storage canary, one instance per StorageClass | • Separate template directory, instantiated by the consuming cluster per class<br>• Generic ephemeral volume per run: no API access, cleanup by garbage collection<br>• Claim variant for an existing PVC<br>• `PrometheusRule` alerting on failed, stale or suspended runs and on volumes left behind |
 | smartctl Exporter | Disk health | • Privileged DaemonSet on every node<br>• ServiceMonitor with `node` label<br>• PrometheusRules |
 | SNMP Exporter | Network metrics | • Custom scrape configs<br>• Instance relabeling<br>• Anti-affinity rules<br>• Timeout handling |
 | Syslog-ng | Log aggregation | • Dual protocol support<br>• Batch processing<br>• Worker scaling<br>• Flow control |
@@ -211,6 +222,26 @@ flowchart TB
    |----------------------|--------------|--------------------------------------|
    | unpoller-credentials | UniFi access | unpoller_username, unpoller_password |
 
+4. Storage canary instance variables
+
+   Set on each Flux Kustomization that points at `health-canaries/storage` or `health-canaries/storage-claim`. These
+   paths are not part of the module root build.
+
+   | Variable                   | Purpose                                                                 | Used by         |
+   |----------------------------|-------------------------------------------------------------------------|-----------------|
+   | storage_canary_name        | Instance name, the suffix of the CronJob name                           | both            |
+   | storage_canary_kind        | `block` (default) or `nfs`; selects the alert capability                | both            |
+   | storage_canary_class       | StorageClass to provision from; must have `reclaimPolicy: Delete`       | `storage`       |
+   | storage_canary_access_mode | PVC access mode, default `ReadWriteOnce`                                | `storage`       |
+   | storage_canary_size        | PVC size, default `1Gi`                                                 | `storage`       |
+   | storage_canary_claim       | Existing PVC in the `health-canary` namespace                           | `storage-claim` |
+
+5. Storage requirements
+
+   | PVC name                    | Purpose                                     | Access mode                    |
+   |-----------------------------|---------------------------------------------|--------------------------------|
+   | `${storage_canary_claim}`   | Volume the `storage-claim` canary writes to | provisioned by the cluster     |
+
 ## Dependencies
 
 ### Required By
@@ -223,3 +254,18 @@ flowchart TB
 ### Depends On
 
 - [observability-core](../observability-core) - For storage backends
+
+## Notes
+
+- **Canary instances live in the consuming cluster.** Kustomize cannot loop over a list, so the per-StorageClass
+  canary is a template directory that each cluster instantiates once per class with its own Flux Kustomization.
+  Each instance is its own CronJob, so its alerts name the class, and one hung provisioner cannot block another.
+  Instances depend on the module root, which provides the namespace and the scripts ConfigMap.
+- **Retain classes leak a volume per run.** A run's PVC is deleted with its pod. On a `reclaimPolicy: Retain` class
+  the PV is only Released and the backing volume stays, every 6 hours. Point the canary at a Delete class with the
+  same provisioner and parameters; `CanaryVolumeLeftBehind` fires if one is missed.
+- **Volumes inherit the class's recurring jobs.** On Longhorn, a class's `recurringJobSelector`, or the `default`
+  group when it has none, applies to canary volumes for the minutes they exist. A canary class should select a
+  group that has no jobs, so a run never lands a snapshot or backup in a real target.
+- **The schedule is not a variable.** A cron expression starting with `*` would be read as a YAML alias after
+  substitution. Change it with a patch; the alert rules derive each canary's interval from the CronJob.
