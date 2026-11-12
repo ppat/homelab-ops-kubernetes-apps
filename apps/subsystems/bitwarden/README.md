@@ -168,7 +168,7 @@ q
 ### Component Details
 
 | Component | Type | Primary Role | Key Features | Integration Points |
-|-----------|------|--------------|--------------|-------------------|
+| --- | --- | --- | --- | --- |
 | API Service | Core | Request Handler | • Client request processing<br>• Data operation management<br>• Encryption handling<br>• Storage coordination | • Direct MSSQL database access<br>• Integration with all supporting services<br>• Data protection key management<br>• License validation |
 | Web Vault | Core | User Interface | • Password management interface<br>• Secure vault access<br>• Organization management<br>• User settings | • Authentication via Identity service<br>• API service communication<br>• Application logging |
 | Admin Portal | Core | Administration | • System configuration<br>• User management<br>• Organization control<br>• License management | • Identity service authentication<br>• MSSQL database access<br>• Application logging |
@@ -184,7 +184,7 @@ q
 1. Persistent Storage
 
    | PVC Name | Purpose | Access Mode |
-   |----------|---------|-------------|
+   | --- | --- | --- |
    | bitwarden-attachments | File attachments | RWX |
    | bitwarden-dataprotection | Encryption keys | RWX |
    | bitwarden-db-backups | Database backups | RWX |
@@ -196,13 +196,13 @@ q
 2. Required Secrets
 
    | Secret Name | Purpose | Required Keys |
-   |-------------|---------|---------------|
+   | --- | --- | --- |
    | coder-db-app | Database connection | uri |
    | coder-oidc-auth-settings | OIDC configuration | clientId, clientSecret |
 
 3. Required Variables
 
    | Variable | Purpose | Used By |
-   |----------|---------|---------|
+   | --- | --- | --- |
    | domain_name | External access URL (bitwarden.${domain_name}) | All services |
    | cloud_communication | External services (disabled by default) | Core services |

@@ -20,7 +20,7 @@ The misc subsystem currently consists of three main capability groups:
 ### Component Details
 
 | Component | Type | Primary Role | Key Features | Integration Points |
-|-----------|------|--------------|--------------|-------------------|
+| --- | --- | --- | --- | --- |
 | Maddy | Core | SMTP Server | • Email relay with TLS support<br>• Authentication handling | • External SMTP providers<br>• Local authentication |
 
 ## Prerequisites
@@ -28,13 +28,13 @@ The misc subsystem currently consists of three main capability groups:
 1. Required Secrets
 
    | Secret Name | Purpose | Required Keys |
-   |-------------|---------|---------------|
+   | --- | --- | --- |
    | maddy-credentials | SMTP authentication | smtp_remote_user, smtp_remote_password, smtp_remote_host, smtp_remote_port, smtp_local_auth |
 
 2. Required Variables
 
    | Variable | Purpose | Used By |
-   |----------|---------|---------|
+   | --- | --- | --- |
    | domain_name | External access URL (smtp.${domain_name}) | Maddy |
    | cert_issuer | Certificate issuer reference | Certificate |
    | secret_store | External secret store reference | ExternalSecret |
