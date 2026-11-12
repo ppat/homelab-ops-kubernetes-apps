@@ -8,7 +8,7 @@ This module extends the core observability stack with specialized collectors and
 
 ## Overview
 
-The observability-extra module provides five main capabilities:
+The observability-extra module provides six main capabilities:
 
 1. Event Collection
    - Node problem detection:
@@ -59,6 +59,19 @@ The observability-extra module provides five main capabilities:
      - NVMe wear above 90 percent of rated endurance
      - Exporter pods missing from scraping
      - A heartbeat showing the rules are evaluated
+
+6. Health Canaries
+   - Scheduled checks that exercise a capability end to end, in the `health-canary` namespace
+   - Pod networking and cluster DNS (`netcheck`):
+     - An echo pod on every node, behind a headless Service that keeps not-ready pods in DNS
+     - A CronJob every 10 minutes that resolves the Service and calls every echo pod
+     - Each echo pod answers with its node name, so a reply proves which pod answered
+   - Alert rules read canary outcomes from kube-state-metrics CronJob status, labelled `capability: net.pod`:
+     - Latest scheduled run not successful
+     - No success within three schedule intervals, or the canary suspended
+     - A node without an echo pod
+     - Canary metrics missing altogether
+     - A heartbeat per capability
 
 ### Component Architecture
 
@@ -111,6 +124,13 @@ flowchart TB
         smartctl-exporter["smartctl Exporter"]:::event
     end
 
+    %% Health Canaries
+    subgraph canaries["Health Canaries"]
+        direction TB
+        netcheck["netcheck<br/>CronJob"]:::probe
+        echo["netcheck-echo<br/>(every node)"]:::probe
+    end
+
     %% Storage
     subgraph storage["Storage Layer"]
         direction TB
@@ -141,6 +161,10 @@ flowchart TB
     blackbox-exporter --> probe-targets
     blackbox-exporter --> prometheus
 
+    %% Canary Flow
+    netcheck --> echo
+    netcheck -. "CronJob status via<br/>kube-state-metrics" .-> prometheus
+
     %% Legend
     subgraph Legend[" "]
         direction LR
@@ -159,6 +183,7 @@ flowchart TB
 | ----------- | ------------- | ------------------- |
 | Blackbox Exporter | Endpoint probing | • HTTP/TCP/DNS `Probe` modules<br>• Cluster-wide `Probe` discovery<br>• TLS certificate expiry<br>• Self-monitoring ServiceMonitor<br>• `PrometheusRule` alerting when the cluster DNS probe mostly fails or stops reporting |
 | Problem Detector | Node monitoring | • System log analysis<br>• Kernel monitoring<br>• PrometheusRules<br>• ServiceMonitor enabled |
+| Health canaries: netcheck | Pod networking and cluster DNS canary | • Echo DaemonSet tolerating every taint<br>• Headless Service publishing not-ready addresses<br>• CronJob every 10 minutes, one attempt, no API access<br>• `PrometheusRule` alerting on failed, stale or suspended runs and nodes without an echo pod |
 | smartctl Exporter | Disk health | • Privileged DaemonSet on every node<br>• ServiceMonitor with `node` label<br>• PrometheusRules |
 | SNMP Exporter | Network metrics | • Custom scrape configs<br>• Instance relabeling<br>• Anti-affinity rules<br>• Timeout handling |
 | Syslog-ng | Log aggregation | • Dual protocol support<br>• Batch processing<br>• Worker scaling<br>• Flow control |

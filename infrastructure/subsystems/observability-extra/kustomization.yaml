@@ -9,6 +9,7 @@ resources:
 - unpoller/
 - node-problem-detector/
 - smartctl-exporter/
+- health-canaries/
 
 sortOptions:
   order: fifo

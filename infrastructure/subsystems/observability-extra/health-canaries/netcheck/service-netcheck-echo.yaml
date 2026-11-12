@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netcheck-echo
+  namespace: health-canary
+  labels:
+    app.kubernetes.io/name: netcheck-echo
+spec:
+  clusterIP: None
+  # Readiness is probed by the local kubelet, which NetworkPolicy does not filter, so a pod can
+  # be Ready and still unreachable from other nodes. Publishing not-ready addresses keeps every
+  # echo pod in DNS, so the canary tests each one instead of only those the kubelet vouches for.
+  publishNotReadyAddresses: true
+  selector:
+    app.kubernetes.io/name: netcheck-echo
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http

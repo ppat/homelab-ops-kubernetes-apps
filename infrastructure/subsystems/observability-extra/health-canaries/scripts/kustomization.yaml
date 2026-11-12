@@ -1,0 +1,16 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: health-canary
+
+configMapGenerator:
+- name: health-canary-scripts
+  files:
+  - netcheck.sh
+
+generatorOptions:
+  annotations:
+    # Flux's postBuild substitution expands bare $NAME as well as ${NAME}, so without this
+    # every shell variable in these scripts becomes an empty string.
+    kustomize.toolkit.fluxcd.io/substitute: disabled

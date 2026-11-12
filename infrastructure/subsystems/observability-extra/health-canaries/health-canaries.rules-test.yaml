@@ -1,0 +1,257 @@
+---
+# yamllint disable rule:line-length
+# promtool unit tests for prometheusrule-health-canaries.yaml. Series carry the extra labels a
+# kube-state-metrics scrape adds (`job`, `instance`), so the aggregations are exercised against
+# what is really stored. Timestamps are seconds from the test's own epoch (time() starts at 0).
+#
+# Shared netcheck shape: scheduled every 10 minutes (next - last = 600 s), created at 0.
+rule_files:
+- prometheusrule-health-canaries.yaml
+evaluation_interval: 1m
+tests:
+# ------------------------------------------------------------------- healthy netcheck
+# Each run succeeds 30 s after its schedule time, and the success is first scraped one minute
+# after the schedule time. That minute, with the schedule newer than the last success, is a
+# run in progress and must not fire anything (checked at 50m, inside it, and at 55m).
+- interval: 1m
+  input_series:
+  - series: 'kube_cronjob_info{namespace="health-canary", cronjob="netcheck", job="kube-state-metrics", instance="10.0.0.9:8080"}'
+    values: '1x59'
+  - series: 'kube_cronjob_created{namespace="health-canary", cronjob="netcheck", job="kube-state-metrics", instance="10.0.0.9:8080"}'
+    values: '0x59'
+  - series: 'kube_cronjob_spec_suspend{namespace="health-canary", cronjob="netcheck", job="kube-state-metrics", instance="10.0.0.9:8080"}'
+    values: '0x59'
+  - series: 'kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob="netcheck", job="kube-state-metrics", instance="10.0.0.9:8080"}'
+    values: '0x9 600x9 1200x9 1800x9 2400x9 3000x9'
+  - series: 'kube_cronjob_status_last_successful_time{namespace="health-canary", cronjob="netcheck", job="kube-state-metrics", instance="10.0.0.9:8080"}'
+    values: '30x10 630x9 1230x9 1830x9 2430x9 3030x8'
+  - series: 'kube_cronjob_next_schedule_time{namespace="health-canary", cronjob="netcheck", job="kube-state-metrics", instance="10.0.0.9:8080"}'
+    values: '600x9 1200x9 1800x9 2400x9 3000x9 3600x9'
+  - series: 'kube_daemonset_status_number_available{namespace="health-canary", daemonset="netcheck-echo", job="kube-state-metrics", instance="10.0.0.9:8080"}'
+    values: '4x59'
+  - series: 'kube_daemonset_status_desired_number_scheduled{namespace="health-canary", daemonset="netcheck-echo", job="kube-state-metrics", instance="10.0.0.9:8080"}'
+    values: '4x59'
+  alert_rule_test:
+  - eval_time: 50m
+    alertname: CanaryFailing
+    exp_alerts: []
+  - eval_time: 55m
+    alertname: CanaryFailing
+    exp_alerts: []
+  - eval_time: 55m
+    alertname: CanaryStale
+    exp_alerts: []
+  - eval_time: 55m
+    alertname: NetcheckEchoNotOnEveryNode
+    exp_alerts: []
+  - eval_time: 55m
+    alertname: CanaryMetricsAbsent
+    exp_alerts: []
+  - eval_time: 55m
+    alertname: CapabilityHeartbeat
+    exp_alerts:
+    - exp_labels: {capability: obs.metrics, tier: M2, severity: none}
+      exp_annotations:
+        summary: The obs.metrics alert rules for health canaries are being evaluated.
+    - exp_labels: {capability: net.pod, tier: H3, severity: none}
+      exp_annotations:
+        summary: The net.pod alert rules are being evaluated.
+
+# ------------------------------------------------------------------- failing netcheck
+# The last success is the first run; every later run fails. Failing holds from minute 10 and
+# fires 15 minutes later, carrying the latest schedule time. Stale has not reached three
+# intervals plus its `for` yet at 40m, and fires by 60m (3 x 600 s after the success at 30 s,
+# plus 15 minutes).
+- interval: 1m
+  input_series:
+  - series: 'kube_cronjob_info{namespace="health-canary", cronjob="netcheck", job="kube-state-metrics"}'
+    values: '1x69'
+  - series: 'kube_cronjob_created{namespace="health-canary", cronjob="netcheck", job="kube-state-metrics"}'
+    values: '0x69'
+  - series: 'kube_cronjob_spec_suspend{namespace="health-canary", cronjob="netcheck", job="kube-state-metrics"}'
+    values: '0x69'
+  - series: 'kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob="netcheck", job="kube-state-metrics"}'
+    values: '0x9 600x9 1200x9 1800x9 2400x9 3000x9 3600x9'
+  - series: 'kube_cronjob_status_last_successful_time{namespace="health-canary", cronjob="netcheck", job="kube-state-metrics"}'
+    values: '30x69'
+  - series: 'kube_cronjob_next_schedule_time{namespace="health-canary", cronjob="netcheck", job="kube-state-metrics"}'
+    values: '600x9 1200x9 1800x9 2400x9 3000x9 3600x9 4200x9'
+  alert_rule_test:
+  - eval_time: 20m
+    alertname: CanaryFailing
+    exp_alerts: []
+  - eval_time: 40m
+    alertname: CanaryFailing
+    exp_alerts:
+    - exp_labels: {namespace: health-canary, cronjob: netcheck, capability: net.pod, tier: H3, severity: warning}
+      exp_annotations:
+        summary: The pod networking canary is failing.
+        description: >-
+          The netcheck canary in health-canary has not succeeded since its run scheduled at
+          1970-01-01 00:40:00 +0000 UTC. Some node's echo pod is unreachable from another node,
+          or cluster DNS is not answering. The canary's log names each address that failed.
+  - eval_time: 40m
+    alertname: CanaryStale
+    exp_alerts: []
+  - eval_time: 60m
+    alertname: CanaryStale
+    exp_alerts:
+    - exp_labels: {namespace: health-canary, cronjob: netcheck, capability: net.pod, tier: H3, severity: warning}
+      exp_annotations:
+        summary: The pod networking canary is not running.
+        description: >-
+          The netcheck canary in health-canary has had no successful run for 59m 30s, more
+          than three schedule intervals, or it is suspended. Pod networking is not being
+          checked.
+
+# ------------------------------------------------------------------- never succeeded
+# A canary that has been scheduled but never succeeded has no last_successful_time series at
+# all. Both rules must still fire: Failing through its `or 0 * ...` arm, Stale by measuring
+# from creation.
+- interval: 1m
+  input_series:
+  - series: 'kube_cronjob_info{namespace="health-canary", cronjob="netcheck"}'
+    values: '1x59'
+  - series: 'kube_cronjob_created{namespace="health-canary", cronjob="netcheck"}'
+    values: '0x59'
+  - series: 'kube_cronjob_spec_suspend{namespace="health-canary", cronjob="netcheck"}'
+    values: '0x59'
+  - series: 'kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob="netcheck"}'
+    values: '0x9 600x9 1200x9 1800x9 2400x9 3000x9'
+  - series: 'kube_cronjob_next_schedule_time{namespace="health-canary", cronjob="netcheck"}'
+    values: '600x9 1200x9 1800x9 2400x9 3000x9 3600x9'
+  alert_rule_test:
+  - eval_time: 50m
+    alertname: CanaryFailing
+    exp_alerts:
+    - exp_labels: {namespace: health-canary, cronjob: netcheck, capability: net.pod, tier: H3, severity: warning}
+      exp_annotations:
+        summary: The pod networking canary is failing.
+        description: >-
+          The netcheck canary in health-canary has not succeeded since its run scheduled at
+          1970-01-01 00:50:00 +0000 UTC. Some node's echo pod is unreachable from another node,
+          or cluster DNS is not answering. The canary's log names each address that failed.
+  - eval_time: 50m
+    alertname: CanaryStale
+    exp_alerts:
+    - exp_labels: {namespace: health-canary, cronjob: netcheck, capability: net.pod, tier: H3, severity: warning}
+      exp_annotations:
+        summary: The pod networking canary is not running.
+        description: >-
+          The netcheck canary in health-canary has had no successful run for 50m 0s, more
+          than three schedule intervals, or it is suspended. Pod networking is not being
+          checked.
+
+# ------------------------------------------------------------------- suspended
+# Suspended at minute 5. kube-state-metrics stops exporting next_schedule_time, and the
+# schedule time stops advancing. The suspended arm fires Stale 15 minutes later, long before
+# three intervals have passed. Failing stays silent: the last run succeeded.
+- interval: 1m
+  input_series:
+  - series: 'kube_cronjob_info{namespace="health-canary", cronjob="netcheck"}'
+    values: '1x39'
+  - series: 'kube_cronjob_created{namespace="health-canary", cronjob="netcheck"}'
+    values: '0x39'
+  - series: 'kube_cronjob_spec_suspend{namespace="health-canary", cronjob="netcheck"}'
+    values: '0x4 1x35'
+  - series: 'kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob="netcheck"}'
+    values: '0x39'
+  - series: 'kube_cronjob_status_last_successful_time{namespace="health-canary", cronjob="netcheck"}'
+    values: '30x39'
+  - series: 'kube_cronjob_next_schedule_time{namespace="health-canary", cronjob="netcheck"}'
+    values: '600x4'
+  alert_rule_test:
+  - eval_time: 15m
+    alertname: CanaryStale
+    exp_alerts: []
+  - eval_time: 25m
+    alertname: CanaryStale
+    exp_alerts:
+    - exp_labels: {namespace: health-canary, cronjob: netcheck, capability: net.pod, tier: H3, severity: warning}
+      exp_annotations:
+        summary: The pod networking canary is not running.
+        description: >-
+          The netcheck canary in health-canary has had no successful run for 24m 30s, more
+          than three schedule intervals, or it is suspended. Pod networking is not being
+          checked.
+  - eval_time: 25m
+    alertname: CanaryFailing
+    exp_alerts: []
+
+# ------------------------------------------------------------------- echo coverage
+# One node without an echo pod for 40 minutes fires; a 10 minute dip (a rollout) does not.
+- interval: 1m
+  input_series:
+  - series: 'kube_cronjob_info{namespace="health-canary", cronjob="netcheck"}'
+    values: '1x59'
+  - series: 'kube_daemonset_status_number_available{namespace="health-canary", daemonset="netcheck-echo", job="kube-state-metrics"}'
+    values: '4x4 3x10 4x5 3x40'
+  - series: 'kube_daemonset_status_desired_number_scheduled{namespace="health-canary", daemonset="netcheck-echo", job="kube-state-metrics"}'
+    values: '4x59'
+  alert_rule_test:
+  - eval_time: 18m
+    alertname: NetcheckEchoNotOnEveryNode
+    exp_alerts: []
+  - eval_time: 58m
+    alertname: NetcheckEchoNotOnEveryNode
+    exp_alerts:
+    - exp_labels: {namespace: health-canary, daemonset: netcheck-echo, capability: net.pod, tier: H3, severity: warning}
+      exp_annotations:
+        summary: Some nodes have no pod networking canary target.
+        description: >-
+          Only 3 netcheck-echo pods are available for 30 minutes, fewer than the DaemonSet's
+          desired count. The nodes without one are not covered by the pod networking canary.
+
+# ------------------------------------------------------------------- metrics absent
+# The absence rule looks across clusters: series from any one cluster (here only nas, which
+# has the k8s_cluster label) keep it silent.
+- interval: 1m
+  input_series:
+  - series: 'kube_cronjob_info{namespace="health-canary", cronjob="netcheck", k8s_cluster="nas"}'
+    values: '1x59'
+  alert_rule_test:
+  - eval_time: 50m
+    alertname: CanaryMetricsAbsent
+    exp_alerts: []
+
+# Series that stop at minute 10 fire it 30 minutes after they go stale.
+- interval: 1m
+  input_series:
+  - series: 'kube_cronjob_info{namespace="health-canary", cronjob="netcheck"}'
+    values: '1x9'
+  alert_rule_test:
+  - eval_time: 5m
+    alertname: CanaryMetricsAbsent
+    exp_alerts: []
+  - eval_time: 50m
+    alertname: CanaryMetricsAbsent
+    exp_alerts:
+    - exp_labels: {namespace: health-canary, capability: obs.metrics, tier: H1, severity: warning}
+      exp_annotations:
+        summary: Health canary metrics are missing.
+        description: >-
+          kube-state-metrics reports no CronJobs in the health-canary namespace for 30 minutes.
+          Every canary alert is blind until it does.
+
+# ------------------------------------------------------------------- cluster label kept
+# nas remote-writes its kube-state-metrics with k8s_cluster="nas"; the homelab evaluator must
+# alert on it with the label intact.
+- interval: 1m
+  input_series:
+  - series: 'kube_cronjob_created{namespace="health-canary", cronjob="netcheck", k8s_cluster="nas"}'
+    values: '0x49'
+  - series: 'kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob="netcheck", k8s_cluster="nas"}'
+    values: '0x9 600x9 1200x9 1800x9 2400x9'
+  - series: 'kube_cronjob_status_last_successful_time{namespace="health-canary", cronjob="netcheck", k8s_cluster="nas"}'
+    values: '30x49'
+  alert_rule_test:
+  - eval_time: 40m
+    alertname: CanaryFailing
+    exp_alerts:
+    - exp_labels: {k8s_cluster: nas, namespace: health-canary, cronjob: netcheck, capability: net.pod, tier: H3, severity: warning}
+      exp_annotations:
+        summary: The pod networking canary is failing.
+        description: >-
+          The netcheck canary in health-canary has not succeeded since its run scheduled at
+          1970-01-01 00:40:00 +0000 UTC. Some node's echo pod is unreachable from another node,
+          or cluster DNS is not answering. The canary's log names each address that failed.

@@ -1,0 +1,70 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: netcheck-echo
+  namespace: health-canary
+  labels:
+    app.kubernetes.io/name: netcheck-echo
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: netcheck-echo
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: netcheck-echo
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      # Every node, tainted or not: a node without an echo pod is a node the canary cannot
+      # reach, and NetcheckEchoNotOnEveryNode only sees nodes the DaemonSet targets.
+      tolerations:
+      - operator: Exists
+      containers:
+      - name: echo
+        image: docker.io/library/busybox:1.37.0-musl@sha256:f6a95d611e0a8780fabdb2aec43e31275b2720dfefa3e41b16835bfc42454478
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/sh
+        - -c
+        # $(NODE_NAME) is expanded by the kubelet from the env entry below, before the shell runs.
+        - printf '%s' '$(NODE_NAME)' > /www/node && exec httpd -f -p 8080 -h /www
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /node
+            port: http
+          periodSeconds: 30
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65534
+          runAsGroup: 65534
+        resources:
+          requests:
+            cpu: 1m
+            memory: 4Mi
+          limits:
+            memory: 16Mi
+        volumeMounts:
+        - name: www
+          mountPath: /www
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - name: www
+        emptyDir:
+          medium: Memory
+          sizeLimit: 1Mi
