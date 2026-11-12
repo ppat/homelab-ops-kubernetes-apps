@@ -56,6 +56,12 @@ tests:
     - exp_labels: {capability: net.pod, tier: H3, severity: none}
       exp_annotations:
         summary: The net.pod alert rules are being evaluated.
+    - exp_labels: {capability: storage.block, tier: H1, severity: none}
+      exp_annotations:
+        summary: The storage.block alert rules are being evaluated.
+    - exp_labels: {capability: storage.nfs, tier: H1, severity: none}
+      exp_annotations:
+        summary: The storage.nfs alert rules are being evaluated.
 
 # ------------------------------------------------------------------- failing netcheck
 # The last success is the first run; every later run fails. Failing holds from minute 10 and
@@ -255,3 +261,121 @@ tests:
           The netcheck canary in health-canary has not succeeded since its run scheduled at
           1970-01-01 00:40:00 +0000 UTC. Some node's echo pod is unreachable from another node,
           or cluster DNS is not answering. The canary's log names each address that failed.
+
+# ------------------------------------------------------------------- storage: healthy
+# Two block canaries and one NFS canary every 6 hours (21600 s), each succeeding 2 minutes
+# after its schedule. Prefix routing: block-canary-* carries storage.block, nfs-canary-*
+# storage.nfs, and netcheck is in neither group. One run's PV exists for 10 minutes, well under
+# the left-behind threshold.
+- interval: 5m
+  input_series:
+  - series: 'kube_cronjob_created{namespace="health-canary", cronjob="block-canary-longhorn", job="kube-state-metrics"}'
+    values: '0x200'
+  - series: 'kube_cronjob_spec_suspend{namespace="health-canary", cronjob="block-canary-longhorn", job="kube-state-metrics"}'
+    values: '0x200'
+  - series: 'kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob="block-canary-longhorn", job="kube-state-metrics"}'
+    values: '0x71 21600x71 43200x58'
+  - series: 'kube_cronjob_status_last_successful_time{namespace="health-canary", cronjob="block-canary-longhorn", job="kube-state-metrics"}'
+    values: '120x71 21720x71 43320x58'
+  - series: 'kube_cronjob_next_schedule_time{namespace="health-canary", cronjob="block-canary-longhorn", job="kube-state-metrics"}'
+    values: '21600x71 43200x71 64800x58'
+  - series: 'kube_cronjob_created{namespace="health-canary", cronjob="nfs-canary-nfs-dynamic", k8s_cluster="nas", job="kube-state-metrics"}'
+    values: '0x200'
+  - series: 'kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob="nfs-canary-nfs-dynamic", k8s_cluster="nas", job="kube-state-metrics"}'
+    values: '0x71 21600x71 43200x58'
+  - series: 'kube_cronjob_status_last_successful_time{namespace="health-canary", cronjob="nfs-canary-nfs-dynamic", k8s_cluster="nas", job="kube-state-metrics"}'
+    values: '120x71 21720x71 43320x58'
+  - series: 'kube_cronjob_next_schedule_time{namespace="health-canary", cronjob="nfs-canary-nfs-dynamic", k8s_cluster="nas", job="kube-state-metrics"}'
+    values: '21600x71 43200x71 64800x58'
+  - series: 'kube_persistentvolume_claim_ref{namespace="monitoring", persistentvolume="pvc-1", claim_namespace="health-canary", name="block-canary-longhorn-29000000-abcde-scratch", job="kube-state-metrics"}'
+    values: '_x144 1x2 _x54'
+  alert_rule_test:
+  - eval_time: 16h
+    alertname: CanaryFailing
+    exp_alerts: []
+  - eval_time: 16h
+    alertname: CanaryStale
+    exp_alerts: []
+  - eval_time: 12h05m
+    alertname: CanaryVolumeLeftBehind
+    exp_alerts: []
+  - eval_time: 16h
+    alertname: CanaryVolumeLeftBehind
+    exp_alerts: []
+
+# ------------------------------------------------------------------- storage: failing block
+# Only the first run succeeded. The 6 h run fails: Failing fires 30 minutes after it was
+# scheduled and keeps the block capability. The run's PV was not cleaned up (a Retain class
+# leaves it Released and still claim-referenced), so CanaryVolumeLeftBehind fires after 2 h.
+- interval: 5m
+  input_series:
+  - series: 'kube_cronjob_created{namespace="health-canary", cronjob="block-canary-replicated"}'
+    values: '0x200'
+  - series: 'kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob="block-canary-replicated"}'
+    values: '0x71 21600x71'
+  - series: 'kube_cronjob_status_last_successful_time{namespace="health-canary", cronjob="block-canary-replicated"}'
+    values: '120x143'
+  - series: 'kube_cronjob_next_schedule_time{namespace="health-canary", cronjob="block-canary-replicated"}'
+    values: '21600x71 43200x71'
+  - series: 'kube_persistentvolume_claim_ref{namespace="monitoring", persistentvolume="pvc-2", claim_namespace="health-canary", name="block-canary-replicated-29000360-fghij-scratch"}'
+    values: '_x72 1x71'
+  alert_rule_test:
+  - eval_time: 6h20m
+    alertname: CanaryFailing
+    exp_alerts: []
+  - eval_time: 6h35m
+    alertname: CanaryFailing
+    exp_alerts:
+    - exp_labels: {namespace: health-canary, cronjob: block-canary-replicated, capability: storage.block, tier: H1, severity: critical}
+      exp_annotations:
+        summary: A block storage canary is failing.
+        description: >-
+          The block-canary-replicated canary in health-canary has not succeeded since its run
+          scheduled at 1970-01-01 06:00:00 +0000 UTC. Its volume did not provision, attach or
+          mount, or did not accept a 64 MiB write with fsync and read it back intact. The
+          canary's log names the step that failed.
+  - eval_time: 8h30m
+    alertname: CanaryVolumeLeftBehind
+    exp_alerts:
+    - exp_labels: {persistentvolume: pvc-2, claim_namespace: health-canary, name: block-canary-replicated-29000360-fghij-scratch, capability: storage.block, tier: M3, severity: warning}
+      exp_annotations:
+        summary: A block storage canary is leaking volumes.
+        description: >-
+          PersistentVolume pvc-2 of canary claim block-canary-replicated-29000360-fghij-scratch
+          still exists after 2 hours. Its StorageClass is probably reclaimPolicy Retain, or the
+          claim was not garbage-collected. Each run adds another volume until it is fixed.
+
+# ------------------------------------------------------------------- storage: stale nfs
+# An NFS canary whose successes stop after the first run (its runs hang and are never
+# rescheduled, e.g. the schedule stops advancing): Stale fires once three 6 h intervals plus
+# 15 minutes have passed since the last success, on the nas label, as storage.nfs. A claim-mode
+# PV (claim name without the -scratch suffix) never counts as left behind.
+- interval: 5m
+  input_series:
+  - series: 'kube_cronjob_created{namespace="health-canary", cronjob="nfs-canary-homelab-export", k8s_cluster="nas"}'
+    values: '0x240'
+  - series: 'kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob="nfs-canary-homelab-export", k8s_cluster="nas"}'
+    values: '0x240'
+  - series: 'kube_cronjob_status_last_successful_time{namespace="health-canary", cronjob="nfs-canary-homelab-export", k8s_cluster="nas"}'
+    values: '120x240'
+  - series: 'kube_cronjob_next_schedule_time{namespace="health-canary", cronjob="nfs-canary-homelab-export", k8s_cluster="nas"}'
+    values: '21600x240'
+  - series: 'kube_persistentvolume_claim_ref{namespace="monitoring", persistentvolume="static-nfs-canary", claim_namespace="health-canary", name="nfs-canary-homelab-export", k8s_cluster="nas"}'
+    values: '1x240'
+  alert_rule_test:
+  - eval_time: 18h10m
+    alertname: CanaryStale
+    exp_alerts: []
+  - eval_time: 18h20m
+    alertname: CanaryStale
+    exp_alerts:
+    - exp_labels: {k8s_cluster: nas, namespace: health-canary, cronjob: nfs-canary-homelab-export, capability: storage.nfs, tier: H1, severity: warning}
+      exp_annotations:
+        summary: A network file storage canary is not running.
+        description: >-
+          The nfs-canary-homelab-export canary in health-canary has had no successful run for
+          18h 18m 0s, more than three schedule intervals, or it is suspended. NFS volumes are
+          not being checked.
+  - eval_time: 20h
+    alertname: CanaryVolumeLeftBehind
+    exp_alerts: []

@@ -84,6 +84,9 @@ spec:
     - description: Apply infra-observability-extra
       apply:
         file: ./infra-observability-extra.yaml
+    - description: Apply a storage canary instance
+      apply:
+        file: ./health-canary-storage.yaml
     catch:
     - describe:
         apiVersion: kustomize.toolkit.fluxcd.io/v1

@@ -1,0 +1,26 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# The storage canary against an existing PVC in the health-canary namespace instead of a fresh
+# one per run. For storage that is only ever consumed through pre-provisioned PersistentVolumes
+# (a static NFS export), where dynamic provisioning is not the capability in use. It proves
+# attach, mount, write and read on that volume, not provisioning. The consuming cluster owns
+# the PV and PVC. Deliberately absent from ../kustomization.yaml, like ../storage.
+resources:
+- ../storage
+
+patches:
+- target:
+    kind: CronJob
+  # yamllint disable-line rule:indentation
+  patch: |-
+    - op: replace
+      path: /spec/jobTemplate/spec/template/spec/volumes/2
+      value:
+        name: scratch
+        persistentVolumeClaim:
+          # The default names a claim that cannot exist, so an instance that omits the
+          # variable still renders and then fails every run (CanaryFailing) instead of
+          # silently checking nothing.
+          claimName: ${storage_canary_claim:=storage-canary-claim-not-set}

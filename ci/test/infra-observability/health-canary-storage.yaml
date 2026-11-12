@@ -1,0 +1,29 @@
+---
+# One instance of the per-StorageClass storage canary template, the way a consuming cluster
+# creates one: a Flux Kustomization on the template path with its own post-build variables.
+# kind's default class (local-path) has reclaimPolicy Delete, which the template requires.
+# dependsOn is what a cluster declares too: the instance needs the health-canary namespace and
+# scripts ConfigMap from the module root, and a failed first apply would only retry at the
+# 15 minute interval.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: health-canary-storage-standard
+  namespace: flux-system
+spec:
+  dependsOn:
+  - name: infra-observability-extra
+    namespace: flux-system
+  interval: 15m0s
+  path: ./infrastructure/subsystems/observability-extra/health-canaries/storage
+  postBuild:
+    substitute:
+      storage_canary_name: standard
+      storage_canary_class: standard
+  prune: false
+  sourceRef:
+    kind: GitRepository
+    name: test-source
+    namespace: flux-system
+  timeout: 2m0s
+  wait: false

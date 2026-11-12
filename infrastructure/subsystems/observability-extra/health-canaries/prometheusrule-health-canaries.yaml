@@ -159,3 +159,209 @@ spec:
         capability: net.pod
         tier: H3
         severity: none
+
+  - name: health-canaries-storage-block
+    rules:
+    - alert: CanaryFailing
+      annotations:
+        description: >-
+          The {{ $labels.cronjob }} canary in {{ $labels.namespace }} has not succeeded since
+          its run scheduled at {{ $value | humanizeTimestamp }}. Its volume did not provision,
+          attach or mount, or did not accept a 64 MiB write with fsync and read it back intact.
+          The canary's log names the step that failed.
+        summary: A block storage canary is failing.
+      expr: |
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob=~"block-canary-.+"}
+        )
+        > (
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_status_last_successful_time{namespace="health-canary", cronjob=~"block-canary-.+"}
+        )
+        or
+        0 * max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob=~"block-canary-.+"}
+        )
+        )
+      for: 30m
+      labels:
+        capability: storage.block
+        tier: H1
+        severity: critical
+    - alert: CanaryStale
+      annotations:
+        description: >-
+          The {{ $labels.cronjob }} canary in {{ $labels.namespace }} has had no successful run
+          for {{ $value | humanizeDuration }}, more than three schedule intervals, or it is
+          suspended. New block volumes are not being checked.
+        summary: A block storage canary is not running.
+      expr: |
+        time() - (
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_status_last_successful_time{namespace="health-canary", cronjob=~"block-canary-.+"}
+        )
+        or
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_created{namespace="health-canary", cronjob=~"block-canary-.+"}
+        )
+        )
+        > on (k8s_cluster, namespace, cronjob) (
+        3 * (
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_next_schedule_time{namespace="health-canary", cronjob=~"block-canary-.+"}
+        )
+        - (
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob=~"block-canary-.+"}
+        )
+        or
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_created{namespace="health-canary", cronjob=~"block-canary-.+"}
+        )
+        )
+        )
+        or on (k8s_cluster, namespace, cronjob)
+        0 * (
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_spec_suspend{namespace="health-canary", cronjob=~"block-canary-.+"}
+        ) == 1
+        )
+        )
+      for: 15m
+      labels:
+        capability: storage.block
+        tier: H1
+        severity: warning
+    # A run's volume exists for minutes: it is created with the canary pod and deleted with it,
+    # within the Job's deadline plus its TTL. A PersistentVolume still bound to, or Released
+    # from, a canary scratch claim two hours later was left behind: the StorageClass is Retain,
+    # or garbage collection of the pod or claim is not happening. Each further run adds one.
+    # PersistentVolumes are cluster-scoped, so `namespace` here would be kube-state-metrics'
+    # own; the claim's namespace is `claim_namespace`.
+    - alert: CanaryVolumeLeftBehind
+      annotations:
+        description: >-
+          PersistentVolume {{ $labels.persistentvolume }} of canary claim {{ $labels.name }}
+          still exists after 2 hours. Its StorageClass is probably reclaimPolicy Retain, or the
+          claim was not garbage-collected. Each run adds another volume until it is fixed.
+        summary: A block storage canary is leaking volumes.
+      expr: |
+        max by (k8s_cluster, persistentvolume, claim_namespace, name) (
+        kube_persistentvolume_claim_ref{claim_namespace="health-canary", name=~"block-canary-.+-scratch"}
+        )
+      for: 2h
+      labels:
+        capability: storage.block
+        tier: M3
+        severity: warning
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The storage.block alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: storage.block
+        tier: H1
+        severity: none
+
+  - name: health-canaries-storage-nfs
+    rules:
+    - alert: CanaryFailing
+      annotations:
+        description: >-
+          The {{ $labels.cronjob }} canary in {{ $labels.namespace }} has not succeeded since
+          its run scheduled at {{ $value | humanizeTimestamp }}. Its volume did not provision,
+          attach or mount, or did not accept a 64 MiB write with fsync and read it back intact.
+          The canary's log names the step that failed.
+        summary: A network file storage canary is failing.
+      expr: |
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob=~"nfs-canary-.+"}
+        )
+        > (
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_status_last_successful_time{namespace="health-canary", cronjob=~"nfs-canary-.+"}
+        )
+        or
+        0 * max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob=~"nfs-canary-.+"}
+        )
+        )
+      for: 30m
+      labels:
+        capability: storage.nfs
+        tier: H1
+        severity: critical
+    - alert: CanaryStale
+      annotations:
+        description: >-
+          The {{ $labels.cronjob }} canary in {{ $labels.namespace }} has had no successful run
+          for {{ $value | humanizeDuration }}, more than three schedule intervals, or it is
+          suspended. NFS volumes are not being checked.
+        summary: A network file storage canary is not running.
+      expr: |
+        time() - (
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_status_last_successful_time{namespace="health-canary", cronjob=~"nfs-canary-.+"}
+        )
+        or
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_created{namespace="health-canary", cronjob=~"nfs-canary-.+"}
+        )
+        )
+        > on (k8s_cluster, namespace, cronjob) (
+        3 * (
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_next_schedule_time{namespace="health-canary", cronjob=~"nfs-canary-.+"}
+        )
+        - (
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_status_last_schedule_time{namespace="health-canary", cronjob=~"nfs-canary-.+"}
+        )
+        or
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_created{namespace="health-canary", cronjob=~"nfs-canary-.+"}
+        )
+        )
+        )
+        or on (k8s_cluster, namespace, cronjob)
+        0 * (
+        max by (k8s_cluster, namespace, cronjob) (
+        kube_cronjob_spec_suspend{namespace="health-canary", cronjob=~"nfs-canary-.+"}
+        ) == 1
+        )
+        )
+      for: 15m
+      labels:
+        capability: storage.nfs
+        tier: H1
+        severity: warning
+    # A run's volume exists for minutes: it is created with the canary pod and deleted with it,
+    # within the Job's deadline plus its TTL. A PersistentVolume still bound to, or Released
+    # from, a canary scratch claim two hours later was left behind: the StorageClass is Retain,
+    # or garbage collection of the pod or claim is not happening. Each further run adds one.
+    # PersistentVolumes are cluster-scoped, so `namespace` here would be kube-state-metrics'
+    # own; the claim's namespace is `claim_namespace`.
+    - alert: CanaryVolumeLeftBehind
+      annotations:
+        description: >-
+          PersistentVolume {{ $labels.persistentvolume }} of canary claim {{ $labels.name }}
+          still exists after 2 hours. Its StorageClass is probably reclaimPolicy Retain, or the
+          claim was not garbage-collected. Each run adds another volume until it is fixed.
+        summary: A network file storage canary is leaking volumes.
+      expr: |
+        max by (k8s_cluster, persistentvolume, claim_namespace, name) (
+        kube_persistentvolume_claim_ref{claim_namespace="health-canary", name=~"nfs-canary-.+-scratch"}
+        )
+      for: 2h
+      labels:
+        capability: storage.nfs
+        tier: M3
+        severity: warning
+    - alert: CapabilityHeartbeat
+      annotations:
+        summary: The storage.nfs alert rules are being evaluated.
+      expr: vector(1)
+      labels:
+        capability: storage.nfs
+        tier: H1
+        severity: none
