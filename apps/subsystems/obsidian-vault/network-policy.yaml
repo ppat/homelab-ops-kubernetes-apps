@@ -3,8 +3,9 @@
 # reader should close. Egress stays unisolated because every workload here has a legitimate
 # outbound path that an egress default-deny would have to re-admit one at a time: the two MCP
 # servers and the exporter reach Obsidian, `batch-processor` reaches the LiteLLM gateway in the
-# `ai` namespace and the broker over its LoadBalancer hostname, `git-committer` reaches GitHub
-# and api.github.com/meta on the public internet, and everything resolves through cluster DNS.
+# `ai` namespace and the broker over its LoadBalancer hostname, `lint-pass` reaches the gateway and
+# OpenClaw's hook in the `openclaw` namespace, `git-committer` reaches GitHub and
+# api.github.com/meta on the public internet, and everything resolves through cluster DNS.
 #
 # One of those cannot be expressed at all, which is why this is a decision rather than a
 # deferral: an in-cluster packet to this cluster's own LoadBalancer VIP is DNAT'd to a backend
@@ -22,9 +23,9 @@
 # where a Pod is running is always allowed" is a NetworkPolicy conformance requirement, not an
 # implementation detail -- so restricting ingress here cannot break liveness/readiness.
 #
-# Four workloads are selected by this policy and admitted by nothing below, deliberately:
-# `git-committer`, `batch-processor`, `batch-stream-provisioner` and `batch-mode-watchdog`. All
-# four are CronJobs that only ever dial outward; nothing in the cluster connects *to* them, and
+# Five workloads are selected by this policy and admitted by nothing below, deliberately:
+# `git-committer`, `batch-processor`, `batch-stream-provisioner`, `batch-mode-watchdog` and
+# `lint-pass`. All five are CronJobs that only ever dial outward; nothing in the cluster connects *to* them, and
 # none carries a listening port or a ServiceMonitor. Denied-by-default is the correct posture
 # for them, not an oversight.
 apiVersion: networking.k8s.io/v1
