@@ -9,7 +9,7 @@
   "apps/subsystems/misc": "0.1.0",
   "apps/subsystems/obsidian-vault": "0.1.6",
   "infrastructure/bootstrap/crds": "0.7.0",
-  "infrastructure/subsystems/clusterops-core": "0.4.6",
+  "infrastructure/subsystems/clusterops-core": "0.4.7",
   "infrastructure/subsystems/database-core": "0.1.7",
   "infrastructure/subsystems/kubernetes-core": "0.2.0",
   "infrastructure/subsystems/kubernetes-extra": "0.0.35",
