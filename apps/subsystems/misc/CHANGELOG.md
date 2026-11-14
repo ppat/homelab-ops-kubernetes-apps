@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-misc-v0.1.0...apps-misc-v0.1.1) (2026-11-14)
+
+
+### 🛠 Improvements
+
+* make README tables satisfy markdownlint MD060 table-column-style ([#4598](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4598)) ([97d4b0c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/97d4b0cd6bc5ec395b220b0f0072c293b68306b5))
+
 ## [0.1.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-misc-v0.0.11...apps-misc-v0.1.0) (2026-11-09)
 
 
