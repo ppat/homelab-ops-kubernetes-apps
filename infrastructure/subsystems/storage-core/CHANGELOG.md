@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.9.2...infra-storage-core-v0.9.3) (2026-11-14)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-storage-core:** update digest docker.io/alpine/k8s (dcb7185 -&gt; 7a82aee) ([#4606](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4606)) ([abf1aee](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/abf1aeed5dd79091766ab1380ee6b2591a42d9f7))
+
 ## [0.9.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-storage-core-v0.9.1...infra-storage-core-v0.9.2) (2026-11-11)
 
 
