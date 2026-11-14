@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-obsidian-vault-v0.1.6...apps-obsidian-vault-v0.2.0) (2026-11-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* deploy infra-networking-core together with every other module released from this change, in one clusters-repo bump per cluster. Any resources annotated outside these modules must move to the external-dns.kubernetes.io/ prefix at the same time, or external-dns deletes their records.
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-obsidian-vault:** update docker.io/natsio/nats-box (0.20.1 -&gt; 0.20.2) ([#4464](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4464)) ([6613748](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/661374860eb33a7207730bf9d88c5cb823b1a539))
+* move external-dns annotations to the external-dns.kubernetes.io/ prefix ([#4486](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4486)) ([98a3009](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/98a30091cac6952bee0a35abdfa075fadb57d4a3))
+
 ## [0.1.6](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-obsidian-vault-v0.1.5...apps-obsidian-vault-v0.1.6) (2026-10-27)
 
 
