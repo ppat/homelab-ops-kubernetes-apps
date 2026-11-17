@@ -104,7 +104,7 @@ jobs:
     steps:
     - name: Flux Diff
       id: flux-diff
-      uses: ppat/homelab-ops-actions/actions/flux-diff@b243512e70e84044d607787b1f482881906b0f01 # v3.0.0
+      uses: ppat/homelab-ops-actions/actions/flux-diff@dabb7c51177ba40ea15235f18d0c1f2dee4b0c9f # v3.1.0
       with:
         log_level: DEBUG
         # One run renders the whole graph, so `all` reports Kustomization and Helm output
@@ -117,7 +117,7 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Comment on PR w/ diff
-      uses: ppat/homelab-ops-actions/actions/comment-on-pr@b243512e70e84044d607787b1f482881906b0f01 # v3.0.0
+      uses: ppat/homelab-ops-actions/actions/comment-on-pr@dabb7c51177ba40ea15235f18d0c1f2dee4b0c9f # v3.1.0
       if: ${{ steps.flux-diff.outputs.diff != '' }}
       continue-on-error: true
       with:
