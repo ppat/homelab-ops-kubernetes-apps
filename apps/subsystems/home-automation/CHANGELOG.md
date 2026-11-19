@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.4.2...apps-home-automation-v0.4.3) (2026-11-19)
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-home-automation:** update ghcr.io/home-operations/home-assistant (2026.11.1 -&gt; 2026.11.2) ([#4648](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4648)) ([7009b92](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/7009b9281f9212c74f563836c5c716b5bf7b1e27))
+* **apps-home-automation:** update rhasspy/wyoming-piper (2.5.3 -&gt; 2.5.4) ([#4644](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4644)) ([bb73555](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/bb735554b0f5e5cf852f7d370e584f11a1f86e31))
+
 ## [0.4.2](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.4.1...apps-home-automation-v0.4.2) (2026-11-17)
 
 
