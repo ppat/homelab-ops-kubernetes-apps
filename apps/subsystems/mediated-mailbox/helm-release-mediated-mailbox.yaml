@@ -1,0 +1,83 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mediated-mailbox-release
+  namespace: mediated-mailbox
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: mediated-mailbox
+    namespace: flux-system
+  install:
+    createNamespace: false
+    remediation:
+      retries: 3
+  interval: 15m0s
+  releaseName: mediated-mailbox
+  targetNamespace: mediated-mailbox
+  timeout: 15m0s
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      ignoreTestFailures: false
+      retries: 3
+      strategy: rollback
+
+  values:
+    database:
+      host: ${db_name:=mediated-mailbox-db}-${db_suffix_current:=default}-rw.mediated-mailbox.svc.cluster.local
+      name: ${db_bootstrap_database:=mediated_mailbox}
+      applicationUser: mediated_mailbox_app
+      migrationUser: ${db_bootstrap_owner:=mediated_mailbox_migrator}
+
+    secrets:
+      databasePasswords:
+        application:
+          existingSecret: mediated-mailbox-app-db
+        migration:
+          existingSecret: ${db_name:=mediated-mailbox-db}-${db_suffix_current:=default}-app
+      databaseCaCertificate:
+        existingSecret: ${db_name:=mediated-mailbox-db}-${db_suffix_current:=default}-ca
+      credentialSealingKeyPair:
+        existingSecret: mediated-mailbox-secrets
+      apiBearerToken:
+        existingSecret: mediated-mailbox-secrets
+
+    # Authenticated by its own bearer token, with nothing in front.
+    api:
+      ingress:
+        enabled: true
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: mediated-mailbox-api.${domain_name}
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+        hosts:
+        - host: mediated-mailbox-api.${domain_name}
+          paths:
+          - path: /
+            pathType: Prefix
+
+    # No login of its own, and no authentication in front.
+    ui:
+      ingress:
+        enabled: true
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: mediated-mailbox.${domain_name}
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+        hosts:
+        - host: mediated-mailbox.${domain_name}
+          paths:
+          - path: /
+            pathType: Prefix
+
+    monitoring:
+      serviceMonitor:
+        enabled: true
+      prometheusRule:
+        enabled: true
+      dashboard:
+        enabled: true
+        annotations:
+          grafana_folder: Mediated Mailbox

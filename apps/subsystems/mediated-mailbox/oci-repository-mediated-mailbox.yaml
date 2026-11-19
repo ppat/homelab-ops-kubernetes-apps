@@ -1,0 +1,13 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: mediated-mailbox
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: oci://ghcr.io/ppat/mediated-mailbox
+  # The chart pins every image to its appVersion, so this pin is the whole deployment's.
+  ref:
+    tag: 0.1.0
+    digest: sha256:0e0289835804f778392b684f212c9da4f2e3fa8839df82ca7702624d1b3525c0
