@@ -1,0 +1,35 @@
+---
+# The database is owned by the migrator's user, whose password CloudNativePG generates into
+# <cluster>-app under `password`, the key the chart's migration Job reads. The application user,
+# which the API server, the UI and the worker connect as, is a managed role, and the migration
+# chain grants to it and fails until it exists. Its password comes from secrets.yaml.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: ${db_name:=mediated-mailbox-db}-${db_suffix_current:=default}
+  namespace: mediated-mailbox
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  bootstrap:
+    initdb:
+      database: ${db_bootstrap_database:=mediated_mailbox}
+      owner: ${db_bootstrap_owner:=mediated_mailbox_migrator}
+  # The PostgreSQL major the project's own tests run against.
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.6-minimal-trixie@sha256:c9be7f221a05b18fe65259d9136affbabe3b39ad91c3b68f8f2f990a45f35f38
+  instances: ${db_replicas:=1}
+  managed:
+    roles:
+    - name: mediated_mailbox_app
+      login: true
+      passwordSecret:
+        name: mediated-mailbox-app-db
+  monitoring:
+    enablePodMonitor: true
+  primaryUpdateStrategy: unsupervised
+  resources: {}
+  startDelay: 300
+  stopDelay: 300
+  storage:
+    size: ${db_storage_size}
+    storageClass: ${db_storage_class}

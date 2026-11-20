@@ -1,0 +1,54 @@
+---
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: StepTemplate
+metadata:
+  name: validate-mediated-mailbox-database
+spec:
+  try:
+  - description: Assert cluster.postgresql.cnpg.io/mediated-mailbox-db-test
+    assert:
+      bindings:
+      - name: name
+        value: mediated-mailbox-db-test
+      - name: namespace
+        value: mediated-mailbox
+      file: ../chainsaw/assertions/cnpg-cluster-ready.yaml
+      # The first step that waits on a pod, so it absorbs the module's start. Measured once, on a
+      # local kind rig: Ready 24s after the module applied. Generous until CI runs are measured.
+      timeout: 5m
+  # The migration chain fails until the application user exists, so a role CloudNativePG could not
+  # create shows up here rather than as a migration Job retrying until the release times out.
+  - description: Assert the application user is reconciled
+    assert:
+      resource:
+        apiVersion: postgresql.cnpg.io/v1
+        kind: Cluster
+        metadata:
+          name: mediated-mailbox-db-test
+          namespace: mediated-mailbox
+        status:
+          managedRolesStatus:
+            byStatus:
+              reconciled:
+              - mediated_mailbox_app
+      timeout: 2m
+  # CloudNativePG grants the database pods' ServiceAccount read access to every managed role's
+  # password Secret. The key pair and the bearer token must stay out of its reach, and the first
+  # check shows the identity and the question are the ones that matter.
+  - description: Assert the database pods can read the role's Secret and not the key pair
+    script:
+      content: |
+        set -eu
+        as=system:serviceaccount:mediated-mailbox:mediated-mailbox-db-test
+        kubectl auth can-i get secret/mediated-mailbox-app-db -n mediated-mailbox --as="$as"
+        if kubectl auth can-i get secret/mediated-mailbox-secrets -n mediated-mailbox --as="$as"; then exit 1; fi
+  catch:
+  - describe:
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      name: mediated-mailbox-db-test
+      namespace: mediated-mailbox
+  - events:
+      namespace: cnpg-system
+  - events:
+      namespace: mediated-mailbox
