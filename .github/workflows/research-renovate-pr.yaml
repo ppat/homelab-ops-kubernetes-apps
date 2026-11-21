@@ -42,7 +42,7 @@ jobs:
       # renovate: datasource=npm depName=@anthropic-ai/claude-code
       CLAUDE_CODE_VERSION: "2.1.318"
       # renovate: datasource=github-releases depName=fluxcd/flux2
-      FLUX_VERSION: "v2.10.0"
+      FLUX_VERSION: "v2.10.1"
       # renovate: datasource=github-releases depName=helm/helm
       HELM_VERSION: "v4.3.2"
       # renovate: datasource=github-releases depName=mikefarah/yq
