@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.8.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.7.0...infra-bootstrap-crds-v0.8.0) (2026-11-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* **infra-bootstrap-crds:** update traefik/traefik-helm-chart (v41.7.1 -> v42.1.0) ([#4619](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4619))
+
+### ✨ Features
+
+* **infra-bootstrap-crds:** update cloudnative-pg/plugin-barman-cloud (v0.15.1 -&gt; v0.16.0) ([#4628](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4628)) ([dddeab8](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/dddeab8e1d4acc87677740fd39b2c55635e07e29))
+* **infra-bootstrap-crds:** update external-secrets/external-secrets (v2.14.0 -&gt; v2.15.0) ([#4632](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4632)) ([d8650cb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/d8650cb2e38a92eb897136c06b5983342e67e9f1))
+* **infra-bootstrap-crds:** update traefik/traefik-helm-chart (v41.7.1 -&gt; v42.1.0) ([#4619](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4619)) ([aceceb3](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/aceceb315af8a4482052e116cb5e8f17356868f3))
+
 ## [0.7.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-bootstrap-crds-v0.6.2...infra-bootstrap-crds-v0.7.0) (2026-11-09)
 
 
