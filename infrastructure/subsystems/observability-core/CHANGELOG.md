@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.36.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.36.3...infra-observability-core-v0.36.4) (2026-11-21)
+
+
+### ✨ Features
+
+* **infra-observability-core:** update alloy (1.15.0 -&gt; 1.16.0) ([#4658](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4658)) ([de54bbf](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/de54bbf47cc36d07ded88d1fbd87d9f9b85f87b3))
+
 ## [0.36.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-core-v0.36.2...infra-observability-core-v0.36.3) (2026-11-19)
 
 
