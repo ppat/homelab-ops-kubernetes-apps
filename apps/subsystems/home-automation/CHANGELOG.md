@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.4](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.4.3...apps-home-automation-v0.4.4) (2026-11-28)
+
+
+### ✨ Features
+
+* **apps-home-automation:** update rhasspy/wyoming-whisper (3.8.1 -&gt; 3.9.0) ([#4677](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4677)) ([542a312](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/542a312ef002d2d57980a8b348caee13cfd789cd))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **apps-home-automation:** update rhasspy/wyoming-whisper (3.9.0 -&gt; 3.9.1) ([#4682](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4682)) ([b81cabb](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/b81cabbdb6671b4228389e855d5c9d3a09b5a054))
+
 ## [0.4.3](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/apps-home-automation-v0.4.2...apps-home-automation-v0.4.3) (2026-11-19)
 
 
