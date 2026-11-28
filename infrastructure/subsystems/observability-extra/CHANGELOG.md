@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.12](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.6.11...infra-observability-extra-v0.6.12) (2026-11-28)
+
+
+### ✨ Features
+
+* **infra-observability-extra:** update docker.io/library/busybox (1.37.0 -&gt; 1.38.0) ([#4605](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4605)) ([1a9c4ac](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/1a9c4ac425b692222f4794c5dab4bc08b7f8a8cc))
+
 ## [0.6.11](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-observability-extra-v0.6.10...infra-observability-extra-v0.6.11) (2026-11-19)
 
 
