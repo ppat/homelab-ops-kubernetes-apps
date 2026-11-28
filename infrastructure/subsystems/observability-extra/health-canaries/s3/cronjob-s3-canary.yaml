@@ -39,7 +39,7 @@ spec:
           restartPolicy: Never
           containers:
           - name: s3-canary
-            image: docker.io/ppatlabs/health-canary:0.1.0@sha256:46ed0801c955d5f012ee0c19d4bf29169f610851732ce5c18111637246b2b62f
+            image: docker.io/ppatlabs/health-canary:0.1.0@sha256:c3ad519c57e1e9a1b09ee8b01f54f43758ed84b53e64bb7a8277285b0e68ac80
             imagePullPolicy: IfNotPresent
             command: [/bin/bash, /scripts/s3-canary.sh]
             envFrom:
