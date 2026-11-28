@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.1](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.4.0...infra-networking-extra-v0.4.1) (2026-11-28)
+
+
+### 🛠 Improvements
+
+* make README tables satisfy markdownlint MD060 table-column-style ([#4598](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4598)) ([97d4b0c](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/97d4b0cd6bc5ec395b220b0f0072c293b68306b5))
+
+
+### 🚀 Enhancements + Bug Fixes
+
+* **infra-networking-extra:** update docker.io/freeradius/freeradius-server (3.2.10 -&gt; 3.2.11) ([#4693](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4693)) ([3347931](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/3347931f4a24927658cd8aec41865b18d0db88b3))
+* **infra-networking-extra:** update tailscale-operator (1.104.4 -&gt; 1.104.7) ([#4613](https://github.com/ppat/homelab-ops-kubernetes-apps/issues/4613)) ([c06fc09](https://github.com/ppat/homelab-ops-kubernetes-apps/commit/c06fc09ccf926c209771c8b4a71f013c53869992))
+
 ## [0.4.0](https://github.com/ppat/homelab-ops-kubernetes-apps/compare/infra-networking-extra-v0.3.20...infra-networking-extra-v0.4.0) (2026-11-09)
 
 
